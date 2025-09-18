@@ -390,8 +390,8 @@ pub struct RegistryStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     #[tokio::test]
     async fn test_plugin_registry() {

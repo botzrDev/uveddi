@@ -4,8 +4,8 @@ use async_graphql::{http::GraphiQLSource, Schema};
 use async_graphql_warp::{GraphQLBadRequest, Response};
 use std::convert::Infallible;
 use std::sync::Arc;
+use tracing::{debug, error, info, warn};
 use warp::{Filter, Rejection, Reply};
-use tracing::{info, warn, error, debug};
 
 use super::graphql::subscriptions::EventBroadcaster;
 use super::graphql::{GraphQLConfig, UveddiSchema};

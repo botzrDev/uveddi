@@ -4,7 +4,7 @@
 //! and severity-based analysis summaries for architectural analysis reports.
 
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
-use crate::report::{ReportGenerator, ArchitecturalComponent};
+use crate::report::{ArchitecturalComponent, ReportGenerator};
 use std::collections::HashSet;
 use std::path::Path;
 

@@ -482,7 +482,13 @@ impl UveddiMetrics {
     }
 
     /// Record an HTTP request (no-op when prometheus is disabled)
-    pub fn record_request(&self, _method: &str, _endpoint: &str, _status: &str, _duration: Duration) {
+    pub fn record_request(
+        &self,
+        _method: &str,
+        _endpoint: &str,
+        _status: &str,
+        _duration: Duration,
+    ) {
         // No-op
     }
 
@@ -633,10 +639,7 @@ impl MetricsServer {
 
     /// Start the metrics server
     pub async fn start(&self) -> Result<()> {
-        use axum::{
-            routing::get,
-            Router,
-        };
+        use axum::{routing::get, Router};
 
         let registry = self.metrics.registry();
 

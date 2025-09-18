@@ -302,12 +302,12 @@ impl UveddiError {
             source: None,
         }
     }
-    
+
     /// Alias for config_error to maintain backwards compatibility
     pub fn configuration_error(message: &str) -> Self {
         Self::config_error(message, "configuration")
     }
-    
+
     /// Creates a validation error
     pub fn validation_error(message: &str) -> Self {
         Self::ConfigError {
@@ -316,7 +316,7 @@ impl UveddiError {
             suggestion: "Check input validation rules and format requirements".to_string(),
         }
     }
-    
+
     /// Creates an initialization error
     pub fn initialization_error(message: &str) -> Self {
         Self::ConfigError {

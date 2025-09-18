@@ -131,7 +131,10 @@ impl StartupManager {
             })?
         } else {
             Database::new(None).map_err(|e| {
-                UveddiError::database_error_msg(&format!("Failed to create in-memory database: {}", e))
+                UveddiError::database_error_msg(&format!(
+                    "Failed to create in-memory database: {}",
+                    e
+                ))
             })?
         };
 
@@ -144,7 +147,10 @@ impl StartupManager {
         debug!("Initializing analysis engine");
 
         let engine = AnalysisEngine::new().map_err(|e| {
-            UveddiError::config_error(&format!("Failed to create analysis engine: {}", e), "analysis engine")
+            UveddiError::config_error(
+                &format!("Failed to create analysis engine: {}", e),
+                "analysis engine",
+            )
         })?;
 
         self.analysis_engine = Some(Arc::new(RwLock::new(engine)));
@@ -156,13 +162,19 @@ impl StartupManager {
         debug!("Initializing plugin system");
 
         // Get required dependencies
-        let database = self.database.as_ref().ok_or_else(|| {
-            UveddiError::config_error("Database not initialized", "plugin system")
-        })?.clone();
+        let database = self
+            .database
+            .as_ref()
+            .ok_or_else(|| UveddiError::config_error("Database not initialized", "plugin system"))?
+            .clone();
 
-        let analysis_engine = self.analysis_engine.as_ref().ok_or_else(|| {
-            UveddiError::config_error("Analysis engine not initialized", "plugin system")
-        })?.clone();
+        let analysis_engine = self
+            .analysis_engine
+            .as_ref()
+            .ok_or_else(|| {
+                UveddiError::config_error("Analysis engine not initialized", "plugin system")
+            })?
+            .clone();
 
         // Create plugin manager configuration
         let plugin_config = PluginManagerConfig {
@@ -178,7 +190,8 @@ impl StartupManager {
             database.clone(),
             analysis_engine.clone(),
             Some(plugin_config),
-        ).await?;
+        )
+        .await?;
 
         self.plugin_manager = Some(plugin_manager);
 
@@ -204,34 +217,46 @@ impl StartupManager {
 
     /// Auto-discover and load plugins from the plugin directory
     async fn auto_load_plugins(&mut self) -> Result<(), UveddiError> {
-        debug!("Auto-loading plugins from: {}", self.config.plugin_directory.display());
+        debug!(
+            "Auto-loading plugins from: {}",
+            self.config.plugin_directory.display()
+        );
 
         // Check if plugin directory exists
         if !self.config.plugin_directory.exists() {
-            info!("Plugin directory doesn't exist, creating: {}", self.config.plugin_directory.display());
-            tokio::fs::create_dir_all(&self.config.plugin_directory).await.map_err(|e| {
-                UveddiError::io_error(
-                    "create plugin directory",
-                    &self.config.plugin_directory.to_string_lossy(),
-                    e
-                )
-            })?;
+            info!(
+                "Plugin directory doesn't exist, creating: {}",
+                self.config.plugin_directory.display()
+            );
+            tokio::fs::create_dir_all(&self.config.plugin_directory)
+                .await
+                .map_err(|e| {
+                    UveddiError::io_error(
+                        "create plugin directory",
+                        &self.config.plugin_directory.to_string_lossy(),
+                        e,
+                    )
+                })?;
             return Ok(()); // No plugins to load
         }
 
         // Scan for plugin files
         let mut plugin_files = Vec::new();
-        let mut dir_entries = tokio::fs::read_dir(&self.config.plugin_directory).await.map_err(|e| {
-            UveddiError::io_error(
-                "read plugin directory",
-                &self.config.plugin_directory.to_string_lossy(),
-                e
-            )
-        })?;
+        let mut dir_entries = tokio::fs::read_dir(&self.config.plugin_directory)
+            .await
+            .map_err(|e| {
+                UveddiError::io_error(
+                    "read plugin directory",
+                    &self.config.plugin_directory.to_string_lossy(),
+                    e,
+                )
+            })?;
 
-        while let Some(entry) = dir_entries.next_entry().await.map_err(|e| {
-            UveddiError::io_error("read directory entry", "plugin directory", e)
-        })? {
+        while let Some(entry) = dir_entries
+            .next_entry()
+            .await
+            .map_err(|e| UveddiError::io_error("read directory entry", "plugin directory", e))?
+        {
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("wasm") {
                 // Look for corresponding manifest file
@@ -252,12 +277,23 @@ impl StartupManager {
         })?;
 
         for (binary_path, manifest_path) in plugin_files {
-            match plugin_manager.install_plugin(&binary_path, &manifest_path).await {
+            match plugin_manager
+                .install_plugin(&binary_path, &manifest_path)
+                .await
+            {
                 Ok(plugin_id) => {
-                    info!("Successfully loaded plugin: {} from {}", plugin_id, binary_path.display());
+                    info!(
+                        "Successfully loaded plugin: {} from {}",
+                        plugin_id,
+                        binary_path.display()
+                    );
                 }
                 Err(e) => {
-                    error!("Failed to load plugin from {}: {}", binary_path.display(), e);
+                    error!(
+                        "Failed to load plugin from {}: {}",
+                        binary_path.display(),
+                        e
+                    );
                     // Continue loading other plugins
                 }
             }
@@ -337,7 +373,9 @@ pub async fn initialize_application() -> Result<StartupManager, UveddiError> {
 }
 
 /// Convenience function to initialize application with custom configuration
-pub async fn initialize_application_with_config(config: StartupConfig) -> Result<StartupManager, UveddiError> {
+pub async fn initialize_application_with_config(
+    config: StartupConfig,
+) -> Result<StartupManager, UveddiError> {
     let mut manager = StartupManager::with_config(config);
     manager.initialize().await?;
     Ok(manager)

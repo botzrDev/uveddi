@@ -131,34 +131,43 @@ impl ConfigCommand {
                 info!("Config successfully updated in {}", file.display());
                 println!("Config updated in {}", file.display());
             }
-            ConfigSubcommand::Validate { file, suggestions, format } => {
+            ConfigSubcommand::Validate {
+                file,
+                suggestions,
+                format,
+            } => {
                 let path_buf = if let Some(file_path) = file.as_ref() {
                     file_path.clone()
                 } else {
                     std::path::PathBuf::from("uveddi.toml")
                 };
-                
+
                 // Use smart validation system
-                let validation_result = crate::config::validation::validate_config_file(&path_buf).await
-                    .map_err(|e| crate::error::UveddiError::config_error(
-                        &format!("Validation failed: {}", e),
-                        "config validation",
-                    ))?;
-                
+                let validation_result = crate::config::validation::validate_config_file(&path_buf)
+                    .await
+                    .map_err(|e| {
+                        crate::error::UveddiError::config_error(
+                            &format!("Validation failed: {}", e),
+                            "config validation",
+                        )
+                    })?;
+
                 match format.as_str() {
                     "json" => {
-                        let json = serde_json::to_string_pretty(&validation_result)
-                            .map_err(|e| crate::error::UveddiError::config_error(
-                                &format!("JSON serialization failed: {}", e),
-                                "output formatting",
-                            ))?;
+                        let json =
+                            serde_json::to_string_pretty(&validation_result).map_err(|e| {
+                                crate::error::UveddiError::config_error(
+                                    &format!("JSON serialization failed: {}", e),
+                                    "output formatting",
+                                )
+                            })?;
                         println!("{}", json);
-                    },
+                    }
                     "human" | _ => {
                         self.display_validation_results(&validation_result, *suggestions);
                     }
                 }
-                
+
                 if !validation_result.is_valid {
                     return Err(crate::error::UveddiError::config_error(
                         "Configuration validation failed",
@@ -170,13 +179,24 @@ impl ConfigCommand {
         Ok(())
     }
 
-    fn display_validation_results(&self, result: &crate::config::validation::ValidationResult, show_suggestions: bool) {
+    fn display_validation_results(
+        &self,
+        result: &crate::config::validation::ValidationResult,
+        show_suggestions: bool,
+    ) {
         use crate::config::validation::{ErrorSeverity, ImpactLevel, Priority};
-        
+
         // Summary
         println!("🔍 Configuration Validation Summary");
         println!("==================================");
-        println!("Status: {}", if result.is_valid { "✅ Valid" } else { "❌ Invalid" });
+        println!(
+            "Status: {}",
+            if result.is_valid {
+                "✅ Valid"
+            } else {
+                "❌ Invalid"
+            }
+        );
         println!("Performance Score: {:.1}/100", result.performance_score);
         println!("Completeness Score: {:.1}/100", result.completeness_score);
         println!();
@@ -218,7 +238,9 @@ impl ConfigCommand {
         let relevant_suggestions: Vec<_> = if show_suggestions {
             result.suggestions.iter().collect()
         } else {
-            result.suggestions.iter()
+            result
+                .suggestions
+                .iter()
                 .filter(|s| matches!(s.priority, Priority::High))
                 .collect()
         };
@@ -238,10 +260,10 @@ impl ConfigCommand {
                     crate::config::validation::SuggestionCategory::Maintenance => "🔧",
                     crate::config::validation::SuggestionCategory::Compatibility => "🔗",
                 };
-                
+
                 println!("  {} {} {}", priority_icon, category_icon, suggestion.title);
                 println!("    {}", suggestion.description);
-                
+
                 if let Some(ref before) = suggestion.before {
                     println!("    Before: {}", before);
                 }
@@ -249,10 +271,12 @@ impl ConfigCommand {
                 println!("    Benefit: {}", suggestion.benefit);
                 println!();
             }
-            
+
             if !show_suggestions && result.suggestions.len() > relevant_suggestions.len() {
-                println!("💭 {} more suggestions available. Use --suggestions to see all.",
-                    result.suggestions.len() - relevant_suggestions.len());
+                println!(
+                    "💭 {} more suggestions available. Use --suggestions to see all.",
+                    result.suggestions.len() - relevant_suggestions.len()
+                );
                 println!();
             }
         }
@@ -260,10 +284,16 @@ impl ConfigCommand {
         // Final recommendations
         if result.is_valid {
             if result.performance_score < 70.0 {
-                println!("🎯 Consider optimizing for better performance (score: {:.1})", result.performance_score);
+                println!(
+                    "🎯 Consider optimizing for better performance (score: {:.1})",
+                    result.performance_score
+                );
             }
             if result.completeness_score < 80.0 {
-                println!("📋 Consider adding more configuration options (completeness: {:.1}%)", result.completeness_score);
+                println!(
+                    "📋 Consider adding more configuration options (completeness: {:.1}%)",
+                    result.completeness_score
+                );
             }
             if result.performance_score >= 80.0 && result.completeness_score >= 80.0 {
                 println!("🎉 Excellent configuration! Your setup looks great.");

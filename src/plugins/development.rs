@@ -184,8 +184,6 @@ impl ExampleAntiPatternPlugin {
     }
 
     async fn load_custom_patterns(&self) -> Result<Vec<PatternKnowledge>, PluginError> {
-        
-
         // Example: Load patterns from plugin-specific source
         // TODO: Fix PatternKnowledge struct fields - using available fields only
         #[cfg(feature = "ai")]

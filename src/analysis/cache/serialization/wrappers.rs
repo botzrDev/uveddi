@@ -8,7 +8,10 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // Custom wrapper for SystemTime that implements rkyv traits manually
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "memory-optimization",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 pub struct ArchivableSystemTime {
     // Store as duration since UNIX_EPOCH for rkyv compatibility
     #[cfg(feature = "memory-optimization")]
@@ -21,10 +24,13 @@ impl From<SystemTime> for ArchivableSystemTime {
     fn from(time: SystemTime) -> Self {
         #[cfg(feature = "memory-optimization")]
         {
-            let duration_since_epoch = time.duration_since(UNIX_EPOCH)
+            let duration_since_epoch = time
+                .duration_since(UNIX_EPOCH)
                 .unwrap_or(Duration::from_secs(0))
                 .as_secs();
-            Self { duration_since_epoch }
+            Self {
+                duration_since_epoch,
+            }
         }
         #[cfg(not(feature = "memory-optimization"))]
         {
@@ -67,7 +73,10 @@ impl ArchivableSystemTime {
 
 // Custom wrapper for PathBuf that implements rkyv traits manually
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "memory-optimization",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 pub struct ArchivablePathBuf {
     // Store as String for rkyv compatibility
     #[cfg(feature = "memory-optimization")]
@@ -80,7 +89,9 @@ impl From<PathBuf> for ArchivablePathBuf {
     fn from(path: PathBuf) -> Self {
         #[cfg(feature = "memory-optimization")]
         {
-            Self { path_string: path.to_string_lossy().into_owned() }
+            Self {
+                path_string: path.to_string_lossy().into_owned(),
+            }
         }
         #[cfg(not(feature = "memory-optimization"))]
         {

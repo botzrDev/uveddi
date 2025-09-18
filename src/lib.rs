@@ -237,7 +237,6 @@
 //!
 //! See individual module documentation for detailed usage information and examples.
 
-
 // Targeted warning suppressions - only suppress specific warnings, not all warnings
 #![allow(unused_variables, unused_imports, dead_code, unused_mut)]
 // TODO: Re-enable documentation warnings after v1.0 release
@@ -256,10 +255,10 @@ pub mod config;
 pub mod constants;
 pub mod core;
 pub mod database;
-pub mod health;
-pub mod hooks;
 pub mod deployment;
 pub mod error;
+pub mod health;
+pub mod hooks;
 pub mod infrastructure;
 pub mod ingestion;
 pub mod models;

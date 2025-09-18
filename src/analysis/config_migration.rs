@@ -8,9 +8,7 @@ use crate::analysis::detectors::anti_patterns::{
     code_duplication::DuplicationConfig, dead_code::DeadCodeConfig, god_object::GodObjectConfig,
     large_classes::LargeClassConfig,
 };
-use crate::analysis::standardized_config::{
-    StandardConfigBuilder, StandardDetectorConfig,
-};
+use crate::analysis::standardized_config::{StandardConfigBuilder, StandardDetectorConfig};
 use crate::analysis::IssueSeverity;
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use crate::error::UveddiError;

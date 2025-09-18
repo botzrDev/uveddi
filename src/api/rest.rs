@@ -29,23 +29,23 @@
 //! - `GET /*` - SPA fallback for client-side routing
 
 use crate::api::types::{ApiServer, RestApiConfig};
-use crate::security::{self, validate_api_request};
 use crate::database::Database;
 use crate::report::interactive_models::REPORT_SCHEMA_VERSION;
+use crate::security::{self, validate_api_request};
 
-// Import modular endpoints  
+// Import modular endpoints
 #[path = "rest_endpoints/mod.rs"]
 mod endpoints;
-use endpoints::*;
-use tracing::{info, error, warn};
 use axum::{
     extract::{Path as AxumPath, State},
-    http::{header, HeaderMap, StatusCode, Request},
-    response::{IntoResponse, Json},
-    routing::{get, get_service}, Router,
+    http::{header, HeaderMap, Request, StatusCode},
     middleware::{self, Next},
+    response::{IntoResponse, Json},
+    routing::{get, get_service},
+    Router,
 };
 use chrono::Utc;
+use endpoints::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -56,6 +56,7 @@ use tower_http::{
     services::ServeDir,
     trace::TraceLayer,
 };
+use tracing::{error, info, warn};
 
 /// REST API Service implementation
 #[derive(Clone)]
@@ -126,7 +127,7 @@ impl RestApiService {
         app.layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(validate_request_middleware))
-                .layer(TraceLayer::new_for_http())
+                .layer(TraceLayer::new_for_http()),
         )
     }
 }
@@ -224,23 +225,23 @@ async fn validate_request_middleware(
 ) -> Result<impl IntoResponse, StatusCode> {
     // Extract headers for validation
     let headers = request.headers();
-    
+
     // Get content type
     let content_type = headers
         .get(header::CONTENT_TYPE)
         .and_then(|ct| ct.to_str().ok());
-    
+
     // Get content length
     let content_length = headers
         .get(header::CONTENT_LENGTH)
         .and_then(|cl| cl.to_str().ok())
         .and_then(|cl| cl.parse::<u64>().ok());
-    
+
     // Get user agent
     let user_agent = headers
         .get(header::USER_AGENT)
         .and_then(|ua| ua.to_str().ok());
-    
+
     // Validate request headers and parameters
     match validate_api_request(content_type, content_length, user_agent) {
         Ok(_) => {

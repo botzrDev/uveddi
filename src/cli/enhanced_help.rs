@@ -3,8 +3,8 @@
 //! Provides context-aware error messages, command suggestions,
 //! and improved help text for better user experience.
 
-use std::fmt;
 use levenshtein::levenshtein;
+use std::fmt;
 
 /// Enhanced CLI error with context and suggestions
 #[derive(Debug, Clone)]
@@ -49,22 +49,22 @@ impl CliError {
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "❌ {}", self.message)?;
-        
+
         if let Some(context) = &self.context {
             writeln!(f, "📍 Context: {}", context)?;
         }
-        
+
         if !self.suggestions.is_empty() {
             writeln!(f, "\n💡 Suggestions:")?;
             for suggestion in &self.suggestions {
                 writeln!(f, "   • {}", suggestion)?;
             }
         }
-        
+
         if let Some(help_topic) = &self.help_topic {
             writeln!(f, "\n📚 For more help: uveddi help {}", help_topic)?;
         }
-        
+
         Ok(())
     }
 }
@@ -73,23 +73,23 @@ impl std::error::Error for CliError {}
 
 /// Available Uveddi commands for suggestion matching
 const AVAILABLE_COMMANDS: &[&str] = &[
-    "analyze", "a",           // Main analysis command + alias
-    "doctor", "dr",           // Health check command + alias  
-    "config", "cfg",          // Configuration command + alias
-    "init",                   // Project initialization
-    "hooks",                  // Git hooks management
-    "serve",                  // Web server command
-    "tui",                    // Terminal UI command
-    "plugin",                 // Plugin management
-    "ci",                     // CI/CD integration
-    "ui",                     // UI command
-    "help",                   // Help command
+    "analyze", "a", // Main analysis command + alias
+    "doctor", "dr", // Health check command + alias
+    "config", "cfg",    // Configuration command + alias
+    "init",   // Project initialization
+    "hooks",  // Git hooks management
+    "serve",  // Web server command
+    "tui",    // Terminal UI command
+    "plugin", // Plugin management
+    "ci",     // CI/CD integration
+    "ui",     // UI command
+    "help",   // Help command
 ];
 
 /// Available help topics
 const HELP_TOPICS: &[&str] = &[
     "installation",
-    "configuration", 
+    "configuration",
     "troubleshooting",
     "ci-cd",
     "plugins",
@@ -106,10 +106,10 @@ pub fn suggest_command(input: &str) -> Vec<String> {
         .iter()
         .map(|cmd| (cmd, levenshtein(input, cmd)))
         .collect::<Vec<_>>();
-    
+
     // Sort by edit distance
     suggestions.sort_by_key(|&(_, distance)| distance);
-    
+
     // Return suggestions with distance <= 3 and at most 3 suggestions
     suggestions
         .iter()
@@ -127,21 +127,27 @@ pub fn suggest_command(input: &str) -> Vec<String> {
 /// Generate contextual error message for common CLI mistakes
 pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -> CliError {
     let lower_error = original_error.to_lowercase();
-    
+
     // Handle "command not found" errors
-    if lower_error.contains("no such subcommand") || lower_error.contains("unrecognized subcommand") {
+    if lower_error.contains("no such subcommand") || lower_error.contains("unrecognized subcommand")
+    {
         if let Some(invalid_cmd) = extract_invalid_command(&lower_error) {
             let suggestions = suggest_command(&invalid_cmd);
-            
+
             return CliError::new(format!("Unknown command: '{}'", invalid_cmd))
-                .with_context("Uveddi supports analysis, configuration, and health checking commands")
-                .with_suggestions(suggestions.into_iter()
-                    .map(|s| format!("Try 'uveddi {}'", s))
-                    .collect())
+                .with_context(
+                    "Uveddi supports analysis, configuration, and health checking commands",
+                )
+                .with_suggestions(
+                    suggestions
+                        .into_iter()
+                        .map(|s| format!("Try 'uveddi {}'", s))
+                        .collect(),
+                )
                 .with_help_topic("commands");
         }
     }
-    
+
     // Handle file not found errors
     if lower_error.contains("no such file") || lower_error.contains("not found") {
         return CliError::new("File or directory not found")
@@ -150,7 +156,7 @@ pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -
             .with_suggestion("Run 'uveddi doctor' to check file permissions")
             .with_help_topic("troubleshooting");
     }
-    
+
     // Handle permission errors
     if lower_error.contains("permission denied") || lower_error.contains("access denied") {
         return CliError::new("Permission denied")
@@ -160,7 +166,7 @@ pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -
             .with_suggestion("Try running with appropriate permissions")
             .with_help_topic("troubleshooting");
     }
-    
+
     // Handle configuration errors
     if lower_error.contains("config") || lower_error.contains("configuration") {
         return CliError::new("Configuration error")
@@ -170,9 +176,10 @@ pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -
             .with_suggestion("Check ~/.config/uveddi/ for configuration files")
             .with_help_topic("configuration");
     }
-    
+
     // Handle AI/Ollama related errors
-    if lower_error.contains("ollama") || lower_error.contains("ai") || lower_error.contains("model") {
+    if lower_error.contains("ollama") || lower_error.contains("ai") || lower_error.contains("model")
+    {
         return CliError::new("AI service error")
             .with_context("Problem connecting to or using AI services")
             .with_suggestion("Check if Ollama is running with 'ollama serve'")
@@ -180,7 +187,7 @@ pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -
             .with_suggestion("Try running without --enable-ai to bypass AI features")
             .with_help_topic("ai-integration");
     }
-    
+
     // Handle timeout errors
     if lower_error.contains("timeout") || lower_error.contains("timed out") {
         return CliError::new("Operation timed out")
@@ -190,17 +197,17 @@ pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -
             .with_suggestion("Use --progress-format terminal to monitor progress")
             .with_help_topic("performance");
     }
-    
+
     // Handle memory errors
     if lower_error.contains("memory") || lower_error.contains("out of memory") {
         return CliError::new("Memory limit exceeded")
             .with_context("The analysis required more memory than available")
             .with_suggestion("Use --memory-limit-gb to increase memory limit")
-            .with_suggestion("Enable --memory-optimization for large codebases") 
+            .with_suggestion("Enable --memory-optimization for large codebases")
             .with_suggestion("Analyze smaller sections of your codebase separately")
             .with_help_topic("performance");
     }
-    
+
     // Default enhanced error
     CliError::new(original_error)
         .with_context("An unexpected error occurred")
@@ -218,13 +225,13 @@ fn extract_invalid_command(error: &str) -> Option<String> {
             return Some(error[start..start + end].to_string());
         }
     }
-    
+
     if let Some(start) = error.find('\'') {
         if let Some(end) = error[start + 1..].find('\'') {
             return Some(error[start + 1..start + 1 + end].to_string());
         }
     }
-    
+
     None
 }
 
@@ -280,7 +287,8 @@ pub fn generate_quick_help() -> String {
   • Documentation: https://github.com/botzrDev/uveddi
   • Issues & Support: https://github.com/botzrDev/uveddi/issues
   • Quick Start Guide: uveddi help tutorials
-"#.to_string()
+"#
+    .to_string()
 }
 
 /// Generate help for a specific topic

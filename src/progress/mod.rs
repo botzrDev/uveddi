@@ -95,7 +95,12 @@ impl PhaseProgress {
     }
 
     /// Updates progress information with current status
-    pub fn update_progress(&mut self, processed: usize, current_item: Option<String>, start_time: Instant) {
+    pub fn update_progress(
+        &mut self,
+        processed: usize,
+        current_item: Option<String>,
+        start_time: Instant,
+    ) {
         self.items_processed = processed;
         self.current_item = current_item;
         self.elapsed_time = start_time.elapsed();
@@ -119,7 +124,7 @@ impl PhaseProgress {
 pub trait ProgressReporter: Send + Sync {
     /// Report progress for the current phase
     fn report_phase(&self, progress: &PhaseProgress);
-    
+
     /// Report overall progress across all phases
     fn report_overall(&self, phase: &AnalysisPhase, overall_progress: f32);
 
@@ -170,11 +175,8 @@ impl TerminalProgressReporter {
     fn format_progress_bar(progress: f32, width: usize) -> String {
         let filled = (progress * width as f32) as usize;
         let empty = width.saturating_sub(filled);
-        
-        format!("[{}{}]", 
-            "█".repeat(filled), 
-            "░".repeat(empty)
-        )
+
+        format!("[{}{}]", "█".repeat(filled), "░".repeat(empty))
     }
 }
 
@@ -186,9 +188,9 @@ impl ProgressReporter for TerminalProgressReporter {
 
         let progress_bar = Self::format_progress_bar(progress.progress, 30);
         let percentage = (progress.progress * 100.0) as u8;
-        
+
         let elapsed = Self::format_duration(progress.elapsed_time);
-        
+
         let eta = if let Some(remaining) = progress.estimated_remaining {
             format!(" ETA: {}", Self::format_duration(remaining))
         } else {
@@ -203,7 +205,8 @@ impl ProgressReporter for TerminalProgressReporter {
             String::new()
         };
 
-        print!("\r{} {} {} {:>3}%{} [{}]{}", 
+        print!(
+            "\r{} {} {} {:>3}%{} [{}]{}",
             progress.phase.emoji(),
             progress.phase.description(),
             progress_bar,
@@ -227,8 +230,9 @@ impl ProgressReporter for TerminalProgressReporter {
     fn report_overall(&self, phase: &AnalysisPhase, overall_progress: f32) {
         let progress_bar = Self::format_progress_bar(overall_progress, 50);
         let percentage = (overall_progress * 100.0) as u8;
-        
-        println!("\n📊 Overall Progress: {} {:>3}% - {} {}", 
+
+        println!(
+            "\n📊 Overall Progress: {} {:>3}% - {} {}",
             progress_bar,
             percentage,
             phase.emoji(),
@@ -237,7 +241,10 @@ impl ProgressReporter for TerminalProgressReporter {
     }
 
     fn report_complete(&self, total_time: Duration) {
-        println!("\n\n✅ Analysis completed in {}", Self::format_duration(total_time));
+        println!(
+            "\n\n✅ Analysis completed in {}",
+            Self::format_duration(total_time)
+        );
     }
 
     fn report_error(&self, phase: &AnalysisPhase, error: &str) {
@@ -333,14 +340,14 @@ impl ProgressTracker {
     pub fn start_phase(&mut self, phase: AnalysisPhase, total_items: Option<usize>) {
         self.current_phase = phase;
         self.phase_start_time = Instant::now();
-        
+
         let mut progress = PhaseProgress::new(self.current_phase.clone());
         if let Some(total) = total_items {
             progress = progress.with_total_items(total);
         }
-        
+
         self.reporter.report_phase(&progress);
-        
+
         if let Some(sender) = &self.sender {
             let _ = sender.send(progress);
         }
@@ -350,9 +357,9 @@ impl ProgressTracker {
     pub fn update_progress(&mut self, processed: usize, current_item: Option<String>) {
         let mut progress = PhaseProgress::new(self.current_phase.clone());
         progress.update_progress(processed, current_item, self.phase_start_time);
-        
+
         self.reporter.report_phase(&progress);
-        
+
         if let Some(sender) = &self.sender {
             let _ = sender.send(progress);
         }
@@ -361,10 +368,11 @@ impl ProgressTracker {
     /// Updates progress with specific file information
     pub fn update_file_progress(&mut self, file_path: &Path, current: usize, total: usize) {
         self.update_progress(current, Some(file_path.display().to_string()));
-        
+
         // Update overall progress across phases
         let overall_progress = self.calculate_overall_progress(current, total);
-        self.reporter.report_overall(&self.current_phase, overall_progress);
+        self.reporter
+            .report_overall(&self.current_phase, overall_progress);
     }
 
     fn calculate_overall_progress(&self, current: usize, total: usize) -> f32 {
@@ -379,8 +387,12 @@ impl ProgressTracker {
             AnalysisPhase::Complete => 1.0,
         };
 
-        let phase_progress = if total > 0 { current as f32 / total as f32 } else { 0.0 };
-        
+        let phase_progress = if total > 0 {
+            current as f32 / total as f32
+        } else {
+            0.0
+        };
+
         // Calculate cumulative progress based on completed phases
         let completed_phases_weight = match self.current_phase {
             AnalysisPhase::Discovery => 0.0,
@@ -399,7 +411,7 @@ impl ProgressTracker {
     pub fn complete(&self) {
         let total_time = self.analysis_start_time.elapsed();
         self.reporter.report_complete(total_time);
-        
+
         if let Some(sender) = &self.sender {
             let progress = PhaseProgress {
                 phase: AnalysisPhase::Complete,
@@ -441,25 +453,44 @@ mod tests {
     impl TestProgressReporter {
         fn new() -> (Self, Arc<Mutex<Vec<String>>>) {
             let reports = Arc::new(Mutex::new(Vec::new()));
-            (Self { reports: reports.clone() }, reports)
+            (
+                Self {
+                    reports: reports.clone(),
+                },
+                reports,
+            )
         }
     }
 
     impl ProgressReporter for TestProgressReporter {
         fn report_phase(&self, progress: &PhaseProgress) {
-            self.reports.lock().unwrap().push(format!("phase: {:?} {}%", progress.phase, (progress.progress * 100.0) as u8));
+            self.reports.lock().unwrap().push(format!(
+                "phase: {:?} {}%",
+                progress.phase,
+                (progress.progress * 100.0) as u8
+            ));
         }
 
         fn report_overall(&self, phase: &AnalysisPhase, overall_progress: f32) {
-            self.reports.lock().unwrap().push(format!("overall: {:?} {}%", phase, (overall_progress * 100.0) as u8));
+            self.reports.lock().unwrap().push(format!(
+                "overall: {:?} {}%",
+                phase,
+                (overall_progress * 100.0) as u8
+            ));
         }
 
         fn report_complete(&self, total_time: Duration) {
-            self.reports.lock().unwrap().push(format!("complete: {}s", total_time.as_secs()));
+            self.reports
+                .lock()
+                .unwrap()
+                .push(format!("complete: {}s", total_time.as_secs()));
         }
 
         fn report_error(&self, phase: &AnalysisPhase, error: &str) {
-            self.reports.lock().unwrap().push(format!("error: {:?} {}", phase, error));
+            self.reports
+                .lock()
+                .unwrap()
+                .push(format!("error: {:?} {}", phase, error));
         }
     }
 
@@ -470,7 +501,7 @@ mod tests {
 
         tracker.start_phase(AnalysisPhase::Parsing, Some(10));
         tracker.update_progress(5, Some("test.rs".to_string()));
-        
+
         let reports = reports.lock().unwrap();
         assert!(reports.len() >= 2);
         assert!(reports[0].contains("Parsing"));

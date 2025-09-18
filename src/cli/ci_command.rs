@@ -81,7 +81,7 @@ impl CiCommand {
             memory_profile: None,
             timeout_seconds: 300,
             enable_resource_management: false, // Default disabled for CI
-            resource_config: None, // Use default when enabled
+            resource_config: None,             // Use default when enabled
         };
 
         let report = orchestrator.execute_analysis(config).await?;

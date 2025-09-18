@@ -12,7 +12,7 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use tracing::debug;
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::{StreamingIterator, Query, QueryCursor, Tree};
+use tree_sitter::{Query, QueryCursor, StreamingIterator, Tree};
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]

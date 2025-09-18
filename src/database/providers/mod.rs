@@ -4,17 +4,17 @@
 //! for different database backends, enabling seamless migration between
 //! SQLite and PostgreSQL based on deployment requirements.
 
-pub mod sqlite_provider;
 pub mod postgresql_provider;
+pub mod sqlite_provider;
 pub mod traits;
 
-pub use traits::{DatabaseProvider, TransactionProvider, ConnectionProvider};
-pub use sqlite_provider::SqliteProvider;
 pub use postgresql_provider::PostgreSqlProvider;
+pub use sqlite_provider::SqliteProvider;
+pub use traits::{ConnectionProvider, DatabaseProvider, TransactionProvider};
 
 use crate::error::{Result, UveddiError};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 /// Database configuration for different provider types
@@ -82,7 +82,7 @@ pub struct DatabaseMetrics {
 impl DatabaseMetrics {
     pub fn record_query(&self, duration: Duration, success: bool) {
         self.total_queries.fetch_add(1, Ordering::Relaxed);
-        
+
         if success {
             self.last_successful_query.store(
                 std::time::SystemTime::now()
@@ -91,7 +91,7 @@ impl DatabaseMetrics {
                     .as_secs(),
                 Ordering::Relaxed,
             );
-            
+
             // Update running average (simplified)
             let current_avg = self.average_query_time.load(Ordering::Relaxed);
             let new_avg = (current_avg + duration.as_millis() as u64) / 2;
@@ -100,22 +100,22 @@ impl DatabaseMetrics {
             self.failed_queries.fetch_add(1, Ordering::Relaxed);
         }
     }
-    
+
     pub fn record_connection_error(&self) {
         self.connection_errors.fetch_add(1, Ordering::Relaxed);
     }
-    
+
     pub fn get_health_status(&self) -> DatabaseHealthStatus {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        
+
         let last_query = self.last_successful_query.load(Ordering::Relaxed);
         let total_queries = self.total_queries.load(Ordering::Relaxed);
         let failed_queries = self.failed_queries.load(Ordering::Relaxed);
         let active_conn = self.active_connections.load(Ordering::Relaxed);
-        
+
         // Calculate health status with proper handling for newly initialized databases
         let is_healthy = if total_queries == 0 {
             // For newly initialized databases with no queries, consider them healthy
@@ -126,14 +126,16 @@ impl DatabaseMetrics {
             let failure_rate_ok = failed_queries < total_queries / 10; // <10% failure rate
             query_recency_ok && failure_rate_ok
         };
-        
+
         DatabaseHealthStatus {
             is_healthy,
             active_connections: active_conn,
             pool_utilization: 0.0, // Will be set by pool implementation
             last_successful_query: last_query,
             error_count: failed_queries,
-            average_query_time: Duration::from_millis(self.average_query_time.load(Ordering::Relaxed)),
+            average_query_time: Duration::from_millis(
+                self.average_query_time.load(Ordering::Relaxed),
+            ),
         }
     }
 }

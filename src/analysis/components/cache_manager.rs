@@ -4,16 +4,16 @@
 //! the new multi-layered caching architecture with memory and disk tiers,
 //! optimized serialization, and intelligent invalidation strategies.
 
-use async_trait::async_trait;
+#[cfg(feature = "prometheus")]
+use crate::analysis::cache::metrics::CacheMetrics;
 use crate::analysis::cache::{
     ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},
 };
-#[cfg(feature = "prometheus")]
-use crate::analysis::cache::metrics::CacheMetrics;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
+use async_trait::async_trait;
 #[cfg(feature = "prometheus")]
 use prometheus::Registry;
 use serde_json::Value;

@@ -15,11 +15,11 @@ pub enum ReportSecurityError {
     MaliciousContent(String),
     /// Content size limit exceeded
     #[error("Content size limit exceeded: {current} bytes > {limit} bytes")]
-    SizeLimit { 
+    SizeLimit {
         /// Current content size
-        current: usize, 
+        current: usize,
         /// Maximum allowed size
-        limit: usize 
+        limit: usize,
     },
     /// Invalid file path provided
     #[error("Invalid file path: {0}")]

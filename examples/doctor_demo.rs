@@ -1,9 +1,9 @@
 #!/usr/bin/env rust-script
 //! Demo script showing the doctor command functionality
-//! 
+//!
 //! This demonstrates the health check system implementation
 //! without requiring the full Uveddi build to work.
-//! 
+//!
 //! Usage: cargo run --bin doctor_demo
 
 use serde::{Deserialize, Serialize};
@@ -80,20 +80,31 @@ impl HealthReport {
         Self {
             overall_status,
             checks,
-            timestamp: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+            timestamp: chrono::Utc::now()
+                .format("%Y-%m-%d %H:%M:%S UTC")
+                .to_string(),
         }
     }
 
     pub fn healthy_count(&self) -> usize {
-        self.checks.iter().filter(|c| c.status == HealthStatus::Healthy).count()
+        self.checks
+            .iter()
+            .filter(|c| c.status == HealthStatus::Healthy)
+            .count()
     }
 
     pub fn warning_count(&self) -> usize {
-        self.checks.iter().filter(|c| c.status == HealthStatus::Warning).count()
+        self.checks
+            .iter()
+            .filter(|c| c.status == HealthStatus::Warning)
+            .count()
     }
 
     pub fn critical_count(&self) -> usize {
-        self.checks.iter().filter(|c| c.status == HealthStatus::Critical).count()
+        self.checks
+            .iter()
+            .filter(|c| c.status == HealthStatus::Critical)
+            .count()
     }
 
     pub fn auto_fixable_count(&self) -> usize {
@@ -102,7 +113,8 @@ impl HealthReport {
 }
 
 fn display_check(check: &HealthCheck) {
-    print!("  {} {}: {}", 
+    print!(
+        "  {} {}: {}",
         match check.status {
             HealthStatus::Healthy => "✅",
             HealthStatus::Warning => "⚠️ ",
@@ -127,99 +139,89 @@ fn run_demo_health_checks() -> HealthReport {
     let mut checks = Vec::new();
 
     // System checks
-    checks.push(
-        HealthCheck::new(
-            "binary_integrity",
-            HealthStatus::Healthy,
-            "Binary is accessible and valid"
-        )
-    );
+    checks.push(HealthCheck::new(
+        "binary_integrity",
+        HealthStatus::Healthy,
+        "Binary is accessible and valid",
+    ));
 
-    checks.push(
-        HealthCheck::new(
-            "file_permissions",
-            HealthStatus::Healthy,
-            "All required directories are accessible"
-        )
-    );
+    checks.push(HealthCheck::new(
+        "file_permissions",
+        HealthStatus::Healthy,
+        "All required directories are accessible",
+    ));
 
     checks.push(
         HealthCheck::new(
             "config_directories",
             HealthStatus::Warning,
-            "Some configuration directories are missing"
+            "Some configuration directories are missing",
         )
         .with_auto_fix(true)
-        .with_details("Run with --fix to create missing directories")
+        .with_details("Run with --fix to create missing directories"),
     );
 
     // Parser checks
     #[cfg(feature = "tree-sitter")]
-    checks.push(
-        HealthCheck::new(
-            "tree_sitter",
-            HealthStatus::Healthy,
-            "Tree-sitter parsing library is available"
-        )
-    );
+    checks.push(HealthCheck::new(
+        "tree_sitter",
+        HealthStatus::Healthy,
+        "Tree-sitter parsing library is available",
+    ));
 
     #[cfg(not(feature = "tree-sitter"))]
     checks.push(
         HealthCheck::new(
             "tree_sitter",
             HealthStatus::Warning,
-            "Tree-sitter parsing library is not enabled"
+            "Tree-sitter parsing library is not enabled",
         )
-        .with_details("Compile with --features tree-sitter to enable AST parsing")
+        .with_details("Compile with --features tree-sitter to enable AST parsing"),
     );
 
     #[cfg(feature = "rust-lang")]
-    checks.push(
-        HealthCheck::new(
-            "rust_parser",
-            HealthStatus::Healthy,
-            "Rust parser feature is enabled"
-        )
-    );
+    checks.push(HealthCheck::new(
+        "rust_parser",
+        HealthStatus::Healthy,
+        "Rust parser feature is enabled",
+    ));
 
     #[cfg(not(feature = "rust-lang"))]
     checks.push(
         HealthCheck::new(
             "rust_parser",
             HealthStatus::Warning,
-            "Rust parser is not enabled"
+            "Rust parser is not enabled",
         )
-        .with_details("Compile with --features rust-lang to enable Rust analysis")
+        .with_details("Compile with --features rust-lang to enable Rust analysis"),
     );
 
     // AI checks
     #[cfg(feature = "ai")]
-    checks.push(
-        HealthCheck::new(
-            "ai_features",
-            HealthStatus::Healthy,
-            "AI features are available"
-        )
-    );
+    checks.push(HealthCheck::new(
+        "ai_features",
+        HealthStatus::Healthy,
+        "AI features are available",
+    ));
 
     #[cfg(not(feature = "ai"))]
     checks.push(
         HealthCheck::new(
             "ai_features",
             HealthStatus::Warning,
-            "AI features are not enabled"
+            "AI features are not enabled",
         )
-        .with_details("Compile with --features ai to enable AI analysis")
+        .with_details("Compile with --features ai to enable AI analysis"),
     );
 
     checks.push(
         HealthCheck::new(
             "ollama_connectivity",
             HealthStatus::Critical,
-            "Cannot connect to Ollama at http://localhost:11434"
+            "Cannot connect to Ollama at http://localhost:11434",
         )
         .with_details("Ensure Ollama is installed and running with 'ollama serve'")
-        .with_auto_fix(true)
+        .with_auto_fix(true),
     );
 
     HealthReport::new(checks)
@@ -263,9 +265,11 @@ fn display_report(report: &HealthReport) {
 
     // Display healthy checks in summary
     if !healthy_checks.is_empty() {
-        println!("✅ Healthy Components ({}): {}", 
+        println!(
+            "✅ Healthy Components ({}): {}",
             healthy_checks.len(),
-            healthy_checks.iter()
+            healthy_checks
+                .iter()
                 .map(|c| c.name.as_str())
                 .collect::<Vec<_>>()
                 .join(", ")
@@ -277,23 +281,25 @@ fn display_report(report: &HealthReport) {
     println!("  Healthy:      {} components", report.healthy_count());
     println!("  Warnings:     {} components", report.warning_count());
     println!("  Critical:     {} components", report.critical_count());
-    
+
     if report.auto_fixable_count() > 0 {
-        println!("  Auto-fixable: {} components (run with --fix to attempt automatic fixes)", 
-                report.auto_fixable_count());
+        println!(
+            "  Auto-fixable: {} components (run with --fix to attempt automatic fixes)",
+            report.auto_fixable_count()
+        );
     }
 
     match report.overall_status {
         HealthStatus::Healthy => {
             println!("\n🎉 All systems are operational!");
             println!("   Your Uveddi installation is ready for use.");
-        },
+        }
         HealthStatus::Warning => {
             println!("\n🟡 Some issues detected, but core functionality should work.");
             if report.auto_fixable_count() > 0 {
                 println!("   Run `uveddi doctor --fix` to automatically resolve fixable issues.");
             }
-        },
+        }
         HealthStatus::Critical => {
             println!("\n🔴 Critical issues detected that may prevent proper operation.");
             println!("   Please resolve these issues before using Uveddi for analysis.");
@@ -307,7 +313,7 @@ fn display_report(report: &HealthReport) {
 fn main() {
     println!("🏥 Uveddi Doctor Command Demo");
     println!("=============================\n");
-    
+
     println!("This demonstrates the new health check system that would be available via:");
     println!("  uveddi doctor                    # Run all health checks");
     println!("  uveddi doctor --fix              # Auto-fix issues where possible");

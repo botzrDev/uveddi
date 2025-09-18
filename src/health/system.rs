@@ -29,21 +29,21 @@ async fn check_binary_integrity() -> HealthCheck {
                 HealthCheck::new(
                     "binary_integrity",
                     HealthStatus::Healthy,
-                    "Binary is accessible and valid"
+                    "Binary is accessible and valid",
                 )
             } else {
                 HealthCheck::new(
                     "binary_integrity",
                     HealthStatus::Critical,
-                    "Binary path exists but file is not accessible"
+                    "Binary path exists but file is not accessible",
                 )
             }
-        },
+        }
         Err(e) => HealthCheck::new(
             "binary_integrity",
             HealthStatus::Critical,
-            format!("Cannot determine binary path: {}", e)
-        )
+            format!("Cannot determine binary path: {}", e),
+        ),
     }
 }
 
@@ -66,7 +66,7 @@ async fn check_file_permissions() -> HealthCheck {
                 } else {
                     accessible_paths += 1;
                 }
-            },
+            }
             Err(e) => {
                 issues.push(format!("Cannot access {}: {}", path.display(), e));
             }
@@ -77,20 +77,25 @@ async fn check_file_permissions() -> HealthCheck {
         HealthCheck::new(
             "file_permissions",
             HealthStatus::Healthy,
-            "All required directories are accessible"
+            "All required directories are accessible",
         )
     } else if accessible_paths > 0 {
         HealthCheck::new(
             "file_permissions",
             HealthStatus::Warning,
-            format!("Some directories have permission issues: {}", issues.join(", "))
-        ).with_auto_fix(true)
+            format!(
+                "Some directories have permission issues: {}",
+                issues.join(", ")
+            ),
+        )
+        .with_auto_fix(true)
     } else {
         HealthCheck::new(
             "file_permissions",
             HealthStatus::Critical,
-            format!("No writable directories found: {}", issues.join(", "))
-        ).with_auto_fix(true)
+            format!("No writable directories found: {}", issues.join(", ")),
+        )
+        .with_auto_fix(true)
     }
 }
 
@@ -104,14 +109,14 @@ async fn check_disk_space() -> HealthCheck {
             HealthCheck::new(
                 "disk_space",
                 HealthStatus::Healthy,
-                "Disk space appears adequate"
+                "Disk space appears adequate",
             )
-        },
+        }
         Err(e) => HealthCheck::new(
             "disk_space",
             HealthStatus::Warning,
-            format!("Cannot check disk space: {}", e)
-        )
+            format!("Cannot check disk space: {}", e),
+        ),
     }
 }
 
@@ -122,7 +127,7 @@ async fn check_memory_availability() -> HealthCheck {
     HealthCheck::new(
         "memory",
         HealthStatus::Healthy,
-        "Memory appears adequate for operation"
+        "Memory appears adequate for operation",
     )
 }
 
@@ -149,13 +154,18 @@ async fn check_config_directories() -> HealthCheck {
         HealthCheck::new(
             "config_directories",
             HealthStatus::Healthy,
-            "All configuration directories exist"
+            "All configuration directories exist",
         )
     } else {
         HealthCheck::new(
             "config_directories",
             HealthStatus::Warning,
-            format!("Missing configuration directories: {}", missing_dirs.join(", "))
-        ).with_auto_fix(true).with_details("Run with --fix to create missing directories")
+            format!(
+                "Missing configuration directories: {}",
+                missing_dirs.join(", ")
+            ),
+        )
+        .with_auto_fix(true)
+        .with_details("Run with --fix to create missing directories")
     }
 }

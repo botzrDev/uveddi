@@ -125,8 +125,8 @@ pub mod memory_report;
 pub mod mermaid_generator;
 pub mod orchestrator;
 pub mod performance;
-pub mod plugin_detector_adapter;
 pub mod plugin_adapter;
+pub mod plugin_detector_adapter;
 pub mod robust_parser;
 pub mod semantic;
 pub mod services;
@@ -159,9 +159,7 @@ pub use engine::AnalysisEngine;
 pub use engine_builder::AnalysisEngineBuilder;
 pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
-pub use incremental::{
-    ChangeDetector, ChangeSet, IncrementalAnalysisEngine, FileState,
-};
+pub use incremental::{ChangeDetector, ChangeSet, FileState, IncrementalAnalysisEngine};
 pub use interactive_diagram_generator::{
     ComponentMetrics as InteractiveComponentMetrics, InteractionConfig,
     InteractiveDiagramGenerator, InteractiveDiagramResult, InteractiveNodeMetadata, NodePosition,

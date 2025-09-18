@@ -67,7 +67,10 @@ impl CycleDetector {
         let mut issues = Vec::new();
 
         // Filter out SCCs with only one node (not a cycle)
-        let cycles: Vec<Vec<_>> = sccs.into_iter().filter(|scc| scc.len() > 1).collect::<Vec<Vec<_>>>(); // Keep explicit outer Vec of SCCs
+        let cycles: Vec<Vec<_>> = sccs
+            .into_iter()
+            .filter(|scc| scc.len() > 1)
+            .collect::<Vec<Vec<_>>>(); // Keep explicit outer Vec of SCCs
 
         for (_cycle_id, cycle) in cycles.iter().enumerate() {
             // Get component names for the cycle description

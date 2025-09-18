@@ -430,7 +430,8 @@ impl TightCouplingDetector {
                 })
                 .collect();
 
-            let all_issues: Vec<ArchitecturalIssue> = issues_result?.into_iter().flatten().collect(); // Explicitly collect into flat Vec of issues
+            let all_issues: Vec<ArchitecturalIssue> =
+                issues_result?.into_iter().flatten().collect(); // Explicitly collect into flat Vec of issues
             Ok(all_issues)
         } else {
             // Cross-file analysis requires building full dependency graph

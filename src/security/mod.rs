@@ -583,15 +583,16 @@ pub fn validate_config_file_path(
 
     // Parse path and validate components
     let path = Path::new(config_path);
-    
+
     // Validate file extension
-    let extension = path.extension()
+    let extension = path
+        .extension()
         .and_then(|ext| ext.to_str())
         .ok_or_else(|| SecurityError::InvalidInput {
             field: "config_path".to_string(),
             reason: "Configuration file must have a valid extension".to_string(),
         })?;
-    
+
     let allowed_extensions = ["toml", "yaml", "yml", "json"];
     if !allowed_extensions.contains(&extension) {
         return Err(SecurityError::InvalidInput {
@@ -609,7 +610,7 @@ pub fn validate_config_file_path(
             field: "config_path".to_string(),
             reason: "Could not read configuration file metadata".to_string(),
         })?;
-        
+
         const MAX_CONFIG_SIZE: u64 = 1024 * 1024; // 1MB
         if metadata.len() > MAX_CONFIG_SIZE {
             return Err(SecurityError::InvalidInput {
@@ -625,10 +626,12 @@ pub fn validate_config_file_path(
 
     // If allowed directories are specified, verify path is within them
     if let Some(allowed_dirs) = allowed_directories {
-        let canonicalized = path.canonicalize().map_err(|_| SecurityError::InvalidInput {
-            field: "config_path".to_string(),
-            reason: "Could not canonicalize configuration file path".to_string(),
-        })?;
+        let canonicalized = path
+            .canonicalize()
+            .map_err(|_| SecurityError::InvalidInput {
+                field: "config_path".to_string(),
+                reason: "Could not canonicalize configuration file path".to_string(),
+            })?;
 
         let is_allowed = allowed_dirs.iter().any(|allowed_dir| {
             if let Ok(allowed_canonical) = Path::new(allowed_dir).canonicalize() {
@@ -651,10 +654,11 @@ pub fn validate_config_file_path(
         Ok(canonicalized)
     } else {
         // Just return canonicalized path if no directory restrictions
-        path.canonicalize().map_err(|_| SecurityError::InvalidInput {
-            field: "config_path".to_string(),
-            reason: "Could not canonicalize configuration file path".to_string(),
-        })
+        path.canonicalize()
+            .map_err(|_| SecurityError::InvalidInput {
+                field: "config_path".to_string(),
+                reason: "Could not canonicalize configuration file path".to_string(),
+            })
     }
 }
 
@@ -684,11 +688,14 @@ pub fn validate_api_request(
             "multipart/form-data",
             "text/plain",
         ];
-        
+
         // Extract base content type (ignore charset and other parameters)
         let base_ct = ct.split(';').next().unwrap_or(ct).trim();
-        
-        if !allowed_content_types.iter().any(|&allowed| base_ct == allowed) {
+
+        if !allowed_content_types
+            .iter()
+            .any(|&allowed| base_ct == allowed)
+        {
             return Err(SecurityError::InvalidInput {
                 field: "content_type".to_string(),
                 reason: format!(
@@ -716,15 +723,15 @@ pub fn validate_api_request(
     // Basic bot detection via User-Agent
     if let Some(ua) = user_agent {
         validate_input(ua, "user_agent")?;
-        
+
         // Check for suspicious user agents
-        let suspicious_patterns = [
-            "bot", "crawler", "spider", "scraper", "scan",
-        ];
-        
+        let suspicious_patterns = ["bot", "crawler", "spider", "scraper", "scan"];
+
         let ua_lower = ua.to_lowercase();
-        let has_suspicious = suspicious_patterns.iter().any(|&pattern| ua_lower.contains(pattern));
-        
+        let has_suspicious = suspicious_patterns
+            .iter()
+            .any(|&pattern| ua_lower.contains(pattern));
+
         // Log suspicious user agents but don't block them (could be legitimate bots)
         if has_suspicious {
             tracing::info!("Suspicious user agent detected: {}", ua);
@@ -770,21 +777,17 @@ pub fn validate_json_input(
     validate_input(json_str, "json_input")?;
 
     // Parse JSON
-    let json_value: serde_json::Value = serde_json::from_str(json_str).map_err(|e| {
-        SecurityError::InvalidInput {
+    let json_value: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| SecurityError::InvalidInput {
             field: "json_input".to_string(),
             reason: format!("Invalid JSON format: {}", e),
-        }
-    })?;
+        })?;
 
     // Validate nesting depth
     if get_json_depth(&json_value) > max_depth {
         return Err(SecurityError::InvalidInput {
             field: "json_input".to_string(),
-            reason: format!(
-                "JSON nesting depth exceeds maximum of {}",
-                max_depth
-            ),
+            reason: format!("JSON nesting depth exceeds maximum of {}", max_depth),
         });
     }
 
@@ -794,18 +797,8 @@ pub fn validate_json_input(
 /// Calculate JSON nesting depth
 fn get_json_depth(value: &serde_json::Value) -> usize {
     match value {
-        serde_json::Value::Object(map) => {
-            map.values()
-                .map(get_json_depth)
-                .max()
-                .unwrap_or(0) + 1
-        }
-        serde_json::Value::Array(arr) => {
-            arr.iter()
-                .map(get_json_depth)
-                .max()
-                .unwrap_or(0) + 1
-        }
+        serde_json::Value::Object(map) => map.values().map(get_json_depth).max().unwrap_or(0) + 1,
+        serde_json::Value::Array(arr) => arr.iter().map(get_json_depth).max().unwrap_or(0) + 1,
         _ => 1,
     }
 }
@@ -830,7 +823,7 @@ pub fn validate_cli_argument(
     match validation_type {
         CliArgumentType::FilePath => {
             validate_file_path_for_storage(arg_value, arg_name)?;
-            
+
             // Additional CLI-specific checks
             if arg_value.contains("$(") || arg_value.contains("`") {
                 return Err(SecurityError::InvalidInput {
@@ -844,7 +837,7 @@ pub fn validate_cli_argument(
                 field: arg_name.to_string(),
                 reason: "Invalid port number format".to_string(),
             })?;
-            
+
             // Validate port range (avoid system ports)
             if port < 1024 {
                 return Err(SecurityError::InvalidInput {
@@ -858,7 +851,7 @@ pub fn validate_cli_argument(
                 field: arg_name.to_string(),
                 reason: "Invalid percentage format".to_string(),
             })?;
-            
+
             if !(0.0..=100.0).contains(&percentage) {
                 return Err(SecurityError::InvalidInput {
                     field: arg_name.to_string(),
@@ -871,7 +864,7 @@ pub fn validate_cli_argument(
                 field: arg_name.to_string(),
                 reason: "Invalid count format".to_string(),
             })?;
-            
+
             if count > 1_000_000 {
                 return Err(SecurityError::InvalidInput {
                     field: arg_name.to_string(),
@@ -883,7 +876,7 @@ pub fn validate_cli_argument(
             validate_input(arg_value, arg_name)?;
         }
     }
-    
+
     Ok(())
 }
 
@@ -923,10 +916,12 @@ pub fn validate_db_parameter(
     match param_type {
         DbParameterType::Id => {
             // Validate numeric ID
-            let _id: i64 = param_value.parse().map_err(|_| SecurityError::InvalidInput {
-                field: param_name.to_string(),
-                reason: "ID must be a valid integer".to_string(),
-            })?;
+            let _id: i64 = param_value
+                .parse()
+                .map_err(|_| SecurityError::InvalidInput {
+                    field: param_name.to_string(),
+                    reason: "ID must be a valid integer".to_string(),
+                })?;
         }
         DbParameterType::Text => {
             validate_input(param_value, param_name)?;
@@ -947,7 +942,7 @@ pub fn validate_db_parameter(
             })?;
         }
     }
-    
+
     Ok(())
 }
 
@@ -983,7 +978,7 @@ pub fn validate_external_api_response(
     max_size: Option<usize>,
 ) -> Result<(), SecurityError> {
     let max_size = max_size.unwrap_or(1024 * 1024); // 1MB default
-    
+
     // Size check
     if response_data.len() > max_size {
         return Err(SecurityError::InvalidInput {
@@ -995,7 +990,7 @@ pub fn validate_external_api_response(
             ),
         });
     }
-    
+
     // Check for null bytes (binary data)
     if response_data.contains('\0') {
         return Err(SecurityError::InvalidInput {
@@ -1003,37 +998,48 @@ pub fn validate_external_api_response(
             reason: "Response contains null bytes (possible binary data)".to_string(),
         });
     }
-    
+
     // Check for excessive control characters (but allow newlines, tabs, carriage returns)
     let control_char_count = response_data
         .chars()
         .filter(|c| c.is_control() && !matches!(*c, '\n' | '\t' | '\r'))
         .count();
-    
-    if control_char_count > response_data.len() / 100 { // More than 1% control chars
+
+    if control_char_count > response_data.len() / 100 {
+        // More than 1% control chars
         return Err(SecurityError::InvalidInput {
             field: "external_api_response".to_string(),
             reason: "Response contains excessive control characters".to_string(),
         });
     }
-    
+
     // Basic HTML/script tag detection in API responses
     let dangerous_html_patterns = [
-        "<script", "</script>", "<iframe", "</iframe>", 
-        "javascript:", "vbscript:", "data:text/html",
-        "onload=", "onerror=", "onclick=",
+        "<script",
+        "</script>",
+        "<iframe",
+        "</iframe>",
+        "javascript:",
+        "vbscript:",
+        "data:text/html",
+        "onload=",
+        "onerror=",
+        "onclick=",
     ];
-    
+
     let response_lower = response_data.to_lowercase();
     for pattern in &dangerous_html_patterns {
         if response_lower.contains(pattern) {
             return Err(SecurityError::InvalidInput {
                 field: "external_api_response".to_string(),
-                reason: format!("Response contains potentially dangerous HTML/script content: {}", pattern),
+                reason: format!(
+                    "Response contains potentially dangerous HTML/script content: {}",
+                    pattern
+                ),
             });
         }
     }
-    
+
     Ok(())
 }
 
@@ -1050,9 +1056,9 @@ pub fn validate_external_api_response(
 /// * `Ok(())` - Memory limit is valid
 /// * `Err(SecurityError)` - Memory limit is invalid or excessive
 pub fn validate_memory_limit(memory_mb: u64, field_name: &str) -> Result<(), SecurityError> {
-    const MIN_MEMORY_MB: u64 = 64;   // 64MB minimum
+    const MIN_MEMORY_MB: u64 = 64; // 64MB minimum
     const MAX_MEMORY_MB: u64 = 8192; // 8GB maximum (adjust based on system capabilities)
-    
+
     if memory_mb < MIN_MEMORY_MB {
         return Err(SecurityError::InvalidInput {
             field: field_name.to_string(),
@@ -1062,7 +1068,7 @@ pub fn validate_memory_limit(memory_mb: u64, field_name: &str) -> Result<(), Sec
             ),
         });
     }
-    
+
     if memory_mb > MAX_MEMORY_MB {
         return Err(SecurityError::InvalidInput {
             field: field_name.to_string(),
@@ -1072,7 +1078,7 @@ pub fn validate_memory_limit(memory_mb: u64, field_name: &str) -> Result<(), Sec
             ),
         });
     }
-    
+
     Ok(())
 }
 

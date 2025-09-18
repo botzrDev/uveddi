@@ -36,7 +36,7 @@ impl std::fmt::Display for ServiceStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ServiceStatus::Healthy => write!(f, "healthy"),
-            ServiceStatus::Degraded => write!(f, "degraded"), 
+            ServiceStatus::Degraded => write!(f, "degraded"),
             ServiceStatus::Unhealthy => write!(f, "unhealthy"),
             ServiceStatus::Unknown => write!(f, "unknown"),
         }
@@ -124,15 +124,15 @@ pub struct SloMetrics {
 pub trait HealthChecker: Send + Sync {
     /// Component name
     fn component_name(&self) -> &str;
-    
+
     /// Perform health check with timeout
     async fn check_health(&self) -> Result<ComponentHealth>;
-    
+
     /// Get component dependencies
     fn dependencies(&self) -> Vec<String> {
         vec![]
     }
-    
+
     /// Health check timeout
     fn timeout_duration(&self) -> Duration {
         Duration::from_secs(5)
@@ -159,19 +159,19 @@ impl HealthChecker for DatabaseHealthChecker {
 
     async fn check_health(&self) -> Result<ComponentHealth> {
         let start = Instant::now();
-        
+
         // Simulate database health check
         tokio::time::sleep(Duration::from_millis(10)).await;
-        
+
         // In real implementation, would check:
         // - Database connectivity
         // - Query response time
         // - Connection pool status
         // - Disk space usage
         // - Active transactions
-        
+
         let response_time = start.elapsed().as_millis() as u64;
-        
+
         // Mock successful check
         Ok(ComponentHealth::healthy(
             response_time,
@@ -182,7 +182,7 @@ impl HealthChecker for DatabaseHealthChecker {
                 "disk_usage_percent": 45.2,
                 "active_transactions": 3,
                 "last_backup": "2024-01-15T10:30:00Z"
-            })
+            }),
         ))
     }
 
@@ -202,18 +202,18 @@ impl HealthChecker for PluginSystemHealthChecker {
 
     async fn check_health(&self) -> Result<ComponentHealth> {
         let start = Instant::now();
-        
+
         // Simulate plugin system health check
         tokio::time::sleep(Duration::from_millis(5)).await;
-        
+
         // In real implementation, would check:
         // - Plugin runtime status
         // - WASM module health
         // - Plugin resource usage
         // - Plugin error rates
-        
+
         let response_time = start.elapsed().as_millis() as u64;
-        
+
         Ok(ComponentHealth::healthy(
             response_time,
             serde_json::json!({
@@ -222,7 +222,7 @@ impl HealthChecker for PluginSystemHealthChecker {
                 "failed_plugins": 0,
                 "memory_usage_mb": 128.5,
                 "average_execution_time_ms": 15.2
-            })
+            }),
         ))
     }
 }
@@ -238,11 +238,11 @@ impl HealthChecker for MemoryHealthChecker {
 
     async fn check_health(&self) -> Result<ComponentHealth> {
         let start = Instant::now();
-        
+
         // Get system memory info
         let memory_info = Self::get_memory_info();
         let response_time = start.elapsed().as_millis() as u64;
-        
+
         let status = if memory_info.usage_percent > 90.0 {
             ServiceStatus::Unhealthy
         } else if memory_info.usage_percent > 80.0 {
@@ -250,7 +250,7 @@ impl HealthChecker for MemoryHealthChecker {
         } else {
             ServiceStatus::Healthy
         };
-        
+
         let mut health = ComponentHealth {
             status: status.clone(),
             last_check: Utc::now(),
@@ -267,14 +267,14 @@ impl HealthChecker for MemoryHealthChecker {
             uptime_percentage: 100.0,
             last_success: Some(Utc::now()),
         };
-        
+
         if status != ServiceStatus::Healthy {
             health.error_message = Some(format!(
-                "High memory usage: {:.1}%", 
+                "High memory usage: {:.1}%",
                 memory_info.usage_percent
             ));
         }
-        
+
         Ok(health)
     }
 }
@@ -310,8 +310,11 @@ pub struct ExternalServicesHealthChecker {
 impl ExternalServicesHealthChecker {
     pub fn new() -> Self {
         let mut services = HashMap::new();
-        services.insert("ollama".to_string(), "http://localhost:11434/api/tags".to_string());
-        
+        services.insert(
+            "ollama".to_string(),
+            "http://localhost:11434/api/tags".to_string(),
+        );
+
         Self {
             services,
             client: reqwest::Client::builder()
@@ -332,7 +335,7 @@ impl HealthChecker for ExternalServicesHealthChecker {
         let start = Instant::now();
         let mut service_statuses = HashMap::new();
         let mut overall_healthy = true;
-        
+
         for (service_name, url) in &self.services {
             let service_start = Instant::now();
             match self.client.get(url).send().await {
@@ -344,44 +347,56 @@ impl HealthChecker for ExternalServicesHealthChecker {
                         overall_healthy = false;
                         ServiceStatus::Degraded
                     };
-                    
-                    service_statuses.insert(service_name.clone(), serde_json::json!({
-                        "status": status,
-                        "response_time_ms": response_time,
-                        "http_status": response.status().as_u16()
-                    }));
+
+                    service_statuses.insert(
+                        service_name.clone(),
+                        serde_json::json!({
+                            "status": status,
+                            "response_time_ms": response_time,
+                            "http_status": response.status().as_u16()
+                        }),
+                    );
                 }
                 Err(e) => {
                     overall_healthy = false;
-                    service_statuses.insert(service_name.clone(), serde_json::json!({
-                        "status": ServiceStatus::Unhealthy,
-                        "error": e.to_string()
-                    }));
+                    service_statuses.insert(
+                        service_name.clone(),
+                        serde_json::json!({
+                            "status": ServiceStatus::Unhealthy,
+                            "error": e.to_string()
+                        }),
+                    );
                 }
             }
         }
-        
+
         let response_time = start.elapsed().as_millis() as u64;
         let status = if overall_healthy {
             ServiceStatus::Healthy
         } else {
             ServiceStatus::Degraded
         };
-        
+
         Ok(ComponentHealth {
             status,
             last_check: Utc::now(),
             response_time_ms: response_time,
-            error_message: if overall_healthy { None } else { 
-                Some("Some external services are unhealthy".to_string()) 
+            error_message: if overall_healthy {
+                None
+            } else {
+                Some("Some external services are unhealthy".to_string())
             },
             details: serde_json::json!({ "services": service_statuses }),
             consecutive_failures: 0,
             uptime_percentage: if overall_healthy { 100.0 } else { 75.0 },
-            last_success: if overall_healthy { Some(Utc::now()) } else { None },
+            last_success: if overall_healthy {
+                Some(Utc::now())
+            } else {
+                None
+            },
         })
     }
-    
+
     fn timeout_duration(&self) -> Duration {
         Duration::from_secs(15) // Longer timeout for external services
     }
@@ -404,16 +419,17 @@ impl HealthCheckSystem {
             Box::new(MemoryHealthChecker),
             Box::new(ExternalServicesHealthChecker::new()),
         ];
-        
+
         // Add additional database checkers if configured
         if config.database.read_replicas.len() > 0 {
             for (i, _) in config.database.read_replicas.iter().enumerate() {
-                checkers.push(Box::new(DatabaseHealthChecker::new(
-                    format!("read_replica_{}", i)
-                )));
+                checkers.push(Box::new(DatabaseHealthChecker::new(format!(
+                    "read_replica_{}",
+                    i
+                ))));
             }
         }
-        
+
         let initial_status = SystemHealthStatus {
             overall_status: ServiceStatus::Unknown,
             components: HashMap::new(),
@@ -429,7 +445,7 @@ impl HealthCheckSystem {
                 error_budget_remaining: 100.0,
             },
         };
-        
+
         Self {
             checkers,
             metrics,
@@ -438,33 +454,33 @@ impl HealthCheckSystem {
             startup_time: Instant::now(),
         }
     }
-    
+
     /// Perform comprehensive health check with timeout and retries
     pub async fn check_health(&self) -> SystemHealthStatus {
         let trace_id = generate_trace_id();
         let start = Instant::now();
-        
+
         tracing::info!(
             trace_id = %trace_id,
             "Starting comprehensive health check"
         );
-        
+
         let mut components = HashMap::new();
         let mut dependencies = HashMap::new();
         let mut overall_healthy = true;
         let mut degraded_components = 0;
         let mut unhealthy_components = 0;
-        
+
         // Run all health checks concurrently with individual timeouts
         let mut check_futures = Vec::new();
-        
+
         for checker in &self.checkers {
             let checker_name = checker.component_name().to_string();
             let timeout_duration = checker.timeout_duration();
-            
+
             let future = async move {
                 let component_start = Instant::now();
-                
+
                 match timeout(timeout_duration, checker.check_health()).await {
                     Ok(Ok(health)) => {
                         tracing::debug!(
@@ -486,8 +502,10 @@ impl HealthCheckSystem {
                         (checker_name, ComponentHealth::unhealthy(e.to_string(), 1))
                     }
                     Err(_) => {
-                        let timeout_error = format!("Health check timeout after {}ms", 
-                                                   timeout_duration.as_millis());
+                        let timeout_error = format!(
+                            "Health check timeout after {}ms",
+                            timeout_duration.as_millis()
+                        );
                         tracing::error!(
                             trace_id = %trace_id,
                             component = %checker_name,
@@ -498,13 +516,13 @@ impl HealthCheckSystem {
                     }
                 }
             };
-            
+
             check_futures.push(future);
         }
-        
+
         // Collect all health check results
         let results = futures::future::join_all(check_futures).await;
-        
+
         for (component_name, health) in results {
             match health.status {
                 ServiceStatus::Healthy => {
@@ -521,7 +539,7 @@ impl HealthCheckSystem {
                     degraded_components += 1;
                 }
             }
-            
+
             // Record metrics
             self.metrics.record_request(
                 "INTERNAL",
@@ -532,7 +550,7 @@ impl HealthCheckSystem {
                 },
                 Duration::from_millis(health.response_time_ms),
             );
-            
+
             if health.error_message.is_some() {
                 self.metrics.record_error(
                     "health_check",
@@ -544,10 +562,10 @@ impl HealthCheckSystem {
                     &component_name,
                 );
             }
-            
+
             components.insert(component_name, health);
         }
-        
+
         // Determine overall status
         let overall_status = if !overall_healthy || unhealthy_components > 0 {
             ServiceStatus::Unhealthy
@@ -556,7 +574,7 @@ impl HealthCheckSystem {
         } else {
             ServiceStatus::Healthy
         };
-        
+
         // Calculate SLO metrics (simplified for demo)
         let availability = if overall_status == ServiceStatus::Healthy {
             100.0
@@ -565,28 +583,27 @@ impl HealthCheckSystem {
         } else {
             0.0
         };
-        
-        let total_response_time: u64 = components.values()
-            .map(|c| c.response_time_ms)
-            .sum();
-        let avg_latency = if components.is_empty() { 
-            0.0 
-        } else { 
-            total_response_time as f64 / components.len() as f64 
+
+        let total_response_time: u64 = components.values().map(|c| c.response_time_ms).sum();
+        let avg_latency = if components.is_empty() {
+            0.0
+        } else {
+            total_response_time as f64 / components.len() as f64
         };
-        
+
         let error_rate = if components.is_empty() {
             0.0
         } else {
             (unhealthy_components as f64 / components.len() as f64) * 100.0
         };
-        
+
         // Calculate healthy components before move
-        let healthy_components_count = components.len() - degraded_components - unhealthy_components;
-        
+        let healthy_components_count =
+            components.len() - degraded_components - unhealthy_components;
+
         // Store overall_status for later use
         let status_for_log = overall_status.clone();
-        
+
         let health_status = SystemHealthStatus {
             overall_status,
             components,
@@ -602,13 +619,13 @@ impl HealthCheckSystem {
                 error_budget_remaining: 100.0 - error_rate,
             },
         };
-        
+
         // Update cache
         {
             let mut cache = self.status_cache.write().await;
             *cache = health_status.clone();
         }
-        
+
         let check_duration = start.elapsed();
         tracing::info!(
             trace_id = %trace_id,
@@ -620,36 +637,40 @@ impl HealthCheckSystem {
             availability_percent = availability,
             "Health check completed"
         );
-        
+
         // Record overall health check metrics
         self.metrics.record_request(
             "INTERNAL",
             "/health",
-            if status_for_log == ServiceStatus::Healthy { "success" } else { "failure" },
+            if status_for_log == ServiceStatus::Healthy {
+                "success"
+            } else {
+                "failure"
+            },
             check_duration,
         );
-        
+
         health_status
     }
-    
+
     /// Get cached health status (fast)
     pub async fn get_cached_status(&self) -> SystemHealthStatus {
         self.status_cache.read().await.clone()
     }
-    
+
     /// Start background health monitoring
     pub async fn start_monitoring(&self, interval: Duration) {
         let system = self.clone();
         tokio::spawn(async move {
             let mut interval_timer = tokio::time::interval(interval);
             interval_timer.tick().await; // Skip first tick
-            
+
             loop {
                 interval_timer.tick().await;
                 let _ = system.check_health().await;
             }
         });
-        
+
         tracing::info!(
             interval_seconds = interval.as_secs(),
             "Health monitoring started"
@@ -678,32 +699,30 @@ mod tests {
     async fn test_database_health_checker() {
         let checker = DatabaseHealthChecker::new("test_db".to_string());
         let health = checker.check_health().await.unwrap();
-        
+
         assert_eq!(checker.component_name(), "test_db");
         assert_eq!(health.status, ServiceStatus::Healthy);
         assert!(health.response_time_ms > 0);
     }
-    
-    #[tokio::test] 
+
+    #[tokio::test]
     async fn test_memory_health_checker() {
         let checker = MemoryHealthChecker;
         let health = checker.check_health().await.unwrap();
-        
+
         assert_eq!(checker.component_name(), "memory");
         // Status depends on actual memory usage
         assert!(health.response_time_ms >= 0);
     }
-    
+
     #[tokio::test]
     async fn test_health_check_system() {
-        let metrics = Arc::new(
-            UveddiMetrics::new(&MetricsConfig::default()).unwrap()
-        );
+        let metrics = Arc::new(UveddiMetrics::new(&MetricsConfig::default()).unwrap());
         let config = ObservabilityConfig::default();
         let system = HealthCheckSystem::new(metrics, config);
-        
+
         let status = system.check_health().await;
-        
+
         assert!(!status.components.is_empty());
         assert!(status.uptime_seconds >= 0);
         assert!(!status.trace_id.is_empty());

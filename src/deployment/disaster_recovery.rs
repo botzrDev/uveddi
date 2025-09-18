@@ -13,7 +13,6 @@ use std::time::{Duration, SystemTime};
 use tokio::time::{sleep, Instant};
 use tracing::{debug, error, info, instrument, warn};
 
-
 /// Disaster recovery coordinator
 #[derive(Debug)]
 pub struct DisasterRecoveryCoordinator {

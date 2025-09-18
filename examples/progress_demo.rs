@@ -1,13 +1,13 @@
 #!/usr/bin/env rust
 //! Demo of the enhanced progress reporting system
-//! 
+//!
 //! Shows the new progress indicators that will be available
 //! in the analyze command.
-//! 
+//!
 //! Usage: rustc --edition 2021 progress_demo.rs && ./progress_demo
 
-use std::time::{Duration, Instant};
 use std::thread;
+use std::time::{Duration, Instant};
 
 /// Simulated analysis phases
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,11 +50,8 @@ impl AnalysisPhase {
 fn format_progress_bar(progress: f32, width: usize) -> String {
     let filled = (progress * width as f32) as usize;
     let empty = width.saturating_sub(filled);
-    
-    format!("[{}{}]", 
-        "█".repeat(filled), 
-        "░".repeat(empty)
-    )
+
+    format!("[{}{}]", "█".repeat(filled), "░".repeat(empty))
 }
 
 fn format_duration(duration: Duration) -> String {
@@ -71,14 +68,51 @@ fn format_duration(duration: Duration) -> String {
 fn demo_terminal_progress() {
     println!("🔥 Enhanced Progress Reporting Demo");
     println!("==================================\n");
-    
+
     let phases = vec![
-        (AnalysisPhase::Discovery, 15, vec!["src/", "tests/", "examples/"]),
-        (AnalysisPhase::Parsing, 120, vec!["main.rs", "lib.rs", "parser.rs", "analyzer.rs", "cli.rs"]),
-        (AnalysisPhase::DependencyAnalysis, 30, vec!["Building dependency graph", "Analyzing imports", "Detecting cycles"]),
-        (AnalysisPhase::Analysis, 180, vec!["God object detection", "Dead code analysis", "Complexity metrics", "Anti-pattern detection"]),
-        (AnalysisPhase::AiAnalysis, 60, vec!["Querying Ollama", "Generating explanations", "Creating suggestions"]),
-        (AnalysisPhase::ReportGeneration, 25, vec!["Markdown generation", "HTML rendering", "Diagram creation"]),
+        (
+            AnalysisPhase::Discovery,
+            15,
+            vec!["src/", "tests/", "examples/"],
+        ),
+        (
+            AnalysisPhase::Parsing,
+            120,
+            vec!["main.rs", "lib.rs", "parser.rs", "analyzer.rs", "cli.rs"],
+        ),
+        (
+            AnalysisPhase::DependencyAnalysis,
+            30,
+            vec![
+                "Building dependency graph",
+                "Analyzing imports",
+                "Detecting cycles",
+            ],
+        ),
+        (
+            AnalysisPhase::Analysis,
+            180,
+            vec![
+                "God object detection",
+                "Dead code analysis",
+                "Complexity metrics",
+                "Anti-pattern detection",
+            ],
+        ),
+        (
+            AnalysisPhase::AiAnalysis,
+            60,
+            vec![
+                "Querying Ollama",
+                "Generating explanations",
+                "Creating suggestions",
+            ],
+        ),
+        (
+            AnalysisPhase::ReportGeneration,
+            25,
+            vec!["Markdown generation", "HTML rendering", "Diagram creation"],
+        ),
     ];
 
     let start_time = Instant::now();
@@ -87,13 +121,13 @@ fn demo_terminal_progress() {
     for (phase, total_items, items) in phases {
         phase_start = Instant::now();
         println!("{} {} - Starting...", phase.emoji(), phase.description());
-        
+
         for (i, item) in items.iter().enumerate() {
             let progress = (i + 1) as f32 / total_items as f32;
             let progress_bar = format_progress_bar(progress, 30);
             let percentage = (progress * 100.0) as u8;
             let elapsed = format_duration(phase_start.elapsed());
-            
+
             // Simulate time estimation
             let eta = if i > 0 {
                 let avg_time_per_item = phase_start.elapsed() / (i + 1) as u32;
@@ -104,7 +138,8 @@ fn demo_terminal_progress() {
                 String::new()
             };
 
-            print!("\r{} {} {} {:>3}% ({}/{}) [{}]{}", 
+            print!(
+                "\r{} {} {} {:>3}% ({}/{}) [{}]{}",
                 phase.emoji(),
                 phase.description(),
                 progress_bar,
@@ -124,7 +159,7 @@ fn demo_terminal_progress() {
             // Simulate work
             thread::sleep(Duration::from_millis(200 + (i * 50) as u64));
         }
-        
+
         println!("\n{} {} - Complete!", phase.emoji(), phase.description());
         println!();
     }
@@ -133,11 +168,12 @@ fn demo_terminal_progress() {
     let total_time = start_time.elapsed();
     println!("✅ Analysis completed in {}", format_duration(total_time));
     println!();
-    
+
     // Show what the JSON output would look like
     println!("📋 JSON Progress Events Example:");
     println!("=================================");
-    println!(r#"
+    println!(
+        r#"
 {{
   "type": "phase_progress",
   "phase": "Parsing",
@@ -159,34 +195,35 @@ fn demo_terminal_progress() {
   "type": "complete",
   "total_time_seconds": 430
 }}
-"#);
+"#
+    );
 }
 
 fn demo_command_examples() {
     println!("💡 Available Progress Options in analyze command:");
     println!("================================================\n");
-    
+
     println!("🎨 Terminal Progress (Default):");
     println!("  uveddi analyze ./src");
     println!("  uveddi analyze ./src --progress-details  # Show file names");
     println!();
-    
+
     println!("📊 JSON Progress for CI/CD:");
     println!("  uveddi analyze ./src --progress-format json");
     println!();
-    
+
     println!("🔇 Silent Progress:");
     println!("  uveddi analyze ./src --progress-format silent");
     println!();
-    
+
     println!("🎯 Real-time Features:");
     println!("   • Phase-based progress tracking");
     println!("   • Accurate time estimates based on throughput");
-    println!("   • File-by-file progress with --progress-details"); 
+    println!("   • File-by-file progress with --progress-details");
     println!("   • JSON events for programmatic consumption");
     println!("   • Intelligent overall progress weighting");
     println!();
-    
+
     println!("🔧 Integration Benefits:");
     println!("   • Works with existing timeout and error handling");
     println!("   • Provides feedback during long-running analyses");
@@ -199,7 +236,7 @@ fn main() {
     demo_terminal_progress();
     println!("{}", "=".repeat(50));
     demo_command_examples();
-    
+
     println!("\n📈 Implementation Status:");
     println!("   ✅ Progress system core implemented");
     println!("   ✅ Terminal reporter with rich formatting");

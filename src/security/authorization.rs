@@ -348,7 +348,10 @@ impl AuthorizationEngine {
     }
 
     /// Get all permissions for a user
-    pub async fn get_permissions_for_user(&self, _user: String) -> SecurityResult<Vec<Vec<String>>> {
+    pub async fn get_permissions_for_user(
+        &self,
+        _user: String,
+    ) -> SecurityResult<Vec<Vec<String>>> {
         // Simplified implementation - in a real system this would query the enforcer
         // For now, return empty permissions as a placeholder
         Ok(vec![])

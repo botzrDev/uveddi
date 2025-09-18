@@ -364,7 +364,6 @@ impl CacheMetrics {
 
     /// Export metrics in Prometheus format
     pub fn export_metrics(&self) -> String {
-        
         let encoder = prometheus::TextEncoder::new();
         let metric_families = self.registry.gather();
         encoder

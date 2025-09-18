@@ -18,12 +18,12 @@
 
 use axum::{
     body::Body,
+    extract::Path as AxumPath,
     extract::State,
     http::{HeaderMap, Request, StatusCode},
     response::Json,
     routing::get,
     Router,
-    extract::Path as AxumPath,
 };
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -135,7 +135,10 @@ impl ApiTestClient {
             .route("/health", get(health_handler))
             .route("/api/v1/reports", get(list_reports))
             .route("/api/v1/reports/:id", get(get_report))
-            .route("/api/v1/reports/:id/graphs/dependency", get(get_dependency_graph))
+            .route(
+                "/api/v1/reports/:id/graphs/dependency",
+                get(get_dependency_graph),
+            )
             .with_state(database.clone());
 
         Ok(Self {
@@ -217,7 +220,7 @@ impl ApiTestClient {
     /// Insert test analysis data into database
     pub async fn insert_test_analysis(&self) -> TestResult<i64> {
         use std::path::Path;
-        
+
         // Create test analysis run
         let test_path = Path::new("/tmp/test");
         let analysis_run = self.database.create_analysis_run(&test_path)?;

@@ -5,14 +5,14 @@
 //! capabilities. It implements the `doctor` command functionality for troubleshooting
 //! and maintaining a healthy development environment.
 
-pub mod parsers;
 pub mod ai;
-pub mod system;
 pub mod fixes;
+pub mod parsers;
+pub mod system;
 
 use crate::error::UveddiError;
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// Overall health status of the Uveddi installation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -93,15 +93,24 @@ impl HealthReport {
     }
 
     pub fn healthy_count(&self) -> usize {
-        self.checks.iter().filter(|c| c.status == HealthStatus::Healthy).count()
+        self.checks
+            .iter()
+            .filter(|c| c.status == HealthStatus::Healthy)
+            .count()
     }
 
     pub fn warning_count(&self) -> usize {
-        self.checks.iter().filter(|c| c.status == HealthStatus::Warning).count()
+        self.checks
+            .iter()
+            .filter(|c| c.status == HealthStatus::Warning)
+            .count()
     }
 
     pub fn critical_count(&self) -> usize {
-        self.checks.iter().filter(|c| c.status == HealthStatus::Critical).count()
+        self.checks
+            .iter()
+            .filter(|c| c.status == HealthStatus::Critical)
+            .count()
     }
 
     pub fn auto_fixable_count(&self) -> usize {

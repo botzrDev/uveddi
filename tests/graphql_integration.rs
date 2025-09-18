@@ -110,17 +110,14 @@ impl GraphQLTestClient {
     }
 
     /// Execute a GraphQL subscription (mock implementation)
-    pub async fn subscribe(
-        &self,
-        _query: &str,
-    ) -> TestResult<MockGraphQLStream> {
+    pub async fn subscribe(&self, _query: &str) -> TestResult<MockGraphQLStream> {
         Ok(MockGraphQLStream {})
     }
 
     /// Insert test data for GraphQL queries
     pub async fn insert_test_data(&self) -> TestResult<i64> {
         use std::path::Path;
-        
+
         // Create test analysis run
         let test_path = Path::new("/tmp/graphql_test");
         let analysis_run = self.database.create_analysis_run(&test_path)?;
@@ -177,7 +174,7 @@ async fn test_graphql_query_validation() -> TestResult {
 
     let response = client.query(invalid_query).await?;
 
-    // Should return validation errors  
+    // Should return validation errors
     assert!(!response.errors.is_empty());
 
     Ok(())
@@ -417,7 +414,7 @@ async fn test_graphql_field_aliasing() -> TestResult {
 
     let response = client.query(query).await?;
 
-    // Should handle field aliasing correctly  
+    // Should handle field aliasing correctly
     let data = response.into_json()?;
 
     // Check that aliases are used in response

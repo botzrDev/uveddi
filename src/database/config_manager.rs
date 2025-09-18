@@ -23,44 +23,56 @@ impl DatabaseConfigManager {
     pub fn new() -> Result<Self> {
         let environment = Self::detect_environment();
         let config = Self::load_config(&environment)?;
-        
+
         Ok(Self {
             config,
             environment,
         })
     }
-    
+
     /// Create from explicit configuration file
     pub fn from_file<P: AsRef<Path>>(config_path: P) -> Result<Self> {
-        let config_content = std::fs::read_to_string(config_path.as_ref())
-            .map_err(|e| UveddiError::io_error("read_to_string", &config_path.as_ref().to_string_lossy(), e))?;
-        
-        let config: DatabaseEnvironmentConfig = match config_path.as_ref().extension().and_then(|s| s.to_str()) {
-            Some("toml") => toml::from_str(&config_content)
-                .map_err(|e| UveddiError::configuration_error(&format!("Failed to parse TOML config: {}", e)))?,
-            Some("json") => serde_json::from_str(&config_content)
-                .map_err(|e| UveddiError::configuration_error(&format!("Failed to parse JSON config: {}", e)))?,
-            _ => return Err(UveddiError::configuration_error("Unsupported config file format (only .toml and .json supported)")),
-        };
-        
+        let config_content = std::fs::read_to_string(config_path.as_ref()).map_err(|e| {
+            UveddiError::io_error("read_to_string", &config_path.as_ref().to_string_lossy(), e)
+        })?;
+
+        let config: DatabaseEnvironmentConfig =
+            match config_path.as_ref().extension().and_then(|s| s.to_str()) {
+                Some("toml") => toml::from_str(&config_content).map_err(|e| {
+                    UveddiError::configuration_error(&format!("Failed to parse TOML config: {}", e))
+                })?,
+                Some("json") => serde_json::from_str(&config_content).map_err(|e| {
+                    UveddiError::configuration_error(&format!("Failed to parse JSON config: {}", e))
+                })?,
+                _ => {
+                    return Err(UveddiError::configuration_error(
+                        "Unsupported config file format (only .toml and .json supported)",
+                    ))
+                }
+            };
+
         let environment = Self::detect_environment();
-        
+
         Ok(Self {
             config,
             environment,
         })
     }
-    
+
     /// Detect current environment
     fn detect_environment() -> Environment {
-        match env::var("UVEDDI_ENV").unwrap_or_else(|_| "development".to_string()).to_lowercase().as_str() {
+        match env::var("UVEDDI_ENV")
+            .unwrap_or_else(|_| "development".to_string())
+            .to_lowercase()
+            .as_str()
+        {
             "production" | "prod" => Environment::Production,
             "staging" | "stage" => Environment::Staging,
             "test" | "testing" => Environment::Test,
             _ => Environment::Development,
         }
     }
-    
+
     /// Load configuration for the detected environment
     fn load_config(environment: &Environment) -> Result<DatabaseEnvironmentConfig> {
         // First try to load from environment-specific files
@@ -70,51 +82,70 @@ impl DatabaseConfigManager {
             "database.toml".to_string(),
             "config/database.toml".to_string(),
         ];
-        
+
         for config_path in config_paths {
             if let Ok(content) = std::fs::read_to_string(&config_path) {
                 info!("Loading database config from: {}", config_path);
-                return toml::from_str(&content)
-                    .map_err(|e| UveddiError::configuration_error(&format!("Failed to parse config: {}", e)));
+                return toml::from_str(&content).map_err(|e| {
+                    UveddiError::configuration_error(&format!("Failed to parse config: {}", e))
+                });
             }
         }
-        
+
         // Fall back to environment variables or defaults
         info!("No config file found, using environment variables and defaults");
         Ok(Self::load_from_environment(environment))
     }
-    
+
     /// Load configuration from environment variables
     fn load_from_environment(environment: &Environment) -> DatabaseEnvironmentConfig {
         let default_provider_type = match environment {
             Environment::Production | Environment::Staging => DatabaseType::PostgreSQL,
             _ => DatabaseType::SQLite,
         };
-        
+
         let provider_type = env::var("DATABASE_TYPE")
             .unwrap_or_else(|_| format!("{:?}", default_provider_type))
             .parse::<DatabaseType>()
             .unwrap_or(default_provider_type);
-        
-        let connection_string = env::var("DATABASE_URL").unwrap_or_else(|_| {
-            match provider_type {
-                DatabaseType::SQLite => "./uveddi.db".to_string(),
-                DatabaseType::PostgreSQL => "postgresql://localhost:5432/uveddi".to_string(),
-            }
+
+        let connection_string = env::var("DATABASE_URL").unwrap_or_else(|_| match provider_type {
+            DatabaseType::SQLite => "./uveddi.db".to_string(),
+            DatabaseType::PostgreSQL => "postgresql://localhost:5432/uveddi".to_string(),
         });
-        
+
         let read_connection_strings: Vec<String> = env::var("DATABASE_READ_URLS")
             .map(|urls| urls.split(',').map(|s| s.trim().to_string()).collect())
             .unwrap_or_default();
-        
+
         DatabaseEnvironmentConfig {
-            development: Self::create_config_for_env(Environment::Development, &provider_type, &connection_string, &read_connection_strings),
-            staging: Self::create_config_for_env(Environment::Staging, &provider_type, &connection_string, &read_connection_strings),
-            production: Self::create_config_for_env(Environment::Production, &provider_type, &connection_string, &read_connection_strings),
-            test: Self::create_config_for_env(Environment::Test, &provider_type, &connection_string, &read_connection_strings),
+            development: Self::create_config_for_env(
+                Environment::Development,
+                &provider_type,
+                &connection_string,
+                &read_connection_strings,
+            ),
+            staging: Self::create_config_for_env(
+                Environment::Staging,
+                &provider_type,
+                &connection_string,
+                &read_connection_strings,
+            ),
+            production: Self::create_config_for_env(
+                Environment::Production,
+                &provider_type,
+                &connection_string,
+                &read_connection_strings,
+            ),
+            test: Self::create_config_for_env(
+                Environment::Test,
+                &provider_type,
+                &connection_string,
+                &read_connection_strings,
+            ),
         }
     }
-    
+
     /// Create configuration for specific environment
     fn create_config_for_env(
         env: Environment,
@@ -128,7 +159,7 @@ impl DatabaseConfigManager {
             Environment::Test => (5, Duration::from_secs(10), Duration::from_secs(5)),
             Environment::Development => (20, Duration::from_secs(30), Duration::from_secs(15)),
         };
-        
+
         DatabaseConfig {
             provider_type: provider_type.clone(),
             connection_string: connection_string.to_string(),
@@ -143,7 +174,7 @@ impl DatabaseConfigManager {
             pool_timeout,
         }
     }
-    
+
     /// Get configuration for current environment
     pub fn get_config(&self) -> &DatabaseConfig {
         match self.environment {
@@ -153,7 +184,7 @@ impl DatabaseConfigManager {
             Environment::Test => &self.config.test,
         }
     }
-    
+
     /// Get configuration for specific environment
     pub fn get_config_for_env(&self, env: Environment) -> &DatabaseConfig {
         match env {
@@ -163,52 +194,68 @@ impl DatabaseConfigManager {
             Environment::Test => &self.config.test,
         }
     }
-    
+
     /// Validate configuration
     pub fn validate_config(&self) -> Result<()> {
         let config = self.get_config();
-        
+
         // Validate connection string format
         match config.provider_type {
             DatabaseType::SQLite => {
                 if config.connection_string.is_empty() {
-                    return Err(UveddiError::configuration_error("SQLite connection string cannot be empty"));
+                    return Err(UveddiError::configuration_error(
+                        "SQLite connection string cannot be empty",
+                    ));
                 }
             }
             DatabaseType::PostgreSQL => {
-                if !config.connection_string.starts_with("postgresql://") && !config.connection_string.starts_with("postgres://") {
-                    return Err(UveddiError::configuration_error("Invalid PostgreSQL connection string format"));
+                if !config.connection_string.starts_with("postgresql://")
+                    && !config.connection_string.starts_with("postgres://")
+                {
+                    return Err(UveddiError::configuration_error(
+                        "Invalid PostgreSQL connection string format",
+                    ));
                 }
             }
         }
-        
+
         // Validate connection pool settings
         if config.max_connections == 0 {
-            return Err(UveddiError::configuration_error("max_connections must be greater than 0"));
+            return Err(UveddiError::configuration_error(
+                "max_connections must be greater than 0",
+            ));
         }
-        
+
         if config.min_connections > config.max_connections {
-            return Err(UveddiError::configuration_error("min_connections cannot be greater than max_connections"));
+            return Err(UveddiError::configuration_error(
+                "min_connections cannot be greater than max_connections",
+            ));
         }
-        
+
         // Validate timeouts
         if config.connection_timeout.as_secs() == 0 {
-            return Err(UveddiError::configuration_error("connection_timeout must be greater than 0"));
+            return Err(UveddiError::configuration_error(
+                "connection_timeout must be greater than 0",
+            ));
         }
-        
+
         // Environment-specific validations
         match self.environment {
             Environment::Production => {
                 if config.enable_logging {
-                    warn!("Database logging is enabled in production - this may impact performance");
+                    warn!(
+                        "Database logging is enabled in production - this may impact performance"
+                    );
                 }
-                
+
                 if config.max_connections < 50 {
                     warn!("Low max_connections setting for production environment");
                 }
-                
+
                 if config.provider_type == DatabaseType::SQLite {
-                    warn!("Using SQLite in production - consider PostgreSQL for better scalability");
+                    warn!(
+                        "Using SQLite in production - consider PostgreSQL for better scalability"
+                    );
                 }
             }
             Environment::Test => {
@@ -218,53 +265,60 @@ impl DatabaseConfigManager {
             }
             _ => {}
         }
-        
+
         Ok(())
     }
-    
+
     /// Get current environment
     pub fn get_environment(&self) -> Environment {
         self.environment
     }
-    
+
     /// Create configuration template file
     pub fn create_template<P: AsRef<Path>>(output_path: P) -> Result<()> {
         let template = DatabaseEnvironmentConfig::default();
-        let toml_content = toml::to_string_pretty(&template)
-            .map_err(|e| UveddiError::configuration_error(&format!("Failed to serialize template: {}", e)))?;
-        
-        std::fs::write(output_path.as_ref(), toml_content)
-            .map_err(|e| UveddiError::io_error("write", &output_path.as_ref().to_string_lossy(), e))?;
-        
-        info!("Created database configuration template at: {}", output_path.as_ref().display());
+        let toml_content = toml::to_string_pretty(&template).map_err(|e| {
+            UveddiError::configuration_error(&format!("Failed to serialize template: {}", e))
+        })?;
+
+        std::fs::write(output_path.as_ref(), toml_content).map_err(|e| {
+            UveddiError::io_error("write", &output_path.as_ref().to_string_lossy(), e)
+        })?;
+
+        info!(
+            "Created database configuration template at: {}",
+            output_path.as_ref().display()
+        );
         Ok(())
     }
-    
+
     /// Load secrets from external sources (environment, secrets manager, etc.)
     pub fn load_secrets(&mut self) -> Result<()> {
         self.load_from_env_vars()?;
-        
+
         // Could extend to load from:
         // - AWS Secrets Manager
         // - HashiCorp Vault
         // - Kubernetes Secrets
         // - Azure Key Vault
-        
+
         Ok(())
     }
-    
+
     /// Load sensitive configuration from environment variables
     fn load_from_env_vars(&mut self) -> Result<()> {
         // Override database URLs if set in environment
         if let Ok(database_url) = env::var("DATABASE_URL") {
             match self.environment {
-                Environment::Development => self.config.development.connection_string = database_url,
+                Environment::Development => {
+                    self.config.development.connection_string = database_url
+                }
                 Environment::Staging => self.config.staging.connection_string = database_url,
                 Environment::Production => self.config.production.connection_string = database_url,
                 Environment::Test => self.config.test.connection_string = database_url,
             }
         }
-        
+
         // Override read URLs if set
         if let Ok(read_urls) = env::var("DATABASE_READ_URLS") {
             let urls: Vec<String> = read_urls.split(',').map(|s| s.trim().to_string()).collect();
@@ -275,7 +329,7 @@ impl DatabaseConfigManager {
                 Environment::Test => self.config.test.read_connection_strings = urls,
             }
         }
-        
+
         // Override connection pool settings if set
         if let Ok(max_conn_str) = env::var("DATABASE_MAX_CONNECTIONS") {
             if let Ok(max_conn) = max_conn_str.parse::<u32>() {
@@ -287,10 +341,10 @@ impl DatabaseConfigManager {
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Get connection string with credentials masked for logging
     pub fn get_masked_connection_string(&self) -> String {
         let config = self.get_config();
@@ -326,12 +380,15 @@ impl Environment {
 
 impl std::str::FromStr for DatabaseType {
     type Err = UveddiError;
-    
+
     fn from_str(s: &str) -> Result<Self> {
         match s.to_lowercase().as_str() {
             "sqlite" => Ok(DatabaseType::SQLite),
             "postgresql" | "postgres" => Ok(DatabaseType::PostgreSQL),
-            _ => Err(UveddiError::configuration_error(&format!("Unknown database type: {}", s))),
+            _ => Err(UveddiError::configuration_error(&format!(
+                "Unknown database type: {}",
+                s
+            ))),
         }
     }
 }
@@ -363,7 +420,8 @@ impl Default for DatabaseEnvironmentConfig {
             },
             staging: DatabaseConfig {
                 provider_type: DatabaseType::PostgreSQL,
-                connection_string: "postgresql://user:password@localhost:5432/uveddi_staging".to_string(),
+                connection_string: "postgresql://user:password@localhost:5432/uveddi_staging"
+                    .to_string(),
                 read_connection_strings: vec![
                     "postgresql://user:password@read-replica1:5432/uveddi_staging".to_string(),
                 ],
@@ -423,12 +481,12 @@ fn mask_connection_string(connection_string: &str) -> String {
             }
         }
     }
-    
+
     // For SQLite or other formats, just mask if it looks like a sensitive path
     if connection_string.contains("password") || connection_string.contains("secret") {
         return "***".to_string();
     }
-    
+
     connection_string.to_string()
 }
 
@@ -446,37 +504,37 @@ impl DatabaseConfigBuilder {
             },
         }
     }
-    
+
     pub fn connection_string<S: Into<String>>(mut self, connection_string: S) -> Self {
         self.config.connection_string = connection_string.into();
         self
     }
-    
+
     pub fn read_connections(mut self, read_connections: Vec<String>) -> Self {
         self.config.read_connection_strings = read_connections;
         self
     }
-    
+
     pub fn max_connections(mut self, max: u32) -> Self {
         self.config.max_connections = max;
         self
     }
-    
+
     pub fn min_connections(mut self, min: u32) -> Self {
         self.config.min_connections = min;
         self
     }
-    
+
     pub fn connection_timeout(mut self, timeout: Duration) -> Self {
         self.config.connection_timeout = timeout;
         self
     }
-    
+
     pub fn enable_logging(mut self, enable: bool) -> Self {
         self.config.enable_logging = enable;
         self
     }
-    
+
     pub fn build(self) -> DatabaseConfig {
         self.config
     }
@@ -485,18 +543,18 @@ impl DatabaseConfigBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_mask_connection_string() {
         let pg_url = "postgresql://user:password@localhost:5432/dbname";
         let masked = mask_connection_string(pg_url);
         assert_eq!(masked, "postgresql://***@localhost:5432/dbname");
-        
+
         let sqlite_path = "./test.db";
         let masked_sqlite = mask_connection_string(sqlite_path);
         assert_eq!(masked_sqlite, "./test.db");
     }
-    
+
     #[test]
     fn test_config_builder() {
         let config = DatabaseConfigBuilder::new(DatabaseType::PostgreSQL)
@@ -504,13 +562,13 @@ mod tests {
             .max_connections(50)
             .enable_logging(false)
             .build();
-        
+
         assert_eq!(config.provider_type, DatabaseType::PostgreSQL);
         assert_eq!(config.connection_string, "postgresql://localhost:5432/test");
         assert_eq!(config.max_connections, 50);
         assert!(!config.enable_logging);
     }
-    
+
     #[test]
     fn test_environment_detection() {
         // Test default environment

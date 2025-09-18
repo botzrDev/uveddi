@@ -5,9 +5,7 @@
 //! It integrates with Wasmtime and the WebAssembly Component Model.
 
 use crate::error::UveddiError;
-use crate::plugins::{
-    host_functions::HostContext, types::PluginId, SecurityPolicy, PluginError,
-};
+use crate::plugins::{host_functions::HostContext, types::PluginId, PluginError, SecurityPolicy};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -86,9 +84,9 @@ pub struct RuntimeResourceLimits {
 impl Default for RuntimeResourceLimits {
     fn default() -> Self {
         Self {
-            max_execution_time_ms: 30_000, // 30 seconds
+            max_execution_time_ms: 30_000,      // 30 seconds
             max_memory_bytes: 32 * 1024 * 1024, // 32MB
-            max_fuel: 500_000, // 500k fuel units
+            max_fuel: 500_000,                  // 500k fuel units
             max_host_calls: 1000,
         }
     }
@@ -228,7 +226,8 @@ impl PluginRuntime {
             // Get plugin configuration
             let config = {
                 let configs = self.plugin_configs.read().await;
-                configs.get(plugin_id)
+                configs
+                    .get(plugin_id)
                     .ok_or_else(|| UveddiError::PluginError {
                         plugin: plugin_id.to_string(),
                         plugin_type: "WASM".to_string(),
@@ -242,7 +241,8 @@ impl PluginRuntime {
             // Get engine for this plugin
             let engine = {
                 let engines = self.engines.read().await;
-                engines.get(plugin_id)
+                engines
+                    .get(plugin_id)
                     .ok_or_else(|| UveddiError::PluginError {
                         plugin: plugin_id.to_string(),
                         plugin_type: "WASM".to_string(),
@@ -254,7 +254,8 @@ impl PluginRuntime {
             };
 
             // Execute plugin in controlled environment
-            self.execute_plugin_impl(&engine, &config, binary, function, args).await
+            self.execute_plugin_impl(&engine, &config, binary, function, args)
+                .await
         }
     }
 
@@ -322,17 +323,17 @@ impl PluginRuntime {
     #[cfg(feature = "wasm-plugins")]
     fn create_engine_config(&self) -> Result<wasmtime::Config, UveddiError> {
         let mut config = wasmtime::Config::new();
-        
+
         // Enable component model support
         config.wasm_component_model(true);
-        
+
         // Configure for security
         config.consume_fuel(true);
         config.max_wasm_stack(1024 * 1024); // 1MB stack limit
-        
+
         // Configure memory limits
         config.max_wasm_stack(self.global_config.default_memory_limit);
-        
+
         // Enable debugging if configured
         if self.global_config.enable_debugging {
             config.debug_info(true);
@@ -343,16 +344,17 @@ impl PluginRuntime {
 
     /// Create a plugin-specific engine
     #[cfg(feature = "wasm-plugins")]
-    fn create_plugin_engine(&self, _security_policy: &SecurityPolicy) -> Result<wasmtime::Engine, UveddiError> {
+    fn create_plugin_engine(
+        &self,
+        _security_policy: &SecurityPolicy,
+    ) -> Result<wasmtime::Engine, UveddiError> {
         let config = self.create_engine_config()?;
-        wasmtime::Engine::new(&config).map_err(|e| {
-            UveddiError::PluginError {
-                plugin: "engine".to_string(),
-                plugin_type: "WASM".to_string(),
-                message: format!("Failed to create WASM engine: {}", e),
-                suggestion: "Check WASM runtime configuration".to_string(),
-                source: Some(PluginError::Execution(e.to_string())),
-            }
+        wasmtime::Engine::new(&config).map_err(|e| UveddiError::PluginError {
+            plugin: "engine".to_string(),
+            plugin_type: "WASM".to_string(),
+            message: format!("Failed to create WASM engine: {}", e),
+            suggestion: "Check WASM runtime configuration".to_string(),
+            source: Some(PluginError::Execution(e.to_string())),
         })
     }
 
@@ -373,7 +375,7 @@ impl PluginRuntime {
         // 4. Instantiate component
         // 5. Call function with arguments
         // 6. Return results
-        
+
         // For now, return placeholder
         debug!("Plugin execution would happen here");
         Ok(vec![0x00, 0x01, 0x02, 0x03]) // Placeholder response

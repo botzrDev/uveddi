@@ -5,11 +5,10 @@
 
 use anyhow::{anyhow, Result};
 use rand::prelude::*;
-use rand::{SeedableRng, rngs::StdRng, rng};
+use rand::{rng, rngs::StdRng, SeedableRng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-
 
 /// Helper struct for resource statistics
 #[derive(Debug, Clone)]
@@ -338,7 +337,9 @@ impl GeneticBottleneckDetector {
         resource_weights.iter_mut().for_each(|w| *w /= sum);
 
         // Threshold values (0.1 to 0.9 for each resource)
-        let threshold_values = (0..4).map(|_| 0.1 + self.rng.random::<f64>() * 0.8).collect();
+        let threshold_values = (0..4)
+            .map(|_| 0.1 + self.rng.random::<f64>() * 0.8)
+            .collect();
 
         // Optimization targets
         let optimization_targets = vec![

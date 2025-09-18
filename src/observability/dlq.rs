@@ -61,7 +61,10 @@ pub struct DeadLetterQueue {
 
 impl DeadLetterQueue {
     /// Create a new Dead Letter Queue with the given database connection
-    pub fn new(connection: Connection, #[cfg(feature = "prometheus")] metrics: Arc<UveddiMetrics>) -> Result<Self> {
+    pub fn new(
+        connection: Connection,
+        #[cfg(feature = "prometheus")] metrics: Arc<UveddiMetrics>,
+    ) -> Result<Self> {
         let conn = Arc::new(Mutex::new(connection));
 
         // Initialize DLQ table
@@ -451,7 +454,7 @@ pub struct DlqStatistics {
 mod tests {
     use super::*;
     #[cfg(feature = "prometheus")]
-use crate::observability::metrics::UveddiMetrics;
+    use crate::observability::metrics::UveddiMetrics;
     use rusqlite::Connection;
     use std::sync::Arc;
 
@@ -461,7 +464,11 @@ use crate::observability::metrics::UveddiMetrics;
         let metrics = Arc::new(UveddiMetrics::new(
             &crate::observability::config::MetricsConfig::default(),
         )?);
-        DeadLetterQueue::new(conn, #[cfg(feature = "prometheus")] metrics)
+        DeadLetterQueue::new(
+            conn,
+            #[cfg(feature = "prometheus")]
+            metrics,
+        )
     }
 
     #[test]

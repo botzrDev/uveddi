@@ -3,8 +3,8 @@
 //! This module handles Mermaid.js diagram generation and rendering,
 //! including diagram creation, formatting, and interactive features.
 
-use crate::database::models::{ArchitecturalIssue, AntiPatternType};
-use crate::report::{ReportGenerator, ArchitecturalComponent};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use crate::report::{ArchitecturalComponent, ReportGenerator};
 use std::collections::HashMap;
 
 impl ReportGenerator {
@@ -70,10 +70,9 @@ impl ReportGenerator {
 
         if !cycle_issues.is_empty() {
             let mermaid_code = self.generate_dependency_cycle_diagram(&cycle_issues);
-            diagrams.push_str(&self.generate_mermaid_only_with_instructions(
-                &mermaid_code,
-                "Dependency Cycles",
-            ));
+            diagrams.push_str(
+                &self.generate_mermaid_only_with_instructions(&mermaid_code, "Dependency Cycles"),
+            );
         }
 
         // Add god object complexity diagram
@@ -96,7 +95,8 @@ impl ReportGenerator {
 
         // Add anti-pattern distribution diagram
         if !issues.is_empty() {
-            let mermaid_code = self.generate_anti_pattern_distribution_diagram(issues, anti_pattern_types);
+            let mermaid_code =
+                self.generate_anti_pattern_distribution_diagram(issues, anti_pattern_types);
             diagrams.push_str(&self.generate_mermaid_only_with_instructions(
                 &mermaid_code,
                 "Anti-Pattern Distribution",
@@ -194,19 +194,13 @@ impl ReportGenerator {
         for i in 0..node_list.len() {
             let current = node_list[i].replace("-", "_");
             let next = node_list[(i + 1) % node_list.len()].replace("-", "_");
-            mermaid.push_str(&format!(
-                "    {} -->|depends on| {}\n",
-                current, next
-            ));
+            mermaid.push_str(&format!("    {} -->|depends on| {}\n", current, next));
         }
 
         // Add styling
         mermaid.push_str("    classDef cycle fill:#ff6b6b,stroke:#333,stroke-width:2px\n");
         for node in &nodes {
-            mermaid.push_str(&format!(
-                "    class {} cycle\n",
-                node.replace("-", "_")
-            ));
+            mermaid.push_str(&format!("    class {} cycle\n", node.replace("-", "_")));
         }
 
         mermaid
@@ -221,20 +215,11 @@ impl ReportGenerator {
             let module_name = parts.last().map_or("unknown", |v| v).replace(".rs", "");
             let node_id = format!("obj{}", i);
 
-            mermaid.push_str(&format!(
-                "    {}[\"{}\"]\n",
-                node_id, module_name
-            ));
+            mermaid.push_str(&format!("    {}[\"{}\"]\n", node_id, module_name));
 
             // Add complexity indicator
-            mermaid.push_str(&format!(
-                "    {}complexity[\"High Complexity\"]\n",
-                node_id
-            ));
-            mermaid.push_str(&format!(
-                "    {} --> {}complexity\n",
-                node_id, node_id
-            ));
+            mermaid.push_str(&format!("    {}complexity[\"High Complexity\"]\n", node_id));
+            mermaid.push_str(&format!("    {} --> {}complexity\n", node_id, node_id));
         }
 
         // Add styling for god objects
@@ -264,10 +249,7 @@ impl ReportGenerator {
         let mut mermaid = String::from("pie title Anti-Pattern Distribution\n");
 
         for (pattern, count) in pattern_counts {
-            mermaid.push_str(&format!(
-                "    \"{}\" : {}\n",
-                pattern, count
-            ));
+            mermaid.push_str(&format!("    \"{}\" : {}\n", pattern, count));
         }
 
         mermaid
@@ -287,10 +269,9 @@ impl ReportGenerator {
         // Add custom diagrams if available
         if !diagrams.is_empty() {
             for diagram in diagrams {
-                section.push_str(&self.generate_mermaid_only_with_instructions(
-                    &diagram.source,
-                    &diagram.title,
-                ));
+                section.push_str(
+                    &self.generate_mermaid_only_with_instructions(&diagram.source, &diagram.title),
+                );
             }
         }
 
@@ -320,18 +301,12 @@ impl ReportGenerator {
 
         for component in components {
             let comp_id = component.name.replace("-", "_").replace(" ", "_");
-            mermaid.push_str(&format!(
-                "    {}[\"{}\"]\n",
-                comp_id, component.name
-            ));
+            mermaid.push_str(&format!("    {}[\"{}\"]\n", comp_id, component.name));
 
             // Add dependencies
             for dep in &component.dependencies {
                 let dep_id = format!("{:?}", dep).replace("-", "_").replace(" ", "_");
-                mermaid.push_str(&format!(
-                    "    {} --> {}\n",
-                    comp_id, dep_id
-                ));
+                mermaid.push_str(&format!("    {} --> {}\n", comp_id, dep_id));
             }
         }
 

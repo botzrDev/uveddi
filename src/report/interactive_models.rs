@@ -963,7 +963,11 @@ impl InteractiveReport {
                 title: format!("{:?} Diagram", diagram.diagram_type),
                 source: diagram.mermaid_src.clone(),
                 description: None,
-                components: diagram.components.iter().map(|c| c.to_string()).collect::<Vec<String>>(), // Explicitly collect component names
+                components: diagram
+                    .components
+                    .iter()
+                    .map(|c| c.to_string())
+                    .collect::<Vec<String>>(), // Explicitly collect component names
                 metadata: DiagramRenderMetadata {
                     width: None,
                     height: None,

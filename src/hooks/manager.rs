@@ -6,8 +6,8 @@
 use super::{HookConfig, HookType, InstallationResult};
 use crate::error::UveddiError;
 use std::fs;
-use std::path::{Path, PathBuf};
 use std::os::unix::fs::PermissionsExt;
+use std::path::{Path, PathBuf};
 
 pub struct HookManager {
     repo_path: PathBuf,
@@ -19,34 +19,42 @@ impl HookManager {
     /// Create a new hook manager for a Git repository
     pub fn new(repo_path: PathBuf, config: HookConfig) -> Result<Self, UveddiError> {
         let hooks_dir = super::get_git_hooks_dir(&repo_path)?;
-        
+
         // Ensure hooks directory exists
         if !hooks_dir.exists() {
-            fs::create_dir_all(&hooks_dir).map_err(|e| UveddiError::io_error("creating hooks directory", &hooks_dir.to_string_lossy(), e))?;
+            fs::create_dir_all(&hooks_dir).map_err(|e| {
+                UveddiError::io_error("creating hooks directory", &hooks_dir.to_string_lossy(), e)
+            })?;
         }
-        
+
         Ok(Self {
             repo_path,
             hooks_dir,
             config,
         })
     }
-    
+
     /// Install all configured hooks
-    pub async fn install_hooks(&self, force_overwrite: bool) -> Result<InstallationResult, UveddiError> {
+    pub async fn install_hooks(
+        &self,
+        force_overwrite: bool,
+    ) -> Result<InstallationResult, UveddiError> {
         let mut installed_hooks = Vec::new();
         let mut updated_hooks = Vec::new();
         let mut errors = Vec::new();
-        
+
         // Install pre-commit hook
         if self.config.pre_commit {
-            match self.install_hook(&HookType::PreCommit, force_overwrite).await {
+            match self
+                .install_hook(&HookType::PreCommit, force_overwrite)
+                .await
+            {
                 Ok(true) => installed_hooks.push(HookType::PreCommit),
                 Ok(false) => updated_hooks.push(HookType::PreCommit),
                 Err(e) => errors.push(format!("Pre-commit hook: {}", e)),
             }
         }
-        
+
         // Install pre-push hook
         if self.config.pre_push {
             match self.install_hook(&HookType::PrePush, force_overwrite).await {
@@ -55,19 +63,22 @@ impl HookManager {
                 Err(e) => errors.push(format!("Pre-push hook: {}", e)),
             }
         }
-        
+
         // Install commit-msg hook
         if self.config.commit_msg {
-            match self.install_hook(&HookType::CommitMsg, force_overwrite).await {
+            match self
+                .install_hook(&HookType::CommitMsg, force_overwrite)
+                .await
+            {
                 Ok(true) => installed_hooks.push(HookType::CommitMsg),
                 Ok(false) => updated_hooks.push(HookType::CommitMsg),
                 Err(e) => errors.push(format!("Commit-msg hook: {}", e)),
             }
         }
-        
+
         // Save hook configuration
         let config_path = self.save_hook_config().await?;
-        
+
         Ok(InstallationResult {
             installed_hooks,
             updated_hooks,
@@ -75,12 +86,16 @@ impl HookManager {
             config_path: Some(config_path),
         })
     }
-    
+
     /// Install a specific hook type
-    async fn install_hook(&self, hook_type: &HookType, force_overwrite: bool) -> Result<bool, UveddiError> {
+    async fn install_hook(
+        &self,
+        hook_type: &HookType,
+        force_overwrite: bool,
+    ) -> Result<bool, UveddiError> {
         let hook_path = self.hooks_dir.join(hook_type.filename());
         let was_new = !hook_path.exists();
-        
+
         // Check if hook already exists and we're not forcing overwrite
         if hook_path.exists() && !force_overwrite {
             // Check if it's already an Uveddi hook
@@ -91,27 +106,35 @@ impl HookManager {
                     return Ok(false); // Updated, not newly installed
                 }
             }
-            
+
             // Backup existing non-Uveddi hook
             let backup_path = hook_path.with_extension("backup");
-            fs::rename(&hook_path, &backup_path).map_err(|e| UveddiError::io_error("backing up existing hook", &hook_path.to_string_lossy(), e))?;
+            fs::rename(&hook_path, &backup_path).map_err(|e| {
+                UveddiError::io_error("backing up existing hook", &hook_path.to_string_lossy(), e)
+            })?;
         }
-        
+
         self.write_hook_script(&hook_path, hook_type).await?;
         self.make_executable(&hook_path)?;
-        
+
         Ok(was_new)
     }
-    
+
     /// Write the hook script content
-    async fn write_hook_script(&self, hook_path: &Path, hook_type: &HookType) -> Result<(), UveddiError> {
+    async fn write_hook_script(
+        &self,
+        hook_path: &Path,
+        hook_type: &HookType,
+    ) -> Result<(), UveddiError> {
         let script_content = self.generate_hook_script(hook_type);
-        
-        fs::write(hook_path, script_content).map_err(|e| UveddiError::io_error("writing hook script", &hook_path.to_string_lossy(), e))?;
-        
+
+        fs::write(hook_path, script_content).map_err(|e| {
+            UveddiError::io_error("writing hook script", &hook_path.to_string_lossy(), e)
+        })?;
+
         Ok(())
     }
-    
+
     /// Generate hook script content
     fn generate_hook_script(&self, hook_type: &HookType) -> String {
         match hook_type {
@@ -121,10 +144,11 @@ impl HookManager {
             _ => String::new(),
         }
     }
-    
+
     /// Generate pre-commit hook script
     fn generate_pre_commit_script(&self) -> String {
-        format!(r#"#!/bin/sh
+        format!(
+            r#"#!/bin/sh
 # Uveddi Hook - Pre-commit Analysis
 # Generated automatically by Uveddi
 # DO NOT EDIT MANUALLY
@@ -214,17 +238,26 @@ echo "🎉 Pre-commit analysis completed successfully"
             self.config.timeout_seconds,
             self.config.min_confidence,
             self.config.timeout_seconds,
-            if self.config.show_progress { "terminal" } else { "silent" },
-            if self.config.fail_fast { "--fail-fast" } else { "" },
+            if self.config.show_progress {
+                "terminal"
+            } else {
+                "silent"
+            },
+            if self.config.fail_fast {
+                "--fail-fast"
+            } else {
+                ""
+            },
             self.config.max_issues.unwrap_or(999),
             self.config.max_issues.unwrap_or(999),
             self.config.timeout_seconds,
         )
     }
-    
+
     /// Generate pre-push hook script
     fn generate_pre_push_script(&self) -> String {
-        format!(r#"#!/bin/sh
+        format!(
+            r#"#!/bin/sh
 # Uveddi Hook - Pre-push Analysis
 # Generated automatically by Uveddi
 # DO NOT EDIT MANUALLY
@@ -295,14 +328,22 @@ echo "🎉 Pre-push analysis completed successfully"
             self.config.timeout_seconds,
             self.config.min_confidence,
             self.config.timeout_seconds,
-            if self.config.show_progress { "terminal" } else { "silent" },
-            if self.config.fail_fast { "--fail-fast" } else { "" },
+            if self.config.show_progress {
+                "terminal"
+            } else {
+                "silent"
+            },
+            if self.config.fail_fast {
+                "--fail-fast"
+            } else {
+                ""
+            },
             self.config.max_issues.unwrap_or(999),
             self.config.max_issues.unwrap_or(999),
             self.config.timeout_seconds,
         )
     }
-    
+
     /// Generate commit-msg hook script
     fn generate_commit_msg_script(&self) -> String {
         r#"#!/bin/sh
@@ -341,33 +382,42 @@ fi
 echo "✅ Commit message validation passed"
 "#.to_string()
     }
-    
+
     /// Make a file executable
     fn make_executable(&self, path: &Path) -> Result<(), UveddiError> {
         #[cfg(unix)]
         {
-            let mut perms = fs::metadata(path).map_err(|e| UveddiError::io_error("reading file metadata", &path.to_string_lossy(), e))?.permissions();
-            
+            let mut perms = fs::metadata(path)
+                .map_err(|e| {
+                    UveddiError::io_error("reading file metadata", &path.to_string_lossy(), e)
+                })?
+                .permissions();
+
             perms.set_mode(0o755);
-            
-            fs::set_permissions(path, perms).map_err(|e| UveddiError::io_error("setting file permissions", &path.to_string_lossy(), e))?;
+
+            fs::set_permissions(path, perms).map_err(|e| {
+                UveddiError::io_error("setting file permissions", &path.to_string_lossy(), e)
+            })?;
         }
-        
+
         Ok(())
     }
-    
+
     /// Save hook configuration to file
     async fn save_hook_config(&self) -> Result<PathBuf, UveddiError> {
         let config_path = self.repo_path.join(".uveddi").join("hooks.toml");
-        
+
         // Ensure config directory exists
         if let Some(parent) = config_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| UveddiError::io_error("creating config directory", &parent.to_string_lossy(), e))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                UveddiError::io_error("creating config directory", &parent.to_string_lossy(), e)
+            })?;
         }
-        
-        let toml_content = toml::to_string_pretty(&self.config)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to serialize hook config: {}", e), "system"))?;
-        
+
+        let toml_content = toml::to_string_pretty(&self.config).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to serialize hook config: {}", e), "system")
+        })?;
+
         let header = format!(
             r#"# Uveddi Git Hooks Configuration
 # Generated on: {}
@@ -378,58 +428,60 @@ echo "✅ Commit message validation passed"
 "#,
             chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
         );
-        
+
         let full_content = format!("{}{}", header, toml_content);
-        
-        fs::write(&config_path, full_content).map_err(|e| UveddiError::io_error("writing hook config", &config_path.to_string_lossy(), e))?;
-        
+
+        fs::write(&config_path, full_content).map_err(|e| {
+            UveddiError::io_error("writing hook config", &config_path.to_string_lossy(), e)
+        })?;
+
         Ok(config_path)
     }
-    
+
     /// Uninstall Uveddi hooks
     pub async fn uninstall_hooks(&self) -> Result<Vec<HookType>, UveddiError> {
         let mut removed_hooks = Vec::new();
-        
-        let hook_types = [
-            HookType::PreCommit,
-            HookType::PrePush,
-            HookType::CommitMsg,
-        ];
-        
+
+        let hook_types = [HookType::PreCommit, HookType::PrePush, HookType::CommitMsg];
+
         for hook_type in &hook_types {
             let hook_path = self.hooks_dir.join(hook_type.filename());
-            
+
             if hook_path.exists() {
                 // Check if it's an Uveddi hook
                 if let Ok(content) = fs::read_to_string(&hook_path) {
                     if content.contains("# Uveddi Hook") {
-                        fs::remove_file(&hook_path).map_err(|e| UveddiError::io_error("removing hook", &hook_path.to_string_lossy(), e))?;
-                        
+                        fs::remove_file(&hook_path).map_err(|e| {
+                            UveddiError::io_error("removing hook", &hook_path.to_string_lossy(), e)
+                        })?;
+
                         removed_hooks.push(hook_type.clone());
-                        
+
                         // Restore backup if it exists
                         let backup_path = hook_path.with_extension("backup");
                         if backup_path.exists() {
-                            fs::rename(&backup_path, &hook_path).map_err(|e| UveddiError::io_error("restoring backup hook", &backup_path.to_string_lossy(), e))?;
+                            fs::rename(&backup_path, &hook_path).map_err(|e| {
+                                UveddiError::io_error(
+                                    "restoring backup hook",
+                                    &backup_path.to_string_lossy(),
+                                    e,
+                                )
+                            })?;
                         }
                     }
                 }
             }
         }
-        
+
         Ok(removed_hooks)
     }
-    
+
     /// List installed Uveddi hooks
     pub async fn list_hooks(&self) -> Result<Vec<(HookType, bool, PathBuf)>, UveddiError> {
         let mut hooks = Vec::new();
-        
-        let hook_types = [
-            HookType::PreCommit,
-            HookType::PrePush, 
-            HookType::CommitMsg,
-        ];
-        
+
+        let hook_types = [HookType::PreCommit, HookType::PrePush, HookType::CommitMsg];
+
         for hook_type in &hook_types {
             let hook_path = self.hooks_dir.join(hook_type.filename());
             let is_uveddi_hook = if hook_path.exists() {
@@ -439,23 +491,25 @@ echo "✅ Commit message validation passed"
             } else {
                 false
             };
-            
+
             hooks.push((hook_type.clone(), is_uveddi_hook, hook_path));
         }
-        
+
         Ok(hooks)
     }
-    
+
     /// Load hook configuration from file
     pub fn load_config(repo_path: &Path) -> Result<HookConfig, UveddiError> {
         let config_path = repo_path.join(".uveddi").join("hooks.toml");
-        
+
         if config_path.exists() {
-            let content = fs::read_to_string(&config_path).map_err(|e| UveddiError::io_error("reading hook config", &config_path.to_string_lossy(), e))?;
-            
-            toml::from_str(&content).map_err(|e| UveddiError::config_error(
-                &format!("Failed to parse hook config: {}", e), "system"
-            ))
+            let content = fs::read_to_string(&config_path).map_err(|e| {
+                UveddiError::io_error("reading hook config", &config_path.to_string_lossy(), e)
+            })?;
+
+            toml::from_str(&content).map_err(|e| {
+                UveddiError::config_error(&format!("Failed to parse hook config: {}", e), "system")
+            })
         } else {
             Ok(HookConfig::default())
         }
@@ -466,30 +520,30 @@ echo "✅ Commit message validation passed"
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    
+
     #[test]
     fn test_hook_manager_creation() {
         let temp_dir = TempDir::new().unwrap();
         let repo_path = temp_dir.path().to_path_buf();
-        
+
         // Create .git directory
         fs::create_dir_all(repo_path.join(".git/hooks")).unwrap();
-        
+
         let config = HookConfig::default();
         let manager = HookManager::new(repo_path, config);
-        
+
         assert!(manager.is_ok());
     }
-    
+
     #[test]
     fn test_pre_commit_script_generation() {
         let temp_dir = TempDir::new().unwrap();
         let repo_path = temp_dir.path().to_path_buf();
         fs::create_dir_all(repo_path.join(".git/hooks")).unwrap();
-        
+
         let config = HookConfig::default();
         let manager = HookManager::new(repo_path, config).unwrap();
-        
+
         let script = manager.generate_pre_commit_script();
         assert!(script.contains("# Uveddi Hook"));
         assert!(script.contains("pre-commit"));

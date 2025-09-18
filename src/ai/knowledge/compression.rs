@@ -7,7 +7,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::io::{Read, Write};
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 /// Compression-aware string type optimized for dictionary training and zstd compression
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

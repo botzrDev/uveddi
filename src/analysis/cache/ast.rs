@@ -16,7 +16,7 @@ use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Instant, SystemTime};
-use tracing::{debug, info, warn, error};
+use tracing::{debug, error, info, warn};
 
 #[cfg(feature = "memory-optimization")]
 use crate::analysis::memory::zero_copy::{SerializableAst, ZeroCopyAstCache};

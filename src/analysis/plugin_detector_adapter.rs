@@ -149,8 +149,10 @@ impl PluginDetectorAdapter {
                             "Plugin {} execution failed (attempt {}): {}. Retrying...",
                             self.plugin_name, attempt, e
                         );
-                        tokio::time::sleep(tokio::time::Duration::from_millis(100 * attempt as u64))
-                            .await;
+                        tokio::time::sleep(tokio::time::Duration::from_millis(
+                            100 * attempt as u64,
+                        ))
+                        .await;
                     } else {
                         error!(
                             "Plugin {} execution failed after {} attempts: {}",
@@ -236,7 +238,7 @@ impl PluginDetectorAdapter {
         plugin_issues
             .into_iter()
             .map(|issue| ArchitecturalIssue {
-                issue_id: None, // Will be assigned by database
+                issue_id: None,     // Will be assigned by database
                 analysis_run_id: 0, // Will be set by caller
                 anti_pattern_type_id: issue.anti_pattern_type_id.unwrap_or(0),
                 file_path: issue.file_path,
@@ -264,18 +266,16 @@ impl AnalysisDetector for PluginDetectorAdapter {
         file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         // Execute plugin analysis
-        let plugin_issues = self
-            .execute_plugin_analysis(file)
-            .await
-            .map_err(|e| AnalysisError::PluginError(
-                crate::plugins::errors::PluginError::Execution(format!("Plugin '{}': {}", self.plugin_name, e))
-            ))?;
+        let plugin_issues = self.execute_plugin_analysis(file).await.map_err(|e| {
+            AnalysisError::PluginError(crate::plugins::errors::PluginError::Execution(format!(
+                "Plugin '{}': {}",
+                self.plugin_name, e
+            )))
+        })?;
 
         // Convert to architectural issues
-        let architectural_issues = self.convert_to_architectural_issues(
-            plugin_issues,
-            &file.file_path.to_string_lossy(),
-        );
+        let architectural_issues =
+            self.convert_to_architectural_issues(plugin_issues, &file.file_path.to_string_lossy());
 
         Ok(architectural_issues)
     }
@@ -357,7 +357,10 @@ impl PluginDetectorManager {
     }
 
     /// Unregister a plugin detector
-    pub async fn unregister_plugin_detector(&self, plugin_id: &PluginId) -> Result<(), UveddiError> {
+    pub async fn unregister_plugin_detector(
+        &self,
+        plugin_id: &PluginId,
+    ) -> Result<(), UveddiError> {
         info!("Unregistering plugin detector: {}", plugin_id);
 
         // Remove from detectors
@@ -387,7 +390,9 @@ impl PluginDetectorManager {
     }
 
     /// Get statistics for all plugin detectors
-    pub async fn get_detector_stats(&self) -> HashMap<PluginId, crate::plugins::PluginRuntimeStats> {
+    pub async fn get_detector_stats(
+        &self,
+    ) -> HashMap<PluginId, crate::plugins::PluginRuntimeStats> {
         let mut stats = HashMap::new();
         let runtime = self.runtime.read().await;
 
@@ -415,7 +420,10 @@ impl Default for PluginDetectorManager {
 
         let mut runtime = PluginRuntime::new();
         futures::executor::block_on(async {
-            runtime.initialize().await.expect("Failed to initialize runtime");
+            runtime
+                .initialize()
+                .await
+                .expect("Failed to initialize runtime");
         });
 
         Self {

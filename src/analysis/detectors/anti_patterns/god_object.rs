@@ -378,7 +378,7 @@ impl Default for GodObjectConfig {
         framework_modules.insert("express".to_string());
         framework_modules.insert("vue".to_string());
         framework_modules.insert("axios".to_string());
-        
+
         // TypeScript frameworks and libraries
         framework_modules.insert("angular".to_string());
         framework_modules.insert("nest".to_string());
@@ -1398,7 +1398,10 @@ impl GodObjectDetector {
             &parsed_file.file_path.display().to_string(),
             &parsed_file.source,
         ) {
-            debug!("Excluding TypeScript file as generated code: {:?}", generated_pattern);
+            debug!(
+                "Excluding TypeScript file as generated code: {:?}",
+                generated_pattern
+            );
             return Ok(issues);
         }
 
@@ -1408,10 +1411,10 @@ impl GodObjectDetector {
 
         // Analyze Classes
         issues.extend(self.analyze_typescript_classes(parsed_file, &detected_frameworks)?);
-        
+
         // Analyze Interfaces (can be God Objects too)
         issues.extend(self.analyze_typescript_interfaces(parsed_file)?);
-        
+
         // Analyze Namespaces
         issues.extend(self.analyze_typescript_namespaces(parsed_file)?);
 
@@ -1440,10 +1443,12 @@ impl GodObjectDetector {
 
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&class_query, tree.root_node(), source);
-        
+
         while let Some(mat) = matches.next() {
             let name_node = mat.captures[0].node;
-            let body_node = mat.captures.iter()
+            let body_node = mat
+                .captures
+                .iter()
                 .find(|c| c.node.kind() == "class_body")
                 .map(|c| c.node)
                 .unwrap_or(mat.captures[1].node);
@@ -1474,8 +1479,18 @@ impl GodObjectDetector {
             };
 
             // Apply TypeScript-specific thresholds
-            let method_threshold = self.config.method_thresholds.get(&SourceLanguage::TypeScript).copied().unwrap_or(15);
-            let field_threshold = self.config.field_thresholds.get(&SourceLanguage::TypeScript).copied().unwrap_or(10);
+            let method_threshold = self
+                .config
+                .method_thresholds
+                .get(&SourceLanguage::TypeScript)
+                .copied()
+                .unwrap_or(15);
+            let field_threshold = self
+                .config
+                .field_thresholds
+                .get(&SourceLanguage::TypeScript)
+                .copied()
+                .unwrap_or(10);
 
             debug!(
                 "Analyzing TypeScript class {}: {} methods, {} fields (thresholds: >{}, >{})",
@@ -1493,7 +1508,10 @@ impl GodObjectDetector {
             if self.config.recognize_patterns {
                 // Check for Angular Component/Service patterns
                 if detected_frameworks.contains("angular") {
-                    if name.ends_with("Component") || name.ends_with("Service") || name.ends_with("Module") {
+                    if name.ends_with("Component")
+                        || name.ends_with("Service")
+                        || name.ends_with("Module")
+                    {
                         excluded_pattern = Some(DetectedPattern::FrameworkController {
                             framework: "angular".to_string(),
                             base_class: Some(name.to_string()),
@@ -1502,8 +1520,14 @@ impl GodObjectDetector {
                 }
 
                 // Check for NestJS Controller/Service patterns
-                if excluded_pattern.is_none() && (detected_frameworks.contains("nest") || detected_frameworks.contains("nestjs")) {
-                    if name.ends_with("Controller") || name.ends_with("Service") || name.ends_with("Module") {
+                if excluded_pattern.is_none()
+                    && (detected_frameworks.contains("nest")
+                        || detected_frameworks.contains("nestjs"))
+                {
+                    if name.ends_with("Controller")
+                        || name.ends_with("Service")
+                        || name.ends_with("Module")
+                    {
                         excluded_pattern = Some(DetectedPattern::FrameworkController {
                             framework: "nestjs".to_string(),
                             base_class: Some(name.to_string()),
@@ -1526,24 +1550,29 @@ impl GodObjectDetector {
 
                 // Check for Builder pattern
                 if excluded_pattern.is_none() {
-                    if let Some(pattern) = self.detect_builder_pattern(parsed_file, container_node, name) {
+                    if let Some(pattern) =
+                        self.detect_builder_pattern(parsed_file, container_node, name)
+                    {
                         excluded_pattern = Some(pattern);
                     }
                 }
             }
 
             // Stage 4: Enhanced Analysis
-            let lcom4_score = if self.config.enable_cohesion_analysis && excluded_pattern.is_none() {
+            let lcom4_score = if self.config.enable_cohesion_analysis && excluded_pattern.is_none()
+            {
                 self.calculate_lcom4(parsed_file, container_node).ok()
             } else {
                 None
             };
 
-            let behavioral_analysis = if self.config.enable_behavioral_analysis && excluded_pattern.is_none() {
-                self.analyze_behavioral_complexity(parsed_file, container_node).ok()
-            } else {
-                None
-            };
+            let behavioral_analysis =
+                if self.config.enable_behavioral_analysis && excluded_pattern.is_none() {
+                    self.analyze_behavioral_complexity(parsed_file, container_node)
+                        .ok()
+                } else {
+                    None
+                };
 
             if let Some(issue) = self.create_issue(
                 parsed_file,
@@ -1582,7 +1611,7 @@ impl GodObjectDetector {
 
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&interface_query, tree.root_node(), source);
-        
+
         while let Some(mat) = matches.next() {
             let name_node = mat.captures[0].node;
             let body_node = mat.captures[1].node;
@@ -1637,7 +1666,7 @@ impl GodObjectDetector {
                     container_node
                         .utf8_text(parsed_file.source.as_bytes())
                         .unwrap_or("")
-                        .to_string()
+                        .to_string(),
                 );
                 issues.push(issue);
             }
@@ -1658,7 +1687,9 @@ impl GodObjectDetector {
         })?;
         let language = tree.language();
 
-        let namespace_query = Query::new(&language, r#"
+        let namespace_query = Query::new(
+            &language,
+            r#"
         [
           (module_declaration
             name: (identifier) @name
@@ -1669,11 +1700,13 @@ impl GodObjectDetector {
             body: (statement_block) @body
           )
         ]
-        "#).map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+        "#,
+        )
+        .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&namespace_query, tree.root_node(), source);
-        
+
         while let Some(mat) = matches.next() {
             let name_node = mat.captures[0].node;
             let body_node = mat.captures[1].node;
@@ -1718,7 +1751,7 @@ impl GodObjectDetector {
                     container_node
                         .utf8_text(parsed_file.source.as_bytes())
                         .unwrap_or("")
-                        .to_string()
+                        .to_string(),
                 );
                 issues.push(issue);
             }
@@ -1743,10 +1776,14 @@ impl GodObjectDetector {
         let field_ratio = field_count as f64 / (field_count + method_count) as f64;
 
         // High field-to-method ratio suggests DTO
-        if field_ratio > 0.8 { // Stricter for TypeScript due to type safety
+        if field_ratio > 0.8 {
+            // Stricter for TypeScript due to type safety
             // Check for TypeScript DTO frameworks
             for framework in frameworks {
-                if ["class-validator", "class-transformer", "nestjs"].iter().any(|f| framework.contains(f)) {
+                if ["class-validator", "class-transformer", "nestjs"]
+                    .iter()
+                    .any(|f| framework.contains(f))
+                {
                     return Some(DetectedPattern::Dto {
                         framework: framework.clone(),
                         field_ratio,
@@ -1756,10 +1793,11 @@ impl GodObjectDetector {
 
             // Check for TypeScript DTO naming conventions or patterns
             if let Ok(source_text) = class_node.utf8_text(parsed_file.source.as_bytes()) {
-                if source_text.to_lowercase().contains("dto") || 
-                   source_text.contains("@IsString") || 
-                   source_text.contains("@IsNumber") ||
-                   source_text.contains("@IsOptional") {
+                if source_text.to_lowercase().contains("dto")
+                    || source_text.contains("@IsString")
+                    || source_text.contains("@IsNumber")
+                    || source_text.contains("@IsOptional")
+                {
                     return Some(DetectedPattern::Dto {
                         framework: "typescript_decorators".to_string(),
                         field_ratio,
@@ -1901,4 +1939,3 @@ mod tests {
         assert!(just_over_fields > detector.field_threshold);
     }
 }
-

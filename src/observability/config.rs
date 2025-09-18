@@ -197,7 +197,7 @@ pub struct HealthCheckConfig {
     pub background_monitoring: bool,
 }
 
-/// Distributed tracing configuration 
+/// Distributed tracing configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TracingConfig {
     /// Enable distributed tracing
@@ -217,7 +217,7 @@ pub struct TracingConfig {
 }
 
 /// Alerting system configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]  
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertingConfig {
     /// Enable alerting system
     pub enabled: bool,

@@ -24,9 +24,7 @@ use tracing::error;
 
 use crate::core::mocks::ai_mocks::AiInsight;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
-use crate::models::visualization::{
-    ArchitecturalComponent, ComponentMetrics, ComponentType,
-};
+use crate::models::visualization::{ArchitecturalComponent, ComponentMetrics, ComponentType};
 use crate::report::metrics::{compute_debt_score, compute_issues_by_severity};
 use crate::report::DiagramMode;
 use uuid::Uuid;

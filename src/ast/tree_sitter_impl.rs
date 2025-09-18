@@ -159,10 +159,12 @@ impl AstParser {
                 #[cfg(feature = "tree-sitter")]
                 {
                     // Try TSX language first for full TypeScript + JSX support
-                    let tsx_result = typescript_parser.set_language(&tree_sitter_typescript::LANGUAGE_TSX.into());
+                    let tsx_result = typescript_parser
+                        .set_language(&tree_sitter_typescript::LANGUAGE_TSX.into());
                     if tsx_result.is_err() {
                         // Fallback to TypeScript-only if TSX fails
-                        let ts_result = typescript_parser.set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into());
+                        let ts_result = typescript_parser
+                            .set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into());
                         if ts_result.is_err() {
                             return Err(AstError::Other(
                                 "Failed to initialize TypeScript parser - no compatible language found".to_string()
@@ -449,25 +451,26 @@ impl AstParser {
                                         AstError::Other("Failed to get node text".to_string())
                                     })?
                                     .to_string();
-                                
+
                                 // Extract class methods for TypeScript classes
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
                                     for member in body_node.children(&mut body_node.walk()) {
                                         if member.kind() == "method_definition" {
-                                            if let Some(method_name_node) = member.child_by_field_name("name") {
-                                                if let Ok(method_name) = method_name_node.utf8_text(source.as_bytes()) {
+                                            if let Some(method_name_node) =
+                                                member.child_by_field_name("name")
+                                            {
+                                                if let Ok(method_name) =
+                                                    method_name_node.utf8_text(source.as_bytes())
+                                                {
                                                     methods.push(method_name.to_string());
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                
-                                items.push(CustomAst::Struct {
-                                    name,
-                                    methods,
-                                });
+
+                                items.push(CustomAst::Struct { name, methods });
                             }
                         }
                         "interface_declaration" => {
@@ -982,17 +985,45 @@ pub struct CacheStats {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CustomAst {
-    File { items: Vec<CustomAst> },
-    Struct { name: String, methods: Vec<String> },
-    Function { name: String, params: Vec<String> },
-    Variable { name: String },
+    File {
+        items: Vec<CustomAst>,
+    },
+    Struct {
+        name: String,
+        methods: Vec<String>,
+    },
+    Function {
+        name: String,
+        params: Vec<String>,
+    },
+    Variable {
+        name: String,
+    },
     // TypeScript-specific constructs
-    Interface { name: String, properties: Vec<String> },
-    TypeAlias { name: String, type_definition: String },
-    Enum { name: String, variants: Vec<String> },
-    Namespace { name: String, members: Vec<CustomAst> },
-    Generic { name: String, type_parameters: Vec<String> },
-    Decorator { name: String, target: String },
+    Interface {
+        name: String,
+        properties: Vec<String>,
+    },
+    TypeAlias {
+        name: String,
+        type_definition: String,
+    },
+    Enum {
+        name: String,
+        variants: Vec<String>,
+    },
+    Namespace {
+        name: String,
+        members: Vec<CustomAst>,
+    },
+    Generic {
+        name: String,
+        type_parameters: Vec<String>,
+    },
+    Decorator {
+        name: String,
+        target: String,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

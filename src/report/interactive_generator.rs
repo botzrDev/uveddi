@@ -465,7 +465,10 @@ mod tests {
     async fn test_generate_demo_report() {
         let demo_report = InteractiveReportGenerator::generate_demo_report();
 
-        assert_eq!(demo_report.schema_version, crate::report::interactive_models::REPORT_SCHEMA_VERSION);
+        assert_eq!(
+            demo_report.schema_version,
+            crate::report::interactive_models::REPORT_SCHEMA_VERSION
+        );
         assert_eq!(demo_report.project.name, "Demo Rust Project");
         assert_eq!(demo_report.findings.len(), 2);
         assert_eq!(demo_report.dependency_graph.nodes.len(), 2);

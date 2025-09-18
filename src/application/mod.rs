@@ -21,8 +21,8 @@ use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::report::{markdown_generator::MarkdownReportGenerator, ReportGenerator};
+use crate::resource_management::{ResourceConfig, ResourceManager};
 use crate::service_orchestration::{OrchestratorConfig, ServiceOrchestrator};
-use crate::resource_management::{ResourceManager, ResourceConfig};
 
 #[cfg(feature = "memory-optimization")]
 use crate::analysis::memory::MemoryOptimizationConfig;
@@ -97,10 +97,10 @@ pub struct AnalysisConfig {
 
     /// Analysis timeout in seconds (0 = no timeout)
     pub timeout_seconds: u64,
-    
+
     /// Enable resource management and monitoring
     pub enable_resource_management: bool,
-    
+
     /// Resource management configuration
     pub resource_config: Option<ResourceConfig>,
 }
@@ -156,14 +156,14 @@ impl AnalysisOrchestrator {
         let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
             .unwrap_or_default()
             .parse::<bool>()
-            .unwrap_or(false) 
+            .unwrap_or(false)
         {
             let resource_config = ResourceConfig::development();
             match ResourceManager::new(resource_config) {
                 Ok(manager) => {
                     tracing::info!("Resource management enabled with database path");
                     Some(manager)
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to initialize resource manager: {}", e);
                     None
@@ -203,14 +203,14 @@ impl AnalysisOrchestrator {
         let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
             .unwrap_or_default()
             .parse::<bool>()
-            .unwrap_or(false) 
+            .unwrap_or(false)
         {
             let resource_config = ResourceConfig::development();
             match ResourceManager::new(resource_config) {
                 Ok(manager) => {
                     tracing::info!("Resource management enabled with in-memory database");
                     Some(manager)
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to initialize resource manager: {}", e);
                     None
@@ -251,14 +251,14 @@ impl AnalysisOrchestrator {
         let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
             .unwrap_or_default()
             .parse::<bool>()
-            .unwrap_or(false) 
+            .unwrap_or(false)
         {
             let resource_config = ResourceConfig::default();
             match ResourceManager::new(resource_config) {
                 Ok(manager) => {
                     tracing::info!("Resource management enabled with custom memory config");
                     Some(manager)
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to initialize resource manager: {}", e);
                     None
@@ -305,11 +305,12 @@ impl AnalysisOrchestrator {
         // Initialize or update resource management if enabled
         if config.enable_resource_management {
             tracing::debug!("🔧 Resource management enabled, initializing resource manager");
-            
-            let resource_config = config.resource_config
+
+            let resource_config = config
+                .resource_config
                 .clone()
                 .unwrap_or_else(|| ResourceConfig::production());
-            
+
             match ResourceManager::new(resource_config) {
                 Ok(manager) => {
                     // Start monitoring in the background
@@ -318,10 +319,10 @@ impl AnalysisOrchestrator {
                     } else {
                         tracing::info!("Resource monitoring started successfully");
                     }
-                    
+
                     self.resource_manager = Some(manager);
                     tracing::debug!("✅ Resource manager initialized successfully");
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to initialize resource manager: {}", e);
                     tracing::warn!("Continuing without resource management");
@@ -556,13 +557,7 @@ impl AnalysisOrchestrator {
             "json" => {
                 let codebase_path = config.target_path.to_str();
                 let report = report_generator
-                    .generate_json_report(
-                        analysis_run,
-                        issues,
-                        &anti_pattern_map,
-                        None,
-                        codebase_path,
-                    )
+                    .generate_json_report(analysis_run, issues, &anti_pattern_map, None)
                     .map_err(|e| {
                         crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
@@ -1309,12 +1304,13 @@ impl Default for AnalysisOrchestrator {
 /// the existing async runtime context from #[tokio::main] for proper async operation
 /// handling, following UV-294 async standardization guidelines.
 pub async fn run_app() -> Result<(), UveddiError> {
-    use crate::cli::{
-        analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
-        doctor_command::DoctorCommand, help_command::HelpCommand, hooks_command::HooksCommand, init_command::InitCommand, tui_command::TuiCommand,
-    };
     #[cfg(feature = "wasm-plugins")]
     use crate::cli::plugin_command::PluginCommand;
+    use crate::cli::{
+        analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
+        doctor_command::DoctorCommand, help_command::HelpCommand, hooks_command::HooksCommand,
+        init_command::InitCommand, tui_command::TuiCommand,
+    };
     use crate::core::logging::{error, info};
     use clap::Parser;
 
@@ -1447,10 +1443,16 @@ pub async fn run_app() -> Result<(), UveddiError> {
             let frontend_assets_path = frontend_assets.or_else(|| {
                 let default_path = std::path::PathBuf::from("frontend/dist");
                 if default_path.exists() && default_path.join("index.html").exists() {
-                    info!("📁 Auto-detected frontend assets at: {}", default_path.display());
+                    info!(
+                        "📁 Auto-detected frontend assets at: {}",
+                        default_path.display()
+                    );
                     Some(default_path)
                 } else {
-                    info!("📁 No frontend assets found at default location: {}", default_path.display());
+                    info!(
+                        "📁 No frontend assets found at default location: {}",
+                        default_path.display()
+                    );
                     None
                 }
             });

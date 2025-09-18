@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use tracing::{info, error};
+use tracing::{error, info};
 
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};

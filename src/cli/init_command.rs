@@ -3,7 +3,7 @@
 //! Provides guided setup with project templates and smart configuration
 //! generation to reduce "time to first success" from minutes to seconds.
 
-use crate::config::{Config, DeadCodeConfig, LargeClassConfig, LanguageThresholds};
+use crate::config::{Config, DeadCodeConfig, LanguageThresholds, LargeClassConfig};
 use crate::error::UveddiError;
 use clap::Args;
 use std::collections::HashMap;
@@ -16,19 +16,19 @@ pub struct InitCommand {
     /// Path to initialize Uveddi configuration
     #[arg(default_value = ".")]
     pub path: PathBuf,
-    
+
     /// Skip interactive prompts and use defaults
     #[arg(long)]
     pub non_interactive: bool,
-    
+
     /// Project template to use
     #[arg(long, value_enum)]
     pub template: Option<ProjectTemplate>,
-    
+
     /// Force overwrite existing configuration
     #[arg(long)]
     pub force: bool,
-    
+
     /// Generate Git hooks for automated analysis
     #[arg(long)]
     pub git_hooks: bool,
@@ -71,39 +71,45 @@ pub struct ProjectInfo {
 
 #[derive(Debug)]
 pub enum ProjectSize {
-    Small,   // < 1k LOC
-    Medium,  // 1k-10k LOC
-    Large,   // 10k-100k LOC
-    Huge,    // 100k+ LOC
+    Small,  // < 1k LOC
+    Medium, // 1k-10k LOC
+    Large,  // 10k-100k LOC
+    Huge,   // 100k+ LOC
 }
 
 impl InitCommand {
     pub async fn execute(&self) -> Result<(), UveddiError> {
         println!("🚀 Uveddi Project Initialization");
         println!("=================================\n");
-        
+
         // Check if configuration already exists
         let config_path = self.path.join("uveddi.toml");
         if config_path.exists() && !self.force {
-            return Err(UveddiError::config_error(&format!(
-                "Configuration already exists at {}. Use --force to overwrite.",
-                config_path.display()
-            ), "cli"));
+            return Err(UveddiError::config_error(
+                &format!(
+                    "Configuration already exists at {}. Use --force to overwrite.",
+                    config_path.display()
+                ),
+                "cli",
+            ));
         }
-        
+
         // Analyze the project
         let analyzer = ProjectAnalyzer::new(&self.path);
         let project_info = analyzer.analyze().await?;
-        
+
         println!("📊 Project Analysis Complete:");
         println!("   Languages: {}", project_info.languages.join(", "));
         println!("   Type: {:?}", project_info.project_type);
         println!("   Size: {:?}", project_info.estimated_size);
         if !project_info.package_managers.is_empty() {
-            println!("   Package Managers: {}", project_info.package_managers.join(", "));
+            println!(
+                "   Package Managers: {}",
+                project_info.package_managers.join(", ")
+            );
         }
         println!();
-        
+
         // Determine template
         let template = if let Some(template) = &self.template {
             template.clone()
@@ -112,25 +118,25 @@ impl InitCommand {
         } else {
             self.prompt_for_template(&project_info)?
         };
-        
+
         // Generate configuration
         let config = if self.non_interactive {
             self.generate_config_from_template(&template, &project_info)
         } else {
             self.interactive_config_generation(&template, &project_info)?
         };
-        
+
         // Write configuration
         self.write_config(&config, &config_path)?;
-        
+
         // Setup Git hooks if requested
         if self.git_hooks {
             self.setup_git_hooks().await?;
         }
-        
+
         // Generate project-specific documentation
         self.generate_project_docs(&template, &project_info)?;
-        
+
         println!("✅ Uveddi initialization complete!");
         println!("📝 Configuration saved to: {}", config_path.display());
         println!("\n🚀 Ready to analyze! Try:");
@@ -138,32 +144,35 @@ impl InitCommand {
         if self.git_hooks {
             println!("   Git hooks installed - analysis will run automatically on commits");
         }
-        
+
         Ok(())
     }
-    
-    fn prompt_for_template(&self, project_info: &ProjectInfo) -> Result<ProjectTemplate, UveddiError> {
+
+    fn prompt_for_template(
+        &self,
+        project_info: &ProjectInfo,
+    ) -> Result<ProjectTemplate, UveddiError> {
         println!("📋 Select Project Template:");
         println!("   1. Rust project");
         println!("   2. Python project");
-        println!("   3. JavaScript project");  
+        println!("   3. JavaScript project");
         println!("   4. TypeScript project");
         println!("   5. Web project (mixed)");
         println!("   6. Library project");
         println!("   7. Monorepo");
         println!("   8. Custom configuration");
         println!("   9. Auto-detect (recommended)");
-        
+
         print!("\nChoose template [9]: ");
         io::stdout().flush().unwrap();
-        
+
         let mut input = String::new();
         io::stdin().read_line(&mut input).map_err(|e| {
             UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
         })?;
-        
+
         let choice = input.trim();
-        
+
         match choice {
             "1" => Ok(ProjectTemplate::Rust),
             "2" => Ok(ProjectTemplate::Python),
@@ -180,41 +189,45 @@ impl InitCommand {
             }
         }
     }
-    
-    fn interactive_config_generation(&self, template: &ProjectTemplate, project_info: &ProjectInfo) -> Result<Config, UveddiError> {
+
+    fn interactive_config_generation(
+        &self,
+        template: &ProjectTemplate,
+        project_info: &ProjectInfo,
+    ) -> Result<Config, UveddiError> {
         let mut config = self.generate_config_from_template(template, project_info);
-        
+
         println!("🔧 Configuration Options:");
-        
+
         // AI Model Configuration
         if self.prompt_yes_no("Enable AI-powered analysis", true)? {
             let model = self.prompt_for_ai_model()?;
             config.ollama_model = Some(model);
         }
-        
+
         // Dead Code Detection
         if self.prompt_yes_no("Configure dead code detection", true)? {
             config.dead_code = Some(self.prompt_dead_code_config()?);
         }
-        
+
         // Large Classes Detection
         if self.prompt_yes_no("Configure large classes detection", true)? {
             config.large_classes = Some(self.prompt_large_classes_config(template, project_info)?);
         }
-        
+
         Ok(config)
     }
-    
+
     fn prompt_yes_no(&self, prompt: &str, default: bool) -> Result<bool, UveddiError> {
         let default_str = if default { "Y/n" } else { "y/N" };
         print!("{} [{}]: ", prompt, default_str);
         io::stdout().flush().unwrap();
-        
+
         let mut input = String::new();
         io::stdin().read_line(&mut input).map_err(|e| {
             UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
         })?;
-        
+
         match input.trim().to_lowercase().as_str() {
             "y" | "yes" => Ok(true),
             "n" | "no" => Ok(false),
@@ -222,22 +235,22 @@ impl InitCommand {
             _ => Ok(default),
         }
     }
-    
+
     fn prompt_for_ai_model(&self) -> Result<String, UveddiError> {
         println!("\n🤖 AI Model Selection:");
         println!("   1. deepseek-coder:6.7b-instruct-q4_0 (recommended for code analysis)");
         println!("   2. codellama:7b-instruct (general purpose)");
         println!("   3. llama2:7b-chat (lightweight)");
         println!("   4. Custom model");
-        
+
         print!("\nChoose AI model [1]: ");
         io::stdout().flush().unwrap();
-        
+
         let mut input = String::new();
         io::stdin().read_line(&mut input).map_err(|e| {
             UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
         })?;
-        
+
         match input.trim() {
             "1" | "" => Ok("deepseek-coder:6.7b-instruct-q4_0".to_string()),
             "2" => Ok("codellama:7b-instruct".to_string()),
@@ -250,28 +263,30 @@ impl InitCommand {
                     UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
                 })?;
                 Ok(custom_input.trim().to_string())
-            },
+            }
             _ => Ok("deepseek-coder:6.7b-instruct-q4_0".to_string()),
         }
     }
-    
+
     fn prompt_dead_code_config(&self) -> Result<DeadCodeConfig, UveddiError> {
         println!("\n💀 Dead Code Detection Configuration:");
-        
-        let confidence_threshold = if self.prompt_yes_no("Use default confidence threshold (0.8)", true)? {
-            Some(0.8)
-        } else {
-            print!("Enter confidence threshold (0.0-1.0): ");
-            io::stdout().flush().unwrap();
-            let mut input = String::new();
-            io::stdin().read_line(&mut input).map_err(|e| {
-                UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
-            })?;
-            input.trim().parse().ok()
-        };
-        
-        let library_mode = self.prompt_yes_no("Enable library mode (analyze exported symbols)", false)?;
-        
+
+        let confidence_threshold =
+            if self.prompt_yes_no("Use default confidence threshold (0.8)", true)? {
+                Some(0.8)
+            } else {
+                print!("Enter confidence threshold (0.0-1.0): ");
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).map_err(|e| {
+                    UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
+                })?;
+                input.trim().parse().ok()
+            };
+
+        let library_mode =
+            self.prompt_yes_no("Enable library mode (analyze exported symbols)", false)?;
+
         Ok(DeadCodeConfig {
             confidence_threshold,
             library_mode: Some(library_mode),
@@ -290,10 +305,14 @@ impl InitCommand {
             ]),
         })
     }
-    
-    fn prompt_large_classes_config(&self, template: &ProjectTemplate, _project_info: &ProjectInfo) -> Result<LargeClassConfig, UveddiError> {
+
+    fn prompt_large_classes_config(
+        &self,
+        template: &ProjectTemplate,
+        _project_info: &ProjectInfo,
+    ) -> Result<LargeClassConfig, UveddiError> {
         println!("\n📏 Large Classes Detection Configuration:");
-        
+
         let (default_loc, default_methods) = match template {
             ProjectTemplate::Rust => (200, 20),
             ProjectTemplate::Python => (300, 30),
@@ -301,8 +320,11 @@ impl InitCommand {
             ProjectTemplate::Web => (400, 35),
             _ => (250, 25),
         };
-        
-        let max_logical_loc = if self.prompt_yes_no(&format!("Use default LOC threshold ({})", default_loc), true)? {
+
+        let max_logical_loc = if self.prompt_yes_no(
+            &format!("Use default LOC threshold ({})", default_loc),
+            true,
+        )? {
             Some(default_loc)
         } else {
             print!("Enter maximum logical LOC: ");
@@ -313,8 +335,11 @@ impl InitCommand {
             })?;
             input.trim().parse().ok()
         };
-        
-        let max_methods = if self.prompt_yes_no(&format!("Use default methods threshold ({})", default_methods), true)? {
+
+        let max_methods = if self.prompt_yes_no(
+            &format!("Use default methods threshold ({})", default_methods),
+            true,
+        )? {
             Some(default_methods)
         } else {
             print!("Enter maximum methods count: ");
@@ -325,7 +350,7 @@ impl InitCommand {
             })?;
             input.trim().parse().ok()
         };
-        
+
         Ok(LargeClassConfig {
             max_logical_loc,
             max_methods,
@@ -342,53 +367,66 @@ impl InitCommand {
             language_overrides: Some(self.generate_language_overrides(template)),
         })
     }
-    
-    fn generate_language_overrides(&self, template: &ProjectTemplate) -> HashMap<String, LanguageThresholds> {
+
+    fn generate_language_overrides(
+        &self,
+        template: &ProjectTemplate,
+    ) -> HashMap<String, LanguageThresholds> {
         let mut overrides = HashMap::new();
-        
+
         match template {
             ProjectTemplate::Web | ProjectTemplate::Monorepo => {
-                overrides.insert("javascript".to_string(), LanguageThresholds {
-                    max_logical_loc: Some(200),
-                    max_methods: Some(20),
-                    max_fields: Some(30),
-                    max_cyclomatic_complexity: Some(15),
-                    max_cognitive_complexity: Some(20),
-                    max_lcom_score: Some(0.7),
-                    max_coupling: Some(25),
-                });
-                
-                overrides.insert("typescript".to_string(), LanguageThresholds {
-                    max_logical_loc: Some(250),
-                    max_methods: Some(25),
-                    max_fields: Some(35),
-                    max_cyclomatic_complexity: Some(18),
-                    max_cognitive_complexity: Some(22),
-                    max_lcom_score: Some(0.75),
-                    max_coupling: Some(28),
-                });
-            },
+                overrides.insert(
+                    "javascript".to_string(),
+                    LanguageThresholds {
+                        max_logical_loc: Some(200),
+                        max_methods: Some(20),
+                        max_fields: Some(30),
+                        max_cyclomatic_complexity: Some(15),
+                        max_cognitive_complexity: Some(20),
+                        max_lcom_score: Some(0.7),
+                        max_coupling: Some(25),
+                    },
+                );
+
+                overrides.insert(
+                    "typescript".to_string(),
+                    LanguageThresholds {
+                        max_logical_loc: Some(250),
+                        max_methods: Some(25),
+                        max_fields: Some(35),
+                        max_cyclomatic_complexity: Some(18),
+                        max_cognitive_complexity: Some(22),
+                        max_lcom_score: Some(0.75),
+                        max_coupling: Some(28),
+                    },
+                );
+            }
             _ => {}
         }
-        
+
         overrides
     }
-    
-    fn generate_config_from_template(&self, template: &ProjectTemplate, project_info: &ProjectInfo) -> Config {
+
+    fn generate_config_from_template(
+        &self,
+        template: &ProjectTemplate,
+        project_info: &ProjectInfo,
+    ) -> Config {
         let ai_model = match project_info.estimated_size {
             ProjectSize::Small => Some("deepseek-coder:6.7b-instruct-q4_0".to_string()),
             ProjectSize::Medium => Some("deepseek-coder:6.7b-instruct-q4_0".to_string()),
             ProjectSize::Large => Some("codellama:7b-instruct".to_string()),
             ProjectSize::Huge => Some("llama2:7b-chat".to_string()),
         };
-        
+
         let dead_code_config = DeadCodeConfig {
             confidence_threshold: Some(0.8),
             library_mode: Some(matches!(template, ProjectTemplate::Library)),
             ignore_patterns: Some(self.generate_ignore_patterns(template)),
             keep_alive_patterns: Some(self.generate_keep_alive_patterns(template)),
         };
-        
+
         let large_classes_config = LargeClassConfig {
             max_logical_loc: Some(match template {
                 ProjectTemplate::Rust => 200,
@@ -416,14 +454,14 @@ impl InitCommand {
             ignore_patterns: Some(self.generate_ignore_patterns(template)),
             language_overrides: Some(self.generate_language_overrides(template)),
         };
-        
+
         Config {
             ollama_model: ai_model,
             dead_code: Some(dead_code_config),
             large_classes: Some(large_classes_config),
         }
     }
-    
+
     fn generate_ignore_patterns(&self, template: &ProjectTemplate) -> Vec<String> {
         let mut patterns = vec![
             "test/**".to_string(),
@@ -433,7 +471,7 @@ impl InitCommand {
             "dist/**".to_string(),
             "build/**".to_string(),
         ];
-        
+
         match template {
             ProjectTemplate::Rust => {
                 patterns.extend(vec![
@@ -441,7 +479,7 @@ impl InitCommand {
                     "**/target/**".to_string(),
                     "Cargo.lock".to_string(),
                 ]);
-            },
+            }
             ProjectTemplate::Python => {
                 patterns.extend(vec![
                     "__pycache__/**".to_string(),
@@ -449,7 +487,7 @@ impl InitCommand {
                     ".venv/**".to_string(),
                     "venv/**".to_string(),
                 ]);
-            },
+            }
             ProjectTemplate::JavaScript | ProjectTemplate::TypeScript | ProjectTemplate::Web => {
                 patterns.extend(vec![
                     "node_modules/**".to_string(),
@@ -457,13 +495,13 @@ impl InitCommand {
                     "build/**".to_string(),
                     ".next/**".to_string(),
                 ]);
-            },
+            }
             _ => {}
         }
-        
+
         patterns
     }
-    
+
     fn generate_keep_alive_patterns(&self, template: &ProjectTemplate) -> Vec<String> {
         match template {
             ProjectTemplate::Rust => vec![
@@ -485,14 +523,19 @@ impl InitCommand {
                 "function main".to_string(),
                 "class ".to_string(),
             ],
-            _ => vec!["main".to_string(), "export".to_string(), "public".to_string()],
+            _ => vec![
+                "main".to_string(),
+                "export".to_string(),
+                "public".to_string(),
+            ],
         }
     }
-    
+
     fn write_config(&self, config: &Config, path: &Path) -> Result<(), UveddiError> {
-        let toml_content = toml::to_string_pretty(config)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to serialize config: {}", e), "cli"))?;
-        
+        let toml_content = toml::to_string_pretty(config).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to serialize config: {}", e), "cli")
+        })?;
+
         // Add header comment
         let header = format!(
             r#"# Uveddi Configuration File
@@ -507,26 +550,28 @@ impl InitCommand {
 "#,
             chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
         );
-        
+
         let full_content = format!("{}{}", header, toml_content);
-        
-        fs::write(path, full_content)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to write config file: {}", e), "cli"))?;
-        
+
+        fs::write(path, full_content).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to write config file: {}", e), "cli")
+        })?;
+
         Ok(())
     }
-    
+
     async fn setup_git_hooks(&self) -> Result<(), UveddiError> {
         let git_dir = self.path.join(".git");
         if !git_dir.exists() {
             println!("⚠️  No Git repository found. Skipping Git hooks setup.");
             return Ok(());
         }
-        
+
         let hooks_dir = git_dir.join("hooks");
-        fs::create_dir_all(&hooks_dir)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to create hooks directory: {}", e), "cli"))?;
-        
+        fs::create_dir_all(&hooks_dir).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to create hooks directory: {}", e), "cli")
+        })?;
+
         // Pre-commit hook
         let pre_commit_content = r#"#!/bin/sh
 # Uveddi pre-commit hook
@@ -545,50 +590,69 @@ fi
 echo "✅ Uveddi analysis passed!"
 exit 0
 "#;
-        
+
         let pre_commit_path = hooks_dir.join("pre-commit");
-        fs::write(&pre_commit_path, pre_commit_content)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to write pre-commit hook: {}", e), "cli"))?;
-        
+        fs::write(&pre_commit_path, pre_commit_content).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to write pre-commit hook: {}", e), "cli")
+        })?;
+
         // Make executable (Unix systems)
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
             let mut perms = fs::metadata(&pre_commit_path)
-                .map_err(|e| UveddiError::config_error(&format!("Failed to read hook permissions: {}", e), "cli"))?
+                .map_err(|e| {
+                    UveddiError::config_error(
+                        &format!("Failed to read hook permissions: {}", e),
+                        "cli",
+                    )
+                })?
                 .permissions();
             perms.set_mode(0o755);
-            fs::set_permissions(&pre_commit_path, perms)
-                .map_err(|e| UveddiError::config_error(&format!("Failed to set hook permissions: {}", e), "cli"))?;
+            fs::set_permissions(&pre_commit_path, perms).map_err(|e| {
+                UveddiError::config_error(&format!("Failed to set hook permissions: {}", e), "cli")
+            })?;
         }
-        
+
         println!("🔧 Git pre-commit hook installed successfully!");
-        
+
         Ok(())
     }
-    
-    fn generate_project_docs(&self, template: &ProjectTemplate, project_info: &ProjectInfo) -> Result<(), UveddiError> {
+
+    fn generate_project_docs(
+        &self,
+        template: &ProjectTemplate,
+        project_info: &ProjectInfo,
+    ) -> Result<(), UveddiError> {
         let docs_dir = self.path.join("docs").join("uveddi");
-        fs::create_dir_all(&docs_dir)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to create docs directory: {}", e), "cli"))?;
-        
+        fs::create_dir_all(&docs_dir).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to create docs directory: {}", e), "cli")
+        })?;
+
         // Generate README
         let readme_content = self.generate_readme_content(template, project_info);
-        fs::write(docs_dir.join("README.md"), readme_content)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to write README: {}", e), "cli"))?;
-        
+        fs::write(docs_dir.join("README.md"), readme_content).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to write README: {}", e), "cli")
+        })?;
+
         // Generate analysis guide
         let guide_content = self.generate_analysis_guide(template);
-        fs::write(docs_dir.join("ANALYSIS_GUIDE.md"), guide_content)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to write analysis guide: {}", e), "cli"))?;
-        
+        fs::write(docs_dir.join("ANALYSIS_GUIDE.md"), guide_content).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to write analysis guide: {}", e), "cli")
+        })?;
+
         println!("📚 Project documentation generated in docs/uveddi/");
-        
+
         Ok(())
     }
-    
-    fn generate_readme_content(&self, template: &ProjectTemplate, project_info: &ProjectInfo) -> String {
-        format!(r#"# Uveddi Analysis Configuration
+
+    fn generate_readme_content(
+        &self,
+        template: &ProjectTemplate,
+        project_info: &ProjectInfo,
+    ) -> String {
+        format!(
+            r#"# Uveddi Analysis Configuration
 
 This project has been set up with Uveddi for automated code analysis.
 
@@ -652,15 +716,20 @@ For more information, see the [Uveddi documentation](https://github.com/botzrDev
             }
         )
     }
-    
+
     fn generate_analysis_guide(&self, template: &ProjectTemplate) -> String {
         match template {
             ProjectTemplate::Rust => include_str!("../templates/guides/rust_analysis_guide.md"),
             ProjectTemplate::Python => include_str!("../templates/guides/python_analysis_guide.md"),
-            ProjectTemplate::JavaScript => include_str!("../templates/guides/javascript_analysis_guide.md"),
-            ProjectTemplate::TypeScript => include_str!("../templates/guides/typescript_analysis_guide.md"),
+            ProjectTemplate::JavaScript => {
+                include_str!("../templates/guides/javascript_analysis_guide.md")
+            }
+            ProjectTemplate::TypeScript => {
+                include_str!("../templates/guides/typescript_analysis_guide.md")
+            }
             _ => include_str!("../templates/guides/general_analysis_guide.md"),
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -670,7 +739,7 @@ impl ProjectAnalyzer {
             path: path.to_path_buf(),
         }
     }
-    
+
     pub async fn analyze(&self) -> Result<ProjectInfo, UveddiError> {
         let languages = self.detect_languages().await?;
         let project_type = self.determine_project_type(&languages).await?;
@@ -679,7 +748,7 @@ impl ProjectAnalyzer {
         let estimated_size = self.estimate_size().await?;
         let package_managers = self.detect_package_managers().await?;
         let build_tools = self.detect_build_tools().await?;
-        
+
         Ok(ProjectInfo {
             languages,
             project_type,
@@ -690,14 +759,17 @@ impl ProjectAnalyzer {
             build_tools,
         })
     }
-    
+
     async fn detect_languages(&self) -> Result<Vec<String>, UveddiError> {
         let mut languages = Vec::new();
-        
+
         // Check for common language files
         let language_patterns: Vec<(&str, &[&str])> = vec![
             ("rust", &["*.rs", "Cargo.toml"]),
-            ("python", &["*.py", "requirements.txt", "pyproject.toml", "setup.py"]),
+            (
+                "python",
+                &["*.py", "requirements.txt", "pyproject.toml", "setup.py"],
+            ),
             ("javascript", &["*.js", "package.json"]),
             ("typescript", &["*.ts", "*.tsx", "tsconfig.json"]),
             ("html", &["*.html"]),
@@ -707,20 +779,20 @@ impl ProjectAnalyzer {
             ("c", &["*.c", "*.h"]),
             ("cpp", &["*.cpp", "*.cc", "*.cxx", "*.hpp"]),
         ];
-        
+
         for (lang, patterns) in language_patterns {
             if self.has_files_matching(patterns).await? {
                 languages.push(lang.to_string());
             }
         }
-        
+
         if languages.is_empty() {
             languages.push("unknown".to_string());
         }
-        
+
         Ok(languages)
     }
-    
+
     async fn has_files_matching(&self, patterns: &[&str]) -> Result<bool, UveddiError> {
         for pattern in patterns {
             let glob_pattern = self.path.join(pattern);
@@ -729,7 +801,7 @@ impl ProjectAnalyzer {
                     return Ok(true);
                 }
             }
-            
+
             // Also check recursively for code files
             if pattern.starts_with("*.") {
                 let recursive_pattern = self.path.join("**").join(pattern);
@@ -742,20 +814,25 @@ impl ProjectAnalyzer {
         }
         Ok(false)
     }
-    
-    async fn determine_project_type(&self, languages: &[String]) -> Result<ProjectTemplate, UveddiError> {
+
+    async fn determine_project_type(
+        &self,
+        languages: &[String],
+    ) -> Result<ProjectTemplate, UveddiError> {
         // Multi-language projects
         if languages.len() > 2 {
             return Ok(ProjectTemplate::Monorepo);
         }
-        
+
         // Web projects
-        if languages.contains(&"html".to_string()) || 
-           languages.contains(&"css".to_string()) ||
-           (languages.contains(&"javascript".to_string()) && languages.contains(&"typescript".to_string())) {
+        if languages.contains(&"html".to_string())
+            || languages.contains(&"css".to_string())
+            || (languages.contains(&"javascript".to_string())
+                && languages.contains(&"typescript".to_string()))
+        {
             return Ok(ProjectTemplate::Web);
         }
-        
+
         // Single language projects
         if languages.contains(&"rust".to_string()) {
             // Check if it's a library
@@ -774,15 +851,10 @@ impl ProjectAnalyzer {
             Ok(ProjectTemplate::Custom)
         }
     }
-    
+
     async fn detect_tests(&self) -> Result<bool, UveddiError> {
-        let test_patterns = [
-            "test/**",
-            "tests/**",
-            "**/*test*",
-            "**/*spec*",
-        ];
-        
+        let test_patterns = ["test/**", "tests/**", "**/*test*", "**/*spec*"];
+
         for pattern in test_patterns {
             let glob_pattern = self.path.join(pattern);
             if let Ok(mut entries) = glob::glob(&glob_pattern.to_string_lossy()) {
@@ -791,18 +863,13 @@ impl ProjectAnalyzer {
                 }
             }
         }
-        
+
         Ok(false)
     }
-    
+
     async fn detect_docs(&self) -> Result<bool, UveddiError> {
-        let doc_patterns = [
-            "README*",
-            "docs/**",
-            "doc/**",
-            "*.md",
-        ];
-        
+        let doc_patterns = ["README*", "docs/**", "doc/**", "*.md"];
+
         for pattern in doc_patterns {
             let glob_pattern = self.path.join(pattern);
             if let Ok(mut entries) = glob::glob(&glob_pattern.to_string_lossy()) {
@@ -811,16 +878,23 @@ impl ProjectAnalyzer {
                 }
             }
         }
-        
+
         Ok(false)
     }
-    
+
     async fn estimate_size(&self) -> Result<ProjectSize, UveddiError> {
         let mut line_count = 0;
         let mut _file_count = 0;
-        
-        let code_patterns = ["**/*.rs", "**/*.py", "**/*.js", "**/*.ts", "**/*.go", "**/*.java"];
-        
+
+        let code_patterns = [
+            "**/*.rs",
+            "**/*.py",
+            "**/*.js",
+            "**/*.ts",
+            "**/*.go",
+            "**/*.java",
+        ];
+
         for pattern in code_patterns {
             let glob_pattern = self.path.join(pattern);
             if let Ok(entries) = glob::glob(&glob_pattern.to_string_lossy()) {
@@ -832,7 +906,7 @@ impl ProjectAnalyzer {
                 }
             }
         }
-        
+
         match line_count {
             0..=1000 => Ok(ProjectSize::Small),
             1001..=10000 => Ok(ProjectSize::Medium),
@@ -840,10 +914,10 @@ impl ProjectAnalyzer {
             _ => Ok(ProjectSize::Huge),
         }
     }
-    
+
     async fn detect_package_managers(&self) -> Result<Vec<String>, UveddiError> {
         let mut managers = Vec::new();
-        
+
         let manager_files = [
             ("cargo", "Cargo.toml"),
             ("npm", "package.json"),
@@ -855,19 +929,19 @@ impl ProjectAnalyzer {
             ("maven", "pom.xml"),
             ("gradle", "build.gradle"),
         ];
-        
+
         for (manager, file) in manager_files {
             if self.path.join(file).exists() {
                 managers.push(manager.to_string());
             }
         }
-        
+
         Ok(managers)
     }
-    
+
     async fn detect_build_tools(&self) -> Result<Vec<String>, UveddiError> {
         let mut tools = Vec::new();
-        
+
         let build_files = [
             ("make", "Makefile"),
             ("cmake", "CMakeLists.txt"),
@@ -876,13 +950,13 @@ impl ProjectAnalyzer {
             ("vite", "vite.config.js"),
             ("docker", "Dockerfile"),
         ];
-        
+
         for (tool, file) in build_files {
             if self.path.join(file).exists() {
                 tools.push(tool.to_string());
             }
         }
-        
+
         Ok(tools)
     }
 }

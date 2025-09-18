@@ -7,7 +7,7 @@
 use crate::ai::knowledge::compression::CompressedString;
 use crate::ai::knowledge::schema::*;
 use std::collections::HashMap;
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 /// Create comprehensive language-specific pattern libraries
 pub fn create_language_specific_libraries() -> HashMap<SourceLanguage, LanguageKnowledge> {

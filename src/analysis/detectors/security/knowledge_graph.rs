@@ -13,9 +13,7 @@
 //! - **Security Information**: Vulnerabilities, anti-patterns, correlations
 //! - **Long-Term Memory**: Historical analysis results and patterns
 
-use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType,
-};
+use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType};
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use serde::{Deserialize, Serialize};
@@ -293,7 +291,10 @@ impl SemanticGraph {
         Ok(())
     }
 
-    pub async fn query(&self, _query: &SecurityQuery) -> Result<SemanticQueryResult, AnalysisError> {
+    pub async fn query(
+        &self,
+        _query: &SecurityQuery,
+    ) -> Result<SemanticQueryResult, AnalysisError> {
         // TODO: Implement semantic querying
         Ok(SemanticQueryResult {
             insights: Vec::new(),

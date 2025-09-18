@@ -3,10 +3,15 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
-use uveddi::plugins::SecurityPolicy;
-use uveddi::{analysis::AnalysisEngine, plugins::{WasmPluginEngine, PluginRegistry}};
-use uveddi::plugins::{Permission, PluginManifest, PluginVerifier, AstDataPlane, PluginLifecycleManager};
 use uveddi::ast::{AstNode, Position};
+use uveddi::plugins::SecurityPolicy;
+use uveddi::plugins::{
+    AstDataPlane, Permission, PluginLifecycleManager, PluginManifest, PluginVerifier,
+};
+use uveddi::{
+    analysis::AnalysisEngine,
+    plugins::{PluginRegistry, WasmPluginEngine},
+};
 
 #[cfg(feature = "wasm-plugins")]
 mod wasm_plugin_tests {

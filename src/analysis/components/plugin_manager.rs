@@ -3,7 +3,6 @@
 //! Manages WASM plugins using an actor-based architecture for better isolation
 //! and non-blocking operation.
 
-use async_trait::async_trait;
 use super::config_service::ConfigurationService;
 use super::traits::{
     ConfigurationService as ConfigurationServiceTrait, PluginCommand,
@@ -13,6 +12,7 @@ use crate::analysis::AnalysisDetector;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use crate::plugins::WasmPluginEngine;
+use async_trait::async_trait;
 
 use crate::core::logging::{error, info, warn};
 use std::collections::HashMap;
@@ -273,9 +273,9 @@ impl PluginManager {
                         source: std::sync::Arc::new(source_content),
                         custom_ast: std::sync::Arc::new(None),
                         modified_at: std::fs::metadata(&source_file_path)
-                                .and_then(|m| m.modified())
-                                .unwrap_or_else(|_| std::time::SystemTime::now())
-                                .into(),
+                            .and_then(|m| m.modified())
+                            .unwrap_or_else(|_| std::time::SystemTime::now())
+                            .into(),
                     };
 
                     // Execute the plugin through the adapter

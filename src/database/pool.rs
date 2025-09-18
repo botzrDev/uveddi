@@ -80,7 +80,7 @@ impl PooledConnection {
 
     fn is_expired(&self, config: &PoolConfig) -> bool {
         let now = Instant::now();
-        
+
         // Check max lifetime
         if now.duration_since(self.created_at) > config.max_lifetime {
             return true;
@@ -110,7 +110,7 @@ impl DatabasePool {
     pub fn new(db_path: Option<&Path>, config: PoolConfig) -> Result<Self> {
         let db_path = db_path.map(|p| p.to_path_buf());
         let semaphore = Arc::new(Semaphore::new(config.max_connections));
-        
+
         Ok(Self {
             db_path,
             connections: Arc::new(Mutex::new(Vec::new())),
@@ -122,17 +122,15 @@ impl DatabasePool {
     /// Get a connection from the pool
     pub async fn get_connection(&self) -> Result<PooledConnection> {
         // Acquire permit from semaphore (blocks if pool is full)
-        let _permit = self.semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire connection permit: {}", e)))?;
+        let _permit = self.semaphore.clone().acquire_owned().await.map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire connection permit: {}", e))
+        })?;
 
         // Try to get existing connection
         if let Ok(mut connections) = self.connections.lock() {
             // Remove expired connections
             connections.retain(|conn| !conn.is_expired(&self.config));
-            
+
             // Return available connection
             if let Some(conn) = connections.pop() {
                 return Ok(conn);
@@ -151,14 +149,16 @@ impl DatabasePool {
         };
 
         // Configure connection for performance
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             PRAGMA journal_mode = WAL;
             PRAGMA synchronous = NORMAL;
             PRAGMA cache_size = 10000;
             PRAGMA temp_store = MEMORY;
             PRAGMA mmap_size = 268435456;
             PRAGMA foreign_keys = ON;
-        ")?;
+        ",
+        )?;
 
         Ok(PooledConnection::new(conn))
     }
@@ -176,7 +176,8 @@ impl DatabasePool {
 
     /// Get pool statistics
     pub fn stats(&self) -> PoolStats {
-        let available_connections = self.connections
+        let available_connections = self
+            .connections
             .lock()
             .map(|conns| conns.len())
             .unwrap_or(0);
@@ -220,7 +221,7 @@ impl PooledDatabase {
     pub fn new(db_path: Option<&Path>, config: Option<PoolConfig>) -> Result<Self> {
         let config = config.unwrap_or_default();
         let pool = Arc::new(DatabasePool::new(db_path, config)?);
-        
+
         Ok(Self { pool })
     }
 
@@ -281,7 +282,7 @@ mod tests {
 
         let db = PooledDatabase::new(None, Some(config)).unwrap();
         let stats = db.pool_stats();
-        
+
         assert_eq!(stats.max_connections, 5);
         assert_eq!(stats.active_connections, 0);
     }
@@ -289,12 +290,14 @@ mod tests {
     #[tokio::test]
     async fn test_connection_execution() {
         let db = PooledDatabase::new(None, None).unwrap();
-        
-        let result = db.with_connection(|conn| {
-            conn.execute_batch("CREATE TABLE test (id INTEGER PRIMARY KEY)")?;
-            conn.execute("INSERT INTO test (id) VALUES (?)", [1])?;
-            Ok(())
-        }).await;
+
+        let result = db
+            .with_connection(|conn| {
+                conn.execute_batch("CREATE TABLE test (id INTEGER PRIMARY KEY)")?;
+                conn.execute("INSERT INTO test (id) VALUES (?)", [1])?;
+                Ok(())
+            })
+            .await;
 
         assert!(result.is_ok());
     }
@@ -308,23 +311,29 @@ mod tests {
         db.with_connection(|conn| {
             conn.execute_batch("CREATE TABLE concurrent_test (id INTEGER PRIMARY KEY)")?;
             Ok(())
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
         let handle1 = tokio::spawn(async move {
             for i in 0..5 {
-                let _ = db.with_connection(|conn| {
-                    conn.execute("INSERT INTO concurrent_test (id) VALUES (?)", [i])?;
-                    Ok(())
-                }).await;
+                let _ = db
+                    .with_connection(|conn| {
+                        conn.execute("INSERT INTO concurrent_test (id) VALUES (?)", [i])?;
+                        Ok(())
+                    })
+                    .await;
             }
         });
 
         let handle2 = tokio::spawn(async move {
             for i in 5..10 {
-                let _ = db_clone.with_connection(|conn| {
-                    conn.execute("INSERT INTO concurrent_test (id) VALUES (?)", [i])?;
-                    Ok(())
-                }).await;
+                let _ = db_clone
+                    .with_connection(|conn| {
+                        conn.execute("INSERT INTO concurrent_test (id) VALUES (?)", [i])?;
+                        Ok(())
+                    })
+                    .await;
             }
         });
 

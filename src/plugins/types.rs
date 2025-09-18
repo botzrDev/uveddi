@@ -7,9 +7,9 @@ use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::component::ResourceTable;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::{WasiView, WasiCtxView};
-#[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::WasiP1Ctx;
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::{WasiCtxView, WasiView};
 
 /// Unique identifier for a plugin instance
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

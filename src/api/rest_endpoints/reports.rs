@@ -3,7 +3,7 @@
 use crate::api::rest::AppState;
 use crate::database::Database;
 use crate::report::interactive_models::*;
-use crate::{security, error::UveddiError};
+use crate::{error::UveddiError, security};
 use axum::{
     extract::{Path as AxumPath, State},
     http::StatusCode,
@@ -39,7 +39,9 @@ struct TaintFlow {
 }
 
 /// List all available reports
-pub async fn list_reports(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, StatusCode> {
+pub async fn list_reports(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
     // Load reports from database
     match list_reports_from_database(&state.database).await {
         Ok(reports) => {
@@ -99,7 +101,7 @@ pub async fn get_report(
             error!("Report ID must be numeric or 'demo': {}", report_id);
             return Err(StatusCode::BAD_REQUEST);
         }
-        
+
         // Additional numeric validation for bounds checking
         if let Ok(id_num) = report_id.parse::<i64>() {
             if id_num < 0 || id_num > i32::MAX as i64 {
@@ -142,21 +144,30 @@ pub async fn get_dependency_graph(
 ) -> Result<impl IntoResponse, StatusCode> {
     // Enhanced input validation for report ID
     if let Err(e) = security::validate_input(&report_id, "report_id") {
-        error!("Invalid report ID parameter in dependency graph request: {}", e);
+        error!(
+            "Invalid report ID parameter in dependency graph request: {}",
+            e
+        );
         return Err(StatusCode::BAD_REQUEST);
     }
 
     // Validate report ID format
     if report_id != "demo" {
         if let Err(_) = report_id.parse::<i64>() {
-            error!("Report ID must be numeric or 'demo' for dependency graph: {}", report_id);
+            error!(
+                "Report ID must be numeric or 'demo' for dependency graph: {}",
+                report_id
+            );
             return Err(StatusCode::BAD_REQUEST);
         }
-        
+
         // Additional numeric validation
         if let Ok(id_num) = report_id.parse::<i64>() {
             if id_num < 0 || id_num > i32::MAX as i64 {
-                error!("Report ID out of valid range for dependency graph: {}", id_num);
+                error!(
+                    "Report ID out of valid range for dependency graph: {}",
+                    id_num
+                );
                 return Err(StatusCode::BAD_REQUEST);
             }
         }
@@ -279,17 +290,21 @@ fn create_security_analysis_from_issues(
 
         // Update OWASP coverage stats
         let owasp_key = format!("{:?}", issue.issue_type);
-        let entry = owasp_coverage.entry(owasp_key).or_insert(OwaspCategoryStats {
-            issues_found: 0,
-            coverage_percentage: 0.0,
-            avg_confidence: 0.0,
-            severity_distribution: std::collections::HashMap::new(),
-        });
+        let entry = owasp_coverage
+            .entry(owasp_key)
+            .or_insert(OwaspCategoryStats {
+                issues_found: 0,
+                coverage_percentage: 0.0,
+                avg_confidence: 0.0,
+                severity_distribution: std::collections::HashMap::new(),
+            });
         entry.issues_found += 1;
 
         // Update confidence distribution
         let confidence_bucket = ((issue.confidence_score * 10.0).floor() / 10.0 * 100.0) as u32;
-        *confidence_distribution.entry(confidence_bucket).or_insert(0) += 1;
+        *confidence_distribution
+            .entry(confidence_bucket)
+            .or_insert(0) += 1;
 
         // Update issue type stats
         let issue_type = format!("{:?}", issue.issue_type);
@@ -303,12 +318,13 @@ fn create_security_analysis_from_issues(
     severity_distribution.insert("low".to_string(), low_count);
 
     // Convert issue_type_stats to IssueTypeStats vector
-    let most_common_issues = issue_type_stats.into_iter()
-        .map(|(issue_type, count)| IssueTypeStats { 
-            issue_type, 
+    let most_common_issues = issue_type_stats
+        .into_iter()
+        .map(|(issue_type, count)| IssueTypeStats {
+            issue_type,
             count: count as u32,
             avg_severity: "Medium".to_string(), // Default severity
-            avg_confidence: 0.8, // Default confidence
+            avg_confidence: 0.8,                // Default confidence
         })
         .collect();
 
@@ -316,7 +332,8 @@ fn create_security_analysis_from_issues(
     let security_score = if total_issues == 0 {
         100.0
     } else {
-        let weight = (critical_count * 10 + high_count * 7 + medium_count * 5 + low_count * 2) as f64;
+        let weight =
+            (critical_count * 10 + high_count * 7 + medium_count * 5 + low_count * 2) as f64;
         let max_weight = total_issues as f64 * 10.0;
         100.0 - (weight / max_weight * 100.0).min(100.0)
     };
@@ -338,34 +355,40 @@ fn create_security_analysis_from_issues(
             most_common_issues,
             security_score,
         },
-        issues: security_issues.iter().map(|issue| {
-            SecurityIssue {
-                id: issue.id.clone().unwrap_or_else(|| "unknown".to_string()),
-                issue_type: format!("{:?}", issue.issue_type),
-                severity: issue.severity.to_string(),
-                confidence_score: issue.confidence_score,
-                location: SecurityLocation {
-                    file: issue.location.file_path.to_string_lossy().to_string(),
-                    start_line: issue.location.start_line as u32,
-                    end_line: issue.location.end_line as u32,
-                    start_column: Some(issue.location.start_column.unwrap_or(0) as u32),
-                    end_column: Some(issue.location.end_column.unwrap_or(0) as u32),
-                    code_snippet: None, // This field might be required, setting to None for now
-                },
-                description: issue.description.clone(),
-                remediation: issue.remediation.clone().unwrap_or_else(|| "No remediation available".to_string()),
-                owasp_category: Some(format!("{:?}", issue.issue_type)),
-                cwe_id: None,
-                cvss_score: None,
-                references: Vec::new(),
-                related_taint_flows: Vec::new(),
-                attack_vector: None,
-            }
-        }).collect(),
+        issues: security_issues
+            .iter()
+            .map(|issue| {
+                SecurityIssue {
+                    id: issue.id.clone().unwrap_or_else(|| "unknown".to_string()),
+                    issue_type: format!("{:?}", issue.issue_type),
+                    severity: issue.severity.to_string(),
+                    confidence_score: issue.confidence_score,
+                    location: SecurityLocation {
+                        file: issue.location.file_path.to_string_lossy().to_string(),
+                        start_line: issue.location.start_line as u32,
+                        end_line: issue.location.end_line as u32,
+                        start_column: Some(issue.location.start_column.unwrap_or(0) as u32),
+                        end_column: Some(issue.location.end_column.unwrap_or(0) as u32),
+                        code_snippet: None, // This field might be required, setting to None for now
+                    },
+                    description: issue.description.clone(),
+                    remediation: issue
+                        .remediation
+                        .clone()
+                        .unwrap_or_else(|| "No remediation available".to_string()),
+                    owasp_category: Some(format!("{:?}", issue.issue_type)),
+                    cwe_id: None,
+                    cvss_score: None,
+                    references: Vec::new(),
+                    related_taint_flows: Vec::new(),
+                    attack_vector: None,
+                }
+            })
+            .collect(),
         owasp_coverage,
-        taint_flows: Vec::new(), // TODO: Implement if needed
+        taint_flows: Vec::new(),  // TODO: Implement if needed
         correlations: Vec::new(), // TODO: Implement correlations with architectural issues
-        compliance: None, // TODO: Implement compliance status
+        compliance: None,         // TODO: Implement compliance status
     }
 }
 
@@ -743,30 +766,28 @@ fn create_demo_security_analysis() -> crate::report::interactive_models::Securit
             ],
             security_score: 75.0,
         },
-        issues: vec![
-            SecurityIssue {
-                id: "sec-001".to_string(),
-                issue_type: "SQLInjection".to_string(),
-                severity: "high".to_string(),
-                confidence_score: 0.94,
-                location: SecurityLocation {
-                    file: "src/database.rs".to_string(),
-                    start_line: 67,
-                    end_line: 67,
-                    start_column: Some(15),
-                    end_column: Some(50),
-                    code_snippet: None,
-                },
-                description: "User input is directly concatenated into SQL queries".to_string(),
-                remediation: "Use parameterized queries".to_string(),
-                owasp_category: Some("A03_Injection".to_string()),
-                cwe_id: None,
-                cvss_score: None,
-                references: vec!["https://owasp.org/Top10/A03_2021-Injection/".to_string()],
-                related_taint_flows: Vec::new(),
-                attack_vector: None,
+        issues: vec![SecurityIssue {
+            id: "sec-001".to_string(),
+            issue_type: "SQLInjection".to_string(),
+            severity: "high".to_string(),
+            confidence_score: 0.94,
+            location: SecurityLocation {
+                file: "src/database.rs".to_string(),
+                start_line: 67,
+                end_line: 67,
+                start_column: Some(15),
+                end_column: Some(50),
+                code_snippet: None,
             },
-        ],
+            description: "User input is directly concatenated into SQL queries".to_string(),
+            remediation: "Use parameterized queries".to_string(),
+            owasp_category: Some("A03_Injection".to_string()),
+            cwe_id: None,
+            cvss_score: None,
+            references: vec!["https://owasp.org/Top10/A03_2021-Injection/".to_string()],
+            related_taint_flows: Vec::new(),
+            attack_vector: None,
+        }],
         owasp_coverage,
         taint_flows: vec![],
         correlations: Vec::new(),

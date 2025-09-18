@@ -9,8 +9,7 @@ use crate::analysis::AnalysisEngine;
 use crate::database::crud::Database;
 use crate::error::UveddiError;
 use crate::plugins::{
-    HostContext, HostContextFactory, PluginId, PluginManifest, 
-    SecurityPolicy, WasmPluginEngine
+    HostContext, HostContextFactory, PluginId, PluginManifest, SecurityPolicy, WasmPluginEngine,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -83,12 +82,14 @@ impl ApplicationPluginManager {
         config: Option<PluginManagerConfig>,
     ) -> Result<Self, UveddiError> {
         let config = config.unwrap_or_default();
-        
+
         // Check if WASM plugins are enabled
         let (plugin_engine, enabled) = match WasmPluginEngine::with_config(
             &config.plugins_directory,
             config.default_security_policy.clone(),
-        ).await {
+        )
+        .await
+        {
             Ok(engine) => (Some(engine), true),
             Err(e) => {
                 warn!("WASM plugin engine not available: {}", e);
@@ -128,56 +129,78 @@ impl ApplicationPluginManager {
             });
         }
 
-        info!("Installing plugin from {} and {}", binary_path.display(), manifest_path.display());
+        info!(
+            "Installing plugin from {} and {}",
+            binary_path.display(),
+            manifest_path.display()
+        );
 
         // Read and validate binary
         let binary = tokio::fs::read(binary_path).await.map_err(|e| {
-            UveddiError::io_error("read plugin binary", binary_path.to_string_lossy().as_ref(), e)
+            UveddiError::io_error(
+                "read plugin binary",
+                binary_path.to_string_lossy().as_ref(),
+                e,
+            )
         })?;
 
         // Read and parse manifest
-        let manifest_content = tokio::fs::read_to_string(manifest_path).await.map_err(|e| {
-            UveddiError::io_error("read plugin manifest", manifest_path.to_string_lossy().as_ref(), e)
-        })?;
+        let manifest_content = tokio::fs::read_to_string(manifest_path)
+            .await
+            .map_err(|e| {
+                UveddiError::io_error(
+                    "read plugin manifest",
+                    manifest_path.to_string_lossy().as_ref(),
+                    e,
+                )
+            })?;
 
-        let manifest: PluginManifest = toml::from_str(&manifest_content).map_err(|e| {
-            UveddiError::PluginError {
+        let manifest: PluginManifest =
+            toml::from_str(&manifest_content).map_err(|e| UveddiError::PluginError {
                 plugin: "unknown".to_string(),
                 plugin_type: "WASM".to_string(),
                 message: format!("Invalid manifest format: {}", e),
                 suggestion: "Check TOML syntax and required fields".to_string(),
-                source: Some(crate::plugins::errors::PluginError::Configuration(e.to_string())),
-            }
-        })?;
+                source: Some(crate::plugins::errors::PluginError::Configuration(
+                    e.to_string(),
+                )),
+            })?;
 
         // Validate plugin constraints
         self.validate_plugin_constraints(&manifest)?;
 
         // Set plugin status to loading
         let plugin_id = PluginId::from_name(&manifest.name);
-        self.set_plugin_status(plugin_id.clone(), PluginStatus::Loading).await;
+        self.set_plugin_status(plugin_id.clone(), PluginStatus::Loading)
+            .await;
 
         // Get plugin engine
-        let engine = self.plugin_engine.as_mut().ok_or_else(|| {
-            UveddiError::PluginError {
+        let engine = self
+            .plugin_engine
+            .as_mut()
+            .ok_or_else(|| UveddiError::PluginError {
                 plugin: manifest.name.clone(),
                 plugin_type: "WASM".to_string(),
                 message: "Plugin engine not available".to_string(),
                 suggestion: "Ensure WASM plugins are enabled".to_string(),
                 source: None,
-            }
-        })?;
+            })?;
 
         // Install plugin in engine
         match engine.install_plugin(manifest.clone(), binary).await {
             Ok(installed_id) => {
-                info!("Successfully installed plugin '{}' with ID: {}", manifest.name, installed_id);
-                self.set_plugin_status(plugin_id.clone(), PluginStatus::Ready).await;
+                info!(
+                    "Successfully installed plugin '{}' with ID: {}",
+                    manifest.name, installed_id
+                );
+                self.set_plugin_status(plugin_id.clone(), PluginStatus::Ready)
+                    .await;
                 Ok(installed_id)
             }
             Err(e) => {
                 error!("Failed to install plugin '{}': {}", manifest.name, e);
-                self.set_plugin_status(plugin_id.clone(), PluginStatus::Error(e.to_string())).await;
+                self.set_plugin_status(plugin_id.clone(), PluginStatus::Error(e.to_string()))
+                    .await;
                 Err(e.into())
             }
         }
@@ -198,21 +221,23 @@ impl ApplicationPluginManager {
         info!("Uninstalling plugin: {}", plugin_id);
 
         // Get plugin engine
-        let engine = self.plugin_engine.as_mut().ok_or_else(|| {
-            UveddiError::PluginError {
+        let engine = self
+            .plugin_engine
+            .as_mut()
+            .ok_or_else(|| UveddiError::PluginError {
                 plugin: plugin_id.to_string(),
                 plugin_type: "WASM".to_string(),
                 message: "Plugin engine not available".to_string(),
                 suggestion: "Ensure WASM plugins are enabled".to_string(),
                 source: None,
-            }
-        })?;
+            })?;
 
         // Uninstall plugin
         match engine.uninstall_plugin(plugin_id).await {
             Ok(_) => {
                 info!("Successfully uninstalled plugin: {}", plugin_id);
-                self.set_plugin_status(plugin_id.clone(), PluginStatus::NotLoaded).await;
+                self.set_plugin_status(plugin_id.clone(), PluginStatus::NotLoaded)
+                    .await;
                 Ok(())
             }
             Err(e) => {
@@ -229,29 +254,39 @@ impl ApplicationPluginManager {
         }
 
         let status_map = self.plugin_status.read().await;
-        Ok(status_map.iter().map(|(id, status)| (id.clone(), status.clone())).collect())
+        Ok(status_map
+            .iter()
+            .map(|(id, status)| (id.clone(), status.clone()))
+            .collect())
     }
 
     /// Get plugin information
-    pub async fn get_plugin_info(&self, plugin_id: &PluginId) -> Result<Option<PluginInfo>, UveddiError> {
+    pub async fn get_plugin_info(
+        &self,
+        plugin_id: &PluginId,
+    ) -> Result<Option<PluginInfo>, UveddiError> {
         if !self.enabled {
             return Ok(None);
         }
 
-        let engine = self.plugin_engine.as_ref().ok_or_else(|| {
-            UveddiError::PluginError {
+        let engine = self
+            .plugin_engine
+            .as_ref()
+            .ok_or_else(|| UveddiError::PluginError {
                 plugin: plugin_id.to_string(),
                 plugin_type: "WASM".to_string(),
                 message: "Plugin engine not available".to_string(),
                 suggestion: "Ensure WASM plugins are enabled".to_string(),
                 source: None,
-            }
-        })?;
+            })?;
 
         // Get plugin status
         let status = {
             let status_map = self.plugin_status.read().await;
-            status_map.get(plugin_id).cloned().unwrap_or(PluginStatus::NotLoaded)
+            status_map
+                .get(plugin_id)
+                .cloned()
+                .unwrap_or(PluginStatus::NotLoaded)
         };
 
         // Try to get plugin stats from engine
@@ -267,17 +302,27 @@ impl ApplicationPluginManager {
 
     /// Create a host context for a plugin
     pub fn create_host_context(&self, plugin_id: PluginId) -> HostContext {
-        self.host_context_factory.create_context(
-            plugin_id, 
-            self.config.default_security_policy.clone()
-        )
+        self.host_context_factory
+            .create_context(plugin_id, self.config.default_security_policy.clone())
     }
 
     /// Enable/disable a plugin
-    pub async fn set_plugin_enabled(&mut self, plugin_id: &PluginId, enabled: bool) -> Result<(), UveddiError> {
-        let new_status = if enabled { PluginStatus::Ready } else { PluginStatus::Disabled };
+    pub async fn set_plugin_enabled(
+        &mut self,
+        plugin_id: &PluginId,
+        enabled: bool,
+    ) -> Result<(), UveddiError> {
+        let new_status = if enabled {
+            PluginStatus::Ready
+        } else {
+            PluginStatus::Disabled
+        };
         self.set_plugin_status(plugin_id.clone(), new_status).await;
-        info!("Plugin {} {}", plugin_id, if enabled { "enabled" } else { "disabled" });
+        info!(
+            "Plugin {} {}",
+            plugin_id,
+            if enabled { "enabled" } else { "disabled" }
+        );
         Ok(())
     }
 

@@ -107,16 +107,19 @@ impl HostFunctions {
 
         // For now, we'll use a simplified approach since we need to create an AstParser
         // In a full implementation, this would use the analysis engine's AST provider
-        
+
         // Create a temporary file path for caching
-        let temp_path = format!("plugin_temp_{}.{}", self.context.plugin_id, 
-                              match language {
-                                  "rust" => "rs",
-                                  "python" => "py",
-                                  "javascript" => "js",
-                                  "typescript" => "ts",
-                                  _ => "txt",
-                              });
+        let temp_path = format!(
+            "plugin_temp_{}.{}",
+            self.context.plugin_id,
+            match language {
+                "rust" => "rs",
+                "python" => "py",
+                "javascript" => "js",
+                "typescript" => "ts",
+                _ => "txt",
+            }
+        );
 
         // Create a simple parsed file structure
         // TODO: In full implementation, this would use AstParser::parse_content
@@ -155,7 +158,10 @@ impl HostFunctions {
     }
 
     /// Get analysis context for a specific file
-    pub async fn get_analysis_context(&self, file_path: &str) -> Result<AnalysisContext, PluginError> {
+    pub async fn get_analysis_context(
+        &self,
+        file_path: &str,
+    ) -> Result<AnalysisContext, PluginError> {
         // Check permission
         self.context.check_permission(Permission::ConfigRead)?;
 
@@ -181,7 +187,7 @@ impl HostFunctions {
             // Try to determine language from file extension
             let language = match Path::new(file_path).extension().and_then(|e| e.to_str()) {
                 Some("rs") => "rust",
-                Some("py") => "python", 
+                Some("py") => "python",
                 Some("js") => "javascript",
                 Some("ts") => "typescript",
                 _ => "unknown",
@@ -195,12 +201,19 @@ impl HostFunctions {
                 metadata: HashMap::new(),
             })
         } else {
-            Err(PluginError::Execution(format!("File not found: {}", file_path)))
+            Err(PluginError::Execution(format!(
+                "File not found: {}",
+                file_path
+            )))
         }
     }
 
     /// Store plugin analysis results in the database
-    pub async fn store_plugin_results(&self, results: &[PluginIssue], analysis_run_id: i32) -> Result<(), PluginError> {
+    pub async fn store_plugin_results(
+        &self,
+        results: &[PluginIssue],
+        analysis_run_id: i32,
+    ) -> Result<(), PluginError> {
         // Check permission
         self.context.check_permission(Permission::TempFileCreate)?;
 
@@ -241,7 +254,11 @@ impl HostFunctions {
         //     .store_issues(&issues)
         //     .map_err(|e| PluginError::Execution(format!("Database storage failed: {}", e)))?;
 
-        debug!("Successfully stored {} issues from plugin {}", issues.len(), self.context.plugin_id);
+        debug!(
+            "Successfully stored {} issues from plugin {}",
+            issues.len(),
+            self.context.plugin_id
+        );
         Ok(())
     }
 
@@ -278,7 +295,7 @@ impl HostFunctions {
     pub fn log_message(&self, level: LogLevel, message: &str) -> Result<(), PluginError> {
         // Basic logging permission (usually allowed for all plugins)
         let plugin_id = &self.context.plugin_id;
-        
+
         match level {
             LogLevel::Debug => debug!("[Plugin {}] {}", plugin_id, message),
             LogLevel::Info => info!("[Plugin {}] {}", plugin_id, message),
@@ -322,15 +339,22 @@ impl HostFunctions {
 
         // Get cached AST
         let cache = self.context.ast_cache.read().await;
-        let parsed_file = cache.get(file_path)
-            .ok_or_else(|| PluginError::Execution(format!("File not in AST cache: {}", file_path)))?;
+        let parsed_file = cache.get(file_path).ok_or_else(|| {
+            PluginError::Execution(format!("File not in AST cache: {}", file_path))
+        })?;
 
         // Execute tree-sitter query
         match self.execute_query_on_ast(parsed_file, query) {
             Ok(matches) => Ok(matches),
             Err(e) => {
-                error!("Tree-sitter query failed for plugin {}: {}", self.context.plugin_id, e);
-                Err(PluginError::Execution(format!("Query execution failed: {}", e)))
+                error!(
+                    "Tree-sitter query failed for plugin {}: {}",
+                    self.context.plugin_id, e
+                );
+                Err(PluginError::Execution(format!(
+                    "Query execution failed: {}",
+                    e
+                )))
             }
         }
     }
@@ -344,13 +368,13 @@ impl HostFunctions {
         // This would integrate with tree-sitter query execution
         // For now, return empty results as placeholder
         debug!("Executing tree-sitter query: {}", query_str);
-        
+
         // TODO: Implement actual tree-sitter query execution
         // This would require:
         // 1. Parse the query string using tree-sitter-query
         // 2. Execute the query against the AST
         // 3. Convert results to QueryMatch format
-        
+
         Ok(Vec::new()) // Placeholder
     }
 }
@@ -441,26 +465,23 @@ pub struct PluginIssue {
 #[cfg(feature = "wasm-plugins")]
 pub trait HostFunctionLinker {
     /// Register all host functions with the Wasmtime linker
-    fn register_host_functions(
-        &mut self,
-        host_context: HostContext,
-    ) -> Result<(), PluginError>;
+    fn register_host_functions(&mut self, host_context: HostContext) -> Result<(), PluginError>;
 }
 
 #[cfg(feature = "wasm-plugins")]
 impl HostFunctionLinker for wasmtime::Linker<HostContext> {
-    fn register_host_functions(
-        &mut self,
-        host_context: HostContext,
-    ) -> Result<(), PluginError> {
-        info!("Registering host functions for plugin: {}", host_context.plugin_id);
+    fn register_host_functions(&mut self, host_context: HostContext) -> Result<(), PluginError> {
+        info!(
+            "Registering host functions for plugin: {}",
+            host_context.plugin_id
+        );
 
         // This would use the actual WIT-generated bindings
         // For now, we'll just log that registration would happen here
-        
+
         // Example of what the actual registration would look like:
         // self.func_wrap_async(
-        //     "uveddi:core", 
+        //     "uveddi:core",
         //     "parse-ast",
         //     |mut caller: Caller<'_, HostContext>, code: String, language: String| {
         //         Box::new(async move {
@@ -470,7 +491,10 @@ impl HostFunctionLinker for wasmtime::Linker<HostContext> {
         //     }
         // )?;
 
-        debug!("Host functions registered successfully for plugin: {}", host_context.plugin_id);
+        debug!(
+            "Host functions registered successfully for plugin: {}",
+            host_context.plugin_id
+        );
         Ok(())
     }
 }

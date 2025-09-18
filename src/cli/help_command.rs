@@ -30,14 +30,14 @@ impl HelpCommand {
 
     async fn show_general_help(&self) -> Result<(), UveddiError> {
         println!("{}", generate_quick_help());
-        
+
         if self.verbose {
             println!("\n🔍 Detailed Command Information:");
             println!("================================");
-            
+
             self.show_command_details().await?;
         }
-        
+
         Ok(())
     }
 
@@ -54,15 +54,19 @@ impl HelpCommand {
             println!("   • plugins        - Plugin system documentation");
             println!("   • examples       - Usage examples and tutorials");
             println!("\n📚 Use 'uveddi help <topic>' for specific help");
-            
-            return Err(UveddiError::config_error(&format!("Unknown help topic: {}", topic), "cli"));
+
+            return Err(UveddiError::config_error(
+                &format!("Unknown help topic: {}", topic),
+                "cli",
+            ));
         }
-        
+
         Ok(())
     }
 
     async fn show_command_details(&self) -> Result<(), UveddiError> {
-        println!(r#"
+        println!(
+            r#"
 📝 Analyze Command (uveddi analyze, uveddi a):
   Primary code analysis command with comprehensive options
   
@@ -123,8 +127,9 @@ impl HelpCommand {
   Usage:
     uveddi ci setup github-actions        # Generate GitHub Actions
     uveddi ci setup gitlab                # Generate GitLab CI
-"#);
-        
+"#
+        );
+
         Ok(())
     }
 }
@@ -152,7 +157,8 @@ This appears to be your first time running Uveddi. Here's how to get started:
    • Try --enable-ai for intelligent explanations (requires Ollama)
 
 🚀 Ready to analyze? Run: uveddi analyze ./your-project-path
-"#.to_string(),
+"#
+        .to_string(),
 
         "analysis_failed" => r#"
 🔧 Analysis Failed - Troubleshooting Steps:
@@ -176,7 +182,8 @@ This appears to be your first time running Uveddi. Here's how to get started:
    • Verify all source files are accessible
 
 📚 More help: uveddi help troubleshooting
-"#.to_string(),
+"#
+        .to_string(),
 
         "config_error" => r#"
 ⚙️  Configuration Issue - Quick Fixes:
@@ -201,23 +208,24 @@ This appears to be your first time running Uveddi. Here's how to get started:
    • Conflicting environment variables
 
 📚 More help: uveddi help configuration
-"#.to_string(),
+"#
+        .to_string(),
 
-        _ => generate_quick_help()
+        _ => generate_quick_help(),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_contextual_help() {
         let help = generate_contextual_help("first_run");
         assert!(help.contains("Welcome to Uveddi"));
         assert!(help.contains("doctor"));
     }
-    
+
     #[test]
     fn test_help_command_creation() {
         let help_cmd = HelpCommand {

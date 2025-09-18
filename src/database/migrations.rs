@@ -28,7 +28,7 @@ impl MigrationManager {
         let mut manager = Self {
             migrations: HashMap::new(),
         };
-        
+
         manager.add_builtin_migrations();
         manager
     }
@@ -41,21 +41,19 @@ impl MigrationManager {
     /// Get current database version
     pub fn get_current_version(&self, conn: &Connection) -> Result<u32> {
         // Create migrations table if it doesn't exist
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             CREATE TABLE IF NOT EXISTS schema_migrations (
                 version INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 applied_at TEXT NOT NULL
             );
-        ")?;
-
-        let mut stmt = conn.prepare(
-            "SELECT MAX(version) FROM schema_migrations"
+        ",
         )?;
 
-        let version = stmt.query_row([], |row| {
-            Ok(row.get::<_, Option<u32>>(0)?.unwrap_or(0))
-        })?;
+        let mut stmt = conn.prepare("SELECT MAX(version) FROM schema_migrations")?;
+
+        let version = stmt.query_row([], |row| Ok(row.get::<_, Option<u32>>(0)?.unwrap_or(0)))?;
 
         Ok(version)
     }
@@ -66,7 +64,8 @@ impl MigrationManager {
         let mut applied_versions = Vec::new();
 
         // Get all versions greater than current, sorted
-        let mut pending_versions: Vec<u32> = self.migrations
+        let mut pending_versions: Vec<u32> = self
+            .migrations
             .keys()
             .filter(|&&v| v > current_version)
             .copied()
@@ -76,12 +75,12 @@ impl MigrationManager {
         for version in pending_versions {
             if let Some(migration) = self.migrations.get(&version) {
                 info!("Applying migration {}: {}", version, migration.name);
-                
+
                 // Check if migration contains PRAGMA statements that need to run outside transaction
                 if migration.up_sql.contains("PRAGMA") {
                     // Execute PRAGMAs outside transaction
                     conn.execute_batch(&migration.up_sql)?;
-                    
+
                     // Record the migration in a separate transaction
                     let tx = conn.transaction()?;
                     tx.execute(
@@ -96,10 +95,10 @@ impl MigrationManager {
                 } else {
                     // Normal migration in transaction
                     let tx = conn.transaction()?;
-                    
+
                     // Apply the migration
                     tx.execute_batch(&migration.up_sql)?;
-                    
+
                     // Record the migration
                     tx.execute(
                         "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
@@ -109,7 +108,7 @@ impl MigrationManager {
                             chrono::Utc::now().to_rfc3339(),
                         ],
                     )?;
-                    
+
                     tx.commit()?;
                 }
                 applied_versions.push(version);
@@ -130,7 +129,8 @@ impl MigrationManager {
         }
 
         // Get all versions greater than target, sorted in reverse
-        let mut versions_to_rollback: Vec<u32> = self.migrations
+        let mut versions_to_rollback: Vec<u32> = self
+            .migrations
             .keys()
             .filter(|&&v| v > target_version && v <= current_version)
             .copied()
@@ -140,12 +140,12 @@ impl MigrationManager {
         for version in versions_to_rollback {
             if let Some(migration) = self.migrations.get(&version) {
                 warn!("Rolling back migration {}: {}", version, migration.name);
-                
+
                 // Check if rollback contains PRAGMA statements that need to run outside transaction
                 if migration.down_sql.contains("PRAGMA") {
                     // Execute PRAGMAs outside transaction
                     conn.execute_batch(&migration.down_sql)?;
-                    
+
                     // Remove migration record in a separate transaction
                     let tx = conn.transaction()?;
                     tx.execute("DELETE FROM schema_migrations WHERE version = ?", [version])?;
@@ -153,10 +153,10 @@ impl MigrationManager {
                 } else {
                     // Normal rollback in transaction
                     let tx = conn.transaction()?;
-                    
+
                     // Apply the rollback
                     tx.execute_batch(&migration.down_sql)?;
-                    
+
                     // Remove the migration record
                     tx.execute("DELETE FROM schema_migrations WHERE version = ?", [version])?;
                     tx.commit()?;
@@ -173,15 +173,14 @@ impl MigrationManager {
     pub fn get_migration_status(&self, conn: &Connection) -> Result<MigrationStatus> {
         let current_version = self.get_current_version(conn)?;
         let max_available = self.migrations.keys().max().copied().unwrap_or(0);
-        
+
         let mut applied = Vec::new();
         let mut pending = Vec::new();
 
         // Get applied migrations
-        let mut stmt = conn.prepare(
-            "SELECT version, name, applied_at FROM schema_migrations ORDER BY version"
-        )?;
-        
+        let mut stmt = conn
+            .prepare("SELECT version, name, applied_at FROM schema_migrations ORDER BY version")?;
+
         let applied_iter = stmt.query_map([], |row| {
             Ok(AppliedMigration {
                 version: row.get(0)?,
@@ -265,13 +264,15 @@ impl MigrationManager {
                 CREATE INDEX IF NOT EXISTS idx_dependencies_run_id ON dependencies(analysis_run_id);
                 CREATE INDEX IF NOT EXISTS idx_dependencies_from_file ON dependencies(from_file);
                 CREATE INDEX IF NOT EXISTS idx_dependencies_to_module ON dependencies(to_module);
-            ".to_string(),
+            "
+            .to_string(),
             down_sql: "
                 DROP INDEX IF EXISTS idx_dependencies_run_id;
                 DROP INDEX IF EXISTS idx_dependencies_from_file;
                 DROP INDEX IF EXISTS idx_dependencies_to_module;
                 DROP TABLE IF EXISTS dependencies;
-            ".to_string(),
+            "
+            .to_string(),
         });
 
         // Migration 3: Add performance optimization pragmas (v0.9.3)
@@ -285,7 +286,8 @@ impl MigrationManager {
                 PRAGMA temp_store = MEMORY;
                 PRAGMA mmap_size = 268435456;
                 PRAGMA foreign_keys = ON;
-            ".to_string(),
+            "
+            .to_string(),
             down_sql: "
                 PRAGMA journal_mode = DELETE;
                 PRAGMA synchronous = FULL;
@@ -293,7 +295,8 @@ impl MigrationManager {
                 PRAGMA temp_store = DEFAULT;
                 PRAGMA mmap_size = 0;
                 PRAGMA foreign_keys = OFF;
-            ".to_string(),
+            "
+            .to_string(),
         });
 
         // Migration 4: Add analysis statistics views (v0.9.4)
@@ -327,11 +330,13 @@ impl MigrationManager {
                     END) as avg_severity_score
                 FROM architectural_issues 
                 GROUP BY detector_name;
-            ".to_string(),
+            "
+            .to_string(),
             down_sql: "
                 DROP VIEW IF EXISTS detector_performance;
                 DROP VIEW IF EXISTS issue_summary_by_run;
-            ".to_string(),
+            "
+            .to_string(),
         });
     }
 }
@@ -381,9 +386,10 @@ impl MigrationStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn initialize_test_schema(conn: &mut Connection) {
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             CREATE TABLE IF NOT EXISTS analysis_runs (
                 run_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 project_id INTEGER NOT NULL,
@@ -421,7 +427,9 @@ mod tests {
                 path TEXT UNIQUE NOT NULL,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
-        ").unwrap();
+        ",
+        )
+        .unwrap();
     }
 
     #[test]
@@ -433,16 +441,16 @@ mod tests {
     #[test]
     fn test_migration_up() {
         let mut conn = Connection::open_in_memory().unwrap();
-        
-        // Initialize base schema first 
+
+        // Initialize base schema first
         initialize_test_schema(&mut conn);
-        
+
         let manager = MigrationManager::new();
-        
+
         // Apply all migrations
         let applied = manager.migrate_up(&mut conn).unwrap();
         assert!(applied.len() > 0);
-        
+
         // Check current version
         let version = manager.get_current_version(&mut conn).unwrap();
         let max_version = manager.migrations.keys().max().copied().unwrap();
@@ -452,20 +460,20 @@ mod tests {
     #[test]
     fn test_migration_down() {
         let mut conn = Connection::open_in_memory().unwrap();
-        
-        // Initialize base schema first 
+
+        // Initialize base schema first
         initialize_test_schema(&mut conn);
-        
+
         let manager = MigrationManager::new();
-        
+
         // Apply all migrations
         let _applied = manager.migrate_up(&mut conn).unwrap();
         let initial_version = manager.get_current_version(&mut conn).unwrap();
-        
+
         // Roll back to version 2
         let rolled_back = manager.migrate_down(&mut conn, 2).unwrap();
         assert!(rolled_back.len() > 0);
-        
+
         let current_version = manager.get_current_version(&mut conn).unwrap();
         assert_eq!(current_version, 2);
         assert!(current_version < initial_version);
@@ -474,18 +482,18 @@ mod tests {
     #[test]
     fn test_migration_status() {
         let mut conn = Connection::open_in_memory().unwrap();
-        
-        // Initialize base schema first 
+
+        // Initialize base schema first
         initialize_test_schema(&mut conn);
-        
+
         let manager = MigrationManager::new();
-        
+
         // Check initial status
         let status = manager.get_migration_status(&mut conn).unwrap();
         assert_eq!(status.current_version, 0);
         assert!(status.pending.len() > 0);
         assert!(!status.is_up_to_date());
-        
+
         // Apply migrations and check again
         let _applied = manager.migrate_up(&mut conn).unwrap();
         let status = manager.get_migration_status(&mut conn).unwrap();

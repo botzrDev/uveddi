@@ -2,14 +2,14 @@
 //!
 //! This module provides end-to-end testing to validate Phase 2 implementation
 
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 #[cfg(test)]
 mod tests {
     use super::super::*;
     use tempfile::TempDir;
     use tokio::runtime::Runtime;
-    use tracing::{info, warn, debug};
+    use tracing::{debug, info, warn};
 
     #[test]
     fn test_phase2_integration_complete() {

@@ -108,15 +108,26 @@ pub enum CliArgumentType {
     Generic,
 }
 
-pub fn validate_api_request(_content_type: Option<&str>, _content_length: Option<u64>, _user_agent: Option<&str>) -> Result<(), SecurityError> {
+pub fn validate_api_request(
+    _content_type: Option<&str>,
+    _content_length: Option<u64>,
+    _user_agent: Option<&str>,
+) -> Result<(), SecurityError> {
     Ok(())
 }
 
-pub fn validate_cli_argument(_value: &str, _field_name: &str, _arg_type: CliArgumentType) -> Result<(), SecurityError> {
+pub fn validate_cli_argument(
+    _value: &str,
+    _field_name: &str,
+    _arg_type: CliArgumentType,
+) -> Result<(), SecurityError> {
     Ok(())
 }
 
-pub fn validate_config_file_path(_path: &str, _allowed_dirs: Option<&[&str]>) -> Result<std::path::PathBuf, SecurityError> {
+pub fn validate_config_file_path(
+    _path: &str,
+    _allowed_dirs: Option<&[&str]>,
+) -> Result<std::path::PathBuf, SecurityError> {
     Ok(std::path::PathBuf::from(_path))
 }
 

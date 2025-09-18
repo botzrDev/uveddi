@@ -3,11 +3,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{info, error};
+use tracing::{error, info};
 
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PerformanceBaseline {
@@ -543,8 +542,10 @@ graph TD
 
         for (diagram_type, measures) in grouped {
             let total_count: usize = measures.len();
-            let successful_measures: Vec<&RenderingMeasurement> =
-                measures.into_iter().filter(|m| m.success).collect::<Vec<&RenderingMeasurement>>(); // Explicitly collect successful measures
+            let successful_measures: Vec<&RenderingMeasurement> = measures
+                .into_iter()
+                .filter(|m| m.success)
+                .collect::<Vec<&RenderingMeasurement>>(); // Explicitly collect successful measures
 
             if !successful_measures.is_empty() {
                 let times: Vec<f64> = successful_measures

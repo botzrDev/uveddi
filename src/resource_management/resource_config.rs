@@ -1,8 +1,8 @@
 //! Resource configuration and limits management
 
+use super::error::{ResourceError, ResourceResult};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use super::error::{ResourceError, ResourceResult};
 
 /// Main resource configuration structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -185,32 +185,32 @@ impl ResourceConfig {
                 "max_memory_bytes must be greater than 0".to_string(),
             ));
         }
-        
+
         if self.memory.warning_threshold >= self.memory.critical_threshold {
             return Err(ResourceError::InvalidConfiguration(
                 "warning_threshold must be less than critical_threshold".to_string(),
             ));
         }
-        
+
         if self.memory.critical_threshold > 1.0 || self.memory.warning_threshold < 0.0 {
             return Err(ResourceError::InvalidConfiguration(
                 "thresholds must be between 0.0 and 1.0".to_string(),
             ));
         }
-        
+
         // Processing validation
         if self.processing.max_concurrent_analyses == 0 {
             return Err(ResourceError::InvalidConfiguration(
                 "max_concurrent_analyses must be greater than 0".to_string(),
             ));
         }
-        
+
         if self.processing.max_cpu_usage > 1.0 || self.processing.max_cpu_usage <= 0.0 {
             return Err(ResourceError::InvalidConfiguration(
                 "max_cpu_usage must be between 0.0 and 1.0".to_string(),
             ));
         }
-        
+
         // Degradation validation
         if self.degradation.enabled {
             let thresholds = [
@@ -218,7 +218,7 @@ impl ResourceConfig {
                 self.degradation.heavy_threshold,
                 self.degradation.emergency_threshold,
             ];
-            
+
             for i in 1..thresholds.len() {
                 if thresholds[i] <= thresholds[i - 1] {
                     return Err(ResourceError::InvalidConfiguration(
@@ -226,17 +226,17 @@ impl ResourceConfig {
                     ));
                 }
             }
-            
+
             if self.degradation.recovery_threshold >= self.degradation.light_threshold {
                 return Err(ResourceError::InvalidConfiguration(
                     "recovery_threshold must be less than light_threshold".to_string(),
                 ));
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Creates a configuration optimized for development
     pub fn development() -> Self {
         Self {
@@ -266,7 +266,7 @@ impl ResourceConfig {
                 interval_seconds: 10, // Less frequent monitoring
                 history_size: 50,
                 enable_metrics_export: false, // No metrics export in dev
-                log_usage: true, // Enable logging for development
+                log_usage: true,              // Enable logging for development
             },
             degradation: DegradationConfig {
                 enabled: true,
@@ -278,7 +278,7 @@ impl ResourceConfig {
             },
         }
     }
-    
+
     /// Creates a configuration optimized for production
     pub fn production() -> Self {
         Self {
@@ -320,7 +320,7 @@ impl ResourceConfig {
             },
         }
     }
-    
+
     /// Creates a configuration for testing with very low limits
     pub fn testing() -> Self {
         Self {
@@ -386,40 +386,40 @@ impl From<&ResourceConfig> for ResourceLimits {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_default_config_validation() {
         let config = ResourceConfig::default();
         assert!(config.validate().is_ok());
     }
-    
+
     #[test]
     fn test_development_config_validation() {
         let config = ResourceConfig::development();
         assert!(config.validate().is_ok());
     }
-    
+
     #[test]
     fn test_production_config_validation() {
         let config = ResourceConfig::production();
         assert!(config.validate().is_ok());
     }
-    
+
     #[test]
     fn test_invalid_thresholds() {
         let mut config = ResourceConfig::default();
         config.memory.warning_threshold = 0.9;
         config.memory.critical_threshold = 0.8;
-        
+
         assert!(config.validate().is_err());
     }
-    
+
     #[test]
     fn test_invalid_degradation_thresholds() {
         let mut config = ResourceConfig::default();
         config.degradation.light_threshold = 0.8;
         config.degradation.heavy_threshold = 0.7;
-        
+
         assert!(config.validate().is_err());
     }
 }

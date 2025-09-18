@@ -106,11 +106,7 @@ impl CacheSerializer {
     }
 
     /// Write serialized data directly to a writer (for streaming)
-    pub fn serialize_to_writer<T, W>(
-        &self,
-        data: &T,
-        writer: W,
-    ) -> Result<(), SerializationError>
+    pub fn serialize_to_writer<T, W>(&self, data: &T, writer: W) -> Result<(), SerializationError>
     where
         T: Serialize,
         W: Write,
@@ -176,7 +172,6 @@ impl CacheSerializer {
     }
 }
 
-
 /// Serializable cache entry with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(
@@ -208,7 +203,10 @@ impl<T> CacheEntry<T> {
     }
 
     pub fn age(&self) -> std::time::Duration {
-        self.timestamp.as_system_time().elapsed().unwrap_or_default()
+        self.timestamp
+            .as_system_time()
+            .elapsed()
+            .unwrap_or_default()
     }
 }
 

@@ -14,41 +14,35 @@ pub enum ResourceError {
         available: u64,
         limit: u64,
     },
-    
+
     /// Resource limit exceeded (non-memory)
     ResourceLimitExceeded {
         resource_type: String,
         limit: u64,
         requested: u64,
     },
-    
+
     /// Configuration is invalid
     InvalidConfiguration(String),
-    
+
     /// System resource unavailable
     ResourceUnavailable(String),
-    
+
     /// Analysis timeout
-    AnalysisTimeout {
-        duration_ms: u64,
-        timeout_ms: u64,
-    },
-    
+    AnalysisTimeout { duration_ms: u64, timeout_ms: u64 },
+
     /// File processing error
-    FileProcessingError {
-        file_path: String,
-        error: String,
-    },
-    
+    FileProcessingError { file_path: String, error: String },
+
     /// Monitoring system error
     MonitoringError(String),
-    
+
     /// Graceful degradation error
     DegradationError(String),
-    
+
     /// I/O error during resource operations
     IoError(String),
-    
+
     /// System error (from OS or runtime)
     SystemError(String),
 }
@@ -56,48 +50,59 @@ pub enum ResourceError {
 impl fmt::Display for ResourceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ResourceError::MemoryExhausted { requested, available, limit } => {
+            ResourceError::MemoryExhausted {
+                requested,
+                available,
+                limit,
+            } => {
                 write!(
                     f,
                     "Memory exhausted: requested {} bytes, available {} bytes (limit: {} bytes)",
                     requested, available, limit
                 )
-            },
-            ResourceError::ResourceLimitExceeded { resource_type, limit, requested } => {
+            }
+            ResourceError::ResourceLimitExceeded {
+                resource_type,
+                limit,
+                requested,
+            } => {
                 write!(
                     f,
                     "Resource limit exceeded for {}: requested {}, limit {}",
                     resource_type, requested, limit
                 )
-            },
+            }
             ResourceError::InvalidConfiguration(msg) => {
                 write!(f, "Invalid configuration: {}", msg)
-            },
+            }
             ResourceError::ResourceUnavailable(msg) => {
                 write!(f, "Resource unavailable: {}", msg)
-            },
-            ResourceError::AnalysisTimeout { duration_ms, timeout_ms } => {
+            }
+            ResourceError::AnalysisTimeout {
+                duration_ms,
+                timeout_ms,
+            } => {
                 write!(
                     f,
                     "Analysis timeout: took {} ms, limit {} ms",
                     duration_ms, timeout_ms
                 )
-            },
+            }
             ResourceError::FileProcessingError { file_path, error } => {
                 write!(f, "File processing error for {}: {}", file_path, error)
-            },
+            }
             ResourceError::MonitoringError(msg) => {
                 write!(f, "Monitoring error: {}", msg)
-            },
+            }
             ResourceError::DegradationError(msg) => {
                 write!(f, "Degradation error: {}", msg)
-            },
+            }
             ResourceError::IoError(msg) => {
                 write!(f, "I/O error: {}", msg)
-            },
+            }
             ResourceError::SystemError(msg) => {
                 write!(f, "System error: {}", msg)
-            },
+            }
         }
     }
 }
@@ -132,13 +137,13 @@ pub enum MemoryError {
         requested: u64,
         available: u64,
     },
-    
+
     /// Memory guard already released
     GuardReleased,
-    
+
     /// Memory tracker destroyed
     TrackerDestroyed,
-    
+
     /// Invalid allocation size
     InvalidSize(u64),
 }
@@ -146,22 +151,26 @@ pub enum MemoryError {
 impl fmt::Display for MemoryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            MemoryError::AllocationFailed { component, requested, available } => {
+            MemoryError::AllocationFailed {
+                component,
+                requested,
+                available,
+            } => {
                 write!(
                     f,
                     "Memory allocation failed for {}: requested {} bytes, available {} bytes",
                     component, requested, available
                 )
-            },
+            }
             MemoryError::GuardReleased => {
                 write!(f, "Memory guard has already been released")
-            },
+            }
             MemoryError::TrackerDestroyed => {
                 write!(f, "Memory tracker has been destroyed")
-            },
+            }
             MemoryError::InvalidSize(size) => {
                 write!(f, "Invalid allocation size: {} bytes", size)
-            },
+            }
         }
     }
 }
@@ -171,12 +180,14 @@ impl std::error::Error for MemoryError {}
 impl From<MemoryError> for ResourceError {
     fn from(err: MemoryError) -> Self {
         match err {
-            MemoryError::AllocationFailed { requested, available, .. } => {
-                ResourceError::MemoryExhausted {
-                    requested,
-                    available,
-                    limit: available + requested,
-                }
+            MemoryError::AllocationFailed {
+                requested,
+                available,
+                ..
+            } => ResourceError::MemoryExhausted {
+                requested,
+                available,
+                limit: available + requested,
             },
             _ => ResourceError::SystemError(err.to_string()),
         }
@@ -208,7 +219,7 @@ macro_rules! resource_try {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_memory_exhausted_error() {
         let error = ResourceError::MemoryExhausted {
@@ -216,13 +227,13 @@ mod tests {
             available: 500,
             limit: 2000,
         };
-        
+
         assert!(error.to_string().contains("Memory exhausted"));
         assert!(error.to_string().contains("1000"));
         assert!(error.to_string().contains("500"));
         assert!(error.to_string().contains("2000"));
     }
-    
+
     #[test]
     fn test_resource_limit_exceeded_error() {
         let error = ResourceError::ResourceLimitExceeded {
@@ -230,18 +241,18 @@ mod tests {
             limit: 100,
             requested: 150,
         };
-        
+
         assert!(error.to_string().contains("Resource limit exceeded"));
         assert!(error.to_string().contains("file_handles"));
     }
-    
+
     #[test]
     fn test_error_conversion() {
         let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
         let resource_error: ResourceError = io_error.into();
-        
+
         match resource_error {
-            ResourceError::IoError(_) => {},
+            ResourceError::IoError(_) => {}
             _ => panic!("Expected IoError variant"),
         }
     }

@@ -87,8 +87,9 @@ impl DetectorScheduler {
         let ast = self.ast_provider.get_ast(file_path).await?;
 
         // Create ParsedFile for detector execution
-        let file_content =
-            std::fs::read_to_string(file_path).map_err(|e| UveddiError::io_error("reading file for analysis", &file_path.to_string_lossy(), e))?;
+        let file_content = std::fs::read_to_string(file_path).map_err(|e| {
+            UveddiError::io_error("reading file for analysis", &file_path.to_string_lossy(), e)
+        })?;
 
         let parsed_file = crate::ast::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),

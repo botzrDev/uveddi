@@ -304,7 +304,10 @@ impl DiagramDependencyTracker {
         hot_files.sort_by(|a, b| b.1.cmp(&a.1));
 
         // Calculate dependency strength distribution
-        let strengths: Vec<f64> = deps.values().map(|d| d.dependency_strength).collect::<Vec<f64>>(); // Explicit collection of strength values
+        let strengths: Vec<f64> = deps
+            .values()
+            .map(|d| d.dependency_strength)
+            .collect::<Vec<f64>>(); // Explicit collection of strength values
         let avg_strength = if !strengths.is_empty() {
             strengths.iter().sum::<f64>() / strengths.len() as f64
         } else {
@@ -315,7 +318,10 @@ impl DiagramDependencyTracker {
             total_diagrams,
             total_files,
             avg_dependencies_per_diagram: avg_deps_per_diagram,
-            hot_files: hot_files.into_iter().take(10).collect::<Vec<(PathBuf, usize)>>(), // Top 10 hot files, explicit tuple type
+            hot_files: hot_files
+                .into_iter()
+                .take(10)
+                .collect::<Vec<(PathBuf, usize)>>(), // Top 10 hot files, explicit tuple type
             average_dependency_strength: avg_strength,
         })
     }

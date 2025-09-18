@@ -1,9 +1,9 @@
 //! CLI commands for WASM plugin management
 // NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
+use crate::core::logging::{error, info, warn};
 #[cfg(feature = "wasm-plugins")]
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
-use crate::core::logging::{error, info, warn};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
@@ -181,7 +181,10 @@ impl PluginCommand {
         Ok(())
     }
 
-    async fn uninstall_plugin(&self, _plugin_name: String) -> Result<(), crate::error::UveddiError> {
+    async fn uninstall_plugin(
+        &self,
+        _plugin_name: String,
+    ) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
             println!("Uninstalling plugin '{}'...", _plugin_name);
@@ -208,7 +211,10 @@ impl PluginCommand {
         Ok(())
     }
 
-    async fn show_plugin_info(&self, _plugin_name: String) -> Result<(), crate::error::UveddiError> {
+    async fn show_plugin_info(
+        &self,
+        _plugin_name: String,
+    ) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
             let engine = WasmPluginEngine::new().await?;

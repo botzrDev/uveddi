@@ -33,7 +33,16 @@ fn create_test_issues(run_id: i64, anti_pattern_id: i64, count: usize) -> Vec<Ar
                 Some((i + 1) as i32),
                 format!("Test issue {}", i),
                 "test_detector",
-                if i % 4 == 0 { "critical" } else if i % 3 == 0 { "high" } else if i % 2 == 0 { "medium" } else { "low" }.to_string(),
+                if i % 4 == 0 {
+                    "critical"
+                } else if i % 3 == 0 {
+                    "high"
+                } else if i % 2 == 0 {
+                    "medium"
+                } else {
+                    "low"
+                }
+                .to_string(),
                 format!("Test description for issue {}", i),
             )
         })
@@ -71,7 +80,9 @@ async fn benchmark_single_connection_vs_pooled() {
         create_test_anti_pattern_type("dead_code"),
         create_test_anti_pattern_type("tight_coupling"),
     ];
-    single_db.store_anti_pattern_types_batch(&mut anti_pattern_types).unwrap();
+    single_db
+        .store_anti_pattern_types_batch(&mut anti_pattern_types)
+        .unwrap();
 
     let issues = create_test_issues(run_id, 1, 1000);
     let mut single_db_mut = single_db;
@@ -96,20 +107,22 @@ async fn benchmark_single_connection_vs_pooled() {
     for batch in 0..10 {
         let db_clone = pooled_db.clone();
         let handle = tokio::spawn(async move {
-            let _ = db_clone.with_connection(|conn| {
-                conn.execute_batch(&format!(
+            let _ = db_clone
+                .with_connection(|conn| {
+                    conn.execute_batch(&format!(
                     "CREATE TABLE IF NOT EXISTS bench_table_{} (id INTEGER PRIMARY KEY, data TEXT)",
                     batch
                 ))?;
-                
-                for i in 0..100 {
-                    conn.execute(
-                        &format!("INSERT INTO bench_table_{} (data) VALUES (?)", batch),
-                        [format!("test_data_{}_{}", batch, i)],
-                    )?;
-                }
-                Ok(())
-            }).await;
+
+                    for i in 0..100 {
+                        conn.execute(
+                            &format!("INSERT INTO bench_table_{} (data) VALUES (?)", batch),
+                            [format!("test_data_{}_{}", batch, i)],
+                        )?;
+                    }
+                    Ok(())
+                })
+                .await;
         });
         handles.push(handle);
     }
@@ -138,7 +151,8 @@ async fn benchmark_query_performance() {
         create_test_anti_pattern_type("performance_test_2"),
         create_test_anti_pattern_type("performance_test_3"),
     ];
-    db.store_anti_pattern_types_batch(&mut anti_pattern_types).unwrap();
+    db.store_anti_pattern_types_batch(&mut anti_pattern_types)
+        .unwrap();
 
     let issues = create_test_issues(run_id, 1, 5000);
     let mut db_mut = db;
@@ -161,11 +175,14 @@ async fn benchmark_query_performance() {
 
     // Test pagination performance
     let start = Instant::now();
-    let _paginated = db_mut.get_issues_paginated(run_id, 0, 100, Some("high"), None).await.unwrap();
+    let _paginated = db_mut
+        .get_issues_paginated(run_id, 0, 100, Some("high"), None)
+        .await
+        .unwrap();
     let pagination_time = start.elapsed();
 
     println!("Paginated query time: {:?}", pagination_time);
-    
+
     // Pagination should be very fast with proper indexes
     assert!(pagination_time < Duration::from_millis(50));
 }
@@ -183,21 +200,22 @@ async fn benchmark_aggregation_queries() {
         create_test_anti_pattern_type("behavioral"),
         create_test_anti_pattern_type("creational"),
     ];
-    db.store_anti_pattern_types_batch(&mut anti_pattern_types).unwrap();
+    db.store_anti_pattern_types_batch(&mut anti_pattern_types)
+        .unwrap();
 
     // Create issues with different severities and detectors
     let mut issues = vec![];
     for i in 0..2000 {
         let severity = match i % 4 {
             0 => "critical",
-            1 => "high", 
+            1 => "high",
             2 => "medium",
             _ => "low",
         };
-        
+
         let detector = match i % 3 {
             0 => "detector_a",
-            1 => "detector_b", 
+            1 => "detector_b",
             _ => "detector_c",
         };
 
@@ -248,7 +266,9 @@ async fn benchmark_dependency_storage() {
     // Benchmark batch dependency storage
     let start = Instant::now();
     let mut db_mut = db;
-    db_mut.store_dependencies_batch(run_id, &dependencies).unwrap();
+    db_mut
+        .store_dependencies_batch(run_id, &dependencies)
+        .unwrap();
     let storage_time = start.elapsed();
 
     println!("Dependency batch storage time: {:?}", storage_time);
@@ -259,7 +279,7 @@ async fn benchmark_dependency_storage() {
     let retrieval_time = start.elapsed();
 
     println!("Dependency retrieval time: {:?}", retrieval_time);
-    
+
     // Verify results
     assert_eq!(retrieved_deps.len(), 10000);
 
@@ -280,8 +300,10 @@ async fn benchmark_concurrent_operations() {
     let pooled_db = PooledDatabase::new(None, Some(pool_config)).unwrap();
 
     // Initialize schema
-    pooled_db.with_connection(|conn| {
-        conn.execute_batch("
+    pooled_db
+        .with_connection(|conn| {
+            conn.execute_batch(
+                "
             CREATE TABLE IF NOT EXISTS projects (project_id INTEGER PRIMARY KEY, path TEXT UNIQUE);
             CREATE TABLE IF NOT EXISTS analysis_runs (
                 run_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -290,26 +312,30 @@ async fn benchmark_concurrent_operations() {
                 status TEXT NOT NULL,
                 analysis_config TEXT NOT NULL DEFAULT '{}'
             );
-        ")?;
-        Ok(())
-    }).await.unwrap();
+        ",
+            )?;
+            Ok(())
+        })
+        .await
+        .unwrap();
 
     let start = Instant::now();
-    
+
     // Simulate concurrent analysis runs
     let mut handles = vec![];
     for i in 0..20 {
         let db_clone = pooled_db.clone();
         let handle = tokio::spawn(async move {
-            let result = db_clone.with_connection_mut(|conn| {
-                // Insert project
-                conn.execute(
-                    "INSERT OR IGNORE INTO projects (path) VALUES (?)",
-                    [format!("/test/concurrent/{}", i)],
-                )?;
-                
-                // Insert analysis run
-                conn.execute(
+            let result = db_clone
+                .with_connection_mut(|conn| {
+                    // Insert project
+                    conn.execute(
+                        "INSERT OR IGNORE INTO projects (path) VALUES (?)",
+                        [format!("/test/concurrent/{}", i)],
+                    )?;
+
+                    // Insert analysis run
+                    conn.execute(
                     "INSERT INTO analysis_runs (project_id, start_time, status) VALUES (?, ?, ?)",
                     rusqlite::params![
                         1,
@@ -317,10 +343,11 @@ async fn benchmark_concurrent_operations() {
                         "completed"
                     ],
                 )?;
-                
-                Ok(conn.last_insert_rowid())
-            }).await;
-            
+
+                    Ok(conn.last_insert_rowid())
+                })
+                .await;
+
             result
         });
         handles.push(handle);
@@ -348,7 +375,7 @@ async fn benchmark_concurrent_operations() {
     assert!(concurrent_time < Duration::from_secs(10));
 }
 
-#[tokio::test] 
+#[tokio::test]
 async fn benchmark_index_effectiveness() {
     let db = Database::new(None).unwrap();
     let project_path = Path::new("/test/indexes");
@@ -360,7 +387,8 @@ async fn benchmark_index_effectiveness() {
         create_test_anti_pattern_type("index_test_1"),
         create_test_anti_pattern_type("index_test_2"),
     ];
-    db.store_anti_pattern_types_batch(&mut anti_pattern_types).unwrap();
+    db.store_anti_pattern_types_batch(&mut anti_pattern_types)
+        .unwrap();
 
     let issues = create_test_issues(run_id, 1, 50000);
     let mut db_mut = db;
@@ -370,18 +398,18 @@ async fn benchmark_index_effectiveness() {
     let test_queries = vec![
         ("severity filter", |db: &Database, run_id: i64| {
             Box::pin(async move {
-                db.get_issues_paginated(run_id, 0, 1000, Some("critical"), None).await
+                db.get_issues_paginated(run_id, 0, 1000, Some("critical"), None)
+                    .await
             })
         }),
         ("detector filter", |db: &Database, run_id: i64| {
             Box::pin(async move {
-                db.get_issues_paginated(run_id, 0, 1000, None, Some("test_detector")).await
+                db.get_issues_paginated(run_id, 0, 1000, None, Some("test_detector"))
+                    .await
             })
         }),
         ("stats aggregation", |db: &Database, run_id: i64| {
-            Box::pin(async move {
-                db.get_analysis_stats(run_id).await.map(|_| vec![])
-            })
+            Box::pin(async move { db.get_analysis_stats(run_id).await.map(|_| vec![]) })
         }),
     ];
 
@@ -389,12 +417,16 @@ async fn benchmark_index_effectiveness() {
         let start = Instant::now();
         let _result = query_fn(&db_mut, run_id).await.unwrap();
         let query_time = start.elapsed();
-        
+
         println!("{} time: {:?}", query_name, query_time);
-        
+
         // With proper indexes, even large datasets should query quickly
-        assert!(query_time < Duration::from_millis(200), 
-                "Query '{}' took too long: {:?}", query_name, query_time);
+        assert!(
+            query_time < Duration::from_millis(200),
+            "Query '{}' took too long: {:?}",
+            query_name,
+            query_time
+        );
     }
 }
 
@@ -407,12 +439,13 @@ async fn benchmark_memory_usage() {
 
     // Create test data
     let mut anti_pattern_types = vec![create_test_anti_pattern_type("memory_test")];
-    db.store_anti_pattern_types_batch(&mut anti_pattern_types).unwrap();
+    db.store_anti_pattern_types_batch(&mut anti_pattern_types)
+        .unwrap();
 
     // Test streaming vs. loading all at once
     let large_issues = create_test_issues(run_id, 1, 100000);
     let mut db_mut = db;
-    
+
     // Store in batches to avoid memory spike
     for chunk in large_issues.chunks(1000) {
         db_mut.store_issues(chunk).unwrap();
@@ -425,7 +458,10 @@ async fn benchmark_memory_usage() {
     let mut offset = 0;
 
     loop {
-        let page = db_mut.get_issues_paginated(run_id, offset, page_size, None, None).await.unwrap();
+        let page = db_mut
+            .get_issues_paginated(run_id, offset, page_size, None, None)
+            .await
+            .unwrap();
         if page.is_empty() {
             break;
         }

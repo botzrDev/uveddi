@@ -198,8 +198,14 @@ pub async fn get_security_issue(
     }
 
     // Validate issue ID format - should be alphanumeric with underscores
-    if !issue_id.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
-        error!("Security issue ID contains invalid characters: {}", issue_id);
+    if !issue_id
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+    {
+        error!(
+            "Security issue ID contains invalid characters: {}",
+            issue_id
+        );
         return Err(StatusCode::BAD_REQUEST);
     }
 
@@ -405,7 +411,9 @@ pub async fn get_taint_flows(
 }
 
 /// Export security findings in SARIF format
-pub async fn export_sarif(State(_state): State<Arc<AppState>>) -> Result<impl IntoResponse, StatusCode> {
+pub async fn export_sarif(
+    State(_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
     use axum::http::{header, HeaderMap};
 
     // SARIF 2.1.0 format implementation

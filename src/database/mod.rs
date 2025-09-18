@@ -144,7 +144,7 @@
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! # let config = DatabaseConfig::default();
 //! let migration_manager = MigrationManager::new(
-//!     config, 
+//!     config,
 //!     Some(PathBuf::from("migrations"))
 //! ).await?;
 //!
@@ -225,28 +225,33 @@ pub mod models;
 pub mod pool;
 
 // New scalability modules
-pub mod providers;
-pub mod scalable_manager;
+pub mod config_manager;
 pub mod migration_manager;
 pub mod monitoring;
-pub mod config_manager;
+pub mod providers;
+pub mod scalable_manager;
 
 // Re-export core functionality
 pub use self::crud::Database;
-pub use self::migrations::{Migration, MigrationManager as LegacyMigrationManager, MigrationStatus};
-pub use self::pool::{DatabasePool, PoolConfig, PooledDatabase, PoolStats};
+pub use self::migrations::{
+    Migration, MigrationManager as LegacyMigrationManager, MigrationStatus,
+};
+pub use self::pool::{DatabasePool, PoolConfig, PoolStats, PooledDatabase};
 
 // Re-export new scalability features
-pub use self::providers::{DatabaseConfig, DatabaseType, DatabaseProvider, create_database_provider};
-pub use self::scalable_manager::{ScalableDatabase, LoadBalancerStats};
-pub use self::migration_manager::{MigrationManager, MigrationResult, DataMigrationResult};
-pub use self::monitoring::{DatabaseMonitor, MonitoringConfig, MonitoringReport, Alert, AlertSeverity, AlertType};
-pub use self::config_manager::{DatabaseConfigManager, Environment, DatabaseConfigBuilder};
+pub use self::config_manager::{DatabaseConfigBuilder, DatabaseConfigManager, Environment};
+pub use self::migration_manager::{DataMigrationResult, MigrationManager, MigrationResult};
+pub use self::monitoring::{
+    Alert, AlertSeverity, AlertType, DatabaseMonitor, MonitoringConfig, MonitoringReport,
+};
+pub use self::providers::{
+    create_database_provider, DatabaseConfig, DatabaseProvider, DatabaseType,
+};
+pub use self::scalable_manager::{LoadBalancerStats, ScalableDatabase};
 
 // Re-export models for convenience
 pub use self::models::{
-    AnalysisRun, AntiPatternType, ArchitecturalIssue, AnalysisStats, 
-    Dependency, DependencyType
+    AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue, Dependency, DependencyType,
 };
 
 /// Database layer initialization for applications
@@ -256,13 +261,15 @@ pub use self::models::{
 pub async fn initialize_database() -> crate::error::Result<ScalableDatabase> {
     let config_manager = DatabaseConfigManager::new()?;
     config_manager.validate_config()?;
-    
+
     let config = config_manager.get_config().clone();
     let database = ScalableDatabase::new(config).await?;
-    
-    tracing::info!("Database initialized successfully with provider: {:?}", 
-                  config_manager.get_config().provider_type);
-    
+
+    tracing::info!(
+        "Database initialized successfully with provider: {:?}",
+        config_manager.get_config().provider_type
+    );
+
     Ok(database)
 }
 
@@ -273,15 +280,16 @@ pub async fn initialize_database_with_monitoring(
     monitoring_config: Option<MonitoringConfig>,
 ) -> crate::error::Result<(ScalableDatabase, monitoring::MonitoringHandle)> {
     let database = std::sync::Arc::new(initialize_database().await?);
-    
+
     let monitoring_config = monitoring_config.unwrap_or_default();
     let monitor = DatabaseMonitor::new(database.clone(), monitoring_config);
     let monitoring_handle = monitor.start_monitoring();
-    
+
     // Return the database (unwrapped from Arc) and monitoring handle
-    let database = std::sync::Arc::try_unwrap(database)
-        .map_err(|_| crate::error::UveddiError::initialization_error("Failed to unwrap database Arc"))?;
-    
+    let database = std::sync::Arc::try_unwrap(database).map_err(|_| {
+        crate::error::UveddiError::initialization_error("Failed to unwrap database Arc")
+    })?;
+
     Ok((database, monitoring_handle))
 }
 
@@ -298,33 +306,33 @@ pub fn create_config_template<P: AsRef<std::path::Path>>(
 mod tests {
     use super::*;
     use std::time::Duration;
-    
+
     #[tokio::test]
     async fn test_database_initialization() {
         let database = initialize_database().await.unwrap();
         let health = database.get_health_status().await.unwrap();
         assert!(health.is_healthy);
     }
-    
+
     #[tokio::test]
     async fn test_database_with_monitoring() {
         let (database, handle) = initialize_database_with_monitoring(None).await.unwrap();
-        
+
         let health = database.get_health_status().await.unwrap();
         assert!(health.is_healthy);
-        
+
         // Stop monitoring
         handle.stop();
     }
-    
+
     #[test]
     fn test_config_template_creation() {
         let temp_dir = tempfile::tempdir().unwrap();
         let template_path = temp_dir.path().join("database-template.toml");
-        
+
         create_config_template(&template_path).unwrap();
         assert!(template_path.exists());
-        
+
         let content = std::fs::read_to_string(template_path).unwrap();
         assert!(content.contains("[development]"));
         assert!(content.contains("[production]"));

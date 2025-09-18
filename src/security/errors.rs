@@ -11,9 +11,9 @@ pub enum SecurityError {
     // Authentication Errors
     /// Authentication failed with specific reason
     #[error("Authentication failed: {reason}")]
-    AuthenticationFailed { 
+    AuthenticationFailed {
         /// Reason for authentication failure
-        reason: String 
+        reason: String,
     },
 
     /// Invalid credentials were provided
@@ -30,27 +30,27 @@ pub enum SecurityError {
 
     /// OIDC provider error
     #[error("OIDC provider error: {provider} - {error}")]
-    OidcProviderError { 
+    OidcProviderError {
         /// Name of the OIDC provider
-        provider: String, 
+        provider: String,
         /// Error details
-        error: String 
+        error: String,
     },
 
     /// OAuth2 flow error
     #[error("OAuth2 flow error: {error}")]
-    OAuth2Error { 
+    OAuth2Error {
         /// OAuth2 error details
-        error: String 
+        error: String,
     },
 
     #[error("OAuth provider error: {provider} - {error}")]
     /// OAuth provider authentication error with provider name and error details
-    OAuthProviderError { 
+    OAuthProviderError {
         /// Name of the OAuth provider that failed
-        provider: String, 
+        provider: String,
         /// Detailed error message from the provider
-        error: String 
+        error: String,
     },
 
     // Authorization Errors
@@ -60,39 +60,39 @@ pub enum SecurityError {
 
     #[error("Permission denied for resource '{resource}' action '{action}'")]
     /// Permission denied for a specific resource and action
-    PermissionDenied { 
+    PermissionDenied {
         /// The resource that was accessed
-        resource: String, 
+        resource: String,
         /// The action that was attempted
-        action: String 
+        action: String,
     },
 
     #[error("Role '{role}' not found")]
     /// Role not found in the system
-    RoleNotFound { 
+    RoleNotFound {
         /// Name or ID of the missing role
-        role: String 
+        role: String,
     },
 
     #[error("User '{user_id}' not found")]
     /// User not found in the system
-    UserNotFound { 
+    UserNotFound {
         /// ID of the missing user
-        user_id: String 
+        user_id: String,
     },
 
     #[error("Permission '{permission}' not found")]
     /// Permission not found in the system
-    PermissionNotFound { 
+    PermissionNotFound {
         /// Name or ID of the missing permission
-        permission: String 
+        permission: String,
     },
 
     #[error("Invalid role assignment: {reason}")]
     /// Invalid role assignment with reason
-    InvalidRoleAssignment { 
+    InvalidRoleAssignment {
         /// Reason why the role assignment is invalid
-        reason: String 
+        reason: String,
     },
 
     // Rate Limiting Errors
@@ -114,33 +114,33 @@ pub enum SecurityError {
     // Configuration Errors
     #[error("Security configuration error: {message}")]
     /// Security configuration error
-    ConfigurationError { 
+    ConfigurationError {
         /// Configuration error message
-        message: String 
+        message: String,
     },
 
     #[error("Missing required configuration: {key}")]
     /// Missing required configuration key
-    MissingConfiguration { 
+    MissingConfiguration {
         /// The configuration key that is missing
-        key: String 
+        key: String,
     },
 
     #[error("Invalid configuration value for {key}: {value}")]
     /// Invalid configuration value for a key
-    InvalidConfiguration { 
+    InvalidConfiguration {
         /// The configuration key with invalid value
-        key: String, 
+        key: String,
         /// The invalid value that was provided
-        value: String 
+        value: String,
     },
 
     // Audit Logging Errors
     #[error("Audit logging failed: {reason}")]
     /// Audit logging operation failed
-    AuditLogError { 
+    AuditLogError {
         /// Reason for audit logging failure
-        reason: String 
+        reason: String,
     },
 
     #[error("Audit log integrity check failed")]
@@ -149,43 +149,43 @@ pub enum SecurityError {
 
     #[error("Audit log storage error: {error}")]
     /// Audit log storage operation failed
-    AuditStorageError { 
+    AuditStorageError {
         /// Storage error details
-        error: String 
+        error: String,
     },
 
     // Database Errors
     #[error("Database operation failed: {operation} - {error}")]
     /// Database operation failed
-    DatabaseError { 
+    DatabaseError {
         /// The database operation that failed
-        operation: String, 
+        operation: String,
         /// Error details from the database
-        error: String 
+        error: String,
     },
 
     #[error("Database connection failed: {error}")]
     /// Database connection failed
-    DatabaseConnectionError { 
+    DatabaseConnectionError {
         /// Connection error details
-        error: String 
+        error: String,
     },
 
     #[error("Database migration failed: {error}")]
     /// Database migration failed
-    DatabaseMigrationError { 
+    DatabaseMigrationError {
         /// Migration error details
-        error: String 
+        error: String,
     },
 
     // Cryptographic Errors
     #[error("Cryptographic operation failed: {operation} - {error}")]
     /// Cryptographic operation failed
-    CryptographicError { 
+    CryptographicError {
         /// The cryptographic operation that failed
-        operation: String, 
+        operation: String,
         /// Error details from the cryptographic library
-        error: String 
+        error: String,
     },
 
     #[error("Hash verification failed")]
@@ -194,53 +194,53 @@ pub enum SecurityError {
 
     #[error("Key generation failed: {error}")]
     /// Cryptographic key generation failed
-    KeyGenerationError { 
+    KeyGenerationError {
         /// Key generation error details
-        error: String 
+        error: String,
     },
 
     // Session Management Errors
     #[error("Session not found: {session_id}")]
     /// Session not found in the session store
-    SessionNotFound { 
+    SessionNotFound {
         /// ID of the missing session
-        session_id: String 
+        session_id: String,
     },
 
     #[error("Session expired: {session_id}")]
     /// Session has expired and is no longer valid
-    SessionExpired { 
+    SessionExpired {
         /// ID of the expired session
-        session_id: String 
+        session_id: String,
     },
 
     #[error("Session creation failed: {error}")]
     /// Failed to create a new session
-    SessionCreationError { 
+    SessionCreationError {
         /// Session creation error details
-        error: String 
+        error: String,
     },
 
     // API Key Errors
     #[error("API key not found: {key_prefix}")]
     /// API key not found in the key store
-    ApiKeyNotFound { 
+    ApiKeyNotFound {
         /// Prefix of the missing API key for identification
-        key_prefix: String 
+        key_prefix: String,
     },
 
     #[error("API key expired: {key_prefix}")]
     /// API key has expired and is no longer valid
-    ApiKeyExpired { 
+    ApiKeyExpired {
         /// Prefix of the expired API key for identification
-        key_prefix: String 
+        key_prefix: String,
     },
 
     #[error("API key creation failed: {error}")]
     /// Failed to create a new API key
-    ApiKeyCreationError { 
+    ApiKeyCreationError {
         /// API key creation error details
-        error: String 
+        error: String,
     },
 
     #[error("Invalid API key format")]
@@ -250,42 +250,42 @@ pub enum SecurityError {
     // Secret Management Errors
     #[error("Secret not found: {key}")]
     /// Secret not found in the secret store
-    SecretNotFound { 
+    SecretNotFound {
         /// Key of the missing secret
-        key: String 
+        key: String,
     },
 
     #[error("Secret store unavailable: {store_type}")]
     /// Secret store service is unavailable
-    SecretStoreUnavailable { 
+    SecretStoreUnavailable {
         /// Type of secret store that is unavailable
-        store_type: String 
+        store_type: String,
     },
 
     #[error("Secret operation failed: {operation} - {error}")]
     /// Secret management operation failed
-    SecretOperationError { 
+    SecretOperationError {
         /// The secret operation that failed
-        operation: String, 
+        operation: String,
         /// Error details from the secret store
-        error: String 
+        error: String,
     },
 
     // Input Validation Errors
     #[error("Invalid input: {field} - {reason}")]
     /// Input validation failed for a specific field
-    InvalidInput { 
+    InvalidInput {
         /// The field that failed validation
-        field: String, 
+        field: String,
         /// Reason why the input is invalid
-        reason: String 
+        reason: String,
     },
 
     #[error("Input validation failed: {errors:?}")]
     /// Multiple input validation errors occurred
-    ValidationError { 
+    ValidationError {
         /// List of validation error messages
-        errors: Vec<String> 
+        errors: Vec<String>,
     },
 
     #[error("Input length exceeds maximum allowed")]
@@ -312,106 +312,106 @@ pub enum SecurityError {
     // Authorization Engine Errors
     #[error("Authorization engine error: {error}")]
     /// Authorization engine internal error
-    AuthorizationEngineError { 
+    AuthorizationEngineError {
         /// Authorization engine error details
-        error: String 
+        error: String,
     },
 
     #[error("Policy evaluation failed: {policy} - {error}")]
     /// Security policy evaluation failed
-    PolicyEvaluationError { 
+    PolicyEvaluationError {
         /// Name or identifier of the policy that failed
-        policy: String, 
+        policy: String,
         /// Error details from policy evaluation
-        error: String 
+        error: String,
     },
 
     #[error("Authorization context invalid: {reason}")]
     /// Authorization context is invalid or incomplete
-    InvalidAuthContext { 
+    InvalidAuthContext {
         /// Reason why the authorization context is invalid
-        reason: String 
+        reason: String,
     },
 
     // Network/External Service Errors
     #[error("External service error: {service} - {error}")]
     /// External service integration error
-    ExternalServiceError { 
+    ExternalServiceError {
         /// Name of the external service that failed
-        service: String, 
+        service: String,
         /// Error details from the external service
-        error: String 
+        error: String,
     },
 
     #[error("Network connection failed: {endpoint} - {error}")]
     /// Network connection or communication error
-    NetworkError { 
+    NetworkError {
         /// Network endpoint that failed
-        endpoint: String, 
+        endpoint: String,
         /// Network error details
-        error: String 
+        error: String,
     },
 
     #[error("HTTP request failed: {status} - {error}")]
     /// HTTP request failed with error status
-    HttpError { 
+    HttpError {
         /// HTTP status code returned
-        status: u16, 
+        status: u16,
         /// HTTP error details
-        error: String 
+        error: String,
     },
 
     // HTTP Client Security Errors
     #[error("HTTPS required for URL: {url}")]
     /// HTTPS is required but HTTP was used
-    HttpsRequired { 
+    HttpsRequired {
         /// URL that requires HTTPS
-        url: String 
+        url: String,
     },
 
     #[error("HTTP client configuration error: {message}")]
     /// HTTP client configuration or setup error
-    HttpClientError { 
+    HttpClientError {
         /// HTTP client error message
-        message: String 
+        message: String,
     },
 
     #[error("HTTP request error: {message}")]
     /// HTTP request construction or sending error
-    HttpRequestError { 
+    HttpRequestError {
         /// HTTP request error message
-        message: String 
+        message: String,
     },
 
     #[error("HTTP response validation failed: {message}")]
     /// HTTP response parsing or validation error
-    HttpResponseError { 
+    HttpResponseError {
         /// HTTP response error message
-        message: String 
+        message: String,
     },
 
     // System Errors
     #[error("System resource unavailable: {resource}")]
     /// Required system resource is unavailable
-    SystemResourceUnavailable { 
+    SystemResourceUnavailable {
         /// Name of the unavailable system resource
-        resource: String 
+        resource: String,
     },
 
     #[error("Internal system error: {error}")]
     /// Internal system error occurred
-    InternalError { 
+    InternalError {
         /// Internal error details
-        error: String 
+        error: String,
     },
 
     #[error("Initialization failed: {component} - {error}")]
     /// System component initialization failed
-    InitializationError { 
+    InitializationError {
         /// Name of the component that failed to initialize
-        component: String, 
+        component: String,
         /// Initialization error details
-        error: String 
+        error: String,
     },
 }
 

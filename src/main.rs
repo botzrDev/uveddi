@@ -47,7 +47,7 @@
 #![allow(unused_variables, unused_imports)]
 
 use color_eyre::eyre::Result;
-use tracing::{info, error, debug};
+use tracing::{debug, error, info};
 // TODO: Re-enable when monitoring dependencies are properly configured
 // use uveddi::monitoring::dashboard::MonitoringDashboard;
 // use uveddi::config::monitoring::MonitoringConfig;
@@ -62,20 +62,18 @@ mod server;
 async fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
-    
+
     // Initialize enhanced logging system
     // Use RUST_LOG environment variable or default to "info"
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     let log_format = std::env::var("LOG_FORMAT").unwrap_or_else(|_| "compact".to_string());
-    
-    uveddi::core::logging::unified::init_logging_with_config(
-        &log_level,
-        log_format == "json"
-    ).expect("Failed to initialize logging");
+
+    uveddi::core::logging::unified::init_logging_with_config(&log_level, log_format == "json")
+        .expect("Failed to initialize logging");
 
     info!("Starting Uveddi application");
     debug!("Log level: {}, Format: {}", log_level, log_format);
-    
+
     // TEMPORARILY DISABLED: Health monitoring server to debug hanging issue
     // TODO: Re-enable after fixing hanging issue
 

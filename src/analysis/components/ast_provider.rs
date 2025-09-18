@@ -176,10 +176,10 @@ impl AstProviderImpl {
         // Also store in the secondary cache (convert Tree to CacheableAst when tree-sitter is disabled)
         #[cfg(feature = "tree-sitter")]
         {
-            if let Err(e) = self
-                .ast_cache
-                .store(file_path, parsed_file.tree.as_ref().unwrap().as_ref().clone())
-            {
+            if let Err(e) = self.ast_cache.store(
+                file_path,
+                parsed_file.tree.as_ref().unwrap().as_ref().clone(),
+            ) {
                 warn!("Failed to cache AST for {:?}: {}", file_path, e);
             }
         }
@@ -247,7 +247,7 @@ impl AstProvider for AstProviderImpl {
             );
             if let Some(tree) = &parsed_file.tree {
                 return Ok(Arc::clone(tree));
-        }
+            }
         }
 
         // Check secondary cache (with read lock to allow concurrent reads)
@@ -283,7 +283,7 @@ impl AstProvider for AstProviderImpl {
             );
             if let Some(tree) = &parsed_file.tree {
                 return Ok(Arc::clone(tree));
-        }
+            }
         }
 
         // Parse and cache the file

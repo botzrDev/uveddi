@@ -3,8 +3,8 @@
 //! Provides comprehensive health checking and auto-fixing capabilities
 //! for the Uveddi installation and environment.
 
-use crate::health::{HealthChecker, HealthReport, HealthStatus};
 use crate::error::UveddiError;
+use crate::health::{HealthChecker, HealthReport, HealthStatus};
 use clap::Args;
 
 #[derive(Args, Debug)]
@@ -14,11 +14,17 @@ pub struct DoctorCommand {
     pub fix: bool,
 
     /// Check only language parser health
-    #[arg(long, help = "Check only language parser availability and functionality")]
+    #[arg(
+        long,
+        help = "Check only language parser availability and functionality"
+    )]
     pub parsers: bool,
 
     /// Check only AI integration health
-    #[arg(long, help = "Check only AI service connectivity and model availability")]
+    #[arg(
+        long,
+        help = "Check only AI service connectivity and model availability"
+    )]
     pub ai: bool,
 
     /// Check only system health
@@ -26,11 +32,18 @@ pub struct DoctorCommand {
     pub system: bool,
 
     /// Output format for the health report
-    #[arg(long, default_value = "human", help = "Output format: human, json, markdown")]
+    #[arg(
+        long,
+        default_value = "human",
+        help = "Output format: human, json, markdown"
+    )]
     pub output_format: String,
 
     /// Run extended tests on each component
-    #[arg(long, help = "Run extended functionality tests (slower but more comprehensive)")]
+    #[arg(
+        long,
+        help = "Run extended functionality tests (slower but more comprehensive)"
+    )]
     pub extended: bool,
 
     /// Suppress warnings in output (only show critical issues)
@@ -86,7 +99,10 @@ impl DoctorCommand {
     async fn display_human_report(&self, report: &HealthReport) -> Result<(), UveddiError> {
         println!("📊 Health Check Results\n");
         println!("Overall Status: {}", report.overall_status);
-        println!("Timestamp: {}\n", report.timestamp.format("%Y-%m-%d %H:%M:%S UTC"));
+        println!(
+            "Timestamp: {}\n",
+            report.timestamp.format("%Y-%m-%d %H:%M:%S UTC")
+        );
 
         let mut healthy_checks = Vec::new();
         let mut warning_checks = Vec::new();
@@ -126,9 +142,11 @@ impl DoctorCommand {
                     self.display_check(check);
                 }
             } else {
-                println!("✅ Healthy Components ({}): {}", 
+                println!(
+                    "✅ Healthy Components ({}): {}",
                     healthy_checks.len(),
-                    healthy_checks.iter()
+                    healthy_checks
+                        .iter()
                         .map(|c| c.name.as_str())
                         .collect::<Vec<_>>()
                         .join(", ")
@@ -141,7 +159,8 @@ impl DoctorCommand {
     }
 
     fn display_check(&self, check: &crate::health::HealthCheck) {
-        print!("  {} {}: {}", 
+        print!(
+            "  {} {}: {}",
             match check.status {
                 HealthStatus::Healthy => "✅",
                 HealthStatus::Warning => "⚠️ ",
@@ -163,9 +182,10 @@ impl DoctorCommand {
     }
 
     async fn display_json_report(&self, report: &HealthReport) -> Result<(), UveddiError> {
-        let json = serde_json::to_string_pretty(report)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to serialize report to JSON: {}", e), "cli"))?;
-        
+        let json = serde_json::to_string_pretty(report).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to serialize report to JSON: {}", e), "cli")
+        })?;
+
         println!("{}", json);
         Ok(())
     }
@@ -173,7 +193,10 @@ impl DoctorCommand {
     async fn display_markdown_report(&self, report: &HealthReport) -> Result<(), UveddiError> {
         println!("# Uveddi Health Report\n");
         println!("**Overall Status:** {}\n", report.overall_status);
-        println!("**Timestamp:** {}\n", report.timestamp.format("%Y-%m-%d %H:%M:%S UTC"));
+        println!(
+            "**Timestamp:** {}\n",
+            report.timestamp.format("%Y-%m-%d %H:%M:%S UTC")
+        );
 
         println!("## Summary\n");
         println!("- ✅ Healthy: {}", report.healthy_count());
@@ -208,7 +231,11 @@ impl DoctorCommand {
         Ok(())
     }
 
-    async fn apply_fixes(&self, health_checker: &HealthChecker, report: &HealthReport) -> Result<(), UveddiError> {
+    async fn apply_fixes(
+        &self,
+        health_checker: &HealthChecker,
+        report: &HealthReport,
+    ) -> Result<(), UveddiError> {
         let fix_results = health_checker.run_fixes(report).await?;
 
         if fix_results.is_empty() {
@@ -223,8 +250,9 @@ impl DoctorCommand {
         println!("\n🔄 Re-running health checks to verify fixes...\n");
 
         let updated_report = health_checker.run_checks().await?;
-        let improvements = report.critical_count() + report.warning_count() - 
-                          updated_report.critical_count() - updated_report.warning_count();
+        let improvements = report.critical_count() + report.warning_count()
+            - updated_report.critical_count()
+            - updated_report.warning_count();
 
         if improvements > 0 {
             println!("✅ Successfully resolved {} issue(s)!", improvements);
@@ -238,34 +266,40 @@ impl DoctorCommand {
     async fn print_summary(&self, report: &HealthReport) -> Result<(), UveddiError> {
         println!("📈 Summary:");
         println!("  Healthy:      {} components", report.healthy_count());
-        
+
         if !self.quiet {
             println!("  Warnings:     {} components", report.warning_count());
         }
-        
+
         println!("  Critical:     {} components", report.critical_count());
-        
+
         if report.auto_fixable_count() > 0 && !self.fix {
-            println!("  Auto-fixable: {} components (run with --fix to attempt automatic fixes)", 
-                    report.auto_fixable_count());
+            println!(
+                "  Auto-fixable: {} components (run with --fix to attempt automatic fixes)",
+                report.auto_fixable_count()
+            );
         }
 
         match report.overall_status {
             HealthStatus::Healthy => {
                 println!("\n🎉 All systems are operational!");
                 println!("   Your Uveddi installation is ready for use.");
-            },
+            }
             HealthStatus::Warning => {
                 println!("\n🟡 Some issues detected, but core functionality should work.");
                 if report.auto_fixable_count() > 0 && !self.fix {
-                    println!("   Run `uveddi doctor --fix` to automatically resolve fixable issues.");
+                    println!(
+                        "   Run `uveddi doctor --fix` to automatically resolve fixable issues."
+                    );
                 }
-            },
+            }
             HealthStatus::Critical => {
                 println!("\n🔴 Critical issues detected that may prevent proper operation.");
                 println!("   Please resolve these issues before using Uveddi for analysis.");
                 if report.auto_fixable_count() > 0 && !self.fix {
-                    println!("   Run `uveddi doctor --fix` to automatically resolve fixable issues.");
+                    println!(
+                        "   Run `uveddi doctor --fix` to automatically resolve fixable issues."
+                    );
                 }
             }
         }
@@ -278,6 +312,6 @@ impl DoctorCommand {
 pub async fn quick_health_check() -> Result<bool, UveddiError> {
     let health_checker = HealthChecker::new();
     let report = health_checker.run_checks().await?;
-    
+
     Ok(report.overall_status != HealthStatus::Critical)
 }

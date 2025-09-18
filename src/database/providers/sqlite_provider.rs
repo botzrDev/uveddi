@@ -3,14 +3,18 @@
 //! This module provides the SQLite implementation of the database provider trait,
 //! with connection pooling, WAL mode optimization, and performance enhancements.
 
-use super::traits::{DatabaseProvider, TransactionProvider, QueryResult, QueryRow, QueryValue, PoolStats};
-use super::{DatabaseConfig, DatabaseMetrics, DatabaseHealthStatus};
-use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, AnalysisStats, Dependency, DependencyType};
+use super::traits::{
+    DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue, TransactionProvider,
+};
+use super::{DatabaseConfig, DatabaseHealthStatus, DatabaseMetrics};
+use crate::database::models::{
+    AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue, Dependency, DependencyType,
+};
 use crate::error::{Result, UveddiError};
 use crate::security;
 use async_trait::async_trait;
 use chrono::Utc;
-use rusqlite::{Connection, Transaction, Row, params};
+use rusqlite::{params, Connection, Row, Transaction};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -28,8 +32,11 @@ pub struct SqliteProvider {
 impl SqliteProvider {
     /// Create a new SQLite provider with the given configuration
     pub fn new(config: DatabaseConfig) -> Result<Self> {
-        let write_pool = Arc::new(SqliteConnectionPool::new(&config.connection_string, &config)?);
-        
+        let write_pool = Arc::new(SqliteConnectionPool::new(
+            &config.connection_string,
+            &config,
+        )?);
+
         // For SQLite, read pool can be the same as write pool or separate read-only instances
         let read_pool = if config.read_connection_strings.is_empty() {
             write_pool.clone()
@@ -38,9 +45,9 @@ impl SqliteProvider {
             let read_config = config.connection_string.clone();
             Arc::new(SqliteConnectionPool::new(&read_config, &config)?)
         };
-        
+
         let metrics = Arc::new(DatabaseMetrics::default());
-        
+
         Ok(Self {
             config,
             write_pool,
@@ -48,7 +55,7 @@ impl SqliteProvider {
             metrics,
         })
     }
-    
+
     /// Internal helper to execute query with timing and error tracking
     async fn execute_with_metrics<T, F>(&self, operation: F) -> Result<T>
     where
@@ -57,12 +64,12 @@ impl SqliteProvider {
         let start = Instant::now();
         let result = operation();
         let duration = start.elapsed();
-        
+
         match &result {
             Ok(_) => self.metrics.record_query(duration, true),
             Err(_) => self.metrics.record_query(duration, false),
         }
-        
+
         result
     }
 }
@@ -72,7 +79,7 @@ impl DatabaseProvider for SqliteProvider {
     async fn initialize(&self) -> Result<()> {
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         self.execute_with_metrics(|| {
             // Enable SQLite optimizations
             conn.execute_batch("
@@ -168,73 +175,77 @@ impl DatabaseProvider for SqliteProvider {
             
             Ok(())
         }).await?;
-        
+
         pool.return_connection(conn).await?;
         Ok(())
     }
-    
+
     async fn test_connection(&self) -> Result<()> {
         let pool = self.read_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         self.execute_with_metrics(|| {
             conn.execute("SELECT 1", params![])?;
             Ok(())
-        }).await?;
-        
+        })
+        .await?;
+
         pool.return_connection(conn).await?;
         Ok(())
     }
-    
+
     async fn execute_query(&self, query: &str, params: &[&str]) -> Result<Vec<QueryResult>> {
         // Not implemented for this specific use case, but would convert rusqlite::Rows to QueryResult
         todo!("Generic query execution not implemented - use specific methods instead")
     }
-    
+
     async fn execute_write(&self, query: &str, params: &[&str]) -> Result<u64> {
         // Not implemented for this specific use case, but would execute write operations
         todo!("Generic write execution not implemented - use specific methods instead")
     }
-    
+
     async fn begin_transaction(&self) -> Result<Box<dyn TransactionProvider>> {
         todo!("Transaction implementation")
     }
-    
+
     async fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
-        let result = self.execute_with_metrics(|| {
-            // First try to find existing project
-            let project_id: Option<i64> = {
-                let mut stmt = conn.prepare_cached("SELECT project_id FROM projects WHERE path = ?")?;
-                let mut rows = stmt.query([&path_str])?;
-                if let Some(row) = rows.next()? {
-                    Some(row.get(0)?)
+
+        let result = self
+            .execute_with_metrics(|| {
+                // First try to find existing project
+                let project_id: Option<i64> = {
+                    let mut stmt =
+                        conn.prepare_cached("SELECT project_id FROM projects WHERE path = ?")?;
+                    let mut rows = stmt.query([&path_str])?;
+                    if let Some(row) = rows.next()? {
+                        Some(row.get(0)?)
+                    } else {
+                        None
+                    }
+                };
+
+                // If not found, insert new project
+                if let Some(id) = project_id {
+                    Ok(id)
                 } else {
-                    None
+                    conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
+                    Ok(conn.last_insert_rowid())
                 }
-            };
-            
-            // If not found, insert new project
-            if let Some(id) = project_id {
-                Ok(id)
-            } else {
-                conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
-                Ok(conn.last_insert_rowid())
-            }
-        }).await?;
-        
+            })
+            .await?;
+
         pool.return_connection(conn).await?;
         Ok(result)
     }
-    
+
     async fn create_analysis_run(&self, project_path: &Path) -> Result<AnalysisRun> {
         let project_id = self.get_or_create_project_id(project_path).await?;
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         let analysis_run = AnalysisRun {
             run_id: None,
             project_id,
@@ -245,7 +256,7 @@ impl DatabaseProvider for SqliteProvider {
             total_issues_found: None,
             analysis_config: "{}".to_string(),
         };
-        
+
         let run_id = self.execute_with_metrics(|| {
             conn.execute(
                 "INSERT INTO analysis_runs (project_id, start_time, status, analysis_config) VALUES (?, ?, ?, ?)",
@@ -258,19 +269,19 @@ impl DatabaseProvider for SqliteProvider {
             )?;
             Ok(conn.last_insert_rowid())
         }).await?;
-        
+
         pool.return_connection(conn).await?;
-        
+
         Ok(AnalysisRun {
             run_id: Some(run_id),
             ..analysis_run
         })
     }
-    
+
     async fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         self.execute_with_metrics(|| {
             conn.execute(
                 "UPDATE analysis_runs SET end_time = ?, status = ?, total_files_analyzed = ?, total_issues_found = ? WHERE run_id = ?",
@@ -284,15 +295,18 @@ impl DatabaseProvider for SqliteProvider {
             )?;
             Ok(())
         }).await?;
-        
+
         pool.return_connection(conn).await?;
         Ok(())
     }
-    
-    async fn store_anti_pattern_types_batch(&self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
+
+    async fn store_anti_pattern_types_batch(
+        &self,
+        anti_pattern_types: &mut [AntiPatternType],
+    ) -> Result<()> {
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         self.execute_with_metrics(|| {
             let tx = conn.transaction()?;
             {
@@ -321,15 +335,15 @@ impl DatabaseProvider for SqliteProvider {
             tx.commit()?;
             Ok(())
         }).await?;
-        
+
         pool.return_connection(conn).await?;
         Ok(())
     }
-    
+
     async fn store_issues_batch(&self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         self.execute_with_metrics(|| {
             let tx = conn.transaction()?;
             {
@@ -372,15 +386,19 @@ impl DatabaseProvider for SqliteProvider {
             tx.commit()?;
             Ok(())
         }).await?;
-        
+
         pool.return_connection(conn).await?;
         Ok(())
     }
-    
-    async fn store_dependencies_batch(&self, run_id: i64, dependencies: &[Dependency]) -> Result<()> {
+
+    async fn store_dependencies_batch(
+        &self,
+        run_id: i64,
+        dependencies: &[Dependency],
+    ) -> Result<()> {
         let pool = self.write_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         self.execute_with_metrics(|| {
             let tx = conn.transaction()?;
             {
@@ -401,18 +419,18 @@ impl DatabaseProvider for SqliteProvider {
             tx.commit()?;
             Ok(())
         }).await?;
-        
+
         pool.return_connection(conn).await?;
         Ok(())
     }
-    
+
     // Additional implementation methods continue here...
     // For brevity, I'll implement key methods and indicate where others would follow
-    
+
     async fn get_analysis_run(&self, run_id: i64) -> Result<Option<AnalysisRun>> {
         let pool = self.read_pool.clone();
         let mut conn = pool.get_connection().await?;
-        
+
         let result = self.execute_with_metrics(|| {
             let mut stmt = conn.prepare_cached(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
@@ -447,48 +465,58 @@ impl DatabaseProvider for SqliteProvider {
                 Err(e) => Err(UveddiError::from(e)),
             }
         }).await?;
-        
+
         pool.return_connection(conn).await?;
         Ok(result)
     }
-    
+
     async fn get_latest_analysis_run(&self) -> Result<Option<AnalysisRun>> {
         // Implementation similar to get_analysis_run but with ORDER BY start_time DESC LIMIT 1
         todo!("Implement get_latest_analysis_run")
     }
-    
+
     async fn get_recent_analysis_runs(&self, limit: u32) -> Result<Vec<AnalysisRun>> {
         todo!("Implement get_recent_analysis_runs")
     }
-    
+
     async fn get_issues_for_run(&self, run_id: i64) -> Result<Vec<ArchitecturalIssue>> {
         todo!("Implement get_issues_for_run")
     }
-    
+
     async fn get_dependencies_for_run(&self, run_id: i64) -> Result<Vec<Dependency>> {
         todo!("Implement get_dependencies_for_run")
     }
-    
-    async fn get_issues_with_types_for_run(&self, run_id: i64) -> Result<Vec<(ArchitecturalIssue, AntiPatternType)>> {
+
+    async fn get_issues_with_types_for_run(
+        &self,
+        run_id: i64,
+    ) -> Result<Vec<(ArchitecturalIssue, AntiPatternType)>> {
         todo!("Implement get_issues_with_types_for_run")
     }
-    
+
     async fn get_analysis_stats(&self, run_id: i64) -> Result<AnalysisStats> {
         todo!("Implement get_analysis_stats")
     }
-    
-    async fn get_issues_paginated(&self, run_id: i64, offset: u32, limit: u32, severity_filter: Option<&str>, detector_filter: Option<&str>) -> Result<Vec<ArchitecturalIssue>> {
+
+    async fn get_issues_paginated(
+        &self,
+        run_id: i64,
+        offset: u32,
+        limit: u32,
+        severity_filter: Option<&str>,
+        detector_filter: Option<&str>,
+    ) -> Result<Vec<ArchitecturalIssue>> {
         todo!("Implement get_issues_paginated")
     }
-    
+
     async fn get_all_anti_pattern_types(&self) -> Result<Vec<AntiPatternType>> {
         todo!("Implement get_all_anti_pattern_types")
     }
-    
+
     async fn get_project_path(&self, project_id: i64) -> Result<String> {
         todo!("Implement get_project_path")
     }
-    
+
     async fn cleanup(&self) -> Result<u64> {
         let write_cleanup = self.write_pool.cleanup_expired().await?;
         let read_cleanup = if !Arc::ptr_eq(&self.write_pool, &self.read_pool) {
@@ -498,14 +526,15 @@ impl DatabaseProvider for SqliteProvider {
         };
         Ok(write_cleanup + read_cleanup)
     }
-    
+
     async fn get_health_status(&self) -> Result<DatabaseHealthStatus> {
         let mut status = self.metrics.get_health_status();
-        
+
         // Update pool utilization
         let write_stats = self.write_pool.get_stats().await?;
-        status.pool_utilization = write_stats.active_connections as f32 / write_stats.max_connections as f32;
-        
+        status.pool_utilization =
+            write_stats.active_connections as f32 / write_stats.max_connections as f32;
+
         Ok(status)
     }
 }
@@ -530,7 +559,7 @@ impl SqliteConnectionPool {
             total_connections_created: 0,
             total_connections_closed: 0,
         }));
-        
+
         Ok(Self {
             db_path: db_path.to_string(),
             config: config.clone(),
@@ -539,48 +568,51 @@ impl SqliteConnectionPool {
             stats,
         })
     }
-    
+
     async fn get_connection(&self) -> Result<PooledSqliteConnection> {
-        let _permit = self.semaphore.clone().acquire_owned().await
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire connection permit: {}", e)))?;
-        
+        let _permit = self.semaphore.clone().acquire_owned().await.map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire connection permit: {}", e))
+        })?;
+
         // Try to get existing connection
         if let Ok(mut connections) = self.connections.lock() {
             connections.retain(|conn| !conn.is_expired(&self.config));
-            
+
             if let Some(conn) = connections.pop() {
                 return Ok(conn);
             }
         }
-        
+
         // Create new connection
         self.create_connection()
     }
-    
+
     fn create_connection(&self) -> Result<PooledSqliteConnection> {
         let conn = if self.db_path == ":memory:" {
             Connection::open_in_memory()?
         } else {
             Connection::open(&self.db_path)?
         };
-        
+
         // Configure connection for performance
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             PRAGMA journal_mode = WAL;
             PRAGMA synchronous = NORMAL;
             PRAGMA cache_size = -16000;  -- 16MB per connection
             PRAGMA temp_store = MEMORY;
             PRAGMA mmap_size = 67108864;  -- 64MB mmap per connection
             PRAGMA foreign_keys = ON;
-        ")?;
-        
+        ",
+        )?;
+
         if let Ok(mut stats) = self.stats.lock() {
             stats.total_connections_created += 1;
         }
-        
+
         Ok(PooledSqliteConnection::new(conn))
     }
-    
+
     async fn return_connection(&self, connection: PooledSqliteConnection) -> Result<()> {
         if !connection.is_expired(&self.config) {
             if let Ok(mut connections) = self.connections.lock() {
@@ -591,24 +623,28 @@ impl SqliteConnectionPool {
         }
         Ok(())
     }
-    
+
     async fn cleanup_expired(&self) -> Result<u64> {
         let mut removed = 0;
         if let Ok(mut connections) = self.connections.lock() {
             let initial_len = connections.len();
             connections.retain(|conn| !conn.is_expired(&self.config));
             removed = (initial_len - connections.len()) as u64;
-            
+
             if let Ok(mut stats) = self.stats.lock() {
                 stats.total_connections_closed += removed;
             }
         }
         Ok(removed)
     }
-    
+
     async fn get_stats(&self) -> Result<PoolStats> {
-        let stats = self.stats.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to get pool stats: {}", e)))?
+        let stats = self
+            .stats
+            .lock()
+            .map_err(|e| {
+                UveddiError::database_error_msg(&format!("Failed to get pool stats: {}", e))
+            })?
             .clone();
         Ok(stats)
     }
@@ -630,52 +666,52 @@ impl PooledSqliteConnection {
             last_used: now,
         }
     }
-    
+
     fn is_expired(&self, config: &DatabaseConfig) -> bool {
         let now = Instant::now();
-        
+
         // Check max lifetime
         if now.duration_since(self.created_at) > config.max_lifetime {
             return true;
         }
-        
+
         // Check idle timeout
         if now.duration_since(self.last_used) > config.idle_timeout {
             return true;
         }
-        
+
         false
     }
-    
+
     fn update_last_used(&mut self) {
         self.last_used = Instant::now();
     }
-    
+
     // Delegate connection methods
     fn execute(&mut self, sql: &str, params: impl rusqlite::Params) -> rusqlite::Result<usize> {
         self.update_last_used();
         self.connection.execute(sql, params)
     }
-    
+
     fn prepare_cached(&mut self, sql: &str) -> rusqlite::Result<rusqlite::CachedStatement> {
         self.update_last_used();
         self.connection.prepare_cached(sql)
     }
-    
+
     fn prepare(&mut self, sql: &str) -> rusqlite::Result<rusqlite::Statement> {
         self.update_last_used();
         self.connection.prepare(sql)
     }
-    
+
     fn transaction(&mut self) -> rusqlite::Result<Transaction> {
         self.update_last_used();
         self.connection.transaction()
     }
-    
+
     fn last_insert_rowid(&self) -> i64 {
         self.connection.last_insert_rowid()
     }
-    
+
     fn execute_batch(&mut self, sql: &str) -> rusqlite::Result<()> {
         self.update_last_used();
         self.connection.execute_batch(sql)

@@ -19,7 +19,8 @@ impl MemoryMonitor {
 
     /// Returns current memory usage in bytes for the process
     pub fn get_current_memory_usage(&mut self) -> u64 {
-        self.system.refresh_processes(ProcessesToUpdate::Some(&[self.process_id]), true);
+        self.system
+            .refresh_processes(ProcessesToUpdate::Some(&[self.process_id]), true);
         if let Some(process) = self.system.process(self.process_id) {
             process.memory() * 1024 // sysinfo returns KB
         } else {

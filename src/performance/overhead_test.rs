@@ -3,7 +3,7 @@
 use super::statistical_analysis::StatisticalAnalyzer;
 use super::trend_detection::TrendDetector;
 use std::time::Instant;
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 pub fn measure_statistical_overhead() {
     println!("=== Performance Overhead Validation ===");

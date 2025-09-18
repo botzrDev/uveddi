@@ -6,7 +6,9 @@
 
 use std::path::Path;
 use thiserror::Error;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry, Layer};
+use tracing_subscriber::{
+    layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer, Registry,
+};
 // OffsetTime requires the `time` feature, using system time instead
 // use tracing_subscriber::fmt::time::OffsetTime;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -92,10 +94,13 @@ pub fn init_production_logging(
             .with_line_number(true)
             .with_current_span(true);
 
-        registry.with(file_layer).try_init()
+        registry
+            .with(file_layer)
+            .try_init()
             .map_err(|_| LoggingError::InitializationFailed)?;
     } else {
-        registry.try_init()
+        registry
+            .try_init()
             .map_err(|_| LoggingError::InitializationFailed)?;
     }
 
@@ -191,12 +196,12 @@ macro_rules! log_error_with_context {
 pub fn format_error_chain(error: &dyn std::error::Error) -> String {
     let mut chain = vec![error.to_string()];
     let mut current = error.source();
-    
+
     while let Some(cause) = current {
         chain.push(cause.to_string());
         current = cause.source();
     }
-    
+
     chain.join(" -> ")
 }
 
@@ -286,8 +291,9 @@ pub fn init_with_config(config: LoggingConfig) -> Result<(), LoggingError> {
     };
 
     let registry = Registry::default().with(env_filter).with(layer);
-    
-    registry.try_init()
+
+    registry
+        .try_init()
         .map_err(|_| LoggingError::InitializationFailed)?;
 
     Ok(())

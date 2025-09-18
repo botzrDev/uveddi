@@ -15,14 +15,14 @@ use chrono::{Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::basic::BasicClient;
 // Removed unused openidconnect imports
-use rand::{Rng, rng};
+use rand::{rng, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use uuid::Uuid;
 use tracing::error;
+use uuid::Uuid;
 
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]

@@ -38,9 +38,9 @@ use tracing::{info, warn};
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
-use crate::progress::{create_progress_reporter, ProgressTracker, AnalysisPhase};
+use crate::progress::{create_progress_reporter, AnalysisPhase, ProgressTracker};
 use crate::report::DiagramMode;
-use crate::security::{self, SecurityError, validate_cli_argument, CliArgumentType};
+use crate::security::{self, validate_cli_argument, CliArgumentType, SecurityError};
 
 // Security functions are now available through the security module import above
 
@@ -521,10 +521,14 @@ impl AnalyzeCommand {
         // Enhanced CLI argument validation using new security framework
         let path_str = self.path.to_string_lossy();
         validate_cli_argument(&path_str, "path", CliArgumentType::FilePath)?;
-        
+
         // Validate output format using enhanced CLI validation
-        validate_cli_argument(&self.output_format, "output_format", CliArgumentType::Generic)?;
-        
+        validate_cli_argument(
+            &self.output_format,
+            "output_format",
+            CliArgumentType::Generic,
+        )?;
+
         // Comprehensive path validation with specific error messages
         self.validate_analysis_path()?;
 
@@ -711,9 +715,7 @@ impl AnalyzeCommand {
         match mode {
             DiagramMode::MermaidOnly => {
                 info!("📊 Diagram Mode: Mermaid-only (zero hosting costs)");
-                info!(
-                    "   Diagrams will be generated as Mermaid code with rendering instructions"
-                );
+                info!("   Diagrams will be generated as Mermaid code with rendering instructions");
             }
             DiagramMode::ImageOnly => {
                 info!("📊 Diagram Mode: Image-only (requires rendering service)");
@@ -721,9 +723,7 @@ impl AnalyzeCommand {
             }
             DiagramMode::ImageWithFallback => {
                 info!("📊 Diagram Mode: Image with fallback (hybrid approach)");
-                info!(
-                    "   Will attempt image rendering, fallback to Mermaid-only if unavailable"
-                );
+                info!("   Will attempt image rendering, fallback to Mermaid-only if unavailable");
             }
         }
     }
@@ -833,12 +833,16 @@ impl AnalyzeCommand {
         info!("Starting analysis of: {}", self.path.display());
 
         // Set up enhanced progress reporting
-        let progress_reporter = create_progress_reporter(&self.progress_format, self.progress_details);
+        let progress_reporter =
+            create_progress_reporter(&self.progress_format, self.progress_details);
         let mut progress_tracker = ProgressTracker::new(progress_reporter);
-        
+
         // Start discovery phase
         progress_tracker.start_phase(AnalysisPhase::Discovery, None);
-        info!("Starting analysis with {} progress reporting", self.progress_format);
+        info!(
+            "Starting analysis with {} progress reporting",
+            self.progress_format
+        );
 
         // Create application layer orchestrator with persistent database
         // Use the same database path as the dashboard server for consistency
@@ -898,12 +902,12 @@ impl AnalyzeCommand {
             memory_profile,
             timeout_seconds: self.timeout,
             enable_resource_management: false, // Default disabled for CLI
-            resource_config: None, // Use default when enabled
+            resource_config: None,             // Use default when enabled
         };
 
         // Start parsing phase
         progress_tracker.start_phase(AnalysisPhase::Parsing, None);
-        
+
         // Execute analysis through application layer with timeout
         let analysis_future = orchestrator.execute_analysis(config);
 
@@ -1110,9 +1114,7 @@ impl AnalyzeCommand {
             self.launch_dashboard();
         } else if report.metadata.issues_found > 0 {
             // Suggest dashboard for a better experience when issues are found
-            info!(
-                "\n💡 Tip: Run with --open-dashboard to visualize results in the web interface"
-            );
+            info!("\n💡 Tip: Run with --open-dashboard to visualize results in the web interface");
         }
 
         Ok(())
@@ -1146,7 +1148,8 @@ impl AnalyzeCommand {
         let addr = format!("localhost:{}", port);
         if let Ok(mut addrs) = addr.to_socket_addrs() {
             if let Some(addr) = addrs.next() {
-                return TcpStream::connect_timeout(&addr, std::time::Duration::from_millis(100)).is_ok();
+                return TcpStream::connect_timeout(&addr, std::time::Duration::from_millis(100))
+                    .is_ok();
             }
         }
         false
@@ -1163,9 +1166,7 @@ impl AnalyzeCommand {
 
         #[cfg(target_os = "macos")]
         {
-            std::process::Command::new("open")
-                .arg(url)
-                .spawn()?;
+            std::process::Command::new("open").arg(url).spawn()?;
         }
 
         #[cfg(target_os = "linux")]
@@ -1178,11 +1179,7 @@ impl AnalyzeCommand {
             {
                 // Fallback options for Linux
                 for browser in &["firefox", "google-chrome", "chromium", "brave"] {
-                    if std::process::Command::new(browser)
-                        .arg(url)
-                        .spawn()
-                        .is_ok()
-                    {
+                    if std::process::Command::new(browser).arg(url).spawn().is_ok() {
                         return Ok(());
                     }
                 }

@@ -20,7 +20,12 @@ use crate::{
         app::AppState,
         messages::AppMessage,
         ui::components::{
-            Dropdown, FocusManager, NumericInput, PathPicker, TextInput, Toggle,
+            Dropdown,
+            FocusManager,
+            NumericInput,
+            PathPicker,
+            TextInput,
+            Toggle,
             // Removed unused ValidationResult import
         },
     },

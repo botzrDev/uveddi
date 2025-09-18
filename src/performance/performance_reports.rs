@@ -14,7 +14,8 @@ use tera::{Context, Tera};
 use tokio::fs;
 
 use crate::performance::{
-    BaselineComparison, BaselineRecommendation, BenchmarkBaseline, ChangeCategory, StatisticalAnalyzer, TrendDetector,
+    BaselineComparison, BaselineRecommendation, BenchmarkBaseline, ChangeCategory,
+    StatisticalAnalyzer, TrendDetector,
 };
 
 /// Comprehensive performance report

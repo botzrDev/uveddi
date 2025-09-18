@@ -4,15 +4,15 @@
 //! across the Uveddi application. It tests validation functions, CLI argument validation,
 //! API request validation, configuration file validation, and edge cases.
 
-use uveddi::security::{
-    validate_api_request, validate_cli_argument, validate_config_file_path,
-    validate_db_parameter, validate_external_api_response, validate_input,
-    validate_json_input, validate_memory_limit, validate_url, sanitize_for_web_display,
-    CliArgumentType, DbParameterType, SecurityError,
-};
-use tempfile::TempDir;
 use std::fs;
 use std::path::Path;
+use tempfile::TempDir;
+use uveddi::security::{
+    sanitize_for_web_display, validate_api_request, validate_cli_argument,
+    validate_config_file_path, validate_db_parameter, validate_external_api_response,
+    validate_input, validate_json_input, validate_memory_limit, validate_url, CliArgumentType,
+    DbParameterType, SecurityError,
+};
 
 #[cfg(test)]
 mod security_validation_tests {
@@ -63,7 +63,9 @@ mod security_validation_tests {
     #[test]
     fn test_cli_argument_validation() {
         // File path validation
-        assert!(validate_cli_argument("/valid/path/file.rs", "path", CliArgumentType::FilePath).is_ok());
+        assert!(
+            validate_cli_argument("/valid/path/file.rs", "path", CliArgumentType::FilePath).is_ok()
+        );
         assert!(validate_cli_argument("$(malicious)", "path", CliArgumentType::FilePath).is_err());
         assert!(validate_cli_argument("`command`", "path", CliArgumentType::FilePath).is_err());
 
@@ -89,60 +91,47 @@ mod security_validation_tests {
 
         // Generic validation
         assert!(validate_cli_argument("normal-text", "generic", CliArgumentType::Generic).is_ok());
-        assert!(validate_cli_argument("'; DROP TABLE", "generic", CliArgumentType::Generic).is_err());
+        assert!(
+            validate_cli_argument("'; DROP TABLE", "generic", CliArgumentType::Generic).is_err()
+        );
     }
 
     #[test]
     fn test_api_request_validation() {
         // Valid requests should pass
-        assert!(validate_api_request(
-            Some("application/json"),
-            Some(1024),
-            Some("curl/7.68.0")
-        ).is_ok());
+        assert!(
+            validate_api_request(Some("application/json"), Some(1024), Some("curl/7.68.0")).is_ok()
+        );
 
         assert!(validate_api_request(None, None, None).is_ok());
 
         // Invalid content types should be rejected
-        assert!(validate_api_request(
-            Some("text/html"),
-            None,
-            None
-        ).is_err());
+        assert!(validate_api_request(Some("text/html"), None, None).is_err());
 
-        assert!(validate_api_request(
-            Some("application/x-evil"),
-            None,
-            None
-        ).is_err());
+        assert!(validate_api_request(Some("application/x-evil"), None, None).is_err());
 
         // Oversized requests should be rejected
         assert!(validate_api_request(
             Some("application/json"),
             Some(20 * 1024 * 1024), // 20MB, over 10MB limit
             None
-        ).is_err());
+        )
+        .is_err());
 
         // Content type with parameters should work
-        assert!(validate_api_request(
-            Some("application/json; charset=utf-8"),
-            Some(1024),
-            None
-        ).is_ok());
+        assert!(
+            validate_api_request(Some("application/json; charset=utf-8"), Some(1024), None).is_ok()
+        );
 
         // Suspicious user agents should be logged but not blocked
-        assert!(validate_api_request(
-            None,
-            None,
-            Some("malicious-bot/1.0")
-        ).is_ok());
+        assert!(validate_api_request(None, None, Some("malicious-bot/1.0")).is_ok());
     }
 
     #[test]
     fn test_config_file_path_validation() -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = TempDir::new()?;
         let config_path = temp_dir.path().join("test.toml");
-        
+
         // Create a test config file
         fs::write(&config_path, "test = true")?;
 
@@ -150,7 +139,8 @@ mod security_validation_tests {
         assert!(validate_config_file_path(
             &config_path.to_string_lossy(),
             Some(&[temp_dir.path().to_str().unwrap()])
-        ).is_ok());
+        )
+        .is_ok());
 
         // Invalid extensions should be rejected
         let bad_path = temp_dir.path().join("test.exe");
@@ -158,24 +148,27 @@ mod security_validation_tests {
         assert!(validate_config_file_path(
             &bad_path.to_string_lossy(),
             Some(&[temp_dir.path().to_str().unwrap()])
-        ).is_err());
+        )
+        .is_err());
 
         // Files outside allowed directories should be rejected
         let outside_path = "/tmp/malicious.toml";
         assert!(validate_config_file_path(
             outside_path,
             Some(&[temp_dir.path().to_str().unwrap()])
-        ).is_err());
+        )
+        .is_err());
 
         // Very large config files should be rejected
         let large_config = temp_dir.path().join("large.toml");
         let large_content = "x".repeat(2 * 1024 * 1024); // 2MB, over 1MB limit
         fs::write(&large_config, large_content)?;
-        
+
         assert!(validate_config_file_path(
             &large_config.to_string_lossy(),
             Some(&[temp_dir.path().to_str().unwrap()])
-        ).is_err());
+        )
+        .is_err());
 
         Ok(())
     }
@@ -218,16 +211,37 @@ mod security_validation_tests {
         assert!(validate_db_parameter("'; DROP TABLE", "text", DbParameterType::Text).is_err());
 
         // File paths
-        assert!(validate_db_parameter("/path/to/file.rs", "path", DbParameterType::FilePath).is_ok());
-        assert!(validate_db_parameter("../../../etc/passwd", "path", DbParameterType::FilePath).is_ok()); // Allowed for storage
+        assert!(
+            validate_db_parameter("/path/to/file.rs", "path", DbParameterType::FilePath).is_ok()
+        );
+        assert!(
+            validate_db_parameter("../../../etc/passwd", "path", DbParameterType::FilePath).is_ok()
+        ); // Allowed for storage
 
         // Code content (more permissive)
-        assert!(validate_db_parameter("fn main() { println!(\"Hello\"); }", "code", DbParameterType::CodeContent).is_ok());
-        assert!(validate_db_parameter("SELECT * FROM table;", "code", DbParameterType::CodeContent).is_ok()); // SQL allowed in code
+        assert!(validate_db_parameter(
+            "fn main() { println!(\"Hello\"); }",
+            "code",
+            DbParameterType::CodeContent
+        )
+        .is_ok());
+        assert!(validate_db_parameter(
+            "SELECT * FROM table;",
+            "code",
+            DbParameterType::CodeContent
+        )
+        .is_ok()); // SQL allowed in code
 
         // Timestamps
-        assert!(validate_db_parameter("2023-01-01T12:00:00Z", "timestamp", DbParameterType::Timestamp).is_ok());
-        assert!(validate_db_parameter("invalid-date", "timestamp", DbParameterType::Timestamp).is_err());
+        assert!(validate_db_parameter(
+            "2023-01-01T12:00:00Z",
+            "timestamp",
+            DbParameterType::Timestamp
+        )
+        .is_ok());
+        assert!(
+            validate_db_parameter("invalid-date", "timestamp", DbParameterType::Timestamp).is_err()
+        );
     }
 
     #[test]
@@ -283,10 +297,7 @@ mod security_validation_tests {
         );
 
         // Ampersand escaping
-        assert_eq!(
-            sanitize_for_web_display("Tom & Jerry"),
-            "Tom &amp; Jerry"
-        );
+        assert_eq!(sanitize_for_web_display("Tom & Jerry"), "Tom &amp; Jerry");
 
         // Quote escaping
         assert_eq!(
@@ -331,7 +342,7 @@ mod security_validation_tests {
         // Test that validation fails early and provides meaningful errors
         let result = validate_input("'; DROP TABLE users; --", "malicious");
         assert!(result.is_err());
-        
+
         if let Err(SecurityError::InvalidInput { field, reason }) = result {
             assert_eq!(field, "malicious");
             assert!(reason.contains("dangerous SQL patterns"));
@@ -342,7 +353,7 @@ mod security_validation_tests {
         // Test URL validation error messages
         let result = validate_url("javascript:alert(1)");
         assert!(result.is_err());
-        
+
         if let Err(SecurityError::InvalidInput { field, reason }) = result {
             assert_eq!(field, "url");
             assert!(reason.contains("http://") || reason.contains("https://"));
@@ -354,12 +365,12 @@ mod security_validation_tests {
     #[test]
     fn test_configuration_integration() {
         // Test that security validation integrates properly with configuration loading
-        use uveddi::config::Config;
         use tempfile::TempDir;
+        use uveddi::config::Config;
 
         let temp_dir = TempDir::new().unwrap();
         let config_path = temp_dir.path().join("test.toml");
-        
+
         // Valid configuration should work
         let valid_config = r#"
 ollama_model = "deepseek-coder:6.7b"
@@ -374,7 +385,7 @@ max_logical_loc = 500
 max_methods = 25
 "#;
         fs::write(&config_path, valid_config).unwrap();
-        
+
         let result = Config::from_file(&config_path.to_string_lossy());
         assert!(result.is_ok());
 
@@ -384,7 +395,7 @@ ollama_model = "'; DROP TABLE models; --"
 "#;
         let invalid_path = temp_dir.path().join("invalid.toml");
         fs::write(&invalid_path, invalid_config).unwrap();
-        
+
         let result = Config::from_file(&invalid_path.to_string_lossy());
         assert!(result.is_err());
     }
@@ -395,13 +406,17 @@ ollama_model = "'; DROP TABLE models; --"
 
         // Test that validation is reasonably fast even with large inputs
         let large_input = "normal_text_".repeat(1000);
-        
+
         let start = Instant::now();
         let result = validate_input(&large_input, "performance_test");
         let duration = start.elapsed();
-        
+
         assert!(result.is_ok());
-        assert!(duration.as_millis() < 100, "Validation took too long: {:?}", duration);
+        assert!(
+            duration.as_millis() < 100,
+            "Validation took too long: {:?}",
+            duration
+        );
 
         // Test with many small validations
         let start = Instant::now();
@@ -410,7 +425,11 @@ ollama_model = "'; DROP TABLE models; --"
             assert!(validate_input(&input, "bulk_test").is_ok());
         }
         let duration = start.elapsed();
-        
-        assert!(duration.as_millis() < 500, "Bulk validation took too long: {:?}", duration);
+
+        assert!(
+            duration.as_millis() < 500,
+            "Bulk validation took too long: {:?}",
+            duration
+        );
     }
 }

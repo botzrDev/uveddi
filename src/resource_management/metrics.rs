@@ -1,13 +1,12 @@
 //! Metrics and system information collection
 
+use super::{
+    analysis_orchestrator::OrchestrationStats, degradation_manager::DegradationLevel,
+    memory_tracker::MemoryStats,
+};
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use super::{
-    memory_tracker::MemoryStats,
-    analysis_orchestrator::OrchestrationStats,
-    degradation_manager::DegradationLevel,
-};
 
 /// Complete resource usage information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -126,96 +125,100 @@ impl MetricsHistory {
             orchestration_stats: VecDeque::with_capacity(max_size),
         }
     }
-    
+
     /// Records resource usage metrics
     pub fn record_resource_usage(&mut self, usage: ResourceUsage) {
         self.resource_usage.push_back((Instant::now(), usage));
-        
+
         if self.resource_usage.len() > self.max_size {
             self.resource_usage.pop_front();
         }
     }
-    
+
     /// Records system metrics
     pub fn record_system_metrics(&mut self, metrics: SystemMetrics) {
         self.system_metrics.push_back((Instant::now(), metrics));
-        
+
         if self.system_metrics.len() > self.max_size {
             self.system_metrics.pop_front();
         }
     }
-    
+
     /// Records orchestration statistics
     pub fn record_orchestration_stats(&mut self, stats: OrchestrationStats) {
         self.orchestration_stats.push_back((Instant::now(), stats));
-        
+
         if self.orchestration_stats.len() > self.max_size {
             self.orchestration_stats.pop_front();
         }
     }
-    
+
     /// Gets recent resource usage data points
     pub fn get_resource_usage_history(&self, duration: Duration) -> Vec<(Instant, ResourceUsage)> {
         let cutoff = Instant::now() - duration;
-        self.resource_usage.iter()
+        self.resource_usage
+            .iter()
             .filter(|(timestamp, _)| *timestamp > cutoff)
             .cloned()
             .collect()
     }
-    
+
     /// Gets recent system metrics data points
     pub fn get_system_metrics_history(&self, duration: Duration) -> Vec<(Instant, SystemMetrics)> {
         let cutoff = Instant::now() - duration;
-        self.system_metrics.iter()
+        self.system_metrics
+            .iter()
             .filter(|(timestamp, _)| *timestamp > cutoff)
             .cloned()
             .collect()
     }
-    
+
     /// Calculates average memory usage over a time period
     pub fn average_memory_usage(&self, duration: Duration) -> Option<f64> {
         let history = self.get_resource_usage_history(duration);
-        
+
         if history.is_empty() {
             return None;
         }
-        
-        let sum: f64 = history.iter()
+
+        let sum: f64 = history
+            .iter()
             .map(|(_, usage)| usage.memory.usage_percent)
             .sum();
-        
+
         Some(sum / history.len() as f64)
     }
-    
+
     /// Gets peak memory usage over a time period
     pub fn peak_memory_usage(&self, duration: Duration) -> Option<f64> {
         let history = self.get_resource_usage_history(duration);
-        
-        history.iter()
+
+        history
+            .iter()
             .map(|(_, usage)| usage.memory.usage_percent)
             .fold(None, |acc, x| Some(acc.unwrap_or(x).max(x)))
     }
-    
+
     /// Calculates analysis throughput (analyses completed per minute)
     pub fn analysis_throughput(&self, duration: Duration) -> f64 {
         let history = self.get_system_metrics_history(duration);
-        
+
         if history.len() < 2 {
             return 0.0;
         }
-        
+
         // This would need to be implemented with actual orchestration stats
         // For now, return a placeholder
         0.0
     }
-    
+
     /// Clears all historical data
     pub fn clear(&mut self) {
         self.resource_usage.clear();
         self.system_metrics.clear();
         self.orchestration_stats.clear();
     }
-    
+
     /// Gets the current storage size
     pub fn size(&self) -> usize {
         self.resource_usage.len() + self.system_metrics.len() + self.orchestration_stats.len()
@@ -237,22 +240,24 @@ impl SystemMetricsCollector {
             last_collection: None,
         }
     }
-    
+
     /// Collects current system metrics
-    pub async fn collect(&mut self) -> Result<SystemMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn collect(
+        &mut self,
+    ) -> Result<SystemMetrics, Box<dyn std::error::Error + Send + Sync>> {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let cpu_usage = self.collect_cpu_usage().await?;
         let memory = self.collect_memory_metrics().await?;
         let disk_io = self.collect_disk_io_metrics().await?;
         let network = self.collect_network_metrics().await?;
         let process = self.collect_process_metrics().await?;
-        
+
         self.last_collection = Some(Instant::now());
-        
+
         Ok(SystemMetrics {
             timestamp,
             cpu_usage,
@@ -262,51 +267,55 @@ impl SystemMetricsCollector {
             process,
         })
     }
-    
+
     async fn collect_cpu_usage(&self) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
         // This is a simplified implementation
         // In a real system, you would use platform-specific APIs
-        
+
         #[cfg(target_os = "linux")]
         {
             self.collect_cpu_usage_linux().await
         }
-        
+
         #[cfg(not(target_os = "linux"))]
         {
             // Fallback implementation
             Ok(0.0)
         }
     }
-    
+
     #[cfg(target_os = "linux")]
-    async fn collect_cpu_usage_linux(&self) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
+    async fn collect_cpu_usage_linux(
+        &self,
+    ) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
         // Read from /proc/stat for system-wide CPU usage
         let contents = tokio::fs::read_to_string("/proc/stat").await?;
         let line = contents.lines().next().unwrap_or("");
-        
+
         let fields: Vec<&str> = line.split_whitespace().collect();
         if fields.len() < 5 {
             return Ok(0.0);
         }
-        
+
         let user: u64 = fields[1].parse()?;
         let nice: u64 = fields[2].parse()?;
         let system: u64 = fields[3].parse()?;
         let idle: u64 = fields[4].parse()?;
-        
+
         let total = user + nice + system + idle;
         let used = user + nice + system;
-        
+
         Ok(used as f64 / total as f64)
     }
-    
-    async fn collect_memory_metrics(&self) -> Result<SystemMemoryMetrics, Box<dyn std::error::Error + Send + Sync>> {
+
+    async fn collect_memory_metrics(
+        &self,
+    ) -> Result<SystemMemoryMetrics, Box<dyn std::error::Error + Send + Sync>> {
         #[cfg(target_os = "linux")]
         {
             self.collect_memory_metrics_linux().await
         }
-        
+
         #[cfg(not(target_os = "linux"))]
         {
             // Fallback implementation
@@ -320,21 +329,23 @@ impl SystemMetricsCollector {
             })
         }
     }
-    
+
     #[cfg(target_os = "linux")]
-    async fn collect_memory_metrics_linux(&self) -> Result<SystemMemoryMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn collect_memory_metrics_linux(
+        &self,
+    ) -> Result<SystemMemoryMetrics, Box<dyn std::error::Error + Send + Sync>> {
         let contents = tokio::fs::read_to_string("/proc/meminfo").await?;
-        
+
         let mut total_kb = 0u64;
         let mut available_kb = 0u64;
         let mut swap_total_kb = 0u64;
         let mut swap_free_kb = 0u64;
-        
+
         for line in contents.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
                 let value: u64 = parts[1].parse().unwrap_or(0);
-                
+
                 match parts[0] {
                     "MemTotal:" => total_kb = value,
                     "MemAvailable:" => available_kb = value,
@@ -344,14 +355,14 @@ impl SystemMetricsCollector {
                 }
             }
         }
-        
+
         let total_bytes = total_kb * 1024;
         let available_bytes = available_kb * 1024;
         let used_bytes = total_bytes - available_bytes;
         let usage_percent = used_bytes as f64 / total_bytes as f64;
         let swap_total_bytes = swap_total_kb * 1024;
         let swap_used_bytes = swap_total_bytes - (swap_free_kb * 1024);
-        
+
         Ok(SystemMemoryMetrics {
             total_bytes,
             available_bytes,
@@ -361,8 +372,10 @@ impl SystemMetricsCollector {
             swap_used_bytes,
         })
     }
-    
-    async fn collect_disk_io_metrics(&self) -> Result<DiskIoMetrics, Box<dyn std::error::Error + Send + Sync>> {
+
+    async fn collect_disk_io_metrics(
+        &self,
+    ) -> Result<DiskIoMetrics, Box<dyn std::error::Error + Send + Sync>> {
         // Simplified implementation - would read from /proc/diskstats on Linux
         Ok(DiskIoMetrics {
             bytes_read: 0,
@@ -373,8 +386,10 @@ impl SystemMetricsCollector {
             avg_write_latency_us: 0.0,
         })
     }
-    
-    async fn collect_network_metrics(&self) -> Result<NetworkMetrics, Box<dyn std::error::Error + Send + Sync>> {
+
+    async fn collect_network_metrics(
+        &self,
+    ) -> Result<NetworkMetrics, Box<dyn std::error::Error + Send + Sync>> {
         // Simplified implementation - would read from /proc/net/dev on Linux
         Ok(NetworkMetrics {
             bytes_received: 0,
@@ -384,15 +399,17 @@ impl SystemMetricsCollector {
             errors: 0,
         })
     }
-    
-    async fn collect_process_metrics(&self) -> Result<ProcessMetrics, Box<dyn std::error::Error + Send + Sync>> {
+
+    async fn collect_process_metrics(
+        &self,
+    ) -> Result<ProcessMetrics, Box<dyn std::error::Error + Send + Sync>> {
         let pid = std::process::id();
-        
+
         #[cfg(target_os = "linux")]
         {
             self.collect_process_metrics_linux(pid).await
         }
-        
+
         #[cfg(not(target_os = "linux"))]
         {
             Ok(ProcessMetrics {
@@ -405,24 +422,27 @@ impl SystemMetricsCollector {
             })
         }
     }
-    
+
     #[cfg(target_os = "linux")]
-    async fn collect_process_metrics_linux(&self, pid: u32) -> Result<ProcessMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn collect_process_metrics_linux(
+        &self,
+        pid: u32,
+    ) -> Result<ProcessMetrics, Box<dyn std::error::Error + Send + Sync>> {
         // Read from /proc/self/stat for process info
         let stat_contents = tokio::fs::read_to_string(format!("/proc/{}/stat", pid)).await?;
         let fields: Vec<&str> = stat_contents.split_whitespace().collect();
-        
+
         let memory_vsize_bytes = if fields.len() > 22 {
             fields[22].parse().unwrap_or(0)
         } else {
             0
         };
-        
+
         // Read from /proc/self/status for more detailed info
         let status_contents = tokio::fs::read_to_string(format!("/proc/{}/status", pid)).await?;
         let mut memory_rss_bytes = 0u64;
         let mut thread_count = 1u32;
-        
+
         for line in status_contents.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
@@ -430,15 +450,15 @@ impl SystemMetricsCollector {
                     "VmRSS:" => {
                         let kb: u64 = parts[1].parse().unwrap_or(0);
                         memory_rss_bytes = kb * 1024;
-                    },
+                    }
                     "Threads:" => {
                         thread_count = parts[1].parse().unwrap_or(1);
-                    },
+                    }
                     _ => {}
                 }
             }
         }
-        
+
         // Count open file descriptors
         let fd_dir = format!("/proc/{}/fd", pid);
         let open_file_descriptors = match tokio::fs::read_dir(&fd_dir).await {
@@ -448,10 +468,10 @@ impl SystemMetricsCollector {
                     count += 1;
                 }
                 count
-            },
+            }
             Err(_) => 0,
         };
-        
+
         Ok(ProcessMetrics {
             pid,
             cpu_time_seconds: 0.0, // Would need to calculate from stat fields
@@ -472,11 +492,11 @@ impl Default for SystemMetricsCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_metrics_history() {
         let mut history = MetricsHistory::new(5);
-        
+
         // Add some resource usage data
         for i in 0..10 {
             let usage = ResourceUsage {
@@ -492,29 +512,29 @@ mod tests {
                 active_analyses: i as usize,
                 degradation_level: DegradationLevel::Normal,
             };
-            
+
             history.record_resource_usage(usage);
         }
-        
+
         // Should only keep the last 5 entries
         assert_eq!(history.resource_usage.len(), 5);
-        
+
         // Check that the most recent data is preserved
         let latest_usage = &history.resource_usage.back().unwrap().1;
         assert_eq!(latest_usage.memory.current, 900);
     }
-    
+
     #[tokio::test]
     async fn test_system_metrics_collection() {
         let mut collector = SystemMetricsCollector::new();
-        
+
         // This test may fail on systems without /proc filesystem
         match collector.collect().await {
             Ok(metrics) => {
                 assert!(metrics.timestamp > 0);
                 assert!(metrics.cpu_usage >= 0.0);
                 assert!(metrics.memory.total_bytes >= metrics.memory.used_bytes);
-            },
+            }
             Err(_) => {
                 // Expected on non-Linux systems or systems without proper /proc access
                 // The test passes as long as it doesn't panic

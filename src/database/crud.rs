@@ -1,5 +1,5 @@
 use crate::core::logging::error;
-use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, AnalysisStats};
+use crate::database::models::{AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue};
 use crate::error::{Result, UveddiError};
 use crate::security;
 use chrono::Utc;
@@ -29,14 +29,16 @@ impl Database {
             None => Connection::open_in_memory().map_err(crate::error::UveddiError::from)?,
         };
         // Enable performance optimizations
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             PRAGMA journal_mode = WAL;
             PRAGMA synchronous = NORMAL;
             PRAGMA cache_size = 10000;
             PRAGMA temp_store = MEMORY;
             PRAGMA mmap_size = 268435456;
-        ")?;
-        
+        ",
+        )?;
+
         conn.execute_batch("
             CREATE TABLE IF NOT EXISTS analysis_runs (
                 run_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,7 +90,7 @@ impl Database {
                 FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id)
             );
         ")?;
-        
+
         // Create performance indexes
         conn.execute_batch("
             CREATE INDEX IF NOT EXISTS idx_analysis_runs_project_time ON analysis_runs(project_id, start_time);
@@ -653,14 +655,18 @@ impl Database {
     }
 
     /// Store dependencies in batch for performance
-    pub fn store_dependencies_batch(&mut self, run_id: i64, dependencies: &[crate::database::models::Dependency]) -> Result<()> {
+    pub fn store_dependencies_batch(
+        &mut self,
+        run_id: i64,
+        dependencies: &[crate::database::models::Dependency],
+    ) -> Result<()> {
         let mut conn = self.conn.lock().unwrap();
         let tx = conn.transaction()?;
         {
             let mut stmt = tx.prepare(
                 "INSERT INTO dependencies (analysis_run_id, from_file, to_module, dependency_type, line_number) VALUES (?, ?, ?, ?, ?)"
             )?;
-            
+
             for dep in dependencies {
                 stmt.execute(rusqlite::params![
                     run_id,
@@ -674,7 +680,7 @@ impl Database {
         tx.commit()?;
         Ok(())
     }
-    
+
     /// Get dependencies for a specific analysis run
     pub async fn get_dependencies_for_run(
         &self,
@@ -685,7 +691,7 @@ impl Database {
         })?;
         let mut stmt = conn.prepare(
             "SELECT from_file, to_module, dependency_type, line_number 
-             FROM dependencies WHERE analysis_run_id = ? ORDER BY from_file, to_module"
+             FROM dependencies WHERE analysis_run_id = ? ORDER BY from_file, to_module",
         )?;
 
         let dep_iter = stmt.query_map([run_id], |row| {
@@ -693,7 +699,7 @@ impl Database {
             let to_module: String = row.get(1)?;
             let dep_type_str: String = row.get(2)?;
             let line_number: Option<i32> = row.get(3)?;
-            
+
             // Parse dependency type
             use crate::database::models::DependencyType;
             let dependency_type = match dep_type_str.as_str() {
@@ -740,11 +746,14 @@ impl Database {
     }
 
     /// Batch get issues with their anti-pattern types (prevents N+1 queries)
-    pub async fn get_issues_with_types_for_run(&self, run_id: i64) -> Result<Vec<(ArchitecturalIssue, AntiPatternType)>> {
+    pub async fn get_issues_with_types_for_run(
+        &self,
+        run_id: i64,
+    ) -> Result<Vec<(ArchitecturalIssue, AntiPatternType)>> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
         })?;
-        
+
         // Use a JOIN to avoid N+1 queries
         let mut stmt = conn.prepare(
             "SELECT ai.issue_id, ai.analysis_run_id, ai.anti_pattern_type_id, ai.file_path, 
@@ -755,7 +764,7 @@ impl Database {
              FROM architectural_issues ai
              INNER JOIN anti_pattern_types apt ON ai.anti_pattern_type_id = apt.anti_pattern_type_id
              WHERE ai.analysis_run_id = ?
-             ORDER BY ai.severity DESC, ai.file_path, ai.start_line"
+             ORDER BY ai.severity DESC, ai.file_path, ai.start_line",
         )?;
 
         let result_iter = stmt.query_map([run_id], |row| {
@@ -821,10 +830,10 @@ impl Database {
                 COUNT(CASE WHEN severity = 'medium' THEN 1 END) as medium_count,
                 COUNT(CASE WHEN severity = 'low' THEN 1 END) as low_count,
                 COUNT(DISTINCT file_path) as affected_files
-             FROM architectural_issues WHERE analysis_run_id = ?"
+             FROM architectural_issues WHERE analysis_run_id = ?",
         )?;
 
-        let (total_issues, critical_count, high_count, medium_count, low_count, affected_files) = 
+        let (total_issues, critical_count, high_count, medium_count, low_count, affected_files) =
             stmt.query_row([run_id], |row| {
                 Ok((
                     row.get::<_, i64>(0)? as u32,
@@ -840,7 +849,7 @@ impl Database {
         let mut stmt = conn.prepare(
             "SELECT detector_name, COUNT(*) as count 
              FROM architectural_issues WHERE analysis_run_id = ? 
-             GROUP BY detector_name ORDER BY count DESC"
+             GROUP BY detector_name ORDER BY count DESC",
         )?;
 
         let detector_iter = stmt.query_map([run_id], |row| {
@@ -859,7 +868,7 @@ impl Database {
              FROM architectural_issues ai
              INNER JOIN anti_pattern_types apt ON ai.anti_pattern_type_id = apt.anti_pattern_type_id
              WHERE ai.analysis_run_id = ? 
-             GROUP BY apt.category ORDER BY count DESC"
+             GROUP BY apt.category ORDER BY count DESC",
         )?;
 
         let category_iter = stmt.query_map([run_id], |row| {
@@ -886,12 +895,12 @@ impl Database {
 
     /// Get paginated issues with efficient query
     pub async fn get_issues_paginated(
-        &self, 
-        run_id: i64, 
-        offset: u32, 
-        limit: u32, 
+        &self,
+        run_id: i64,
+        offset: u32,
+        limit: u32,
         severity_filter: Option<&str>,
-        detector_filter: Option<&str>
+        detector_filter: Option<&str>,
     ) -> Result<Vec<ArchitecturalIssue>> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
@@ -918,7 +927,8 @@ impl Database {
         params.push(offset.to_string());
 
         let mut stmt = conn.prepare(&query)?;
-        let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+        let param_refs: Vec<&dyn rusqlite::ToSql> =
+            params.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
 
         let issue_iter = stmt.query_map(param_refs.as_slice(), |row| {
             let created_at_str: String = row.get(11)?;

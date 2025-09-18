@@ -14,9 +14,7 @@ use thiserror::Error;
 
 use crate::analysis::mermaid_generator::MermaidGenerator;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
-use crate::models::visualization::{
-    ArchitecturalComponent, ComponentType,
-};
+use crate::models::visualization::{ArchitecturalComponent, ComponentType};
 // Removed unused uuid import
 
 // Include the bundled assets generated at build time
@@ -50,7 +48,7 @@ pub struct ModernReportGenerator {
 impl ModernReportGenerator {
     /// Create a new modern report generator
     pub fn new() -> Result<Self, ModernReportError> {
-        use crate::core::logging::{info};
+        use crate::core::logging::info;
 
         info!("Attempting to initialize modern report generator with templates");
 
@@ -602,9 +600,7 @@ impl ModernReportGenerator {
         issues: &[ArchitecturalIssue],
     ) -> Vec<ArchitecturalComponent> {
         use crate::core::logging::debug;
-        use crate::models::visualization::{
-            ArchitecturalComponent, ComponentMetrics,
-        };
+        use crate::models::visualization::{ArchitecturalComponent, ComponentMetrics};
         use std::collections::HashSet;
         use uuid::Uuid;
 
@@ -1010,8 +1006,8 @@ struct PerformanceMetric {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
     use crate::core::logging::error;
+    use chrono::Utc;
     use std::collections::HashMap;
     use tera::Value;
 

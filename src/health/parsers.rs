@@ -37,7 +37,7 @@ async fn check_tree_sitter_availability() -> HealthCheck {
         HealthCheck::new(
             "tree_sitter",
             HealthStatus::Healthy,
-            "Tree-sitter parsing library is available"
+            "Tree-sitter parsing library is available",
         )
     }
 
@@ -46,8 +46,9 @@ async fn check_tree_sitter_availability() -> HealthCheck {
         HealthCheck::new(
             "tree_sitter",
             HealthStatus::Warning,
-            "Tree-sitter parsing library is not enabled"
-        ).with_details("Compile with --features tree-sitter to enable AST parsing")
+            "Tree-sitter parsing library is not enabled",
+        )
+        .with_details("Compile with --features tree-sitter to enable AST parsing")
     }
 }
 
@@ -59,7 +60,7 @@ async fn check_rust_parser() -> HealthCheck {
     HealthCheck::new(
         "rust_parser",
         HealthStatus::Healthy,
-        "Rust parser feature is enabled"
+        "Rust parser feature is enabled",
     )
 }
 
@@ -68,8 +69,9 @@ async fn check_rust_parser() -> HealthCheck {
     HealthCheck::new(
         "rust_parser",
         HealthStatus::Warning,
-        "Rust parser is not enabled"
-    ).with_details("Compile with --features rust-lang to enable Rust analysis")
+        "Rust parser is not enabled",
+    )
+    .with_details("Compile with --features rust-lang to enable Rust analysis")
 }
 
 /// Check Python language parser
@@ -78,7 +80,7 @@ async fn check_python_parser() -> HealthCheck {
     HealthCheck::new(
         "python_parser",
         HealthStatus::Healthy,
-        "Python parser feature is enabled"
+        "Python parser feature is enabled",
     )
 }
 
@@ -87,8 +89,9 @@ async fn check_python_parser() -> HealthCheck {
     HealthCheck::new(
         "python_parser",
         HealthStatus::Warning,
-        "Python parser is not enabled"
-    ).with_details("Compile with --features python-lang to enable Python analysis")
+        "Python parser is not enabled",
+    )
+    .with_details("Compile with --features python-lang to enable Python analysis")
 }
 
 /// Check JavaScript language parser
@@ -97,7 +100,7 @@ async fn check_javascript_parser() -> HealthCheck {
     HealthCheck::new(
         "javascript_parser",
         HealthStatus::Healthy,
-        "JavaScript parser feature is enabled"
+        "JavaScript parser feature is enabled",
     )
 }
 
@@ -106,8 +109,9 @@ async fn check_javascript_parser() -> HealthCheck {
     HealthCheck::new(
         "javascript_parser",
         HealthStatus::Warning,
-        "JavaScript parser is not enabled"
-    ).with_details("Compile with --features javascript-lang to enable JavaScript analysis")
+        "JavaScript parser is not enabled",
+    )
+    .with_details("Compile with --features javascript-lang to enable JavaScript analysis")
 }
 
 /// Check TypeScript language parser
@@ -116,7 +120,7 @@ async fn check_typescript_parser() -> HealthCheck {
     HealthCheck::new(
         "typescript_parser",
         HealthStatus::Healthy,
-        "TypeScript parser feature is enabled"
+        "TypeScript parser feature is enabled",
     )
 }
 
@@ -125,8 +129,9 @@ async fn check_typescript_parser() -> HealthCheck {
     HealthCheck::new(
         "typescript_parser",
         HealthStatus::Warning,
-        "TypeScript parser is not enabled"
-    ).with_details("Compile with --features typescript-lang to enable TypeScript analysis")
+        "TypeScript parser is not enabled",
+    )
+    .with_details("Compile with --features typescript-lang to enable TypeScript analysis")
 }
 
 /// Test basic parser functionality with sample code
@@ -139,8 +144,8 @@ pub async fn test_parser_functionality(language: &str) -> Result<HealthCheck, Uv
         _ => Ok(HealthCheck::new(
             format!("{}_test", language),
             HealthStatus::Warning,
-            format!("Unknown language: {}", language)
-        ))
+            format!("Unknown language: {}", language),
+        )),
     }
 }
 
@@ -149,7 +154,7 @@ async fn test_rust_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "rust_parser_test",
         HealthStatus::Healthy,
-        "Rust parser testing completed - feature available"
+        "Rust parser testing completed - feature available",
     ))
 }
 
@@ -158,7 +163,7 @@ async fn test_rust_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "rust_parser_test",
         HealthStatus::Warning,
-        "Rust parser testing skipped - feature not enabled"
+        "Rust parser testing skipped - feature not enabled",
     ))
 }
 
@@ -167,7 +172,7 @@ async fn test_python_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "python_parser_test",
         HealthStatus::Healthy,
-        "Python parser testing completed - feature available"
+        "Python parser testing completed - feature available",
     ))
 }
 
@@ -176,7 +181,7 @@ async fn test_python_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "python_parser_test",
         HealthStatus::Warning,
-        "Python parser testing skipped - feature not enabled"
+        "Python parser testing skipped - feature not enabled",
     ))
 }
 
@@ -185,7 +190,7 @@ async fn test_javascript_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "javascript_parser_test",
         HealthStatus::Healthy,
-        "JavaScript parser testing completed - feature available"
+        "JavaScript parser testing completed - feature available",
     ))
 }
 
@@ -194,7 +199,7 @@ async fn test_javascript_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "javascript_parser_test",
         HealthStatus::Warning,
-        "JavaScript parser testing skipped - feature not enabled"
+        "JavaScript parser testing skipped - feature not enabled",
     ))
 }
 
@@ -203,7 +208,7 @@ async fn test_typescript_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "typescript_parser_test",
         HealthStatus::Healthy,
-        "TypeScript parser testing completed - feature available"
+        "TypeScript parser testing completed - feature available",
     ))
 }
 
@@ -212,6 +217,6 @@ async fn test_typescript_parsing() -> Result<HealthCheck, UveddiError> {
     Ok(HealthCheck::new(
         "typescript_parser_test",
         HealthStatus::Warning,
-        "TypeScript parser testing skipped - feature not enabled"
+        "TypeScript parser testing skipped - feature not enabled",
     ))
 }
