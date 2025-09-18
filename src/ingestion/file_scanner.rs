@@ -150,12 +150,15 @@ impl FileScanner {
     /// * `Err(ScanError)` - If scanning fails
     pub async fn scan_for_changes(
         &self,
-        _root_path: &Path,
+        root_path: &Path,
         change_detector: &mut ChangeDetector,
     ) -> Result<ChangeSet, ScanError> {
-        // TODO: Implement proper change detection with previous state
-        let previous_state = std::collections::HashMap::new();
-        Ok(change_detector.detect_changes(&previous_state))
+        // Detect changes in the given root path
+        let changeset = change_detector
+            .detect_changes(root_path)
+            .await
+            .map_err(|e| ScanError::IncrementalError(format!("Change detection failed: {}", e)))?;
+        Ok(changeset)
     }
 
     /// Scans only changed files for incremental analysis

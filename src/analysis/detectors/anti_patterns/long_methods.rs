@@ -1246,7 +1246,7 @@ fn short_function() {
     async fn test_calculate_method_metrics_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+        parser.set_language(&crate::tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
 fn test_function(param1: i32, param2: String) -> i32 {
@@ -1332,7 +1332,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
     {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+        parser.set_language(&crate::tree_sitter_rust::LANGUAGE.into())?;
 
         // Create a mock node that will fail utf8_text extraction
         let rust_code = "fn test() {}";
@@ -1377,11 +1377,12 @@ fn test_function(param1: i32, param2: String) -> i32 {
         Ok(())
     }
 
+    #[cfg(feature = "tree-sitter")]
     #[test]
     fn test_create_rust_function_query_success() {
         let detector = LongMethodsDetector::new();
-        let language = tree_sitter_rust::LANGUAGE;
-        let tree_sitter_language: Language = tree_sitter_rust::LANGUAGE.into();
+        let language = crate::tree_sitter_rust::LANGUAGE;
+        let tree_sitter_language: tree_sitter::Language = language.into();
         let result = detector.create_rust_function_query(&tree_sitter_language);
         assert!(result.is_ok());
     }
@@ -1391,7 +1392,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
     async fn test_process_function_matches_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+        parser.set_language(&crate::tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
 fn function_one(x: i32) -> i32 {
@@ -1489,7 +1490,7 @@ fn function_two() {
     async fn test_process_function_matches_malformed() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+        parser.set_language(&crate::tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
 fn valid_function() {

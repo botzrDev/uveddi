@@ -253,7 +253,7 @@ impl IncrementalCache {
         // Update modification time cache
         {
             let mut mtime_cache = self.mtime_cache.write().await;
-            mtime_cache.insert(file_path.clone(), file_state.modified_time);
+            mtime_cache.insert(file_path.clone(), file_state.last_modified);
         }
 
         // Update statistics
