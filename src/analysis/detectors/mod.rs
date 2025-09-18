@@ -5,10 +5,17 @@
 //! infrastructure for dependency analysis.
 
 pub mod anti_patterns;
+pub mod base;
 pub mod cycle;
 pub mod dependency;
+pub mod registry;
 pub mod security;
 
+pub use base::{
+    AnalysisContext, BaseConfig, BaseMetrics, Detector, DetectorCategory, DetectorConfig,
+    DetectorOutput, DetectionMetrics, Issue, Severity,
+};
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};
+pub use registry::{DetectorRegistry, DetectorRegistryFactory, RegistryConfig, RegistryResults};
 pub use security::{MainSecurityDetector, SecurityConfig, SecurityDetector};

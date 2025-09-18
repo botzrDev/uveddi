@@ -20,7 +20,7 @@ pub mod tight_coupling;
 // pub mod state_synchronization;
 
 // Re-exports for community detectors
-pub use code_duplication::CodeDuplicationDetector;
+pub use code_duplication::{CodeDuplicationDetector, DuplicationConfig};
 pub use cyclic_dependencies::CyclicDependenciesDetector;
 // pub use data_clumps::{DataClumpsConfig, DataClumpsDetector};
 pub use dead_code::DeadCodeDetector;
