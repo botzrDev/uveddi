@@ -100,6 +100,9 @@ pub enum SecurityIssueType {
     RaceCondition,
     DeserializationVulnerabilities,
 
+    // Agent-related security issues
+    PotentialMaliciousAgent,
+
     // Custom/Unknown category
     Custom(String),
 }
@@ -136,6 +139,7 @@ impl SecurityIssueType {
             SecurityIssueType::SecurityMisconfiguration => SecuritySeverity::Medium,
             SecurityIssueType::InsecureRandomness => SecuritySeverity::Medium,
             SecurityIssueType::ImproperErrorHandling => SecuritySeverity::Low,
+            SecurityIssueType::PotentialMaliciousAgent => SecuritySeverity::Critical,
             _ => SecuritySeverity::Medium,
         }
     }
@@ -179,6 +183,7 @@ impl ToString for SecurityIssueType {
             SecurityIssueType::DeserializationVulnerabilities => {
                 "Deserialization Vulnerabilities".to_string()
             }
+            SecurityIssueType::PotentialMaliciousAgent => "Potential Malicious Agent".to_string(),
             SecurityIssueType::Custom(name) => name.clone(),
         }
     }
