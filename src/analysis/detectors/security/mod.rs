@@ -79,7 +79,7 @@ pub use config::{
 pub use core::{ConfidenceScore, SecurityAnalysisResult, SecurityContext, VulnerabilityDatabase};
 pub use detector::SecurityDetector;
 pub use knowledge_graph::{
-    CodeCentricRAG, KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph,
+    KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph,
 };
 pub use owasp::{OwaspCategory, OwaspTop10Detector, OwaspVulnerability};
 pub use strategies::{
