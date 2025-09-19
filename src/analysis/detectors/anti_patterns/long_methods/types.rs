@@ -147,6 +147,8 @@ impl Default for LanguageThresholds {
 pub struct LongMethodsResult {
     /// All detected long methods
     pub methods: Vec<MethodMetrics>,
+    /// Issues found during analysis
+    pub issues: Vec<crate::analysis::detectors::base::Issue>,
     /// Total number of methods analyzed
     pub total_methods_analyzed: usize,
     /// Number of methods exceeding thresholds
