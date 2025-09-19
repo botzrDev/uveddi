@@ -1,6 +1,6 @@
 //! Type definitions for long methods detection
 
-use crate::database::models::AntiPatternType;
+use crate::analysis::detectors::base::Severity;
 use serde::{Deserialize, Serialize};
 
 /// Represents metrics collected for a method/function
@@ -67,14 +67,14 @@ impl MethodMetrics {
     }
 
     /// Determine severity based on score
-    pub fn get_severity(&self, thresholds: &LanguageThresholds) -> AntiPatternType {
+    pub fn get_severity(&self, thresholds: &LanguageThresholds) -> Severity {
         let score = self.calculate_score(thresholds);
         match score {
-            0..=25 => AntiPatternType::LongMethod,  // Info level
-            26..=50 => AntiPatternType::LongMethod, // Low level
-            51..=75 => AntiPatternType::LongMethod, // Medium level
-            76..=90 => AntiPatternType::LongMethod, // High level
-            _ => AntiPatternType::LongMethod,       // Critical level
+            0..=25 => Severity::Info,
+            26..=50 => Severity::Low,
+            51..=75 => Severity::Medium,
+            76..=90 => Severity::High,
+            _ => Severity::Critical,
         }
     }
 

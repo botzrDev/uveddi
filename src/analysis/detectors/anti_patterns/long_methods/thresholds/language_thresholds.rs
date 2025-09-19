@@ -10,7 +10,6 @@ pub fn get_language_thresholds(language: SourceLanguage) -> LanguageThresholds {
         SourceLanguage::Rust => rust_thresholds(),
         SourceLanguage::Python => python_thresholds(),
         SourceLanguage::JavaScript | SourceLanguage::TypeScript => javascript_thresholds(),
-        _ => LanguageThresholds::default(),
     }
 }
 

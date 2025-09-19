@@ -57,16 +57,6 @@ impl LongMethodsDetector {
         metrics.calculate_score(thresholds)
     }
 
-    /// Get severity level based on score
-    fn get_severity_level(score: u32) -> String {
-        match score {
-            0..=25 => "info".to_string(),
-            26..=50 => "low".to_string(),
-            51..=75 => "medium".to_string(),
-            76..=90 => "high".to_string(),
-            _ => "critical".to_string(),
-        }
-    }
 
     /// Convert severity score to Severity enum
     fn score_to_severity(score: u32) -> Severity {
@@ -205,22 +195,28 @@ impl Detector for LongMethodsDetector {
 impl DetectorConfig for LongMethodsConfig {
     fn validate(&self) -> Result<(), AnalysisError> {
         if self.adaptive_percentile < 50.0 || self.adaptive_percentile > 99.0 {
-            return Err(AnalysisError::ConfigValidationError(
-                "adaptive_percentile must be between 50.0 and 99.0".to_string(),
-            ));
+            return Err(AnalysisError::ConfigurationError {
+                field: "adaptive_percentile".to_string(),
+                value: self.adaptive_percentile.to_string(),
+                reason: "must be between 50.0 and 99.0".to_string(),
+            });
         }
 
         if self.min_sample_size == 0 {
-            return Err(AnalysisError::ConfigValidationError(
-                "min_sample_size must be greater than 0".to_string(),
-            ));
+            return Err(AnalysisError::ConfigurationError {
+                field: "min_sample_size".to_string(),
+                value: self.min_sample_size.to_string(),
+                reason: "must be greater than 0".to_string(),
+            });
         }
 
         for (language, thresholds) in &self.thresholds {
             if thresholds.max_logical_loc == 0 {
-                return Err(AnalysisError::ConfigValidationError(
-                    format!("max_logical_loc for {:?} must be greater than 0", language),
-                ));
+                return Err(AnalysisError::ConfigurationError {
+                    field: format!("max_logical_loc[{:?}]", language),
+                    value: thresholds.max_logical_loc.to_string(),
+                    reason: "must be greater than 0".to_string(),
+                });
             }
         }
 
@@ -257,6 +253,9 @@ impl DetectorConfig for LongMethodsConfig {
         }
     }
 
+    fn default() -> Self {
+        <LongMethodsConfig as Default>::default()
+    }
 }
 
 impl DetectorOutput for LongMethodsResult {
@@ -278,11 +277,14 @@ impl DetectorOutput for LongMethodsResult {
     }
 
     fn metrics(&self) -> Option<DetectionMetrics> {
+        use std::collections::HashMap;
+
         Some(DetectionMetrics {
+            duration_ms: 0, // This would need to be tracked properly
             files_analyzed: 1, // This would need to be tracked properly
-            issues_found: self.issues.len(),
-            analysis_duration_ms: 0, // This would need to be tracked
-            memory_usage_bytes: 0,   // This would need to be tracked
+            nodes_processed: 0, // This would need to be tracked
+            memory_usage_bytes: Some(0), // This would need to be tracked
+            custom_metrics: HashMap::new(),
         })
     }
 
