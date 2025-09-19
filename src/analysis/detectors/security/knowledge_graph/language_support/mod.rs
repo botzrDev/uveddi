@@ -43,27 +43,24 @@ impl LanguageEntityProcessor {
             SourceLanguage::Python => {
                 self.python_processor.process_python_entities(file_path, content).await
             }
-            SourceLanguage::JavaScript => {
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.js_processor.process_js_entities(file_path, content).await
-            }
-            _ => {
-                // For unsupported languages, return empty list
-                Ok(Vec::new())
             }
         }
     }
 
     /// Determine language from file extension
-    pub fn detect_language(&self, file_path: &PathBuf) -> SourceLanguage {
+    pub fn detect_language(&self, file_path: &PathBuf) -> Option<SourceLanguage> {
         if let Some(extension) = file_path.extension().and_then(|ext| ext.to_str()) {
             match extension.to_lowercase().as_str() {
-                "rs" => SourceLanguage::Rust,
-                "py" => SourceLanguage::Python,
-                "js" | "ts" | "jsx" | "tsx" => SourceLanguage::JavaScript,
-                _ => SourceLanguage::Unknown,
+                "rs" => Some(SourceLanguage::Rust),
+                "py" => Some(SourceLanguage::Python),
+                "js" | "jsx" => Some(SourceLanguage::JavaScript),
+                "ts" | "tsx" => Some(SourceLanguage::TypeScript),
+                _ => None,
             }
         } else {
-            SourceLanguage::Unknown
+            None
         }
     }
 }

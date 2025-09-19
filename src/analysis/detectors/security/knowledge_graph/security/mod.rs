@@ -4,7 +4,7 @@ pub mod patterns;
 pub mod vulnerabilities;
 pub mod risk_assessment;
 
-pub use patterns::{SecurityPatternDetector, SecurityPatternResult};
+pub use patterns::{SecurityPatternDetector, SecurityPatternResult, detect_security_patterns};
 pub use vulnerabilities::{VulnerabilityAnalyzer, VulnerabilityAnalysisResult};
 pub use risk_assessment::{RiskAssessmentEngine, RiskAssessmentResult};
 
