@@ -1,14 +1,21 @@
 pub mod analysis;
 pub mod config;
 pub mod detector;
+pub mod issue_evaluator;
 pub mod language_support;
 pub mod metrics;
+pub mod report;
 pub mod types;
 pub mod visualization;
+
+#[cfg(test)]
+mod tests;
 
 // Re-export main components for easy access
 pub use config::TightCouplingConfig;
 pub use detector::{CrossFileAnalysisDetector, TightCouplingDetector};
+pub use issue_evaluator::IssueEvaluator;
+pub use report::{CouplingAnalysisReport, ReportGenerator};
 pub use types::{CouplingMetrics, CouplingThresholds, Dependency, DependencyStrength};
 
 // Re-export analysis components

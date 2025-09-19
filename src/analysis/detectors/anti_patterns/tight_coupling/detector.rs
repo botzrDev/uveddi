@@ -9,24 +9,20 @@ use std::path::Path;
 use tracing::{debug, info};
 
 use super::{
-    analysis::{CouplingCalculator, DependencyAnalyzer},
+    analysis::DependencyAnalyzer,
     config::TightCouplingConfig,
+    issue_evaluator::IssueEvaluator,
     language_support::{LanguageAnalyzer, PythonAnalyzer, RustAnalyzer, TypeScriptAnalyzer},
-    metrics::{AfferentCouplingCalculator, EfferentCouplingCalculator, InstabilityCalculator},
-    types::{CouplingMetrics, CouplingThresholds, Dependency},
-    visualization::{CouplingMatrixGenerator, DependencyGraphVisualizer},
+    report::{CouplingAnalysisReport, ReportGenerator},
+    types::{CouplingThresholds, Dependency},
 };
 
 /// Detector for tight coupling anti-patterns
 pub struct TightCouplingDetector {
     config: TightCouplingConfig,
     dependency_analyzer: DependencyAnalyzer,
-    coupling_calculator: CouplingCalculator,
-    afferent_calculator: AfferentCouplingCalculator,
-    efferent_calculator: EfferentCouplingCalculator,
-    instability_calculator: InstabilityCalculator,
-    graph_visualizer: DependencyGraphVisualizer,
-    matrix_generator: CouplingMatrixGenerator,
+    issue_evaluator: IssueEvaluator,
+    report_generator: ReportGenerator,
     language_analyzers: HashMap<SourceLanguage, Box<dyn LanguageAnalyzer>>,
 }
 
@@ -41,12 +37,8 @@ impl std::fmt::Debug for TightCouplingDetector {
         f.debug_struct("TightCouplingDetector")
             .field("config", &self.config)
             .field("dependency_analyzer", &self.dependency_analyzer)
-            .field("coupling_calculator", &self.coupling_calculator)
-            .field("afferent_calculator", &self.afferent_calculator)
-            .field("efferent_calculator", &self.efferent_calculator)
-            .field("instability_calculator", &self.instability_calculator)
-            .field("graph_visualizer", &self.graph_visualizer)
-            .field("matrix_generator", &self.matrix_generator)
+            .field("issue_evaluator", &self.issue_evaluator)
+            .field("report_generator", &self.report_generator)
             .field("language_analyzers", &"[trait objects]")
             .finish()
     }
@@ -64,12 +56,8 @@ impl TightCouplingDetector {
         Self {
             config,
             dependency_analyzer: DependencyAnalyzer::new(),
-            coupling_calculator: CouplingCalculator::new(),
-            afferent_calculator: AfferentCouplingCalculator::new(),
-            efferent_calculator: EfferentCouplingCalculator::new(),
-            instability_calculator: InstabilityCalculator::new(),
-            graph_visualizer: DependencyGraphVisualizer::new(),
-            matrix_generator: CouplingMatrixGenerator::new(),
+            issue_evaluator: IssueEvaluator::new(),
+            report_generator: ReportGenerator::new(),
             language_analyzers,
         }
     }
@@ -92,123 +80,6 @@ impl TightCouplingDetector {
     /// Get analyzer for a specific language
     fn get_analyzer_for_language(&self, language: SourceLanguage) -> Option<&dyn LanguageAnalyzer> {
         self.language_analyzers.get(&language).map(|analyzer| analyzer.as_ref())
-    }
-
-    /// Evaluate coupling issues based on thresholds
-    fn evaluate_coupling_issues(
-        &self,
-        metrics: &HashMap<ComponentNode, CouplingMetrics>,
-        language: SourceLanguage,
-    ) -> Vec<ArchitecturalIssue> {
-        let mut issues = Vec::new();
-        let thresholds = self.get_thresholds_for_language(language);
-
-        for (component, metric) in metrics {
-            // Evaluate fan-out
-            if metric.fan_out >= thresholds.fan_out_critical {
-                issues.push(self.create_coupling_issue(
-                    component,
-                    "Critical",
-                    format!(
-                        "Fan-out {} exceeds critical threshold {}",
-                        metric.fan_out, thresholds.fan_out_critical
-                    ),
-                    metric,
-                ));
-            } else if metric.fan_out >= thresholds.fan_out_warning {
-                issues.push(self.create_coupling_issue(
-                    component,
-                    "Warning",
-                    format!(
-                        "Fan-out {} exceeds warning threshold {}",
-                        metric.fan_out, thresholds.fan_out_warning
-                    ),
-                    metric,
-                ));
-            }
-
-            // Evaluate CBO
-            if metric.cbo >= thresholds.cbo_critical {
-                issues.push(self.create_coupling_issue(
-                    component,
-                    "Critical",
-                    format!(
-                        "CBO {} exceeds critical threshold {}",
-                        metric.cbo, thresholds.cbo_critical
-                    ),
-                    metric,
-                ));
-            } else if metric.cbo >= thresholds.cbo_warning {
-                issues.push(self.create_coupling_issue(
-                    component,
-                    "Warning",
-                    format!(
-                        "CBO {} exceeds warning threshold {}",
-                        metric.cbo, thresholds.cbo_warning
-                    ),
-                    metric,
-                ));
-            }
-
-            // Evaluate RFC
-            if metric.rfc >= thresholds.rfc_critical {
-                issues.push(self.create_coupling_issue(
-                    component,
-                    "Critical",
-                    format!(
-                        "RFC {} exceeds critical threshold {}",
-                        metric.rfc, thresholds.rfc_critical
-                    ),
-                    metric,
-                ));
-            } else if metric.rfc >= thresholds.rfc_warning {
-                issues.push(self.create_coupling_issue(
-                    component,
-                    "Warning",
-                    format!(
-                        "RFC {} exceeds warning threshold {}",
-                        metric.rfc, thresholds.rfc_warning
-                    ),
-                    metric,
-                ));
-            }
-        }
-
-        issues
-    }
-
-    /// Create a coupling issue
-    fn create_coupling_issue(
-        &self,
-        component: &ComponentNode,
-        severity: &str,
-        description: String,
-        metrics: &CouplingMetrics,
-    ) -> ArchitecturalIssue {
-        let (file_path, component_name) = match component {
-            ComponentNode::Class { name, file_path } => (file_path.clone(), name.clone()),
-            ComponentNode::Function { name, file_path } => (file_path.clone(), name.clone()),
-            ComponentNode::Module { path } => (path.clone(), "module".to_string()),
-        };
-
-        let mut issue = ArchitecturalIssue::new(
-            0, // analysis_run_id will be set by caller
-            3, // anti_pattern_type_id for tight coupling
-            file_path,
-            None, // line_number
-            description.clone(),
-            "TightCouplingDetector".to_string(),
-            severity.to_string(),
-            description,
-        );
-        issue.start_line = None;
-        issue.end_line = None;
-        issue.code_snippet = Some(component_name);
-        issue.ai_explanation = Some(format!(
-            "Reduce coupling by: 1) Using dependency injection, 2) Applying interfaces/traits, 3) Reducing direct dependencies. Current metrics: Fan-out={}, Fan-in={}, CBO={}, RFC={}",
-            metrics.fan_out, metrics.fan_in, metrics.cbo, metrics.rfc
-        ));
-        issue
     }
 
     /// Build dependency graph from multiple files with parallel processing
@@ -259,6 +130,15 @@ impl TightCouplingDetector {
         }
     }
 
+    /// Generate comprehensive coupling analysis report
+    pub fn generate_analysis_report(
+        &self,
+        graph: &LocalDependencyGraph,
+        dependencies: &[Dependency],
+    ) -> CouplingAnalysisReport {
+        self.report_generator.generate_report(graph, dependencies, &self.config)
+    }
+
     /// Infer language from component file path
     fn infer_language_from_component(&self, component: &ComponentNode) -> SourceLanguage {
         let file_path = match component {
@@ -268,39 +148,6 @@ impl TightCouplingDetector {
         };
 
         SourceLanguage::from_path(Path::new(file_path)).unwrap_or(SourceLanguage::Rust)
-    }
-
-    /// Generate comprehensive coupling analysis report
-    pub fn generate_analysis_report(
-        &self,
-        graph: &LocalDependencyGraph,
-        dependencies: &[Dependency],
-    ) -> CouplingAnalysisReport {
-        info!("Generating comprehensive coupling analysis report");
-
-        let metrics = self.coupling_calculator.calculate_metrics(graph);
-        let stability_analysis = self.instability_calculator.analyze_system_stability(graph);
-        let hotspots = self.coupling_calculator.identify_coupling_hotspots(&metrics, 0.9);
-
-        let visualization_data = if self.config.visualization_enabled {
-            Some(self.graph_visualizer.generate_graph_data(graph, &metrics, dependencies))
-        } else {
-            None
-        };
-
-        let coupling_matrix = if self.config.generate_coupling_matrix {
-            Some(self.matrix_generator.generate_matrix(graph, &metrics, dependencies))
-        } else {
-            None
-        };
-
-        CouplingAnalysisReport {
-            metrics,
-            stability_analysis,
-            hotspots,
-            visualization_data,
-            coupling_matrix,
-        }
     }
 }
 
@@ -387,7 +234,8 @@ impl AnalysisDetector for TightCouplingDetector {
         );
 
         // Calculate coupling metrics for all components
-        let metrics = self.coupling_calculator.calculate_metrics(graph);
+        let report = self.generate_analysis_report(graph, &[]);
+        let metrics = report.metrics;
 
         // Group components by language for threshold evaluation
         let mut issues_by_language: HashMap<SourceLanguage, Vec<ArchitecturalIssue>> =
@@ -395,9 +243,11 @@ impl AnalysisDetector for TightCouplingDetector {
 
         for (component, metric) in &metrics {
             let language = self.infer_language_from_component(component);
-            let component_issues = self.evaluate_coupling_issues(
+            let thresholds = self.get_thresholds_for_language(language);
+            let component_issues = self.issue_evaluator.evaluate_coupling_issues(
                 &[(component.clone(), metric.clone())].into_iter().collect(),
                 language,
+                thresholds,
             );
 
             issues_by_language
@@ -436,14 +286,4 @@ impl AnalysisDetector for TightCouplingDetector {
             category: "structural".to_string(),
         }]
     }
-}
-
-/// Comprehensive coupling analysis report
-#[derive(Debug)]
-pub struct CouplingAnalysisReport {
-    pub metrics: HashMap<ComponentNode, CouplingMetrics>,
-    pub stability_analysis: super::metrics::instability_calculator::StabilityAnalysis,
-    pub hotspots: Vec<(ComponentNode, CouplingMetrics)>,
-    pub visualization_data: Option<super::visualization::dependency_graph::DependencyGraphData>,
-    pub coupling_matrix: Option<super::visualization::coupling_matrix::CouplingMatrix>,
 }

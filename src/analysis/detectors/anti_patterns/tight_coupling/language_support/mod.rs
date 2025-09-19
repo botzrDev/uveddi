@@ -1,10 +1,18 @@
 pub mod rust;
+pub mod rust_queries;
+pub mod rust_extractor;
 pub mod python;
 pub mod typescript;
+pub mod typescript_imports;
+pub mod typescript_modules;
 
 pub use rust::RustAnalyzer;
+pub use rust_queries::RustQueries;
+pub use rust_extractor::RustExtractor;
 pub use python::PythonAnalyzer;
 pub use typescript::TypeScriptAnalyzer;
+pub use typescript_imports::TypeScriptImportAnalyzer;
+pub use typescript_modules::TypeScriptModuleAnalyzer;
 
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
