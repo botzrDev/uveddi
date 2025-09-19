@@ -269,8 +269,6 @@ impl AnalysisModule for PatternMatcher {
             | SourceLanguage::Python
             | SourceLanguage::JavaScript
             | SourceLanguage::TypeScript
-            | SourceLanguage::C
-            | SourceLanguage::Cpp
         )
     }
 }

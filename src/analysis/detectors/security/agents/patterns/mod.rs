@@ -12,8 +12,10 @@ pub use malicious_patterns::{MaliciousPattern, MaliciousPatternDatabase};
 use crate::analysis::detectors::security::core::SecurityContext;
 use crate::analysis::detectors::security::types::SecurityIssue;
 use crate::analysis::AnalysisError;
+use async_trait::async_trait;
 
 /// Trait for pattern matching
+#[async_trait]
 pub trait PatternMatcher: Send + Sync {
     /// Match patterns in the given context
     async fn match_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError>;
