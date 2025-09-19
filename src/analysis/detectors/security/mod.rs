@@ -88,6 +88,7 @@ pub use strategies::{
 };
 pub use taint_analysis::{
     DataFlowGraph, SanitizationPoint, TaintAnalysisEngine, TaintSink, TaintSource,
+    TaintLevel, TaintFlow, UnifiedSourceDetector, UnifiedSinkDetector,
 };
 pub use types::{
     SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityMetadata, VulnerabilityType,
