@@ -47,10 +47,11 @@ impl SecurityPatternDetector {
         let interaction_issues = self.analyze_pattern_interactions(&pattern_matches, graph).await?;
         detected_issues.extend(interaction_issues);
 
+        let confidence_score = self.calculate_overall_confidence(&detected_issues);
         Ok(SecurityPatternResult {
             detected_issues,
             pattern_matches,
-            confidence_score: self.calculate_overall_confidence(&detected_issues),
+            confidence_score,
         })
     }
 

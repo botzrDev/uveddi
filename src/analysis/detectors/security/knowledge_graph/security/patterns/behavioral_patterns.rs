@@ -4,9 +4,10 @@ use super::detection_patterns::{SecurityPatternDetector, PatternApplicationResul
 use crate::analysis::detectors::security::knowledge_graph::types::{
     CodeEntity, StructuralSemanticGraph,
 };
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType};
+use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType, SecurityLocation};
 use crate::analysis::AnalysisError;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Detect unsafe data flow patterns (simplified)
 pub async fn detect_unsafe_data_flows(
@@ -16,8 +17,7 @@ pub async fn detect_unsafe_data_flows(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.7,
+        security_issues: Vec::new(),
     })
 }
 
@@ -29,8 +29,7 @@ pub async fn detect_input_validation_gaps(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.8,
+        security_issues: Vec::new(),
     })
 }
 
@@ -42,8 +41,7 @@ pub async fn detect_authorization_bypass(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.6,
+        security_issues: Vec::new(),
     })
 }
 
@@ -55,8 +53,43 @@ pub async fn detect_error_disclosure(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.5,
+        security_issues: Vec::new(),
+    })
+}
+
+/// Detect overprivileged components (simplified)
+pub async fn detect_overprivileged_components(
+    _detector: &SecurityPatternDetector,
+    _graph: &StructuralSemanticGraph,
+    _entities: &[CodeEntity],
+) -> Result<PatternApplicationResult, AnalysisError> {
+    Ok(PatternApplicationResult {
+        pattern_matches: Vec::new(),
+        security_issues: Vec::new(),
+    })
+}
+
+/// Detect insecure defaults (simplified)
+pub async fn detect_insecure_defaults(
+    _detector: &SecurityPatternDetector,
+    _graph: &StructuralSemanticGraph,
+    _entities: &[CodeEntity],
+) -> Result<PatternApplicationResult, AnalysisError> {
+    Ok(PatternApplicationResult {
+        pattern_matches: Vec::new(),
+        security_issues: Vec::new(),
+    })
+}
+
+/// Detect unvalidated input paths (simplified)
+pub async fn detect_unvalidated_input_paths(
+    _detector: &SecurityPatternDetector,
+    _graph: &StructuralSemanticGraph,
+    _entities: &[CodeEntity],
+) -> Result<PatternApplicationResult, AnalysisError> {
+    Ok(PatternApplicationResult {
+        pattern_matches: Vec::new(),
+        security_issues: Vec::new(),
     })
 }
 
@@ -75,7 +108,7 @@ fn create_behavioral_issue(
         confidence_score: 0.6,
         title,
         description,
-        location: Default::default(),
+        location: SecurityLocation::new(PathBuf::from("unknown"), 0, 0),
         language: None,
         remediation: Some("Review behavioral patterns and implement proper security controls".to_string()),
         context: HashMap::new(),

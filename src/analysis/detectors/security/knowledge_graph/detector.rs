@@ -2,17 +2,17 @@
 
 use crate::analysis::detectors::security::knowledge_graph::{
     config::KnowledgeGraphConfig,
-    types::{SecurityQuery, SecurityKnowledgeResult, FileAnalysis, ArchitecturalCorrelation},
-    graph::GraphManager,
-    knowledge::KnowledgeManager,
-    security::SecurityAnalyzer,
-    language_support::LanguageEntityProcessor,
+    types::{SecurityQuery, SecurityKnowledgeResult, FileAnalysis, ArchitecturalCorrelation, StructuralQueryResult, SemanticQueryResult, RAGQueryResult},
 };
 use crate::analysis::detectors::security::types::{
     SecurityIssue, SecurityIssueType, SecuritySeverity, SecurityLocation, VulnerabilityType
 };
+use crate::analysis::detectors::base::{
+    Detector, DetectorConfig, DetectorOutput, AnalysisContext, DetectorCategory, Severity, Issue
+};
 use crate::analysis::AnalysisError;
-use crate::ast::SourceLanguage;
+use crate::ast::tree_sitter_impl::SourceLanguage;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -31,8 +31,10 @@ impl KnowledgeGraphDetector {
     pub async fn analyze_files(&mut self, file_paths: &[PathBuf]) -> Result<SecurityKnowledgeResult, AnalysisError> {
         // Simplified implementation
         Ok(SecurityKnowledgeResult {
-            security_issues: Vec::new(),
-            architectural_correlations: Vec::new(),
+            structural_facts: StructuralQueryResult::default(),
+            semantic_insights: SemanticQueryResult::default(),
+            contextual_information: RAGQueryResult::default(),
+            historical_patterns: Vec::new(),
             confidence_score: 0.7,
         })
     }
@@ -78,15 +80,4 @@ impl KnowledgeGraphDetector {
     }
 }
 
-impl crate::analysis::detectors::Detector for KnowledgeGraphDetector {
-    async fn analyze_file(&mut self, file_path: &PathBuf, _content: &str) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        self.language = self.detect_language(file_path);
-
-        // Simplified analysis - return empty results
-        Ok(Vec::new())
-    }
-
-    fn detector_name(&self) -> &'static str {
-        "KnowledgeGraphDetector"
-    }
-}
+// Simplified implementation - no complex trait requirements for now

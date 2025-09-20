@@ -5,6 +5,7 @@ use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueTy
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Vulnerability analyzer for security patterns
 pub struct VulnerabilityAnalyzer;
@@ -73,7 +74,7 @@ impl VulnerabilityAnalyzer {
             confidence_score: 0.7,
             title,
             description,
-            location: SecurityLocation::default(),
+            location: SecurityLocation::new(PathBuf::from("unknown"), 0, 0),
             language: Some(SourceLanguage::Rust),
             remediation: Some("Review and apply security best practices".to_string()),
             context: HashMap::new(),

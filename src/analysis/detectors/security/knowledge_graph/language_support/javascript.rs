@@ -126,7 +126,7 @@ impl JavaScriptEntityProcessor {
     fn parse_class_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(class_part) = trimmed.strip_prefix("class ") {
-            let name = class_part.split([' ', '{', "extends"]).next().unwrap_or("unknown").trim();
+            let name = class_part.split([' ', '{']).next().unwrap_or("unknown").trim();
             let mut metadata = HashMap::new();
 
             if line.contains("extends ") {
@@ -154,7 +154,7 @@ impl JavaScriptEntityProcessor {
     fn parse_interface_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(interface_part) = trimmed.strip_prefix("interface ") {
-            let name = interface_part.split([' ', '{', "extends"]).next().unwrap_or("unknown").trim();
+            let name = interface_part.split([' ', '{']).next().unwrap_or("unknown").trim();
             let metadata = HashMap::new();
 
             return Ok(Some(CodeEntity {

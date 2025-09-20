@@ -20,7 +20,8 @@ impl GraphBuilder {
         let metadata = GraphMetadata {
             creation_time: chrono::Utc::now(),
             language,
-            version: "0.1.0".to_string(),
+            node_count: 0,
+            edge_count: 0,
         };
 
         Self {
@@ -56,12 +57,13 @@ impl GraphBuilder {
 
         let node = GraphNode {
             id: node_id.clone(),
-            node_type: GraphNodeType::CodeEntity,
+            node_type: GraphNodeType::Function,
             code_entity: Some(entity),
             properties: HashMap::new(),
+            location: None,
         };
 
-        self.graph.nodes.push(node);
+        self.graph.nodes.insert(node_id.clone(), node);
         debug!("Added node: {}", node_id);
 
         Ok(node_id)
@@ -75,12 +77,10 @@ impl GraphBuilder {
         edge_type: GraphEdgeType,
     ) -> Result<(), AnalysisError> {
         let edge = GraphEdge {
-            id: format!("edge_{}_{}", from_node_id, to_node_id),
             from: from_node_id.clone(),
             to: to_node_id.clone(),
             edge_type: edge_type.clone(),
             weight: 1.0,
-            properties: HashMap::new(),
         };
 
         self.graph.edges.push(edge);
@@ -103,13 +103,14 @@ impl GraphBuilder {
     pub fn find_node_by_entity_id(&self, entity_id: &str) -> Option<&GraphNode> {
         self.graph.nodes
             .iter()
-            .find(|node| {
+            .find(|(_, node)| {
                 if let Some(entity) = &node.code_entity {
                     entity.id == entity_id
                 } else {
                     false
                 }
             })
+            .map(|(_, node)| node)
     }
 
     /// Get graph statistics

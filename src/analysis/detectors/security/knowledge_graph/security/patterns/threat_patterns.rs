@@ -4,9 +4,10 @@ use super::detection_patterns::{SecurityPatternDetector, PatternApplicationResul
 use crate::analysis::detectors::security::knowledge_graph::types::{
     CodeEntity, StructuralSemanticGraph,
 };
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType};
+use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType, SecurityLocation};
 use crate::analysis::AnalysisError;
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 
 /// Detect privilege escalation patterns (simplified)
 pub async fn detect_privilege_escalation(
@@ -16,8 +17,7 @@ pub async fn detect_privilege_escalation(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.7,
+        security_issues: Vec::new(),
     })
 }
 
@@ -29,8 +29,7 @@ pub async fn detect_trust_boundary_violations(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.6,
+        security_issues: Vec::new(),
     })
 }
 
@@ -42,8 +41,7 @@ pub async fn detect_exposed_apis(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.8,
+        security_issues: Vec::new(),
     })
 }
 
@@ -55,8 +53,7 @@ pub async fn detect_insecure_network_communication(
 ) -> Result<PatternApplicationResult, AnalysisError> {
     Ok(PatternApplicationResult {
         pattern_matches: Vec::new(),
-        detected_issues: Vec::new(),
-        confidence_score: 0.5,
+        security_issues: Vec::new(),
     })
 }
 
@@ -75,7 +72,7 @@ fn create_threat_issue(
         confidence_score: 0.7,
         title,
         description,
-        location: Default::default(),
+        location: SecurityLocation::new(PathBuf::from("unknown"), 0, 0),
         language: None,
         remediation: Some("Review security implications and implement appropriate controls".to_string()),
         context: HashMap::new(),
@@ -101,6 +98,30 @@ fn crosses_trust_boundary(_entity1: &CodeEntity, _entity2: &CodeEntity) -> bool 
 fn is_api_exposed(_entity: &CodeEntity) -> bool {
     // Simplified check
     false
+}
+
+/// Detect weak authentication paths (simplified)
+pub async fn detect_weak_authentication_paths(
+    _detector: &SecurityPatternDetector,
+    _graph: &StructuralSemanticGraph,
+    _entities: &[CodeEntity],
+) -> Result<PatternApplicationResult, AnalysisError> {
+    Ok(PatternApplicationResult {
+        pattern_matches: Vec::new(),
+        security_issues: Vec::new(),
+    })
+}
+
+/// Detect exposed internal APIs (simplified)
+pub async fn detect_exposed_internal_apis(
+    _detector: &SecurityPatternDetector,
+    _graph: &StructuralSemanticGraph,
+    _entities: &[CodeEntity],
+) -> Result<PatternApplicationResult, AnalysisError> {
+    Ok(PatternApplicationResult {
+        pattern_matches: Vec::new(),
+        security_issues: Vec::new(),
+    })
 }
 
 /// Helper function to check network security

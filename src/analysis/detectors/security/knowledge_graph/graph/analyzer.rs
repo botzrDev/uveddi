@@ -23,12 +23,12 @@ impl<'a> GraphAnalyzer<'a> {
 
     /// Calculate centrality metrics (simplified)
     pub fn calculate_centrality(&self) -> HashMap<String, f64> {
-        let mut centrality = HashMap::new();
+        let mut centrality: HashMap<String, f64> = HashMap::new();
 
         // Simple centrality calculation based on node degree
-        for node in &self.graph.nodes {
-            let degree = self.calculate_node_degree(&node.id);
-            centrality.insert(node.id.clone(), degree as f64);
+        for (node_id, node) in &self.graph.nodes {
+            let degree = self.calculate_node_degree(node_id);
+            centrality.insert(node_id.clone(), degree as f64);
         }
 
         centrality
@@ -38,8 +38,8 @@ impl<'a> GraphAnalyzer<'a> {
     pub fn calculate_clustering_coefficient(&self) -> HashMap<String, f64> {
         let mut clustering = HashMap::new();
 
-        for node in &self.graph.nodes {
-            clustering.insert(node.id.clone(), 0.5); // Default clustering
+        for (node_id, node) in &self.graph.nodes {
+            clustering.insert(node_id.clone(), 0.5); // Default clustering
         }
 
         clustering
@@ -50,7 +50,7 @@ impl<'a> GraphAnalyzer<'a> {
         // Simplified: return each node as its own component
         self.graph.nodes
             .iter()
-            .map(|node| vec![node.id.clone()])
+            .map(|(node_id, node)| vec![node_id.clone()])
             .collect()
     }
 
@@ -72,8 +72,8 @@ impl<'a> GraphAnalyzer<'a> {
     pub fn calculate_shortest_paths(&self, _start: &str) -> HashMap<String, usize> {
         let mut paths = HashMap::new();
 
-        for node in &self.graph.nodes {
-            paths.insert(node.id.clone(), 1); // Default distance
+        for (node_id, node) in &self.graph.nodes {
+            paths.insert(node_id.clone(), 1); // Default distance
         }
 
         paths
@@ -95,6 +95,6 @@ impl<'a> GraphAnalyzer<'a> {
     /// Analyze community structure (simplified)
     pub fn analyze_communities(&self) -> Vec<Vec<String>> {
         // Simplified: return single community with all nodes
-        vec![self.graph.nodes.iter().map(|n| n.id.clone()).collect()]
+        vec![self.graph.nodes.iter().map(|(node_id, _)| node_id.clone()).collect()]
     }
 }

@@ -1,15 +1,10 @@
 //! Core data structures for the knowledge graph system
-//!
-//! This module contains all the fundamental types used throughout the
-//! knowledge graph implementation for security analysis.
 
 use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType};
 use crate::ast::SourceLanguage;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-
-/// Core code entity representation in the knowledge graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeEntity {
     pub id: String,
@@ -20,7 +15,6 @@ pub struct CodeEntity {
     pub language: SourceLanguage,
 }
 
-/// Types of code entities that can be represented
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EntityType {
     Function,
@@ -34,7 +28,6 @@ pub enum EntityType {
     Trait,
 }
 
-/// Location information for code entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
     pub file_path: PathBuf,
@@ -44,7 +37,6 @@ pub struct CodeLocation {
     pub end_column: u32,
 }
 
-/// Relationships between code entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeRelationship {
     pub from_entity: String,
@@ -53,7 +45,6 @@ pub struct CodeRelationship {
     pub strength: f64,
 }
 
-/// Types of relationships between entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RelationshipType {
     Calls,
@@ -65,7 +56,6 @@ pub enum RelationshipType {
     Imports,
 }
 
-/// AI-generated semantic enrichment for entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticEnrichment {
     pub entity_id: String,
@@ -76,7 +66,6 @@ pub struct SemanticEnrichment {
     pub confidence_score: f64,
 }
 
-/// Concept mapping for semantic understanding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConceptMapping {
     pub concept: String,
@@ -84,7 +73,6 @@ pub struct ConceptMapping {
     pub relevance_score: f64,
 }
 
-/// Anti-pattern mapping in the codebase
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AntiPatternMapping {
     pub pattern_type: String,
@@ -92,7 +80,6 @@ pub struct AntiPatternMapping {
     pub severity: f64,
 }
 
-/// Historical security patterns for learning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityPattern {
     pub pattern_type: SecurityIssueType,
@@ -105,7 +92,6 @@ pub struct SecurityPattern {
     pub temporal_data: Vec<chrono::DateTime<chrono::Utc>>,
 }
 
-/// Temporal trend analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemporalTrend {
     pub pattern_type: SecurityIssueType,
@@ -114,7 +100,6 @@ pub struct TemporalTrend {
     pub time_range: (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>),
 }
 
-/// Direction of security trend patterns
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TrendDirection {
     Increasing,
@@ -123,7 +108,6 @@ pub enum TrendDirection {
     Volatile,
 }
 
-/// Query types for the knowledge graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SecurityQuery {
     ArchitecturalCorrelation {
@@ -139,7 +123,6 @@ pub enum SecurityQuery {
     },
 }
 
-/// Comprehensive knowledge graph query results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityKnowledgeResult {
     pub structural_facts: StructuralQueryResult,
@@ -149,15 +132,13 @@ pub struct SecurityKnowledgeResult {
     pub confidence_score: f64,
 }
 
-/// Results from structural graph queries
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct StructuralQueryResult {
     pub entities: Vec<CodeEntity>,
     pub relationships: Vec<CodeRelationship>,
     pub anti_patterns: Vec<AntiPatternInfo>,
 }
 
-/// Results from semantic graph queries
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticQueryResult {
     pub insights: Vec<String>,
@@ -165,7 +146,16 @@ pub struct SemanticQueryResult {
     pub confidence_score: f64,
 }
 
-/// Results from RAG system queries
+impl Default for SemanticQueryResult {
+    fn default() -> Self {
+        Self {
+            insights: Vec::new(),
+            concepts: Vec::new(),
+            confidence_score: 0.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RAGQueryResult {
     pub relevant_contexts: Vec<String>,
@@ -173,7 +163,16 @@ pub struct RAGQueryResult {
     pub retrieved_facts: Vec<String>,
 }
 
-/// Historical pattern information
+impl Default for RAGQueryResult {
+    fn default() -> Self {
+        Self {
+            relevant_contexts: Vec::new(),
+            similarity_scores: HashMap::new(),
+            retrieved_facts: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoricalPattern {
     pub pattern_description: String,
@@ -182,7 +181,6 @@ pub struct HistoricalPattern {
     pub relevance_score: f64,
 }
 
-/// Anti-pattern information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AntiPatternInfo {
     pub pattern_type: String,
@@ -191,7 +189,6 @@ pub struct AntiPatternInfo {
     pub affected_entities: Vec<String>,
 }
 
-/// Correlation between security issues and architecture
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalCorrelation {
     pub security_issue_id: String,
@@ -201,7 +198,6 @@ pub struct ArchitecturalCorrelation {
     pub recommendations: Vec<String>,
 }
 
-/// File analysis input for knowledge graph construction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileAnalysis {
     pub file_path: PathBuf,
@@ -210,7 +206,6 @@ pub struct FileAnalysis {
     pub anti_patterns: Vec<AntiPatternInfo>,
 }
 
-/// Unified graph representation for multi-language support
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructuralSemanticGraph {
     pub nodes: HashMap<String, GraphNode>,
@@ -218,16 +213,15 @@ pub struct StructuralSemanticGraph {
     pub metadata: GraphMetadata,
 }
 
-/// Individual graph node
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphNode {
     pub id: String,
     pub node_type: GraphNodeType,
     pub properties: HashMap<String, serde_json::Value>,
     pub location: Option<CodeLocation>,
+    pub code_entity: Option<CodeEntity>,
 }
 
-/// Types of graph nodes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GraphNodeType {
     Function,
@@ -239,7 +233,6 @@ pub enum GraphNodeType {
     Statement,
 }
 
-/// Graph edge representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphEdge {
     pub from: String,
@@ -248,7 +241,6 @@ pub struct GraphEdge {
     pub weight: f64,
 }
 
-/// Types of graph edges
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GraphEdgeType {
     CallsTo,
@@ -259,7 +251,6 @@ pub enum GraphEdgeType {
     Dependency,
 }
 
-/// Metadata about the graph structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphMetadata {
     pub language: SourceLanguage,

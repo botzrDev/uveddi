@@ -39,10 +39,10 @@ impl<'a> GraphTraversal<'a> {
         let mut components = Vec::new();
         let mut visited = HashSet::new();
 
-        for node in &self.graph.nodes {
-            if !visited.contains(&node.id) {
+        for (node_id, node) in &self.graph.nodes {
+            if !visited.contains(node_id) {
                 let mut component = Vec::new();
-                self.dfs_component(&node.id, &mut visited, &mut component);
+                self.dfs_component(node_id, &mut visited, &mut component);
                 if !component.is_empty() {
                     components.push(component);
                 }
@@ -85,7 +85,7 @@ impl<'a> GraphTraversal<'a> {
             if distance <= radius {
                 // Apply filter if provided
                 if let Some(filter) = entity_filter {
-                    if let Some(entity) = self.graph.nodes.iter().find(|n| n.id == current) {
+                    if let Some((_, entity)) = self.graph.nodes.iter().find(|(node_id, _)| *node_id == &current) {
                         if let Some(code_entity) = &entity.code_entity {
                             if filter(code_entity) {
                                 result.push(current.clone());
