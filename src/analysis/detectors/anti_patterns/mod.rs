@@ -23,7 +23,7 @@ pub mod tight_coupling;
 pub use code_duplication::{CodeDuplicationDetector, DuplicationConfig};
 pub use cyclic_dependencies::CyclicDependenciesDetector;
 // pub use data_clumps::{DataClumpsConfig, DataClumpsDetector};
-pub use dead_code::DeadCodeDetector;
+pub use dead_code::{DeadCodeConfig, DeadCodeDetector};
 // pub use feature_envy::{FeatureEnvyConfig, FeatureEnvyDetector};
 pub use god_object::GodObjectDetector;
 pub use large_classes::{ClassMetrics, LanguageThresholds, LargeClassConfig, LargeClassDetector};
