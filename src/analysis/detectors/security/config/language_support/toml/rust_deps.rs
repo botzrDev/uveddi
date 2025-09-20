@@ -115,11 +115,9 @@ impl RustDependencyChecker {
 
         Ok(issues)
     }
-
     /// Check for dependency source configurations
     pub fn check_dependency_sources(&self, table: &toml::value::Table) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
-
         // Check for custom registries or sources
         if let Some(TomlValue::Table(source_table)) = table.get("source") {
             for (source_name, source_config) in source_table {
@@ -166,7 +164,6 @@ impl RustDependencyChecker {
 
         Ok(issues)
     }
-
     fn is_insecure_path(&self, path: &str) -> bool {
         // Check for potentially insecure paths
         let insecure_patterns = [
@@ -299,5 +296,4 @@ mod tests {
         let issues = checker.check_rust_dependencies(&deps, "dependencies").unwrap();
         assert!(issues.iter().any(|i| i.title.contains("Potentially Insecure Path Dependency")));
     }
-
 }

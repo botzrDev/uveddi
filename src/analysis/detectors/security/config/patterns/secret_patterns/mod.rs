@@ -3,6 +3,15 @@
 //! This module provides comprehensive pattern matching for detecting various
 //! types of secrets and credentials in configuration files.
 
+pub mod api_keys;
+pub mod credentials;
+pub mod certificates;
+
+// Re-export main types
+pub use api_keys::build_api_key_patterns;
+pub use credentials::build_credential_patterns;
+pub use certificates::build_certificate_patterns;
+
 use crate::analysis::AnalysisError;
 use crate::core::patterns::PatternMatcher;
 use super::super::config::ConfigSecurityConfig;
@@ -11,23 +20,23 @@ use super::{ConfigPatternMatcher, utils};
 use regex::Regex;
 use std::collections::HashMap;
 
+/// Individual secret pattern definition
+pub struct SecretPattern {
+    pub name: String,
+    pub regex: Regex,
+    pub severity: ConfigSeverity,
+    pub confidence: f64,
+    pub description: String,
+    pub remediation: String,
+    pub cwe_id: Option<u32>,
+    pub tags: Vec<String>,
+}
+
 /// Pattern matcher for detecting secrets and credentials
 pub struct SecretPatternMatcher {
     patterns: HashMap<String, SecretPattern>,
     config: ConfigSecurityConfig,
     suppression_patterns: Vec<String>,
-}
-
-/// Individual secret pattern definition
-struct SecretPattern {
-    name: String,
-    regex: Regex,
-    severity: ConfigSeverity,
-    confidence: f64,
-    description: String,
-    remediation: String,
-    cwe_id: Option<u32>,
-    tags: Vec<String>,
 }
 
 impl ConfigPatternMatcher for SecretPatternMatcher {
@@ -60,7 +69,6 @@ impl ConfigPatternMatcher for SecretPatternMatcher {
             for (pattern_id, pattern) in &self.patterns {
                 for regex_match in pattern.regex.find_iter(line) {
                     let match_start = regex_match.start();
-                    let match_end = regex_match.end();
                     let matched_text = regex_match.as_str().to_string();
 
                     let confidence = self.calculate_match_confidence(pattern, &matched_text, line);
@@ -134,124 +142,14 @@ impl SecretPatternMatcher {
     fn build_secret_patterns() -> Result<HashMap<String, SecretPattern>, AnalysisError> {
         let mut patterns = HashMap::new();
 
-        // AWS Credentials
-        patterns.insert("aws_access_key".to_string(), SecretPattern {
-            name: "AWS Access Key ID".to_string(),
-            regex: utils::compile_pattern(r"(?i)(aws_access_key_id|AKIA[0-9A-Z]{16})")?,
-            severity: ConfigSeverity::Critical,
-            confidence: 0.95,
-            description: "AWS Access Key ID detected in configuration".to_string(),
-            remediation: "Use AWS IAM roles or environment variables for AWS credentials".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["aws".to_string(), "cloud".to_string(), "credential".to_string()],
-        });
+        // Add API key patterns
+        patterns.extend(build_api_key_patterns()?);
 
-        patterns.insert("aws_secret_key".to_string(), SecretPattern {
-            name: "AWS Secret Access Key".to_string(),
-            regex: utils::compile_pattern(r"(?i)(aws_secret_access_key|[A-Za-z0-9/+=]{40})")?,
-            severity: ConfigSeverity::Critical,
-            confidence: 0.90,
-            description: "AWS Secret Access Key detected in configuration".to_string(),
-            remediation: "Use AWS IAM roles or AWS Secrets Manager for credentials".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["aws".to_string(), "cloud".to_string(), "credential".to_string()],
-        });
+        // Add credential patterns
+        patterns.extend(build_credential_patterns()?);
 
-        // Generic API Keys
-        patterns.insert("api_key".to_string(), SecretPattern {
-            name: "API Key".to_string(),
-            regex: utils::compile_pattern(r#"(?i)(api[_-]?key|secret[_-]?key)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_-]{20,})['"]?"#)?,
-            severity: ConfigSeverity::High,
-            confidence: 0.85,
-            description: "API key detected in configuration".to_string(),
-            remediation: "Store API keys in environment variables or secure secret management".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["api-key".to_string(), "credential".to_string()],
-        });
-
-        // Database Passwords
-        patterns.insert("database_password".to_string(), SecretPattern {
-            name: "Database Password".to_string(),
-            regex: utils::compile_pattern(r#"(?i)(password|passwd|pwd)[\s]*[:=][\s]*['"]?([^'\s\n]{6,})['"]?"#)?,
-            severity: ConfigSeverity::High,
-            confidence: 0.80,
-            description: "Database password detected in configuration".to_string(),
-            remediation: "Use environment variables or database credential management systems".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["database".to_string(), "password".to_string(), "credential".to_string()],
-        });
-
-        // JWT Secrets
-        patterns.insert("jwt_secret".to_string(), SecretPattern {
-            name: "JWT Secret".to_string(),
-            regex: utils::compile_pattern(r#"(?i)(jwt[_-]?secret|token[_-]?secret)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_+-=]{20,})['"]?"#)?,
-            severity: ConfigSeverity::High,
-            confidence: 0.88,
-            description: "JWT signing secret detected in configuration".to_string(),
-            remediation: "Use cryptographically strong, random JWT secrets stored securely".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["jwt".to_string(), "token".to_string(), "secret".to_string()],
-        });
-
-        // Private Keys
-        patterns.insert("private_key".to_string(), SecretPattern {
-            name: "Private Key".to_string(),
-            regex: utils::compile_pattern(r"-----BEGIN[A-Z\s]*PRIVATE KEY-----")?,
-            severity: ConfigSeverity::Critical,
-            confidence: 0.99,
-            description: "Private key detected in configuration".to_string(),
-            remediation: "Store private keys in secure key management systems, never in configuration files".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["private-key".to_string(), "encryption".to_string(), "credential".to_string()],
-        });
-
-        // OAuth Tokens
-        patterns.insert("oauth_token".to_string(), SecretPattern {
-            name: "OAuth Token".to_string(),
-            regex: utils::compile_pattern(r#"(?i)(access[_-]?token|bearer[_-]?token|oauth[_-]?token)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_.-]{32,})['"]?"#)?,
-            severity: ConfigSeverity::High,
-            confidence: 0.85,
-            description: "OAuth access token detected in configuration".to_string(),
-            remediation: "Use OAuth refresh token flow and store tokens securely".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["oauth".to_string(), "token".to_string(), "credential".to_string()],
-        });
-
-        // Database Connection Strings
-        patterns.insert("db_connection_string".to_string(), SecretPattern {
-            name: "Database Connection String".to_string(),
-            regex: utils::compile_pattern(r"(?i)(mongodb|mysql|postgresql|postgres|mssql)://[^/]*:[^@]*@")?,
-            severity: ConfigSeverity::Critical,
-            confidence: 0.95,
-            description: "Database connection string with embedded credentials detected".to_string(),
-            remediation: "Use connection strings without embedded credentials and store credentials separately".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["database".to_string(), "connection-string".to_string(), "credential".to_string()],
-        });
-
-        // Slack Tokens
-        patterns.insert("slack_token".to_string(), SecretPattern {
-            name: "Slack Token".to_string(),
-            regex: utils::compile_pattern(r"xox[baprs]-[0-9]{12}-[0-9]{12}-[a-zA-Z0-9]{24}")?,
-            severity: ConfigSeverity::High,
-            confidence: 0.95,
-            description: "Slack API token detected in configuration".to_string(),
-            remediation: "Store Slack tokens in environment variables or secure token management".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["slack".to_string(), "token".to_string(), "api".to_string()],
-        });
-
-        // GitHub Tokens
-        patterns.insert("github_token".to_string(), SecretPattern {
-            name: "GitHub Token".to_string(),
-            regex: utils::compile_pattern(r"(?i)(github[_-]?token|gh[ps]_[a-zA-Z0-9]{36})")?,
-            severity: ConfigSeverity::High,
-            confidence: 0.90,
-            description: "GitHub access token detected in configuration".to_string(),
-            remediation: "Use GitHub Apps or store tokens in secure secret management".to_string(),
-            cwe_id: Some(798),
-            tags: vec!["github".to_string(), "token".to_string(), "git".to_string()],
-        });
+        // Add certificate patterns
+        patterns.extend(build_certificate_patterns()?);
 
         Ok(patterns)
     }
