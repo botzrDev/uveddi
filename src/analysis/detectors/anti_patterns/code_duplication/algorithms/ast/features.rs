@@ -97,11 +97,11 @@ impl StructuralFeatures {
         let mut hist2 = HashMap::new();
 
         for &count in &self.children_counts {
-            *hist1.entry(count).or_insert(0) += 1;
+            *hist1.entry(count.to_string()).or_insert(0) += 1;
         }
 
         for &count in &other.children_counts {
-            *hist2.entry(count).or_insert(0) += 1;
+            *hist2.entry(count.to_string()).or_insert(0) += 1;
         }
 
         self.distribution_similarity(&hist1, &hist2)

@@ -1,4 +1,4 @@
-use crate::application::{AnalysisConfig, AnalysisOrchestrator};
+use crate::application::{LegacyAnalysisConfig, AnalysisOrchestrator};
 use crate::core::logging::{error, info};
 use crate::error::UveddiError;
 use clap::{Args, Subcommand};
@@ -56,32 +56,14 @@ impl CiCommand {
         }
 
         let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path)?;
-        let config = AnalysisConfig {
+        #[allow(deprecated)]
+        let config = LegacyAnalysisConfig {
             target_path: args.path.clone(),
             output_format: args.output_format.clone(),
             output_file: None,
             enable_ai: false,
             ollama_api_url: None,
             ollama_model: None,
-            dead_code_confidence: None,
-            dead_code_library_mode: false,
-            dead_code_ignore_patterns: None,
-            dead_code_keep_alive: None,
-            large_classes_max_loc: None,
-            large_classes_max_methods: None,
-            large_classes_max_fields: None,
-            large_classes_max_complexity: None,
-            large_classes_max_lcom: None,
-            large_classes_ignore_patterns: None,
-            large_classes_min_severity: None,
-            #[cfg(feature = "memory-optimization")]
-            memory_optimization: None,
-            enable_memory_optimization: true,
-            memory_limit_gb: None,
-            memory_profile: None,
-            timeout_seconds: 300,
-            enable_resource_management: false, // Default disabled for CI
-            resource_config: None,             // Use default when enabled
         };
 
         let report = orchestrator.execute_analysis(config).await?;
