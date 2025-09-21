@@ -37,6 +37,7 @@ use sysinfo::System;
 use tracing::{info, warn};
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
+use crate::application::configuration::analysis_config::{DeadCodeOptions, LargeClassOptions};
 use crate::error::UveddiError;
 use crate::progress::{create_progress_reporter, AnalysisPhase, ProgressTracker};
 use crate::report::DiagramMode;
@@ -877,32 +878,29 @@ impl AnalyzeCommand {
         // Configure analysis parameters
         let config = AnalysisConfig {
             target_path: self.path.clone(),
-            output_format: self.output_format.clone(),
-            output_file: self.output.clone(),
-            enable_ai: self.enable_ai,
-            ollama_api_url: self.ollama_api_url.clone(),
-            ollama_model: self.ollama_model.clone(),
-            dead_code_confidence: self.dead_code_confidence,
-            dead_code_library_mode: self.dead_code_library_mode,
-            dead_code_ignore_patterns: self.dead_code_ignore_patterns.clone(),
-            dead_code_keep_alive: self.dead_code_keep_alive.clone(),
-            large_classes_max_loc: self.large_classes_max_loc,
-            large_classes_max_methods: self.large_classes_max_methods,
-            large_classes_max_fields: self.large_classes_max_fields,
-            large_classes_max_complexity: self.large_classes_max_complexity,
-            large_classes_max_lcom: self.large_classes_max_lcom,
-            large_classes_ignore_patterns: self.large_classes_ignore_patterns.clone(),
-            large_classes_min_severity: self.large_classes_min_severity,
-
-            // Memory optimization fields
-            #[cfg(feature = "memory-optimization")]
-            memory_optimization: None, // Will be created based on profile/limits
+            timeout_seconds: self.timeout,
+            enable_resource_management: false, // Default disabled for CLI
+            resource_config: None,
             enable_memory_optimization,
             memory_limit_gb,
             memory_profile,
-            timeout_seconds: self.timeout,
-            enable_resource_management: false, // Default disabled for CLI
-            resource_config: None,             // Use default when enabled
+            #[cfg(feature = "memory-optimization")]
+            memory_optimization: None, // Will be created based on profile/limits
+            dead_code: DeadCodeOptions {
+                confidence: self.dead_code_confidence,
+                library_mode: self.dead_code_library_mode,
+                ignore_patterns: self.dead_code_ignore_patterns.clone(),
+                keep_alive: self.dead_code_keep_alive.clone(),
+            },
+            large_classes: LargeClassOptions {
+                max_loc: self.large_classes_max_loc,
+                max_methods: self.large_classes_max_methods,
+                max_fields: self.large_classes_max_fields,
+                max_complexity: self.large_classes_max_complexity,
+                max_lcom: self.large_classes_max_lcom,
+                ignore_patterns: self.large_classes_ignore_patterns.clone(),
+                min_severity: self.large_classes_min_severity,
+            },
         };
 
         // Start parsing phase
@@ -959,35 +957,29 @@ impl AnalyzeCommand {
                     // Try with reduced scope and timeouts
                     let degraded_config = AnalysisConfig {
                         target_path: self.path.clone(),
-                        output_format: self.output_format.clone(),
-                        output_file: self.output.clone(),
-                        enable_ai: false,  // Disable AI for faster analysis
-                        ollama_api_url: None,
-                        ollama_model: None,
-
-                        // Dead code detection configs (reduced scope)
-                        dead_code_confidence: Some(0.9),  // Higher confidence for faster processing
-                        dead_code_library_mode: false,
-                        dead_code_ignore_patterns: None,
-                        dead_code_keep_alive: None,
-
-                        // Large classes configs (more restrictive)
-                        large_classes_max_loc: Some(500),  // Reduced from default
-                        large_classes_max_methods: Some(self.large_classes_max_loc.unwrap_or(20)),
-                        large_classes_max_fields: Some(15),
-                        large_classes_max_complexity: Some(10),
-                        large_classes_max_lcom: Some(0.8),
-                        large_classes_ignore_patterns: None,
-                        large_classes_min_severity: self.large_classes_min_severity,
-
-                        #[cfg(feature = "memory-optimization")]
-                        memory_optimization: None,
-                        enable_memory_optimization: false,  // Disable for faster analysis
-                        memory_limit_gb: Some(1.0),  // Strict memory limit
-                        memory_profile: Some("small".to_string()),
                         timeout_seconds: 60,  // Reduced timeout for degraded analysis
                         enable_resource_management: false, // Default disabled for CLI
                         resource_config: None, // Use default when enabled
+                        enable_memory_optimization: false,  // Disable for faster analysis
+                        memory_limit_gb: Some(1.0),  // Strict memory limit
+                        memory_profile: Some("small".to_string()),
+                        #[cfg(feature = "memory-optimization")]
+                        memory_optimization: None,
+                        dead_code: DeadCodeOptions {
+                            confidence: Some(0.9),  // Higher confidence for faster processing
+                            library_mode: false,
+                            ignore_patterns: None,
+                            keep_alive: None,
+                        },
+                        large_classes: LargeClassOptions {
+                            max_loc: Some(500),  // Reduced from default
+                            max_methods: Some(self.large_classes_max_loc.unwrap_or(20)),
+                            max_fields: Some(15),
+                            max_complexity: Some(10),
+                            max_lcom: Some(0.8),
+                            ignore_patterns: None,
+                            min_severity: self.large_classes_min_severity,
+                        },
                     };
 
                     info!("🔄 Retrying analysis with degraded settings: max 100 files, 15s per detector");

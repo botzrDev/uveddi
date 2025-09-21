@@ -1,0 +1,43 @@
+feature	depth	deps	files	matches
+ai	0		10	74
+alpha	3	local-ai,memory-optimization,security,tree-sitter,tui	0	0
+chaos	0		1	5
+crypto-full	0		0	0
+crypto-minimal	0		0	0
+dev-core	2	dev-minimal,prometheus	0	0
+dev-full	3	dev-core,tree-sitter	0	0
+dev-js-only	2	dev-minimal,javascript-lang	0	0
+dev-minimal	1	dev-ultra-minimal	0	0
+dev-python-only	2	dev-minimal,python-lang	0	0
+dev-rust-only	2	dev-minimal,rust-lang	0	0
+dev-ts-only	2	dev-minimal,typescript-lang	0	0
+dev-ultra-minimal	0		0	0
+enterprise	2	chaos,image-rendering,local-ai,memory-optimization,sla-monitoring,tree-sitter,tui,wasm-plugins	0	0
+full-featured	2	image-rendering,local-ai,memory-optimization,tree-sitter,tui	0	0
+graphql-api	0		1	4
+image-rendering	0		6	19
+javascript-lang	0		3	6
+local-ai	1	ai	1	4
+memory-optimization	0		8	26
+mimalloc	0		1	3
+production	3	memory-optimization,prometheus,security,tree-sitter,tui,wasm-plugins,web-full	0	0
+production-secure	2	memory-optimization,prometheus,tree-sitter,tui,wasm-plugins,web-full	0	0
+prometheus	0		6	31
+python-lang	0		3	6
+regression-detection	0		1	5
+reqwest	0		1	4
+rust-lang	0		3	6
+security	2	crypto-full,web-full	12	75
+sla-monitoring	0		0	0
+streaming-iterator	0		0	0
+tower	0		0	0
+tower-http	0		0	0
+tree-sitter	1	javascript-lang,python-lang,rust-lang,typescript-lang	37	128
+tui	0		2	9
+typescript-lang	0		3	6
+wasm-plugins	0		12	68
+web-client	0		0	0
+web-full	1	web-client,web-server	0	0
+web-server	0		0	0
+yaml	0		1	2
+zero-cost	2	local-ai,memory-optimization,tree-sitter	0	0

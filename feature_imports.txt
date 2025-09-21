@@ -1,0 +1,774 @@
+src/security/mod.rs-51-
+src/security/mod.rs:52:#[cfg(feature = "security")]
+src/security/mod.rs-53-pub mod audit;
+src/security/mod.rs:54:#[cfg(feature = "security")]
+src/security/mod.rs-55-pub mod authentication;
+src/security/mod.rs:56:#[cfg(feature = "security")]
+src/security/mod.rs-57-pub mod authorization;
+src/security/mod.rs:58:#[cfg(feature = "security")]
+src/security/mod.rs-59-pub mod config;
+src/security/mod.rs:60:#[cfg(feature = "security")]
+src/security/mod.rs-61-pub mod dependency_config;
+src/security/mod.rs:62:#[cfg(feature = "security")]
+src/security/mod.rs-63-pub mod errors;
+src/security/mod.rs:64:#[cfg(feature = "security")]
+src/security/mod.rs-65-pub mod http_client;
+src/security/mod.rs:66:#[cfg(feature = "security")]
+src/security/mod.rs-67-pub mod middleware;
+src/security/mod.rs:68:#[cfg(feature = "security")]
+src/security/mod.rs-69-pub mod models;
+src/security/mod.rs:70:#[cfg(feature = "security")]
+src/security/mod.rs-71-pub mod rate_limiting;
+src/security/mod.rs:72:#[cfg(feature = "security")]
+src/security/mod.rs-73-pub mod secrets;
+src/security/mod.rs:74:#[cfg(feature = "security")]
+src/security/mod.rs-75-pub mod secure_config_loader;
+src/security/mod.rs-76-
+--
+src/security/mod.rs-81-// Re-export main components for API compatibility
+src/security/mod.rs:82:#[cfg(feature = "security")]
+src/security/mod.rs-83-pub use authentication::AuthenticationService;
+src/security/mod.rs:84:#[cfg(feature = "security")]
+src/security/mod.rs-85-pub use authorization::AuthorizationEngine;
+src/security/mod.rs:86:#[cfg(feature = "security")]
+src/security/mod.rs-87-pub use errors::{SecurityError, SecurityResult};
+src/security/mod.rs:88:#[cfg(feature = "security")]
+src/security/mod.rs-89-pub use http_client::{HttpSecurityConfig, SecureHttpClient};
+src/security/mod.rs:90:#[cfg(feature = "security")]
+src/security/mod.rs-91-pub use models::UserRole;
+src/security/mod.rs:92:#[cfg(feature = "security")]
+src/security/mod.rs-93-pub use models::{AuthContext, AuthenticatedUser};
+src/security/mod.rs-94-
+--
+src/security/mod.rs-106-// Re-export commonly used types (feature-gated)
+src/security/mod.rs:107:#[cfg(feature = "security")]
+src/security/mod.rs-108-pub use errors::SecurityErrorSeverity;
+src/security/mod.rs:109:#[cfg(feature = "security")]
+src/security/mod.rs-110-pub use models::{
+src/security/mod.rs-111-    ApiKey, AuditEvent, AuditEventType, AuditOutcome, Permission, RateLimitIdentifierType,
+--
+src/security/mod.rs-115-// Re-export authentication and authorization config types (feature-gated)
+src/security/mod.rs:116:#[cfg(feature = "security")]
+src/security/mod.rs-117-pub use audit::{AuditLogger, AuditStore};
+src/security/mod.rs:118:#[cfg(feature = "security")]
+src/security/mod.rs-119-pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProviderConfig};
+src/security/mod.rs:120:#[cfg(feature = "security")]
+src/security/mod.rs-121-pub use config::RateLimitingConfig;
+src/security/mod.rs:122:#[cfg(feature = "security")]
+src/security/mod.rs-123-pub use config::{SecurityConfig, SecurityConfigLoader};
+src/security/mod.rs:124:#[cfg(feature = "security")]
+src/security/mod.rs-125-pub use dependency_config::{
+src/security/mod.rs-126-    create_custom_http_client, create_secure_http_client, validate_input_size, SecurityLimits,
+src/security/mod.rs-127-};
+src/security/mod.rs:128:#[cfg(feature = "security")]
+src/security/mod.rs-129-pub use middleware::SecurityServices;
+src/security/mod.rs:130:#[cfg(feature = "security")]
+src/security/mod.rs-131-pub use rate_limiting::RateLimiter;
+src/security/mod.rs:132:#[cfg(feature = "security")]
+src/security/mod.rs-133-pub use secrets::{RotationPolicy, SecretRotationManager, SecretStore, SecretStoreFactory};
+src/security/mod.rs:134:#[cfg(feature = "security")]
+src/security/mod.rs-135-pub use secure_config_loader::{SecretStoreHealthStatus, SecureConfigLoader};
+src/security/mod.rs-136-
+--
+src/cli/tui_command.rs-11-
+src/cli/tui_command.rs:12:#[cfg(feature = "tui")]
+src/cli/tui_command.rs-13-use crate::tui::events::run_tui;
+src/cli/tui_command.rs-14-
+--
+src/cli/plugin_command.rs-4-use crate::core::logging::{error, info, warn};
+src/cli/plugin_command.rs:5:#[cfg(feature = "wasm-plugins")]
+src/cli/plugin_command.rs-6-use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
+src/cli/plugin_command.rs-7-use clap::{Args, Subcommand};
+--
+src/health/parsers.rs-55-/// Check Rust language parser
+src/health/parsers.rs:56:#[cfg(feature = "rust-lang")]
+src/health/parsers.rs-57-async fn check_rust_parser() -> HealthCheck {
+src/health/parsers.rs-58-    // Test basic availability without calling the language function
+--
+src/health/parsers.rs-77-/// Check Python language parser
+src/health/parsers.rs:78:#[cfg(feature = "python-lang")]
+src/health/parsers.rs-79-async fn check_python_parser() -> HealthCheck {
+src/health/parsers.rs-80-    HealthCheck::new(
+--
+src/health/parsers.rs-97-/// Check JavaScript language parser
+src/health/parsers.rs:98:#[cfg(feature = "javascript-lang")]
+src/health/parsers.rs-99-async fn check_javascript_parser() -> HealthCheck {
+src/health/parsers.rs-100-    HealthCheck::new(
+--
+src/health/parsers.rs-117-/// Check TypeScript language parser
+src/health/parsers.rs:118:#[cfg(feature = "typescript-lang")]
+src/health/parsers.rs-119-async fn check_typescript_parser() -> HealthCheck {
+src/health/parsers.rs-120-    HealthCheck::new(
+--
+src/health/parsers.rs-151-
+src/health/parsers.rs:152:#[cfg(feature = "rust-lang")]
+src/health/parsers.rs-153-async fn test_rust_parsing() -> Result<HealthCheck, UveddiError> {
+src/health/parsers.rs-154-    Ok(HealthCheck::new(
+--
+src/health/parsers.rs-169-
+src/health/parsers.rs:170:#[cfg(feature = "python-lang")]
+src/health/parsers.rs-171-async fn test_python_parsing() -> Result<HealthCheck, UveddiError> {
+src/health/parsers.rs-172-    Ok(HealthCheck::new(
+--
+src/health/parsers.rs-187-
+src/health/parsers.rs:188:#[cfg(feature = "javascript-lang")]
+src/health/parsers.rs-189-async fn test_javascript_parsing() -> Result<HealthCheck, UveddiError> {
+src/health/parsers.rs-190-    Ok(HealthCheck::new(
+--
+src/health/parsers.rs-205-
+src/health/parsers.rs:206:#[cfg(feature = "typescript-lang")]
+src/health/parsers.rs-207-async fn test_typescript_parsing() -> Result<HealthCheck, UveddiError> {
+src/health/parsers.rs-208-    Ok(HealthCheck::new(
+--
+src/health/ai.rs-49-/// Check Ollama service connectivity
+src/health/ai.rs:50:#[cfg(feature = "local-ai")]
+src/health/ai.rs-51-async fn check_ollama_connectivity() -> HealthCheck {
+src/health/ai.rs-52-    let ollama_url =
+--
+src/health/ai.rs-132-/// Check available Ollama models
+src/health/ai.rs:133:#[cfg(feature = "local-ai")]
+src/health/ai.rs-134-async fn check_ollama_models() -> HealthCheck {
+src/health/ai.rs-135-    let ollama_url =
+--
+src/health/ai.rs-258-/// Test AI functionality with a simple request
+src/health/ai.rs:259:#[cfg(feature = "local-ai")]
+src/health/ai.rs-260-pub async fn test_ai_functionality() -> Result<HealthCheck, UveddiError> {
+src/health/ai.rs-261-    let ollama_url =
+--
+src/application/orchestrator.rs-15-
+src/application/orchestrator.rs:16:#[cfg(feature = "memory-optimization")]
+src/application/orchestrator.rs-17-use crate::analysis::memory::MemoryOptimizationConfig;
+src/application/orchestrator.rs-18-
+--
+src/observability/dlq.rs-5-
+src/observability/dlq.rs:6:#[cfg(feature = "prometheus")]
+src/observability/dlq.rs-7-use crate::observability::metrics::UveddiMetrics;
+src/observability/dlq.rs-8-use crate::observability::tracing_utils::TraceId;
+--
+src/application/mod_backup.rs-26-
+src/application/mod_backup.rs:27:#[cfg(feature = "memory-optimization")]
+src/application/mod_backup.rs-28-use crate::analysis::memory::MemoryOptimizationConfig;
+src/application/mod_backup.rs-29-
+--
+src/observability/mod.rs-59-pub mod logging;
+src/observability/mod.rs:60:#[cfg(feature = "prometheus")]
+src/observability/mod.rs-61-pub mod metrics;
+src/observability/mod.rs-62-pub mod resilience;
+--
+src/observability/metrics.rs-12-use axum::response::IntoResponse;
+src/observability/metrics.rs:13:#[cfg(feature = "prometheus")]
+src/observability/metrics.rs-14-use prometheus::{
+src/observability/metrics.rs-15-    Counter, CounterVec, Gauge, GaugeVec, HistogramOpts, HistogramVec, Opts, Registry,
+--
+src/observability/metrics.rs-20-/// Metrics collector for the Uveddi analysis system
+src/observability/metrics.rs:21:#[cfg(feature = "prometheus")]
+src/observability/metrics.rs-22-#[derive(Clone)]
+src/observability/metrics.rs-23-pub struct UveddiMetrics {
+--
+src/observability/metrics.rs-75-
+src/observability/metrics.rs:76:#[cfg(feature = "prometheus")]
+src/observability/metrics.rs-77-impl UveddiMetrics {
+src/observability/metrics.rs-78-    /// Create a new metrics collector with the given configuration
+--
+src/application/configuration/analysis_config.rs-8-
+src/application/configuration/analysis_config.rs:9:#[cfg(feature = "memory-optimization")]
+src/application/configuration/analysis_config.rs-10-use crate::analysis::memory::MemoryOptimizationConfig;
+src/application/configuration/analysis_config.rs-11-
+--
+src/report/interactive_models.rs-1054-/// Security analysis results for interactive reports
+src/report/interactive_models.rs:1055:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1056-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1057-pub struct SecurityAnalysis {
+--
+src/report/interactive_models.rs-1074-/// Security summary statistics
+src/report/interactive_models.rs:1075:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1076-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1077-pub struct SecuritySummary {
+--
+src/report/interactive_models.rs-1104-/// OWASP category statistics
+src/report/interactive_models.rs:1105:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1106-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1107-pub struct OwaspCategoryStats {
+--
+src/report/interactive_models.rs-1122-/// Issue type statistics
+src/report/interactive_models.rs:1123:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1124-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1125-pub struct IssueTypeStats {
+--
+src/report/interactive_models.rs-1139-/// Security issue details
+src/report/interactive_models.rs:1140:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1141-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1142-pub struct SecurityIssue {
+--
+src/report/interactive_models.rs-1178-/// Security issue location
+src/report/interactive_models.rs:1179:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1180-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1181-pub struct SecurityLocation {
+--
+src/report/interactive_models.rs-1201-/// Data flow analysis result
+src/report/interactive_models.rs:1202:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1203-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1204-pub struct TaintFlow {
+--
+src/report/interactive_models.rs-1222-/// Node in a data flow
+src/report/interactive_models.rs:1223:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1224-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1225-pub struct FlowNode {
+--
+src/report/interactive_models.rs-1240-/// Correlation between security and architectural issues
+src/report/interactive_models.rs:1241:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1242-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1243-pub struct SecurityCorrelation {
+--
+src/report/interactive_models.rs-1260-/// Compliance status with security standards
+src/report/interactive_models.rs:1261:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1262-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1263-pub struct ComplianceStatus {
+--
+src/report/interactive_models.rs-1274-/// Compliance with a specific standard
+src/report/interactive_models.rs:1275:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1276-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1277-pub struct StandardCompliance {
+--
+src/report/interactive_models.rs-1293-/// Security-specific metadata for findings
+src/report/interactive_models.rs:1294:#[cfg(feature = "security")]
+src/report/interactive_models.rs-1295-#[derive(Debug, Clone, Serialize, Deserialize)]
+src/report/interactive_models.rs-1296-pub struct SecurityFindingMetadata {
+--
+src/report/mod.rs-68-
+src/report/mod.rs:69:#[cfg(feature = "image-rendering")]
+src/report/mod.rs-70-pub mod image_renderer;
+src/report/mod.rs-71-
+--
+src/report/mod.rs-95-
+src/report/mod.rs:96:#[cfg(feature = "image-rendering")]
+src/report/mod.rs-97-pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
+src/report/mod.rs-98-
+--
+src/report/image_renderer.rs-6-use crate::error::rendering::RenderingServiceError;
+src/report/image_renderer.rs:7:#[cfg(feature = "security")]
+src/report/image_renderer.rs-8-use crate::security::{HttpSecurityConfig, SecureHttpClient};
+src/report/image_renderer.rs-9-use md5;
+--
+src/analysis/extractors.rs-6-use std::sync::atomic::Ordering;
+src/analysis/extractors.rs:7:#[cfg(feature = "tree-sitter")]
+src/analysis/extractors.rs-8-use tree_sitter::{Query, QueryCursor, StreamingIterator};
+src/analysis/extractors.rs-9-
+--
+src/api/mod.rs-8-
+src/api/mod.rs:9:#[cfg(feature = "graphql-api")]
+src/api/mod.rs-10-pub mod graphql;
+src/api/mod.rs-11-
+src/api/mod.rs:12:#[cfg(feature = "graphql-api")]
+src/api/mod.rs-13-pub mod server;
+src/api/mod.rs-14-
+--
+src/api/mod.rs-18-// Re-export main types when GraphQL feature is enabled
+src/api/mod.rs:19:#[cfg(feature = "graphql-api")]
+src/api/mod.rs-20-pub use graphql::{create_schema, GraphQLConfig, UveddiSchema};
+src/api/mod.rs-21-
+src/api/mod.rs:22:#[cfg(feature = "graphql-api")]
+src/api/mod.rs-23-pub use server::start_graphql_server;
+src/api/mod.rs-24-
+--
+src/analysis/memory/mod.rs-9-
+src/analysis/memory/mod.rs:10:#[cfg(feature = "memory-optimization")]
+src/analysis/memory/mod.rs-11-pub mod arena;
+src/analysis/memory/mod.rs-12-// pub mod file_arena; // Not needed with bumpalo-herd pattern
+src/analysis/memory/mod.rs-13-
+src/analysis/memory/mod.rs:14:#[cfg(feature = "memory-optimization")]
+src/analysis/memory/mod.rs-15-pub mod zero_copy;
+src/analysis/memory/mod.rs-16-
+--
+src/analysis/memory/mod.rs-19-
+src/analysis/memory/mod.rs:20:#[cfg(feature = "memory-optimization")]
+src/analysis/memory/mod.rs-21-pub use arena::{
+src/analysis/memory/mod.rs-22-    conversion, rayon_integration, AnalysisArenaManager, AnalysisMetadata,
+--
+src/analysis/memory/mod.rs-34-
+src/analysis/memory/mod.rs:35:#[cfg(feature = "memory-optimization")]
+src/analysis/memory/mod.rs-36-pub use zero_copy::{
+src/analysis/memory/mod.rs-37-    LoadedAst, SerializableAst, ZeroCopyAstCache, ZeroCopyCacheStats, ZeroCopyError,
+--
+src/analysis/memory/zero_copy.rs-3-
+src/analysis/memory/zero_copy.rs:4:#[cfg(feature = "tree-sitter")]
+src/analysis/memory/zero_copy.rs-5-use crate::ast::tree_sitter::ParsedFile;
+src/analysis/memory/zero_copy.rs-6-use memmap2::{Mmap, MmapOptions};
+--
+src/analysis/memory/allocator.rs-3-
+src/analysis/memory/allocator.rs:4:#[cfg(feature = "mimalloc")]
+src/analysis/memory/allocator.rs-5-use mimalloc::MiMalloc;
+src/analysis/memory/allocator.rs-6-
+src/analysis/memory/allocator.rs:7:#[cfg(feature = "mimalloc")]
+src/analysis/memory/allocator.rs-8-#[global_allocator]
+src/analysis/memory/allocator.rs-9-static GLOBAL: MiMalloc = MiMalloc;
+--
+src/analysis/performance/optimizations.rs-6-
+src/analysis/performance/optimizations.rs:7:#[cfg(feature = "image-rendering")]
+src/analysis/performance/optimizations.rs-8-use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
+src/analysis/performance/optimizations.rs-9-
+--
+src/analysis/performance/optimizations.rs-599-
+src/analysis/performance/optimizations.rs:600:#[cfg(feature = "image-rendering")]
+src/analysis/performance/optimizations.rs-601-#[derive(Debug)]
+src/analysis/performance/optimizations.rs-602-pub struct RenderResult {
+--
+src/analysis/performance/testing.rs-5-
+src/analysis/performance/testing.rs:6:#[cfg(feature = "image-rendering")]
+src/analysis/performance/testing.rs-7-use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
+src/analysis/performance/testing.rs-8-
+--
+src/analysis/performance/baseline.rs-7-
+src/analysis/performance/baseline.rs:8:#[cfg(feature = "image-rendering")]
+src/analysis/performance/baseline.rs-9-use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
+src/analysis/performance/baseline.rs-10-
+--
+src/analysis/orchestrator.rs-14-// AI service imports (feature-gated)
+src/analysis/orchestrator.rs:15:#[cfg(feature = "ai")]
+src/analysis/orchestrator.rs-16-use crate::ai::engine::AiAnalysisEngine;
+src/analysis/orchestrator.rs:17:#[cfg(feature = "ai")]
+src/analysis/orchestrator.rs-18-use crate::ai::{AiInsight, AiService};
+src/analysis/orchestrator.rs-19-
+--
+src/analysis/engine_builder.rs-48-// Knowledge Library imports (feature-gated)
+src/analysis/engine_builder.rs:49:#[cfg(feature = "ai")]
+src/analysis/engine_builder.rs-50-use crate::ai::engine::AiAnalysisEngine;
+src/analysis/engine_builder.rs:51:#[cfg(feature = "ai")]
+src/analysis/engine_builder.rs-52-use crate::ai::knowledge::{ContextSelector, KnowledgeLibrary};
+src/analysis/engine_builder.rs-53-
+--
+src/api/rest_endpoints/reports.rs-264-/// Create security analysis from security issues
+src/api/rest_endpoints/reports.rs:265:#[cfg(feature = "security")]
+src/api/rest_endpoints/reports.rs-266-fn create_security_analysis_from_issues(
+src/api/rest_endpoints/reports.rs-267-    security_issues: &[crate::analysis::detectors::security::types::SecurityIssue],
+--
+src/api/rest_endpoints/reports.rs-715-/// Create demo security analysis data
+src/api/rest_endpoints/reports.rs:716:#[cfg(feature = "security")]
+src/api/rest_endpoints/reports.rs-717-fn create_demo_security_analysis() -> crate::report::interactive_models::SecurityAnalysis {
+src/api/rest_endpoints/reports.rs-718-    use crate::report::interactive_models::*;
+--
+src/analysis/components/cache_manager.rs-6-
+src/analysis/components/cache_manager.rs:7:#[cfg(feature = "prometheus")]
+src/analysis/components/cache_manager.rs-8-use crate::analysis::cache::metrics::CacheMetrics;
+src/analysis/components/cache_manager.rs-9-use crate::analysis::cache::{
+--
+src/analysis/components/cache_manager.rs-16-use async_trait::async_trait;
+src/analysis/components/cache_manager.rs:17:#[cfg(feature = "prometheus")]
+src/analysis/components/cache_manager.rs-18-use prometheus::Registry;
+src/analysis/components/cache_manager.rs-19-use serde_json::Value;
+--
+src/analysis/components/ast_provider.rs-20-use crate::ast::tree_sitter::{Language, Parser, Tree};
+src/analysis/components/ast_provider.rs:21:#[cfg(feature = "tree-sitter")]
+src/analysis/components/ast_provider.rs-22-use tree_sitter::{Language, Parser, Tree};
+src/analysis/components/ast_provider.rs-23-#[derive(Debug)]
+--
+src/ai/ollama_provider.rs-41-use crate::security::{HttpSecurityConfig, SecureHttpClient};
+src/ai/ollama_provider.rs:42:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-43-use serde::{Deserialize, Serialize};
+src/ai/ollama_provider.rs-44-use std::time::Duration;
+src/ai/ollama_provider.rs:45:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-46-use tokio::time::timeout;
+src/ai/ollama_provider.rs-47-
+--
+src/ai/ollama_provider.rs-51-/// for text generation requests.
+src/ai/ollama_provider.rs:52:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-53-#[derive(Serialize, Debug)]
+src/ai/ollama_provider.rs-54-struct OllamaRequest<'a> {
+--
+src/ai/ollama_provider.rs-69-/// affecting creativity, coherence, and output length.
+src/ai/ollama_provider.rs:70:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-71-#[derive(Serialize, Debug)]
+src/ai/ollama_provider.rs-72-struct OllamaOptions {
+--
+src/ai/ollama_provider.rs-88-/// a successful text generation request.
+src/ai/ollama_provider.rs:89:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-90-#[derive(Deserialize, Debug)]
+src/ai/ollama_provider.rs-91-struct OllamaResponse {
+--
+src/ai/ollama_provider.rs-101-/// Used to parse error messages when the Ollama API returns an error status.
+src/ai/ollama_provider.rs:102:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-103-#[derive(Deserialize, Debug)]
+src/ai/ollama_provider.rs-104-struct OllamaErrorResponse {
+--
+src/ai/ollama_provider.rs-130-/// ```
+src/ai/ollama_provider.rs:131:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-132-#[derive(Clone, Debug)]
+src/ai/ollama_provider.rs-133-pub struct OllamaConfig {
+--
+src/ai/ollama_provider.rs-287-/// HTTP client is thread-safe and can be shared between requests.
+src/ai/ollama_provider.rs:288:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-289-pub struct OllamaProvider {
+src/ai/ollama_provider.rs-290-    /// Configuration settings for this provider instance
+--
+src/ai/ollama_provider.rs-299-/// or a basic reqwest client for localhost connections.
+src/ai/ollama_provider.rs:300:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-301-pub enum OllamaHttpClient {
+src/ai/ollama_provider.rs-302-    /// Secure client for external connections
+--
+src/ai/ollama_provider.rs-307-
+src/ai/ollama_provider.rs:308:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-309-impl OllamaHttpClient {
+src/ai/ollama_provider.rs-310-    /// Make a GET request to the specified URL
+--
+src/ai/ollama_provider.rs-573-
+src/ai/ollama_provider.rs:574:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-575-use crate::ai::api::llm_provider::LlmProvider;
+src/ai/ollama_provider.rs:576:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-577-use crate::error::UveddiError;
+src/ai/ollama_provider.rs:578:#[cfg(feature = "ai")]
+src/ai/ollama_provider.rs-579-use async_trait::async_trait;
+src/ai/ollama_provider.rs-580-
+--
+src/ai/mod.rs-10-/// The `api` submodule defines the traits and data structures for interacting with AI providers.
+src/ai/mod.rs:11:#[cfg(feature = "ai")]
+src/ai/mod.rs-12-pub mod api;
+src/ai/mod.rs-13-
+src/ai/mod.rs-14-/// The `analysis` submodule contains data structures for AI analysis results.
+src/ai/mod.rs:15:#[cfg(feature = "ai")]
+src/ai/mod.rs-16-pub mod analysis;
+src/ai/mod.rs-17-
+src/ai/mod.rs-18-/// The `engine` submodule contains the core logic for the AI analysis engine.
+src/ai/mod.rs:19:#[cfg(feature = "ai")]
+src/ai/mod.rs-20-pub mod engine;
+src/ai/mod.rs-21-
+src/ai/mod.rs-22-/// The `knowledge` submodule provides the AI Knowledge Library with compressed pattern data.
+src/ai/mod.rs:23:#[cfg(feature = "ai")]
+src/ai/mod.rs-24-pub mod knowledge;
+src/ai/mod.rs-25-
+src/ai/mod.rs-26-/// The `ollama_provider` submodule provides Ollama LLM integration.
+src/ai/mod.rs:27:#[cfg(feature = "ai")]
+src/ai/mod.rs-28-pub mod ollama_provider;
+src/ai/mod.rs-29-
+src/ai/mod.rs-30-/// The `prompts` submodule provides tools for building and managing prompts for the AI models.
+src/ai/mod.rs:31:#[cfg(feature = "ai")]
+src/ai/mod.rs-32-pub mod prompts;
+src/ai/mod.rs-33-
+src/ai/mod.rs-34-/// The `services` submodule provides service interfaces for AI analysis.
+src/ai/mod.rs:35:#[cfg(feature = "ai")]
+src/ai/mod.rs-36-pub mod services;
+src/ai/mod.rs-37-
+src/ai/mod.rs-38-// Re-export key types for easier access
+src/ai/mod.rs:39:#[cfg(feature = "ai")]
+src/ai/mod.rs-40-pub use engine::AiAnalysisEngine;
+src/ai/mod.rs-41-
+src/ai/mod.rs:42:#[cfg(feature = "ai")]
+src/ai/mod.rs-43-pub use analysis::{AiAnalysisResult, AiInsight};
+src/ai/mod.rs-44-
+src/ai/mod.rs:45:#[cfg(feature = "ai")]
+src/ai/mod.rs-46-pub use services::{AiAnalysisService, AiService};
+--
+src/analysis/engine.rs-29-// AI service imports (feature-gated)
+src/analysis/engine.rs:30:#[cfg(feature = "ai")]
+src/analysis/engine.rs-31-use crate::ai::engine::AiAnalysisEngine;
+src/analysis/engine.rs:32:#[cfg(feature = "ai")]
+src/analysis/engine.rs-33-use crate::ai::knowledge::{
+src/analysis/engine.rs-34-    ContextSelector, EngineAnalysisContext, EngineComplexityMetrics, KnowledgeContext,
+--
+src/analysis/detector_factory.rs-13-// Security detector import
+src/analysis/detector_factory.rs:14:#[cfg(feature = "security")]
+src/analysis/detector_factory.rs-15-use crate::analysis::detectors::security::MainSecurityDetector;
+src/analysis/detector_factory.rs-16-use crate::error::UveddiError;
+--
+src/ast/tree_sitter_impl.rs-15-use tracing::{info, warn};
+src/ast/tree_sitter_impl.rs:16:#[cfg(feature = "tree-sitter")]
+src/ast/tree_sitter_impl.rs-17-use tree_sitter::{Parser, Tree};
+src/ast/tree_sitter_impl.rs-18-
+--
+src/plugins/host_functions.rs-464-/// Extension trait to register host functions with Wasmtime linker
+src/plugins/host_functions.rs:465:#[cfg(feature = "wasm-plugins")]
+src/plugins/host_functions.rs-466-pub trait HostFunctionLinker {
+src/plugins/host_functions.rs-467-    /// Register all host functions with the Wasmtime linker
+--
+src/plugins/host_functions.rs-470-
+src/plugins/host_functions.rs:471:#[cfg(feature = "wasm-plugins")]
+src/plugins/host_functions.rs-472-impl HostFunctionLinker for wasmtime::Linker<HostContext> {
+src/plugins/host_functions.rs-473-    fn register_host_functions(&mut self, host_context: HostContext) -> Result<(), PluginError> {
+--
+src/plugins/security.rs-6-use std::path::PathBuf;
+src/plugins/security.rs:7:#[cfg(feature = "wasm-plugins")]
+src/plugins/security.rs-8-use wasmtime_wasi::WasiCtxBuilder;
+src/plugins/security.rs-9-
+--
+src/plugins/mod.rs-85-// Feature gate for WASM plugin system
+src/plugins/mod.rs:86:#[cfg(feature = "wasm-plugins")]
+src/plugins/mod.rs-87-pub mod wasm {
+src/plugins/mod.rs-88-    pub use super::*;
+--
+src/plugins/types.rs-6-use uuid::Uuid;
+src/plugins/types.rs:7:#[cfg(feature = "wasm-plugins")]
+src/plugins/types.rs-8-use wasmtime::component::ResourceTable;
+src/plugins/types.rs:9:#[cfg(feature = "wasm-plugins")]
+src/plugins/types.rs-10-use wasmtime_wasi::preview1::WasiP1Ctx;
+src/plugins/types.rs:11:#[cfg(feature = "wasm-plugins")]
+src/plugins/types.rs-12-use wasmtime_wasi::{WasiCtxView, WasiView};
+src/plugins/types.rs-13-
+--
+src/plugins/types.rs-85-/// Wrapper type for WASI context to avoid orphan rule issues
+src/plugins/types.rs:86:#[cfg(feature = "wasm-plugins")]
+src/plugins/types.rs-87-pub struct HostContext {
+src/plugins/types.rs-88-    /// Host state containing plugin configuration and limits
+--
+src/plugins/types.rs-95-
+src/plugins/types.rs:96:#[cfg(feature = "wasm-plugins")]
+src/plugins/types.rs-97-impl std::fmt::Debug for HostContext {
+src/plugins/types.rs-98-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+--
+src/plugins/types.rs-108-
+src/plugins/types.rs:109:#[cfg(feature = "wasm-plugins")]
+src/plugins/types.rs-110-impl WasiView for HostContext {
+src/plugins/types.rs-111-    fn ctx(&mut self) -> WasiCtxView<'_> {
+--
+src/plugins/knowledge.rs-6-
+src/plugins/knowledge.rs:7:#[cfg(feature = "ai")]
+src/plugins/knowledge.rs-8-use crate::ai::knowledge::context_selection::*;
+src/plugins/knowledge.rs:9:#[cfg(feature = "ai")]
+src/plugins/knowledge.rs-10-use crate::ai::knowledge::schema::*;
+src/plugins/knowledge.rs-11-use crate::plugins::PluginError;
+--
+src/plugins/data_plane.rs-2-
+src/plugins/data_plane.rs:3:#[cfg(feature = "wasm-plugins")]
+src/plugins/data_plane.rs-4-use std::{collections::HashMap, io::Cursor, sync::Arc};
+src/plugins/data_plane.rs-5-
+--
+src/plugins/lifecycle.rs-11-
+src/plugins/lifecycle.rs:12:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-13-use crate::plugins::types::HostContext;
+src/plugins/lifecycle.rs-14-use std::collections::HashMap;
+--
+src/plugins/lifecycle.rs-16-use tokio::sync::RwLock;
+src/plugins/lifecycle.rs:17:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-18-use wasmtime::{Engine, Linker, Module, Store};
+src/plugins/lifecycle.rs:19:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-20-use wasmtime_wasi::preview1::{self, WasiP1Ctx};
+src/plugins/lifecycle.rs:21:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-22-use wasmtime_wasi::{WasiCtxBuilder, WasiView};
+src/plugins/lifecycle.rs-23-
+--
+src/plugins/lifecycle.rs-396-/// Memory limiter for WASM instances
+src/plugins/lifecycle.rs:397:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-398-pub struct MemoryLimiter {
+src/plugins/lifecycle.rs-399-    max_memory: u64,
+--
+src/plugins/lifecycle.rs-401-
+src/plugins/lifecycle.rs:402:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-403-impl MemoryLimiter {
+src/plugins/lifecycle.rs-404-    pub fn new(max_memory: u64) -> Self {
+--
+src/plugins/lifecycle.rs-408-
+src/plugins/lifecycle.rs:409:#[cfg(feature = "wasm-plugins")]
+src/plugins/lifecycle.rs-410-impl wasmtime::ResourceLimiter for MemoryLimiter {
+src/plugins/lifecycle.rs-411-    fn memory_growing(
+--
+src/plugins/development.rs-5-
+src/plugins/development.rs:6:#[cfg(feature = "ai")]
+src/plugins/development.rs-7-use crate::ai::knowledge::compression::CompressedString;
+src/plugins/development.rs:8:#[cfg(feature = "ai")]
+src/plugins/development.rs-9-use crate::ai::knowledge::context_selection::{LocationContext, SeverityLevel};
+src/plugins/development.rs:10:#[cfg(feature = "ai")]
+src/plugins/development.rs-11-use crate::ai::knowledge::schema::*;
+src/plugins/development.rs-12-use crate::plugins::knowledge::*;
+--
+src/plugins/integration.rs-5-
+src/plugins/integration.rs:6:#[cfg(feature = "ai")]
+src/plugins/integration.rs-7-use crate::ai::knowledge::context_selection::*;
+src/plugins/integration.rs:8:#[cfg(feature = "ai")]
+src/plugins/integration.rs-9-use crate::ai::knowledge::loader::KnowledgeLibraryLoader;
+src/plugins/integration.rs:10:#[cfg(feature = "ai")]
+src/plugins/integration.rs-11-use crate::ai::knowledge::schema::*;
+src/plugins/integration.rs-12-use crate::plugins::knowledge::*;
+--
+src/ast/tree_sitter/mod.rs-8-// Conditional module imports based on feature flag
+src/ast/tree_sitter/mod.rs:9:#[cfg(feature = "tree-sitter")]
+src/ast/tree_sitter/mod.rs-10-mod tree_sitter_impl;
+src/ast/tree_sitter/mod.rs-11-#[cfg(not(feature = "tree-sitter"))]
+--
+src/ast/tree_sitter/mod.rs-14-// Re-export the appropriate implementation
+src/ast/tree_sitter/mod.rs:15:#[cfg(feature = "tree-sitter")]
+src/ast/tree_sitter/mod.rs-16-pub use tree_sitter_impl::*;
+src/ast/tree_sitter/mod.rs-17-#[cfg(not(feature = "tree-sitter"))]
+--
+src/ast/tree_sitter/mod.rs-20-// Re-export tree-sitter types for compatibility
+src/ast/tree_sitter/mod.rs:21:#[cfg(feature = "tree-sitter")]
+src/ast/tree_sitter/mod.rs-22-pub use streaming_iterator::StreamingIterator;
+src/ast/tree_sitter/mod.rs:23:#[cfg(feature = "tree-sitter")]
+src/ast/tree_sitter/mod.rs-24-pub use tree_sitter::{Language, Node, Query, QueryCursor, QueryMatch, Tree, TreeCursor};
+src/ast/tree_sitter/mod.rs-25-#[cfg(not(feature = "tree-sitter"))]
+--
+src/ast/tree_sitter/mod.rs-34-};
+src/ast/tree_sitter/mod.rs:35:#[cfg(feature = "tree-sitter")]
+src/ast/tree_sitter/mod.rs-36-pub use {tree_sitter_javascript, tree_sitter_python, tree_sitter_rust, tree_sitter_typescript};
+src/ast/tree_sitter/mod.rs-37-
+--
+src/lib.rs-273-pub mod resource_management;
+src/lib.rs:274:#[cfg(feature = "security")]
+src/lib.rs-275-pub mod security;
+src/lib.rs-276-#[cfg(not(feature = "security"))]
+--
+src/lib.rs-282-pub mod sla;
+src/lib.rs:283:#[cfg(feature = "tui")]
+src/lib.rs-284-pub mod tui;
+src/lib.rs-285-
+--
+src/monitoring/distribution.rs-8-
+src/monitoring/distribution.rs:9:#[cfg(feature = "reqwest")]
+src/monitoring/distribution.rs-10-use reqwest;
+src/monitoring/distribution.rs-11-
+--
+src/monitoring/mod.rs-12-pub mod baseline_collector;
+src/monitoring/mod.rs:13:#[cfg(feature = "prometheus")]
+src/monitoring/mod.rs-14-pub mod carbon_metrics;
+src/monitoring/mod.rs-15-pub mod config;
+--
+src/monitoring/mod.rs-32-};
+src/monitoring/mod.rs:33:#[cfg(feature = "prometheus")]
+src/monitoring/mod.rs-34-pub use carbon_metrics::{
+src/monitoring/mod.rs-35-    CarbonAwarenessCollector, CarbonAwarenessConfig, CarbonFootprintReport,
+--
+src/analysis/detectors/anti_patterns/large_classes.rs-13-use tracing::debug;
+src/analysis/detectors/anti_patterns/large_classes.rs:14:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/large_classes.rs-15-use tree_sitter::{Query, QueryCursor, StreamingIterator, Tree};
+src/analysis/detectors/anti_patterns/large_classes.rs-16-
+--
+src/analysis/detectors/anti_patterns/large_classes.rs-520-// Tree-sitter queries are only compiled when the feature is enabled
+src/analysis/detectors/anti_patterns/large_classes.rs:521:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/large_classes.rs-522-const RUST_STRUCT_QUERY: &str = r#"
+src/analysis/detectors/anti_patterns/large_classes.rs-523-(struct_item
+--
+src/analysis/detectors/anti_patterns/large_classes.rs-526-
+src/analysis/detectors/anti_patterns/large_classes.rs:527:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/large_classes.rs-528-const PYTHON_CLASS_QUERY: &str = r#"
+src/analysis/detectors/anti_patterns/large_classes.rs-529-(class_definition
+--
+src/analysis/detectors/anti_patterns/large_classes.rs-532-
+src/analysis/detectors/anti_patterns/large_classes.rs:533:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/large_classes.rs-534-const JAVASCRIPT_CLASS_QUERY: &str = r#"
+src/analysis/detectors/anti_patterns/large_classes.rs-535-(class_declaration
+--
+src/monitoring/carbon_metrics.rs-9-use chrono::{DateTime, Utc};
+src/monitoring/carbon_metrics.rs:10:#[cfg(feature = "prometheus")]
+src/monitoring/carbon_metrics.rs-11-use prometheus::{Counter, Gauge, Histogram, Registry};
+src/monitoring/carbon_metrics.rs-12-use serde::{Deserialize, Serialize};
+--
+src/analysis/detectors/anti_patterns/long_methods/analyzers/line_counter.rs-3-use crate::analysis::AnalysisError;
+src/analysis/detectors/anti_patterns/long_methods/analyzers/line_counter.rs:4:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/analyzers/line_counter.rs-5-use crate::ast::tree_sitter::Node;
+src/analysis/detectors/anti_patterns/long_methods/analyzers/line_counter.rs-6-
+--
+src/analysis/detectors/anti_patterns/long_methods/analyzers/complexity_analyzer.rs-3-use crate::analysis::AnalysisError;
+src/analysis/detectors/anti_patterns/long_methods/analyzers/complexity_analyzer.rs:4:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/analyzers/complexity_analyzer.rs-5-use crate::ast::tree_sitter::Node;
+src/analysis/detectors/anti_patterns/long_methods/analyzers/complexity_analyzer.rs-6-
+--
+src/analysis/detectors/anti_patterns/long_methods/analyzers/nesting_analyzer.rs-2-
+src/analysis/detectors/anti_patterns/long_methods/analyzers/nesting_analyzer.rs:3:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/analyzers/nesting_analyzer.rs-4-use crate::ast::tree_sitter::Node;
+src/analysis/detectors/anti_patterns/long_methods/analyzers/nesting_analyzer.rs-5-
+--
+src/analysis/detectors/anti_patterns/long_methods/language_support/python.rs-3-use crate::analysis::AnalysisError;
+src/analysis/detectors/anti_patterns/long_methods/language_support/python.rs:4:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/language_support/python.rs-5-use crate::ast::tree_sitter::{Language, Node, Query};
+src/analysis/detectors/anti_patterns/long_methods/language_support/python.rs-6-
+--
+src/analysis/detectors/anti_patterns/long_methods/language_support/rust.rs-4-use crate::analysis::detectors::anti_patterns::long_methods::types::MethodMetrics;
+src/analysis/detectors/anti_patterns/long_methods/language_support/rust.rs:5:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/language_support/rust.rs-6-use crate::ast::tree_sitter::{Language, Node, Query};
+src/analysis/detectors/anti_patterns/long_methods/language_support/rust.rs-7-
+--
+src/analysis/detectors/anti_patterns/long_methods/language_support/typescript.rs-3-use crate::analysis::AnalysisError;
+src/analysis/detectors/anti_patterns/long_methods/language_support/typescript.rs:4:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/language_support/typescript.rs-5-use crate::ast::tree_sitter::{Language, Node, Query};
+src/analysis/detectors/anti_patterns/long_methods/language_support/typescript.rs-6-
+--
+src/analysis/detectors/anti_patterns/long_methods/extractors/match_processor.rs-7-use crate::analysis::AnalysisError;
+src/analysis/detectors/anti_patterns/long_methods/extractors/match_processor.rs:8:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/long_methods/extractors/match_processor.rs-9-use crate::ast::tree_sitter::{Node, QueryMatch};
+src/analysis/detectors/anti_patterns/long_methods/extractors/match_processor.rs-10-
+--
+src/analysis/detectors/anti_patterns/magic_values.rs-20-use std::collections::HashSet;
+src/analysis/detectors/anti_patterns/magic_values.rs:21:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/magic_values.rs-22-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/magic_values.rs-23-
+--
+src/analysis/detectors/dependency.rs:1:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/dependency.rs-2-use crate::ast::tree_sitter::queries::{
+src/analysis/detectors/dependency.rs-3-    JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY,
+--
+src/analysis/detectors/dependency.rs-6-use std::sync::Arc;
+src/analysis/detectors/dependency.rs:7:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/dependency.rs-8-use tree_sitter::{Query, QueryCursor, StreamingIterator};
+src/analysis/detectors/dependency.rs-9-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/field_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/field_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/field_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/field_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/dependency_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/dependency_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/dependency_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/dependency_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/method_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/method_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/method_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/method_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/visibility_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/visibility_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/visibility_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/implementation/visibility_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/python_interface.rs-9-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/python_interface.rs:10:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/python_interface.rs-11-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/python_interface.rs-12-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/js_interface.rs-9-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/js_interface.rs:10:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/js_interface.rs-11-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/js_interface.rs-12-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/rust_interface.rs-9-
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/rust_interface.rs:10:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/rust_interface.rs-11-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/analyzers/interface/rust_interface.rs-12-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/trait_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/trait_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/trait_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/trait_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/module_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/module_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/module_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/rust/module_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/module_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/module_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/module_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/module_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/interface_parser.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/interface_parser.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/interface_parser.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/interface_parser.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/class_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/class_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/class_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/typescript/class_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/import_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/import_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/import_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/import_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/framework_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/framework_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/framework_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/framework_analyzer.rs-13-
+--
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/class_analyzer.rs-10-
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/class_analyzer.rs:11:#[cfg(feature = "tree-sitter")]
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/class_analyzer.rs-12-use tree_sitter::StreamingIterator;
+src/analysis/detectors/anti_patterns/leaky_abstraction/language_support/python/class_analyzer.rs-13-

@@ -1,0 +1,128 @@
+[features]
+# ==================== CORE FEATURE SETS ====================
+# Lightweight default for fast development builds
+default = ["dev-core"]
+
+# Ultra-minimal build (absolute minimum for fastest compilation)
+dev-ultra-minimal = ["dep:rusqlite", "dep:bincode"]
+
+# Minimal development build (essential deps only)
+dev-minimal = ["dev-ultra-minimal", "dep:rayon"]
+
+# Core development features (recommended for daily development)
+dev-core = ["dev-minimal", "dep:tokio-stream", "dep:async-stream", "prometheus"]
+
+# Full development build (includes parsing capabilities)
+dev-full = ["dev-core", "tree-sitter"]
+
+# ==================== LANGUAGE PARSING ====================
+# Individual language support (granular control)
+rust-lang = ["dep:tree-sitter-rust"]
+python-lang = ["dep:tree-sitter-python"]
+javascript-lang = ["dep:tree-sitter-javascript"]
+typescript-lang = ["dep:tree-sitter-typescript"]
+
+# Language combinations for targeted development
+dev-rust-only = ["dev-minimal", "rust-lang", "dep:tree-sitter"]
+dev-python-only = ["dev-minimal", "python-lang", "dep:tree-sitter"]
+dev-js-only = ["dev-minimal", "javascript-lang", "dep:tree-sitter"]
+dev-ts-only = ["dev-minimal", "typescript-lang", "dep:tree-sitter"]
+
+# Full tree-sitter support (all languages)
+tree-sitter = [
+    "dep:tree-sitter",
+    "rust-lang",
+    "python-lang",
+    "javascript-lang",
+    "typescript-lang"
+]
+
+# ==================== PRODUCTION BUILDS ====================
+# Production-ready features (full functionality)
+production = [
+    "tree-sitter",
+    "security",
+    "memory-optimization",
+    "web-full",
+    "tui",
+    "wasm-plugins",
+    "prometheus",
+    "dep:rayon",
+    "dep:tokio-stream",
+    "dep:async-stream",
+    "dep:rusqlite",
+    "dep:bincode"
+]
+
+# Production-secure features (without RSA vulnerability dependencies)
+production-secure = [
+    "tree-sitter",
+    "memory-optimization",
+    "web-full",
+    "tui",
+    "wasm-plugins",
+    "prometheus",
+    "dep:rayon",
+    "dep:tokio-stream",
+    "dep:async-stream",
+    "dep:rusqlite",
+    "dep:bincode"
+]
+
+# ==================== SPECIALIZED FEATURES ====================
+# Metrics and monitoring
+prometheus = ["dep:prometheus"]
+
+# Cryptography and security
+crypto-minimal = []
+crypto-full = ["dep:rustls", "dep:ring", "dep:argon2", "dep:subtle"]
+security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs", "dep:config"]
+
+# Web infrastructure
+web-client = []
+web-server = []
+web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
+
+# User interfaces
+tui = ["dep:ratatui", "dep:crossterm", "dep:tui-input"]
+
+# Plugin and extension systems
+wasm-plugins = ["dep:wasmtime", "dep:wasmtime-wasi", "dep:cap-std", "dep:wit-bindgen"]
+
+# Performance optimizations
+memory-optimization = ["dep:mimalloc", "dep:bumpalo", "dep:bumpalo-herd", "dep:memmap2", "dep:rkyv"]
+
+# AI and analysis features
+ai = []
+local-ai = ["ai"]
+image-rendering = []
+
+# ==================== TESTING AND DEVELOPMENT ====================
+# Chaos engineering and load testing
+chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
+regression-detection = ["dep:changepoint", "dep:linfa", "dep:influxdb2"]
+sla-monitoring = ["dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
+
+# ==================== CONVENIENCE COMBINATIONS ====================
+# Zero-cost option (no external services required)
+zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
+
+# Full-featured option (includes image rendering)
+full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
+
+# Enterprise option (all features)
+enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
+
+# Legacy compatibility (for backward compatibility)
+alpha = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
+
+# ==================== INTERNAL FLAGS (for dependencies) ====================
+# Cleanup unused flags
+streaming-iterator = []
+tower = []
+tower-http = []
+mimalloc = []
+graphql-api = []
+yaml = []
+reqwest = []
+
