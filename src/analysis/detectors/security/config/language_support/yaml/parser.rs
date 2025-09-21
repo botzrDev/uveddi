@@ -76,10 +76,10 @@ impl YamlParser {
     }
 
     /// Get a value from a mapping by checking multiple possible keys
-    pub fn get_mapping_value(
-        map: &serde_yaml::Mapping,
+    pub fn get_mapping_value<'a>(
+        map: &'a serde_yaml::Mapping,
         keys: &[&str],
-    ) -> Option<&YamlValue> {
+    ) -> Option<&'a YamlValue> {
         for &key in keys {
             if let Some(value) = map.get(&YamlValue::String(key.to_string())) {
                 return Some(value);

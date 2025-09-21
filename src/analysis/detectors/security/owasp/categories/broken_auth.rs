@@ -201,14 +201,6 @@ impl OwaspCategoryDetector for BrokenAuthDetector {
 
         Ok(vulnerabilities)
     }
-
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::AuthenticationFailures
-    }
-
-    fn description(&self) -> &str {
-        "Detects broken authentication and session management vulnerabilities"
-    }
 }
 
 #[cfg(test)]

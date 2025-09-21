@@ -202,13 +202,6 @@ impl OwaspCategoryDetector for BrokenAccessDetector {
         Ok(vulnerabilities)
     }
 
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::BrokenAccessControl
-    }
-
-    fn description(&self) -> &str {
-        "Detects broken access control and authorization vulnerabilities"
-    }
 }
 
 #[cfg(test)]

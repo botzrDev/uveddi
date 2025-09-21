@@ -5,8 +5,10 @@
 
 use super::{Scanner, UnifiedScanResult};
 use crate::analysis::detectors::security::owasp::types::{
-    OwaspAnalysisPattern, OwaspCategory, OwaspVulnerability, SecurityIssueType, SecurityLocation,
-    SecuritySeverity, VulnerabilityMetadata,
+    OwaspAnalysisPattern, OwaspCategory, OwaspVulnerability,
+};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};

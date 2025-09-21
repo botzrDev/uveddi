@@ -218,13 +218,6 @@ impl OwaspCategoryDetector for InsecureDeserializationDetector {
         Ok(vulnerabilities)
     }
 
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::DataIntegrityFailures
-    }
-
-    fn description(&self) -> &str {
-        "Detects insecure deserialization and data integrity failures"
-    }
 }
 
 #[cfg(test)]

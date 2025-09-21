@@ -206,13 +206,6 @@ impl OwaspCategoryDetector for XXEDetector {
         Ok(vulnerabilities)
     }
 
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::InsecureDesign
-    }
-
-    fn description(&self) -> &str {
-        "Detects XML External Entity (XXE) vulnerabilities and insecure XML processing"
-    }
 }
 
 #[cfg(test)]

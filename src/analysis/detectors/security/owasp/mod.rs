@@ -13,7 +13,7 @@ pub mod vulnerabilities;
 
 // Core re-exports
 pub use config::OwaspConfig;
-pub use detector::{OwaspDetector, OwaspComprehensiveResult, DetectorStatistics};
+pub use detector::{OwaspDetector, DetectorStatistics};
 pub use types::{OwaspCategory, OwaspVulnerability, OwaspCategoryDetector};
 
 // Note: Analysis and reporting modules removed per assignment requirements
@@ -33,14 +33,14 @@ pub use language_support::{
 
 // Scanner re-exports
 pub use scanners::{
-    StaticScanner, PatternScanner, FlowScanner, DependencyScanner,
+    StaticAnalysisScanner, PatternScanner, DataFlowScanner, DependencyScanner,
     Scanner, ScannerOrchestrator, UnifiedScanResult,
 };
 
 // Vulnerability detector re-exports
 pub use vulnerabilities::{
     SqlInjectionDetector, CommandInjectionDetector, PathTraversalDetector,
-    CSRFDetector, SessionManagementDetector, VulnerabilityRegistry,
+    CsrfDetector, SessionManagementDetector, VulnerabilityRegistry,
 };
 
 /// OWASP Top 10 2021 categories

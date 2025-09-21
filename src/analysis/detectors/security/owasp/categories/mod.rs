@@ -22,39 +22,26 @@ pub use xss::XSSDetector;
 pub use insecure_deserialization::InsecureDeserializationDetector;
 pub use vulnerable_components::VulnerableComponentsDetector;
 
-use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
-use crate::analysis::AnalysisError;
-use crate::ast::ParsedFile;
+use crate::analysis::detectors::security::owasp::types::{
+    OwaspCategory, OwaspCategoryDetector,
+};
 
 /// Registry for all OWASP category detectors
 pub struct CategoryRegistry;
 
 impl CategoryRegistry {
     /// Get all active category detectors
-    pub fn get_detectors() -> Vec<Box<dyn OwaspCategoryDetector>> {
+    pub fn get_detectors() -> Vec<(OwaspCategory, Box<dyn OwaspCategoryDetector>)> {
         vec![
-            Box::new(InjectionDetector::new()),
-            Box::new(BrokenAuthDetector::new()),
-            Box::new(SensitiveDataDetector::new()),
-            Box::new(XXEDetector::new()),
-            Box::new(BrokenAccessDetector::new()),
-            Box::new(SecurityMisconfigDetector::new()),
-            Box::new(XSSDetector::new()),
-            Box::new(InsecureDeserializationDetector::new()),
-            Box::new(VulnerableComponentsDetector::new()),
+            (OwaspCategory::Injection, Box::new(InjectionDetector::new()) as Box<_>),
+            (OwaspCategory::AuthenticationFailures, Box::new(BrokenAuthDetector::new()) as Box<_>),
+            (OwaspCategory::CryptographicFailures, Box::new(SensitiveDataDetector::new()) as Box<_>),
+            (OwaspCategory::ServerSideRequestForgery, Box::new(XXEDetector::new()) as Box<_>),
+            (OwaspCategory::BrokenAccessControl, Box::new(BrokenAccessDetector::new()) as Box<_>),
+            (OwaspCategory::SecurityMisconfiguration, Box::new(SecurityMisconfigDetector::new()) as Box<_>),
+            (OwaspCategory::InsecureDesign, Box::new(XSSDetector::new()) as Box<_>),
+            (OwaspCategory::DataIntegrityFailures, Box::new(InsecureDeserializationDetector::new()) as Box<_>),
+            (OwaspCategory::VulnerableComponents, Box::new(VulnerableComponentsDetector::new()) as Box<_>),
         ]
     }
-}
-
-/// Trait for OWASP category-specific detectors
-#[async_trait::async_trait]
-pub trait OwaspCategoryDetector: Send + Sync {
-    /// Detect vulnerabilities in the given file
-    async fn detect(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError>;
-
-    /// Get the OWASP category this detector handles
-    fn category(&self) -> OwaspCategory;
-
-    /// Get detector description
-    fn description(&self) -> &str;
 }

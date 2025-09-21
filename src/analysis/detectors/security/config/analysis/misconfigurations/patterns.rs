@@ -4,7 +4,7 @@
 
 use crate::analysis::AnalysisError;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
-use super::super::super::utils;
+use crate::analysis::detectors::security::config::patterns::utils;
 use super::rules::{MisconfigurationRule, MisconfigurationPattern};
 use regex::Regex;
 

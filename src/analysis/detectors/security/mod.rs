@@ -73,15 +73,15 @@ pub use agents::{
     ConfigAnalysisAgent, DependencyAgent, SecurityOrchestrator, TaintAnalysisAgent, ValidationAgent,
 };
 pub use config::{
-    AgentConfig, FalsePositiveConfig, MultiAgentConfig, SecurityConfig, TaintAnalysisConfig,
-    ValidationConfig,
+    AgentConfig, FalsePositiveConfig, LanguageConfig, MultiAgentConfig, SecurityConfig,
+    TaintAnalysisConfig,
 };
 pub use core::{ConfidenceScore, SecurityAnalysisResult, SecurityContext, VulnerabilityDatabase};
 pub use detector::SecurityDetector;
 pub use knowledge_graph::{
     KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph,
 };
-pub use owasp::{OwaspCategory, OwaspDetector, OwaspVulnerability, OwaspConfig, OwaspAnalysisReport};
+pub use owasp::{OwaspCategory, OwaspDetector, OwaspVulnerability, OwaspConfig};
 pub use strategies::{
     ConfigFileAnalyzer, DeterministicPatternMatcher, SoftwareCompositionAnalyzer,
     VulnerabilityCorrelationEngine,

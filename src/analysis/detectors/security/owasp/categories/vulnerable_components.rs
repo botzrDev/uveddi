@@ -232,13 +232,6 @@ impl OwaspCategoryDetector for VulnerableComponentsDetector {
         Ok(vulnerabilities)
     }
 
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::VulnerableComponents
-    }
-
-    fn description(&self) -> &str {
-        "Detects vulnerable and outdated components in dependencies"
-    }
 }
 
 #[cfg(test)]

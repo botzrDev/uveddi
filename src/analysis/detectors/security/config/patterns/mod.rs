@@ -11,9 +11,17 @@ pub use secret_patterns::SecretPatternMatcher;
 pub use vulnerability_patterns::VulnerabilityPatternMatcher;
 
 use crate::analysis::AnalysisError;
-use crate::core::patterns::PatternMatcher;
 use super::config::ConfigSecurityConfig;
 use super::types::{ConfigIssue, PatternMatch};
+
+/// Basic pattern matcher interface used by the configuration security detector.
+pub trait PatternMatcher: Send + Sync {
+    /// Quickly determine if the content matches the underlying pattern set
+    fn match_pattern(&self, content: &str) -> Result<bool, AnalysisError>;
+
+    /// Return a descriptive pattern type identifier
+    fn get_pattern_type(&self) -> String;
+}
 
 /// Trait for configuration-specific pattern matching
 pub trait ConfigPatternMatcher: PatternMatcher {

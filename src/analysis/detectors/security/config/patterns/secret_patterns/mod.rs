@@ -13,10 +13,9 @@ pub use credentials::build_credential_patterns;
 pub use certificates::build_certificate_patterns;
 
 use crate::analysis::AnalysisError;
-use crate::core::patterns::PatternMatcher;
 use super::super::config::ConfigSecurityConfig;
 use super::super::types::{ConfigIssue, ConfigSeverity, PatternMatch};
-use super::{ConfigPatternMatcher, utils};
+use super::{ConfigPatternMatcher, PatternMatcher, utils};
 use regex::Regex;
 use std::collections::HashMap;
 

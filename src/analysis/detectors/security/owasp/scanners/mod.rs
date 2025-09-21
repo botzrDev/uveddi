@@ -7,9 +7,9 @@ pub mod static_scanner;
 
 // Re-exports
 pub use dependency_scanner::DependencyScanner;
-pub use flow_scanner::FlowScanner;
+pub use flow_scanner::DataFlowScanner;
 pub use pattern_scanner::PatternScanner;
-pub use static_scanner::StaticScanner;
+pub use static_scanner::StaticAnalysisScanner;
 
 use crate::analysis::AnalysisError;
 use crate::analysis::detectors::security::owasp::types::OwaspVulnerability;
@@ -40,15 +40,15 @@ pub struct ScannerOrchestrator {
 }
 
 impl ScannerOrchestrator {
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> Result<Self, AnalysisError> {
+        Ok(Self {
             scanners: vec![
-                Box::new(StaticScanner::new()),
-                Box::new(PatternScanner::new()),
-                Box::new(FlowScanner::new()),
+                Box::new(StaticAnalysisScanner::new()?),
+                Box::new(PatternScanner::new()?),
+                Box::new(DataFlowScanner::new()?),
                 Box::new(DependencyScanner::new()),
             ],
-        }
+        })
     }
 
     pub async fn scan_all(&self, file: &ParsedFile) -> Result<Vec<UnifiedScanResult>, AnalysisError> {
@@ -69,7 +69,7 @@ impl ScannerOrchestrator {
 
 impl Default for ScannerOrchestrator {
     fn default() -> Self {
-        Self::new()
+        Self::new().expect("failed to create scanner orchestrator")
     }
 }
 
@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_orchestrator() {
-        let orchestrator = ScannerOrchestrator::new();
+        let orchestrator = ScannerOrchestrator::new().unwrap();
         assert_eq!(orchestrator.scanner_count(), 4);
     }
 }

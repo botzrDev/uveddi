@@ -11,6 +11,7 @@ pub mod language_support;
 pub mod patterns;
 pub mod types;
 pub mod validation;
+pub mod settings;
 
 // Re-export public API
 pub use config::ConfigSecurityConfig;
@@ -19,6 +20,10 @@ pub use types::{
     ConfigAnalysisContext, ConfigAnalysisResult, ConfigIssue, ConfigSeverity, ConfigType,
     PatternMatch,
 };
+pub use settings::{
+    FalsePositiveConfig, LanguageConfig, SecurityConfig, TaintAnalysisConfig,
+};
+pub use crate::analysis::detectors::security::agents::config::{AgentConfig, MultiAgentConfig};
 
 // Re-export analysis components
 pub use analysis::{CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer};

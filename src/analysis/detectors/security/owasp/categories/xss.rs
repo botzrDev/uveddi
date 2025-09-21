@@ -210,13 +210,6 @@ impl OwaspCategoryDetector for XSSDetector {
         Ok(vulnerabilities)
     }
 
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::Injection
-    }
-
-    fn description(&self) -> &str {
-        "Detects Cross-Site Scripting (XSS) vulnerabilities"
-    }
 }
 
 #[cfg(test)]

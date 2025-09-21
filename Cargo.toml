@@ -18,6 +18,7 @@ readme = "README.md"
 # Core serialization - single version across workspace
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.143"
+serde_yaml = "0.9.34"
 
 # Async runtime - unified tokio ecosystem
 tokio = { version = "1.47", features = ["full"] }
@@ -179,6 +180,7 @@ reqwest = []
 # Use workspace dependencies for consistency
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 tokio = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }

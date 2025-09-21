@@ -57,11 +57,11 @@ impl RustQueries {
     }
 
     /// Execute a query and collect all matches
-    pub fn execute_query(
-        query: &Query,
-        tree: &Tree,
-        source: &str,
-    ) -> Result<Vec<crate::ast::tree_sitter::QueryMatch>, AnalysisError> {
+    pub fn execute_query<'a>(
+        query: &'a Query,
+        tree: &'a Tree,
+        source: &'a str,
+    ) -> Result<Vec<crate::ast::tree_sitter::QueryMatch<'a>>, AnalysisError> {
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(query, tree.root_node(), source.as_bytes());
         let mut results = Vec::new();

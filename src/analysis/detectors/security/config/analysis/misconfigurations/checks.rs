@@ -3,14 +3,10 @@
 //! This module provides specialized checkers for different types of
 //! configuration security issues.
 
-pub mod debug_checker;
-pub mod session_checker;
-pub mod database_checker;
-
-// Re-export checkers
-pub use debug_checker::DebugChecker;
-pub use session_checker::SessionChecker;
-pub use database_checker::DatabaseChecker;
+// Re-export checkers for convenient access
+pub use super::debug_checker::DebugChecker;
+pub use super::session_checker::SessionChecker;
+pub use super::database_checker::DatabaseChecker;
 
 #[cfg(test)]
 mod tests {

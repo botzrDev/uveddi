@@ -5,15 +5,14 @@
 
 use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType};
 use crate::analysis::AnalysisError;
-use crate::core::patterns::PatternMatcher;
 use std::path::PathBuf;
 
+use super::analysis::{CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer};
 use super::config::ConfigSecurityConfig;
-use super::types::{ConfigType, ConfigIssue};
-use super::analysis::{CredentialAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer, DefaultsAnalyzer};
-use super::language_support::{YamlAnalyzer, TomlAnalyzer, EnvAnalyzer};
-use super::patterns::{SecretPatternMatcher, VulnerabilityPatternMatcher};
-use super::validation::{PolicyValidator, ComplianceValidator};
+use super::language_support::{EnvAnalyzer, TomlAnalyzer, YamlAnalyzer};
+use super::patterns::{PatternMatcher, SecretPatternMatcher, VulnerabilityPatternMatcher};
+use super::types::{ConfigIssue, ConfigType};
+use super::validation::{ComplianceValidator, PolicyValidator};
 
 /// Main configuration security detector
 pub struct ConfigSecurityDetector {

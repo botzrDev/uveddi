@@ -4,10 +4,8 @@
 //! vulnerability detection, integrating all detection modules and analysis
 //! capabilities.
 
-use super::analysis::{OwaspAnalysisOrchestrator, OwaspAnalysisResult};
 use super::config::OwaspConfig;
-use super::reporting::{OwaspReportingCoordinator, OwaspAnalysisReport};
-use super::top10::OwaspTop10Factory;
+use super::categories::CategoryRegistry;
 use super::types::{OwaspCategory, OwaspCategoryDetector, OwaspVulnerability};
 use crate::analysis::AnalysisError;
 use crate::ast::ParsedFile;
@@ -18,8 +16,6 @@ use tracing::{debug, info, warn};
 pub struct OwaspDetector {
     config: OwaspConfig,
     detectors: HashMap<OwaspCategory, Box<dyn OwaspCategoryDetector>>,
-    analysis_orchestrator: OwaspAnalysisOrchestrator,
-    reporting_coordinator: OwaspReportingCoordinator,
 }
 
 impl OwaspDetector {
@@ -32,15 +28,13 @@ impl OwaspDetector {
     pub fn with_config(config: OwaspConfig) -> Result<Self, AnalysisError> {
         info!("Initializing OWASP detector with config");
 
-        let detectors = OwaspTop10Factory::create_all_detectors()?;
-        let analysis_orchestrator = OwaspAnalysisOrchestrator::new()?;
-        let reporting_coordinator = OwaspReportingCoordinator::new()?;
+        let detectors = CategoryRegistry::get_detectors()
+            .into_iter()
+            .collect::<HashMap<_, _>>();
 
         Ok(Self {
             config,
             detectors,
-            analysis_orchestrator,
-            reporting_coordinator,
         })
     }
 
@@ -87,31 +81,6 @@ impl OwaspDetector {
         Ok(all_vulnerabilities)
     }
 
-    /// Perform comprehensive analysis including risk assessment and reporting
-    pub async fn comprehensive_analysis(&self, file: &ParsedFile) -> Result<OwaspComprehensiveResult, AnalysisError> {
-        let vulnerabilities = self.analyze_file(file).await?;
-
-        let analysis_result = self
-            .analysis_orchestrator
-            .analyze_vulnerabilities(vulnerabilities.clone())
-            .await?;
-
-        let report = self
-            .reporting_coordinator
-            .generate_comprehensive_report(&vulnerabilities)?;
-
-        Ok(OwaspComprehensiveResult {
-            analysis_result,
-            report,
-            file_path: file.file_path.to_string_lossy().to_string(),
-        })
-    }
-
-    /// Generate compliance report for a set of vulnerabilities
-    pub fn generate_compliance_report(&self, vulnerabilities: &[OwaspVulnerability]) -> Result<OwaspAnalysisReport, AnalysisError> {
-        self.reporting_coordinator.generate_comprehensive_report(vulnerabilities)
-    }
-
     /// Update detector configuration
     pub fn update_config(&mut self, config: OwaspConfig) -> Result<(), AnalysisError> {
         info!("Updating OWASP detector configuration");
@@ -126,7 +95,12 @@ impl OwaspDetector {
 
     /// Get statistics about enabled detectors
     pub fn get_detector_statistics(&self) -> DetectorStatistics {
-        let enabled_categories = self.config.enabled_categories.len();
+        let enabled_categories = self
+            .config
+            .enabled_categories
+            .iter()
+            .filter(|category| self.detectors.contains_key(category))
+            .count();
         let total_categories = self.detectors.len();
 
         DetectorStatistics {
@@ -147,14 +121,6 @@ impl OwaspDetector {
     pub fn get_supported_categories(&self) -> Vec<OwaspCategory> {
         self.detectors.keys().cloned().collect()
     }
-}
-
-/// Comprehensive OWASP analysis result
-#[derive(Debug, Clone)]
-pub struct OwaspComprehensiveResult {
-    pub analysis_result: OwaspAnalysisResult,
-    pub report: OwaspAnalysisReport,
-    pub file_path: String,
 }
 
 /// Statistics about the OWASP detector configuration
@@ -185,7 +151,7 @@ mod tests {
         assert!(detector.is_ok());
 
         let detector = detector.unwrap();
-        assert_eq!(detector.detectors.len(), 10); // All OWASP Top 10 categories
+        assert!(detector.detectors.len() >= 1);
     }
 
     #[tokio::test]

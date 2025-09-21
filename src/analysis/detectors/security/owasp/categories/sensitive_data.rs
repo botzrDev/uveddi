@@ -205,14 +205,6 @@ impl OwaspCategoryDetector for SensitiveDataDetector {
 
         Ok(vulnerabilities)
     }
-
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::CryptographicFailures
-    }
-
-    fn description(&self) -> &str {
-        "Detects sensitive data exposure and cryptographic failures"
-    }
 }
 
 #[cfg(test)]

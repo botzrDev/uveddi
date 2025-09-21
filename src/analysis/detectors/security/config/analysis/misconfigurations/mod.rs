@@ -6,13 +6,18 @@
 pub mod analyzer;
 pub mod rules;
 pub mod patterns;
+pub mod debug_checker;
+pub mod session_checker;
+pub mod database_checker;
 pub mod checks;
 
 // Re-export main analyzer
 pub use analyzer::MisconfigurationAnalyzer;
 pub use rules::{MisconfigurationRule, MisconfigurationPattern};
 pub use patterns::PatternBuilder;
-pub use checks::{DebugChecker, SessionChecker, DatabaseChecker};
+pub use debug_checker::DebugChecker;
+pub use session_checker::SessionChecker;
+pub use database_checker::DatabaseChecker;
 
 #[cfg(test)]
 mod tests {

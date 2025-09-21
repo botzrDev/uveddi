@@ -202,13 +202,6 @@ impl OwaspCategoryDetector for SecurityMisconfigDetector {
         Ok(vulnerabilities)
     }
 
-    fn category(&self) -> OwaspCategory {
-        OwaspCategory::SecurityMisconfiguration
-    }
-
-    fn description(&self) -> &str {
-        "Detects security misconfiguration vulnerabilities"
-    }
 }
 
 #[cfg(test)]
