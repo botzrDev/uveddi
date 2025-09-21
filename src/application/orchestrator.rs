@@ -56,16 +56,15 @@ pub struct AnalysisResult {
 impl AnalysisOrchestrator {
     /// Creates a new AnalysisOrchestrator with a database at the specified path
     pub fn with_db_path(db_path: &std::path::Path) -> Result<Self, UveddiError> {
-        let database = Database::new(Some(db_path))
-            .context("Failed to initialize database with path")?;
+        let database =
+            Database::new(Some(db_path)).context("Failed to initialize database with path")?;
 
         Self::initialize_with_database(database)
     }
 
     /// Creates a new AnalysisOrchestrator with an in-memory database
     pub fn new() -> Result<Self, UveddiError> {
-        let database = Database::new(None)
-            .context("Failed to initialize in-memory database")?;
+        let database = Database::new(None).context("Failed to initialize in-memory database")?;
 
         Self::initialize_with_database(database)
     }
@@ -75,8 +74,7 @@ impl AnalysisOrchestrator {
         db_path: Option<&std::path::Path>,
         memory_config: Option<crate::analysis::memory::MemoryOptimizationConfig>,
     ) -> Result<Self, UveddiError> {
-        let database = Database::new(db_path)
-            .context("Failed to initialize database")?;
+        let database = Database::new(db_path).context("Failed to initialize database")?;
 
         let mut orchestrator = Self::initialize_with_database(database)?;
 
@@ -106,8 +104,8 @@ impl AnalysisOrchestrator {
             }
         }
 
-        let analysis_engine = AnalysisEngine::new()
-            .context("Failed to initialize analysis engine")?;
+        let analysis_engine =
+            AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
         // Initialize resource manager if enabled
         let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
@@ -168,7 +166,8 @@ impl AnalysisOrchestrator {
         let mut analysis_run = self.create_analysis_run(config).await?;
 
         // Execute core analysis
-        let (mut issues, _dependency_graph) = self.analysis_engine
+        let (mut issues, _dependency_graph) = self
+            .analysis_engine
             .analyze(&config.target_path)
             .await
             .context("Analysis failed")?;
@@ -177,10 +176,12 @@ impl AnalysisOrchestrator {
 
         // Update analysis run with results
         let analysis_duration = start_time.elapsed();
-        self.finalize_analysis_run(&mut analysis_run, &issues, analysis_duration).await?;
+        self.finalize_analysis_run(&mut analysis_run, &issues, analysis_duration)
+            .await?;
 
         // Store results in database
-        self.store_analysis_results(&mut analysis_run, &mut issues).await?;
+        self.store_analysis_results(&mut analysis_run, &mut issues)
+            .await?;
 
         let metadata = AnalysisMetadata {
             files_analyzed: self.analysis_engine.get_files_analyzed() as usize,
@@ -223,7 +224,8 @@ impl AnalysisOrchestrator {
     ) -> Result<(), UveddiError> {
         debug!("Resource management enabled, initializing resource manager");
 
-        let resource_config = config.resource_config
+        let resource_config = config
+            .resource_config
             .clone()
             .unwrap_or_else(|| ResourceConfig::production());
 
@@ -260,7 +262,10 @@ impl AnalysisOrchestrator {
     }
 
     /// Validate the target path
-    fn validate_target_path(&self, config: &super::configuration::AnalysisConfig) -> Result<(), UveddiError> {
+    fn validate_target_path(
+        &self,
+        config: &super::configuration::AnalysisConfig,
+    ) -> Result<(), UveddiError> {
         debug!("Validating input path: {}", config.target_path.display());
         if !config.target_path.exists() {
             error!("Path does not exist: {}", config.target_path.display());
@@ -275,16 +280,21 @@ impl AnalysisOrchestrator {
     }
 
     /// Configure analysis detectors
-    fn configure_detectors(&mut self, config: &super::configuration::AnalysisConfig) -> Result<(), UveddiError> {
+    fn configure_detectors(
+        &mut self,
+        config: &super::configuration::AnalysisConfig,
+    ) -> Result<(), UveddiError> {
         debug!("Configuring detectors");
 
         if let Some(dead_code_config) = config.create_dead_code_config() {
-            self.analysis_engine.configure_dead_code_detector(dead_code_config);
+            self.analysis_engine
+                .configure_dead_code_detector(dead_code_config);
             info!("Dead code detector configured with custom settings");
         }
 
         if let Some(large_class_config) = config.create_large_class_config() {
-            self.analysis_engine.configure_large_classes_detector(large_class_config);
+            self.analysis_engine
+                .configure_large_classes_detector(large_class_config);
             info!("Large classes detector configured with custom settings");
         }
 
@@ -310,10 +320,14 @@ impl AnalysisOrchestrator {
         config: &super::configuration::AnalysisConfig,
     ) -> Result<AnalysisRun, UveddiError> {
         debug!("Creating analysis run record");
-        let analysis_run = self.database
+        let analysis_run = self
+            .database
             .create_analysis_run(&config.target_path)
             .context("Failed to create analysis run")?;
-        debug!("Analysis run record created with ID: {:?}", analysis_run.run_id);
+        debug!(
+            "Analysis run record created with ID: {:?}",
+            analysis_run.run_id
+        );
         Ok(analysis_run)
     }
 
@@ -376,7 +390,10 @@ impl AnalysisOrchestrator {
             if let Some(memory_config) = config.memory_optimization.clone() {
                 // Validate provided memory config
                 if let Err(validation_error) = memory_config.validate() {
-                    warn!("Invalid memory optimization configuration: {}", validation_error);
+                    warn!(
+                        "Invalid memory optimization configuration: {}",
+                        validation_error
+                    );
                     warn!("Falling back to standard analysis mode");
                     return Self::create_fallback_engine();
                 }
@@ -402,7 +419,10 @@ impl AnalysisOrchestrator {
 
                 // Validate the created config
                 if let Err(validation_error) = memory_config.validate() {
-                    warn!("Generated memory optimization configuration is invalid: {}", validation_error);
+                    warn!(
+                        "Generated memory optimization configuration is invalid: {}",
+                        validation_error
+                    );
                     warn!("Falling back to standard analysis mode");
                     return Self::create_fallback_engine();
                 }

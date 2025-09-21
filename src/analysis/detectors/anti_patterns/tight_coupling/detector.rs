@@ -47,11 +47,18 @@ impl std::fmt::Debug for TightCouplingDetector {
 impl TightCouplingDetector {
     /// Creates a new tight coupling detector with custom configuration
     pub fn new(config: TightCouplingConfig) -> Self {
-        let mut language_analyzers: HashMap<SourceLanguage, Box<dyn LanguageAnalyzer>> = HashMap::new();
+        let mut language_analyzers: HashMap<SourceLanguage, Box<dyn LanguageAnalyzer>> =
+            HashMap::new();
         language_analyzers.insert(SourceLanguage::Rust, Box::new(RustAnalyzer::default()));
         language_analyzers.insert(SourceLanguage::Python, Box::new(PythonAnalyzer::default()));
-        language_analyzers.insert(SourceLanguage::JavaScript, Box::new(TypeScriptAnalyzer::default()));
-        language_analyzers.insert(SourceLanguage::TypeScript, Box::new(TypeScriptAnalyzer::default()));
+        language_analyzers.insert(
+            SourceLanguage::JavaScript,
+            Box::new(TypeScriptAnalyzer::default()),
+        );
+        language_analyzers.insert(
+            SourceLanguage::TypeScript,
+            Box::new(TypeScriptAnalyzer::default()),
+        );
 
         Self {
             config,
@@ -79,7 +86,9 @@ impl TightCouplingDetector {
 
     /// Get analyzer for a specific language
     fn get_analyzer_for_language(&self, language: SourceLanguage) -> Option<&dyn LanguageAnalyzer> {
-        self.language_analyzers.get(&language).map(|analyzer| analyzer.as_ref())
+        self.language_analyzers
+            .get(&language)
+            .map(|analyzer| analyzer.as_ref())
     }
 
     /// Build dependency graph from multiple files with parallel processing
@@ -87,7 +96,8 @@ impl TightCouplingDetector {
         &self,
         files: &[(String, ParsedFile)],
     ) -> Result<LocalDependencyGraph, AnalysisError> {
-        self.dependency_analyzer.build_project_dependency_graph(files, &self.language_analyzers)
+        self.dependency_analyzer
+            .build_project_dependency_graph(files, &self.language_analyzers)
     }
 
     /// Build dependency graph incrementally for changed files only
@@ -136,7 +146,8 @@ impl TightCouplingDetector {
         graph: &LocalDependencyGraph,
         dependencies: &[Dependency],
     ) -> CouplingAnalysisReport {
-        self.report_generator.generate_report(graph, dependencies, &self.config)
+        self.report_generator
+            .generate_report(graph, dependencies, &self.config)
     }
 
     /// Infer language from component file path

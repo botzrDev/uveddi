@@ -43,7 +43,9 @@ impl DependencyGraphVisualizer {
         let nodes = self.builder.create_graph_nodes(graph, metrics);
         let edges = self.builder.create_graph_edges(dependencies);
         let clusters = self.builder.identify_clusters(&nodes);
-        let statistics = self.analyzer.calculate_graph_statistics(&nodes, &edges, metrics);
+        let statistics = self
+            .analyzer
+            .calculate_graph_statistics(&nodes, &edges, metrics);
 
         DependencyGraphData {
             nodes,
@@ -67,7 +69,10 @@ impl DependencyGraphVisualizer {
         // Add clusters (subgraphs)
         for (cluster_name, node_ids) in &graph_data.clusters {
             if node_ids.len() > 1 {
-                dot.push_str(&format!("  subgraph cluster_{} {{\n", cluster_name.replace("::", "_")));
+                dot.push_str(&format!(
+                    "  subgraph cluster_{} {{\n",
+                    cluster_name.replace("::", "_")
+                ));
                 dot.push_str(&format!("    label=\"{}\";\n", cluster_name));
                 dot.push_str("    style=dashed;\n");
 
@@ -84,10 +89,7 @@ impl DependencyGraphVisualizer {
             let mut label = node.label.clone();
             if include_metrics {
                 if let Some(metrics) = &node.metrics {
-                    label.push_str(&format!(
-                        "\\nCBO: {}, RFC: {}",
-                        metrics.cbo, metrics.rfc
-                    ));
+                    label.push_str(&format!("\\nCBO: {}, RFC: {}", metrics.cbo, metrics.rfc));
                 }
             }
 
@@ -112,11 +114,7 @@ impl DependencyGraphVisualizer {
 
             dot.push_str(&format!(
                 "  \"{}\" -> \"{}\" [style=\"{}\", color=\"{}\", penwidth={}];\n",
-                edge.from,
-                edge.to,
-                style,
-                edge.color,
-                edge.weight
+                edge.from, edge.to, style, edge.color, edge.weight
             ));
         }
 
@@ -152,10 +150,7 @@ impl DependencyGraphVisualizer {
                 _ => "-->",
             };
 
-            mermaid.push_str(&format!(
-                "  {} {} {}\n",
-                edge.from, arrow, edge.to
-            ));
+            mermaid.push_str(&format!("  {} {} {}\n", edge.from, arrow, edge.to));
         }
 
         // Add styling
@@ -179,7 +174,8 @@ impl DependencyGraphVisualizer {
         graph_data: &DependencyGraphData,
         threshold_percentile: f64,
     ) -> Vec<GraphNode> {
-        self.analyzer.identify_hotspots(&graph_data.nodes, threshold_percentile)
+        self.analyzer
+            .identify_hotspots(&graph_data.nodes, threshold_percentile)
     }
 }
 

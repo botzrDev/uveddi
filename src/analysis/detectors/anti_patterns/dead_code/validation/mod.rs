@@ -84,7 +84,7 @@ pub struct ValidationResult {
 /// Validation confidence levels
 #[derive(Debug, Clone, PartialEq)]
 pub enum ValidationConfidence {
-    High,    // Very confident the code is dead
-    Medium,  // Moderately confident
-    Low,     // Low confidence, needs manual review
+    High,   // Very confident the code is dead
+    Medium, // Moderately confident
+    Low,    // Low confidence, needs manual review
 }

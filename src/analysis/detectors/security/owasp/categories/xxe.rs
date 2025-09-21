@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -169,11 +171,17 @@ impl XXEDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "disable_external_entities", "XMLConstants.FEATURE_SECURE_PROCESSING",
-            "setFeature", "secure_xml", "defusedxml", "lxml_safe",
+            "disable_external_entities",
+            "XMLConstants.FEATURE_SECURE_PROCESSING",
+            "setFeature",
+            "secure_xml",
+            "defusedxml",
+            "lxml_safe",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.contains(indicator))
     }
 }
 
@@ -205,7 +213,6 @@ impl OwaspCategoryDetector for XXEDetector {
 
         Ok(vulnerabilities)
     }
-
 }
 
 #[cfg(test)]

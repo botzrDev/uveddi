@@ -36,8 +36,10 @@ impl AdaptiveThresholdCalculator {
         let mut statement_counts: Vec<u32> = methods.iter().map(|m| m.statement_count).collect();
         let mut param_counts: Vec<u32> = methods.iter().map(|m| m.parameter_count).collect();
         let mut nesting_depths: Vec<u32> = methods.iter().map(|m| m.max_nesting_depth).collect();
-        let mut cyclo_complexities: Vec<u32> = methods.iter().map(|m| m.cyclomatic_complexity).collect();
-        let mut cognitive_complexities: Vec<u32> = methods.iter().map(|m| m.cognitive_complexity).collect();
+        let mut cyclo_complexities: Vec<u32> =
+            methods.iter().map(|m| m.cyclomatic_complexity).collect();
+        let mut cognitive_complexities: Vec<u32> =
+            methods.iter().map(|m| m.cognitive_complexity).collect();
 
         // Sort all vectors
         loc_values.sort_unstable();
@@ -49,17 +51,23 @@ impl AdaptiveThresholdCalculator {
 
         // Calculate percentile values
         LanguageThresholds {
-            max_logical_loc: self.calculate_percentile(&loc_values)
+            max_logical_loc: self
+                .calculate_percentile(&loc_values)
                 .max(base_thresholds.max_logical_loc),
-            max_statements: self.calculate_percentile(&statement_counts)
+            max_statements: self
+                .calculate_percentile(&statement_counts)
                 .max(base_thresholds.max_statements),
-            max_parameters: self.calculate_percentile(&param_counts)
+            max_parameters: self
+                .calculate_percentile(&param_counts)
                 .max(base_thresholds.max_parameters),
-            max_nesting_depth: self.calculate_percentile(&nesting_depths)
+            max_nesting_depth: self
+                .calculate_percentile(&nesting_depths)
                 .max(base_thresholds.max_nesting_depth),
-            max_cyclomatic_complexity: self.calculate_percentile(&cyclo_complexities)
+            max_cyclomatic_complexity: self
+                .calculate_percentile(&cyclo_complexities)
                 .max(base_thresholds.max_cyclomatic_complexity),
-            max_cognitive_complexity: self.calculate_percentile(&cognitive_complexities)
+            max_cognitive_complexity: self
+                .calculate_percentile(&cognitive_complexities)
                 .max(base_thresholds.max_cognitive_complexity),
         }
     }
@@ -107,7 +115,9 @@ impl AdaptiveThresholdCalculator {
             } else {
                 current_thresholds.max_logical_loc
             },
-            max_cyclomatic_complexity: if avg_complexity_violation < 3.0 && avg_complexity_violation > 0.0 {
+            max_cyclomatic_complexity: if avg_complexity_violation < 3.0
+                && avg_complexity_violation > 0.0
+            {
                 current_thresholds.max_cyclomatic_complexity + 2
             } else {
                 current_thresholds.max_cyclomatic_complexity

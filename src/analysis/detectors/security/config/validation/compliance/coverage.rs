@@ -3,7 +3,7 @@
 //! This module tracks compliance coverage for security issues.
 
 use super::super::super::types::ConfigIssue;
-use super::types::{ComplianceStandard, ComplianceRequirement};
+use super::types::{ComplianceRequirement, ComplianceStandard};
 use std::collections::HashMap;
 
 /// Compliance coverage statistics
@@ -29,10 +29,7 @@ impl ComplianceCoverage {
     }
 
     /// Calculate coverage from requirements
-    pub fn from_requirements(
-        standard: &ComplianceStandard,
-        covered_requirements: usize,
-    ) -> Self {
+    pub fn from_requirements(standard: &ComplianceStandard, covered_requirements: usize) -> Self {
         let total = standard.requirements.len();
         let coverage_percentage = if total > 0 {
             (covered_requirements as f64 / total as f64) * 100.0
@@ -92,10 +89,21 @@ impl CoverageLevel {
     pub fn recommendations(&self) -> Vec<&'static str> {
         match self {
             CoverageLevel::Excellent => vec!["Maintain current security practices"],
-            CoverageLevel::Good => vec!["Minor improvements recommended", "Consider additional controls"],
-            CoverageLevel::Fair => vec!["Significant improvements needed", "Prioritize high-risk areas"],
-            CoverageLevel::Poor => vec!["Major security gaps detected", "Immediate action required"],
-            CoverageLevel::Minimal => vec!["Critical security deficiencies", "Comprehensive security review needed"],
+            CoverageLevel::Good => vec![
+                "Minor improvements recommended",
+                "Consider additional controls",
+            ],
+            CoverageLevel::Fair => vec![
+                "Significant improvements needed",
+                "Prioritize high-risk areas",
+            ],
+            CoverageLevel::Poor => {
+                vec!["Major security gaps detected", "Immediate action required"]
+            }
+            CoverageLevel::Minimal => vec![
+                "Critical security deficiencies",
+                "Comprehensive security review needed",
+            ],
         }
     }
 }
@@ -126,7 +134,9 @@ impl CoverageCalculator {
 
     /// Count requirements covered by the given issues
     fn count_covered_requirements(standard: &ComplianceStandard, issues: &[ConfigIssue]) -> usize {
-        standard.requirements.iter()
+        standard
+            .requirements
+            .iter()
             .filter(|requirement| Self::requirement_is_covered(requirement, issues))
             .count()
     }
@@ -135,7 +145,9 @@ impl CoverageCalculator {
     fn requirement_is_covered(requirement: &ComplianceRequirement, issues: &[ConfigIssue]) -> bool {
         issues.iter().any(|issue| {
             // Check if requirement applies to this issue
-            let applies_by_cwe = issue.cwe_id.map_or(false, |cwe| requirement.applies_to_cwe(cwe));
+            let applies_by_cwe = issue
+                .cwe_id
+                .map_or(false, |cwe| requirement.applies_to_cwe(cwe));
             let applies_by_tags = requirement.applies_to_tags(&issue.tags);
 
             applies_by_cwe || applies_by_tags
@@ -186,9 +198,9 @@ pub struct ComplianceSummary {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::super::types::ComplianceRequirement;
     use super::super::super::super::types::ConfigSeverity;
+    use super::super::types::ComplianceRequirement;
+    use super::*;
 
     #[test]
     fn test_coverage_calculation() {
@@ -213,7 +225,10 @@ mod tests {
 
     #[test]
     fn test_coverage_level_descriptions() {
-        assert_eq!(CoverageLevel::Excellent.description(), "Excellent compliance coverage");
+        assert_eq!(
+            CoverageLevel::Excellent.description(),
+            "Excellent compliance coverage"
+        );
         assert!(!CoverageLevel::Poor.recommendations().is_empty());
     }
 }

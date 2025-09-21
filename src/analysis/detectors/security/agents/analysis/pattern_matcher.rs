@@ -24,10 +24,22 @@ impl PatternMatcher {
 
         // Compile common patterns
         let patterns = [
-            ("suspicious_network", r"(?i)(socket|connect|bind|listen|accept)\s*\("),
-            ("file_operations", r"(?i)(open|read|write|delete|remove)\s*\("),
-            ("process_creation", r"(?i)(spawn|exec|fork|create_process)\s*\("),
-            ("crypto_operations", r"(?i)(encrypt|decrypt|hash|sign|verify)\s*\("),
+            (
+                "suspicious_network",
+                r"(?i)(socket|connect|bind|listen|accept)\s*\(",
+            ),
+            (
+                "file_operations",
+                r"(?i)(open|read|write|delete|remove)\s*\(",
+            ),
+            (
+                "process_creation",
+                r"(?i)(spawn|exec|fork|create_process)\s*\(",
+            ),
+            (
+                "crypto_operations",
+                r"(?i)(encrypt|decrypt|hash|sign|verify)\s*\(",
+            ),
             ("system_calls", r"(?i)(system|shell|cmd|execute)\s*\("),
         ];
 
@@ -52,7 +64,10 @@ impl PatternMatcher {
     }
 
     /// Match patterns in the given context
-    pub async fn match_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn match_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Apply regex patterns
@@ -67,7 +82,10 @@ impl PatternMatcher {
         Ok(issues)
     }
 
-    async fn apply_regex_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn apply_regex_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -78,7 +96,8 @@ impl PatternMatcher {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -102,7 +121,10 @@ impl PatternMatcher {
         Ok(issues)
     }
 
-    async fn apply_signature_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn apply_signature_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -117,20 +139,14 @@ impl PatternMatcher {
 
         for (signature_name, signature) in &signatures {
             if content.to_lowercase().contains(&signature.to_lowercase()) {
-                let location = SecurityLocation::new(
-                    context.file_path.clone(),
-                    1,
-                    1,
-                ).with_columns(0, 0);
+                let location =
+                    SecurityLocation::new(context.file_path.clone(), 1, 1).with_columns(0, 0);
 
                 let issue = SecurityIssue::new(
                     SecurityIssueType::PotentialMaliciousAgent,
                     VulnerabilityType::Static,
                     format!("Malicious Signature Detected: {}", signature_name),
-                    format!(
-                        "Detected known malicious signature '{}' in code",
-                        signature
-                    ),
+                    format!("Detected known malicious signature '{}' in code", signature),
                     location,
                 )
                 .with_severity(SecuritySeverity::Critical)
@@ -144,7 +160,10 @@ impl PatternMatcher {
         Ok(issues)
     }
 
-    async fn apply_behavioral_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn apply_behavioral_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -153,11 +172,8 @@ impl PatternMatcher {
 
         // Look for command and control patterns
         if self.detect_cnc_pattern(&lines) {
-            let location = SecurityLocation::new(
-                context.file_path.clone(),
-                1,
-                lines.len() as i32,
-            ).with_columns(0, 0);
+            let location = SecurityLocation::new(context.file_path.clone(), 1, lines.len() as i32)
+                .with_columns(0, 0);
 
             let issue = SecurityIssue::new(
                 SecurityIssueType::PotentialMaliciousAgent,
@@ -175,11 +191,8 @@ impl PatternMatcher {
 
         // Look for data collection patterns
         if self.detect_data_collection_pattern(&lines) {
-            let location = SecurityLocation::new(
-                context.file_path.clone(),
-                1,
-                lines.len() as i32,
-            ).with_columns(0, 0);
+            let location = SecurityLocation::new(context.file_path.clone(), 1, lines.len() as i32)
+                .with_columns(0, 0);
 
             let issue = SecurityIssue::new(
                 SecurityIssueType::PotentialMaliciousAgent,
@@ -203,11 +216,15 @@ impl PatternMatcher {
         let command_indicators = ["command", "cmd", "execute", "run"];
 
         let has_network = lines.iter().any(|line| {
-            cnc_indicators.iter().any(|indicator| line.contains(indicator))
+            cnc_indicators
+                .iter()
+                .any(|indicator| line.contains(indicator))
         });
 
         let has_commands = lines.iter().any(|line| {
-            command_indicators.iter().any(|indicator| line.to_lowercase().contains(indicator))
+            command_indicators
+                .iter()
+                .any(|indicator| line.to_lowercase().contains(indicator))
         });
 
         has_network && has_commands
@@ -218,11 +235,15 @@ impl PatternMatcher {
         let data_indicators = ["file", "directory", "process", "registry", "memory"];
 
         let has_collection = lines.iter().any(|line| {
-            collection_indicators.iter().any(|indicator| line.to_lowercase().contains(indicator))
+            collection_indicators
+                .iter()
+                .any(|indicator| line.to_lowercase().contains(indicator))
         });
 
         let has_data_targets = lines.iter().any(|line| {
-            data_indicators.iter().any(|indicator| line.to_lowercase().contains(indicator))
+            data_indicators
+                .iter()
+                .any(|indicator| line.to_lowercase().contains(indicator))
         });
 
         has_collection && has_data_targets
@@ -253,8 +274,14 @@ impl PatternMatcher {
 
 #[async_trait]
 impl AnalysisModule for PatternMatcher {
-    async fn analyze(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Starting pattern matching analysis for {:?}", context.file_path);
+    async fn analyze(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
+        debug!(
+            "Starting pattern matching analysis for {:?}",
+            context.file_path
+        );
         self.match_patterns(context).await
     }
 
@@ -266,9 +293,9 @@ impl AnalysisModule for PatternMatcher {
         matches!(
             context.language,
             SourceLanguage::Rust
-            | SourceLanguage::Python
-            | SourceLanguage::JavaScript
-            | SourceLanguage::TypeScript
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 }

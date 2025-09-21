@@ -9,24 +9,24 @@ pub mod config;
 pub mod detector;
 pub mod language_support;
 pub mod patterns;
+pub mod settings;
 pub mod types;
 pub mod validation;
-pub mod settings;
 
 // Re-export public API
+pub use crate::analysis::detectors::security::agents::config::{AgentConfig, MultiAgentConfig};
 pub use config::ConfigSecurityConfig;
 pub use detector::ConfigSecurityDetector;
+pub use settings::{FalsePositiveConfig, LanguageConfig, SecurityConfig, TaintAnalysisConfig};
 pub use types::{
     ConfigAnalysisContext, ConfigAnalysisResult, ConfigIssue, ConfigSeverity, ConfigType,
     PatternMatch,
 };
-pub use settings::{
-    FalsePositiveConfig, LanguageConfig, SecurityConfig, TaintAnalysisConfig,
-};
-pub use crate::analysis::detectors::security::agents::config::{AgentConfig, MultiAgentConfig};
 
 // Re-export analysis components
-pub use analysis::{CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer};
+pub use analysis::{
+    CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer,
+};
 
 // Re-export language support
 pub use language_support::{EnvAnalyzer, TomlAnalyzer, YamlAnalyzer};
@@ -54,7 +54,10 @@ pub async fn analyze_config_file(
 /// Check if a file is a supported configuration file
 pub fn is_supported_config_file(file_path: &PathBuf) -> bool {
     if let Some(extension) = file_path.extension().and_then(|ext| ext.to_str()) {
-        matches!(extension.to_lowercase().as_str(), "yaml" | "yml" | "json" | "toml" | "env")
+        matches!(
+            extension.to_lowercase().as_str(),
+            "yaml" | "yml" | "json" | "toml" | "env"
+        )
     } else {
         false
     }
@@ -90,10 +93,22 @@ mod tests {
 
     #[test]
     fn test_get_config_type() {
-        assert_eq!(get_config_type(&PathBuf::from("config.yaml")), Some(ConfigType::Yaml));
-        assert_eq!(get_config_type(&PathBuf::from("package.json")), Some(ConfigType::Json));
-        assert_eq!(get_config_type(&PathBuf::from("Cargo.toml")), Some(ConfigType::Toml));
-        assert_eq!(get_config_type(&PathBuf::from(".env")), Some(ConfigType::Environment));
+        assert_eq!(
+            get_config_type(&PathBuf::from("config.yaml")),
+            Some(ConfigType::Yaml)
+        );
+        assert_eq!(
+            get_config_type(&PathBuf::from("package.json")),
+            Some(ConfigType::Json)
+        );
+        assert_eq!(
+            get_config_type(&PathBuf::from("Cargo.toml")),
+            Some(ConfigType::Toml)
+        );
+        assert_eq!(
+            get_config_type(&PathBuf::from(".env")),
+            Some(ConfigType::Environment)
+        );
         assert_eq!(get_config_type(&PathBuf::from("main.rs")), None);
     }
 

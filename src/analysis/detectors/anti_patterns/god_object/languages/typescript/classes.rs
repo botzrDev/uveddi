@@ -1,14 +1,14 @@
 //! TypeScript class analysis
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::database::models::ArchitecturalIssue;
 use super::super::super::config::GodObjectConfig;
 use super::super::super::detector::{ComplexityMetrics, DetectedPattern};
 use super::super::super::metrics::MetricsCalculator;
 use super::patterns::TypeScriptPatternDetector;
 use super::queries::TYPESCRIPT_CLASS_QUERY;
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 use std::collections::HashSet;
 use tracing::debug;
 
@@ -118,7 +118,10 @@ impl<'a> TypeScriptClassAnalyzer<'a> {
     ) -> Option<ArchitecturalIssue> {
         // If excluded by pattern recognition, return None
         if excluded_pattern.is_some() {
-            debug!("Excluding '{}' due to detected pattern: {:?}", name, excluded_pattern);
+            debug!(
+                "Excluding '{}' due to detected pattern: {:?}",
+                name, excluded_pattern
+            );
             return None;
         }
 
@@ -146,7 +149,10 @@ impl<'a> TypeScriptClassAnalyzer<'a> {
         );
 
         if let Some(lcom4) = metrics.lcom4_score {
-            description.push_str(&format!(" LCOM4 score: {} (>1 indicates low cohesion)", lcom4));
+            description.push_str(&format!(
+                " LCOM4 score: {} (>1 indicates low cohesion)",
+                lcom4
+            ));
         }
 
         let mut issue = ArchitecturalIssue::new(

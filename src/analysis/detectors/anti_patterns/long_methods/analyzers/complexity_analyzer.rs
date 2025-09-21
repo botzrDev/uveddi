@@ -53,21 +53,21 @@ impl ComplexityAnalyzer {
         matches!(
             node_type,
             "if_statement"
-            | "if_expression"
-            | "while_statement"
-            | "while_expression"
-            | "for_statement"
-            | "for_expression"
-            | "loop_expression"
-            | "match_expression"
-            | "conditional_expression"
-            | "logical_and"
-            | "logical_or"
-            | "match_arm"
-            | "case_statement"
-            | "catch_clause"
-            | "elif_clause"
-            | "else_clause"
+                | "if_expression"
+                | "while_statement"
+                | "while_expression"
+                | "for_statement"
+                | "for_expression"
+                | "loop_expression"
+                | "match_expression"
+                | "conditional_expression"
+                | "logical_and"
+                | "logical_or"
+                | "match_arm"
+                | "case_statement"
+                | "catch_clause"
+                | "elif_clause"
+                | "else_clause"
         )
     }
 
@@ -176,7 +176,10 @@ impl ComplexityAnalyzer {
 
     /// Calculate all complexity metrics at once
     #[cfg(feature = "tree-sitter")]
-    pub fn calculate_all_metrics(node: &Node, source: &[u8]) -> Result<ComplexityMetrics, AnalysisError> {
+    pub fn calculate_all_metrics(
+        node: &Node,
+        source: &[u8],
+    ) -> Result<ComplexityMetrics, AnalysisError> {
         Ok(ComplexityMetrics {
             cyclomatic: Self::calculate_cyclomatic(node, source)?,
             cognitive: Self::calculate_cognitive(node, source)?,

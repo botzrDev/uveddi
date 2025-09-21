@@ -34,7 +34,8 @@ impl InterfaceAnalyzer {
         language: SourceLanguage,
     ) -> Result<Vec<InterfaceUsage>, AnalysisError> {
         debug!("Analyzing interface usage for {}", file_path.display());
-        self.validator.analyze_interface_usage(file_path, tree, source, language)
+        self.validator
+            .analyze_interface_usage(file_path, tree, source, language)
     }
 
     /// Extract trait/interface implementations and their dependencies
@@ -45,8 +46,12 @@ impl InterfaceAnalyzer {
         source: &str,
         language: SourceLanguage,
     ) -> Result<Vec<Dependency>, AnalysisError> {
-        debug!("Extracting interface dependencies for {}", file_path.display());
-        self.extractor.extract_interface_dependencies(file_path, tree, source, language)
+        debug!(
+            "Extracting interface dependencies for {}",
+            file_path.display()
+        );
+        self.extractor
+            .extract_interface_dependencies(file_path, tree, source, language)
     }
 
     /// Detect direct field access which indicates tight coupling
@@ -57,8 +62,12 @@ impl InterfaceAnalyzer {
         source: &str,
         language: SourceLanguage,
     ) -> Result<Vec<Dependency>, AnalysisError> {
-        debug!("Detecting field access coupling for {}", file_path.display());
-        self.extractor.detect_field_access_coupling(file_path, tree, source, language)
+        debug!(
+            "Detecting field access coupling for {}",
+            file_path.display()
+        );
+        self.extractor
+            .detect_field_access_coupling(file_path, tree, source, language)
     }
 
     /// Perform comprehensive interface analysis
@@ -70,8 +79,10 @@ impl InterfaceAnalyzer {
         language: SourceLanguage,
     ) -> Result<InterfaceAnalysisResult, AnalysisError> {
         let usage_patterns = self.analyze_interface_usage(file_path, tree, source, language)?;
-        let dependencies = self.extract_interface_dependencies(file_path, tree, source, language)?;
-        let field_accesses = self.detect_field_access_coupling(file_path, tree, source, language)?;
+        let dependencies =
+            self.extract_interface_dependencies(file_path, tree, source, language)?;
+        let field_accesses =
+            self.detect_field_access_coupling(file_path, tree, source, language)?;
 
         Ok(InterfaceAnalysisResult {
             usage_patterns,

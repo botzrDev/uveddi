@@ -1,8 +1,8 @@
 //! Sanitization detection and taint level modification
 
-use super::patterns::{get_rust_sanitizers, get_python_sanitizers, get_javascript_sanitizers};
+use super::patterns::{get_javascript_sanitizers, get_python_sanitizers, get_rust_sanitizers};
 use crate::analysis::detectors::security::taint_analysis::types::{
-    TaintLevel, DataFlowNode, DataFlowNodeType, SanitizationPoint
+    DataFlowNode, DataFlowNodeType, SanitizationPoint, TaintLevel,
 };
 use crate::ast::SourceLanguage;
 use std::collections::HashMap;
@@ -34,9 +34,14 @@ impl SanitizerDetector {
     }
 
     /// Add sanitizers for a specific language
-    fn add_language_sanitizers(&mut self, language: SourceLanguage, sanitizers: Vec<SanitizationPoint>) {
+    fn add_language_sanitizers(
+        &mut self,
+        language: SourceLanguage,
+        sanitizers: Vec<SanitizationPoint>,
+    ) {
         for sanitizer in sanitizers {
-            self.sanitizers.insert(sanitizer.id.clone(), sanitizer.clone());
+            self.sanitizers
+                .insert(sanitizer.id.clone(), sanitizer.clone());
             self.language_sanitizers
                 .entry(language)
                 .or_default()
@@ -105,7 +110,9 @@ impl SanitizerDetector {
 
     /// Check if a function call pattern matches any known sanitizers
     pub fn is_sanitizer_pattern(&self, pattern: &str) -> bool {
-        self.sanitizers.values().any(|s| pattern.contains(&s.pattern))
+        self.sanitizers
+            .values()
+            .any(|s| pattern.contains(&s.pattern))
     }
 
     /// Get sanitizer by ID

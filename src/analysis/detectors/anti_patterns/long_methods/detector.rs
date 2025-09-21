@@ -7,7 +7,7 @@ use crate::analysis::detectors::anti_patterns::long_methods::{
     types::{LanguageThresholds, LongMethodsResult, MethodMetrics},
 };
 use crate::analysis::detectors::base::{
-    AnalysisContext, Detector, DetectorConfig, DetectorOutput, DetectionMetrics, Issue, Severity,
+    AnalysisContext, DetectionMetrics, Detector, DetectorConfig, DetectorOutput, Issue, Severity,
 };
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
@@ -42,9 +42,15 @@ impl LongMethodsDetector {
     }
 
     /// Extract method metrics from a parsed file
-    pub(crate) fn extract_method_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    pub(crate) fn extract_method_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         // Check if file should be skipped
-        if self.config.should_skip_file(&parsed_file.file_path.display().to_string()) {
+        if self
+            .config
+            .should_skip_file(&parsed_file.file_path.display().to_string())
+        {
             debug!("Skipping file: {}", parsed_file.file_path.display());
             return Ok(Vec::new());
         }
@@ -53,10 +59,13 @@ impl LongMethodsDetector {
     }
 
     /// Calculate severity score for a method
-    pub(crate) fn calculate_severity_score(&self, metrics: &MethodMetrics, thresholds: &LanguageThresholds) -> u32 {
+    pub(crate) fn calculate_severity_score(
+        &self,
+        metrics: &MethodMetrics,
+        thresholds: &LanguageThresholds,
+    ) -> u32 {
         metrics.calculate_score(thresholds)
     }
-
 
     /// Convert severity score to Severity enum
     fn score_to_severity(score: u32) -> Severity {
@@ -103,14 +112,38 @@ impl LongMethodsDetector {
             metrics.end_line,
         )
         .with_suggestion(suggestion_text)
-        .with_metadata("logical_loc".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.logical_loc)))
-        .with_metadata("statement_count".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.statement_count)))
-        .with_metadata("cyclomatic_complexity".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.cyclomatic_complexity)))
-        .with_metadata("cognitive_complexity".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.cognitive_complexity)))
-        .with_metadata("max_nesting_depth".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.max_nesting_depth)))
-        .with_metadata("parameter_count".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.parameter_count)))
-        .with_metadata("method_type".to_string(), serde_json::Value::String(metrics.method_type.clone()))
-        .with_metadata("is_exported".to_string(), serde_json::Value::Bool(metrics.is_exported))
+        .with_metadata(
+            "logical_loc".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.logical_loc)),
+        )
+        .with_metadata(
+            "statement_count".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.statement_count)),
+        )
+        .with_metadata(
+            "cyclomatic_complexity".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.cyclomatic_complexity)),
+        )
+        .with_metadata(
+            "cognitive_complexity".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.cognitive_complexity)),
+        )
+        .with_metadata(
+            "max_nesting_depth".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.max_nesting_depth)),
+        )
+        .with_metadata(
+            "parameter_count".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.parameter_count)),
+        )
+        .with_metadata(
+            "method_type".to_string(),
+            serde_json::Value::String(metrics.method_type.clone()),
+        )
+        .with_metadata(
+            "is_exported".to_string(),
+            serde_json::Value::Bool(metrics.is_exported),
+        )
     }
 
     /// Filter issues based on configuration
@@ -280,9 +313,9 @@ impl DetectorOutput for LongMethodsResult {
         use std::collections::HashMap;
 
         Some(DetectionMetrics {
-            duration_ms: 0, // This would need to be tracked properly
-            files_analyzed: 1, // This would need to be tracked properly
-            nodes_processed: 0, // This would need to be tracked
+            duration_ms: 0,              // This would need to be tracked properly
+            files_analyzed: 1,           // This would need to be tracked properly
+            nodes_processed: 0,          // This would need to be tracked
             memory_usage_bytes: Some(0), // This would need to be tracked
             custom_metrics: HashMap::new(),
         })
@@ -296,4 +329,3 @@ impl DetectorOutput for LongMethodsResult {
         self
     }
 }
-

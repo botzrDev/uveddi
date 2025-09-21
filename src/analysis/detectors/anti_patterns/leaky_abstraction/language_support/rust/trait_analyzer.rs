@@ -1,12 +1,12 @@
 //! Rust trait and implementation analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl TraitAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -70,7 +71,10 @@ impl TraitAnalyzer {
                         if self.is_infrastructure_trait(trait_name) {
                             issues.push(self.create_issue(
                                 context,
-                                &format!("Infrastructure trait '{}' may expose implementation details", trait_name),
+                                &format!(
+                                    "Infrastructure trait '{}' may expose implementation details",
+                                    trait_name
+                                ),
                                 node.start_position().row as u32 + 1,
                                 LeakType::ImplementationExposure,
                                 "medium",
@@ -93,9 +97,10 @@ impl TraitAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -153,11 +158,19 @@ impl TraitAnalyzer {
     /// Checks if a trait name represents an infrastructure trait.
     fn is_infrastructure_trait(&self, trait_name: &str) -> bool {
         let infrastructure_traits = [
-            "Connection", "Transaction", "Session", "Query",
-            "Serialize", "Deserialize", "FromRequest", "IntoResponse",
+            "Connection",
+            "Transaction",
+            "Session",
+            "Query",
+            "Serialize",
+            "Deserialize",
+            "FromRequest",
+            "IntoResponse",
         ];
 
-        infrastructure_traits.iter().any(|pattern| trait_name.contains(pattern))
+        infrastructure_traits
+            .iter()
+            .any(|pattern| trait_name.contains(pattern))
     }
 
     /// Helper function to create an architectural issue.

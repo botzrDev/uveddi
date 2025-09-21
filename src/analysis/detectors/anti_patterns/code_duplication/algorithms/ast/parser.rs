@@ -11,7 +11,10 @@ pub struct AstParser<'a> {
 
 impl<'a> AstParser<'a> {
     pub fn new(tokens: &'a [Token]) -> Self {
-        Self { tokens, position: 0 }
+        Self {
+            tokens,
+            position: 0,
+        }
     }
 
     pub fn parse(&mut self) -> Result<AstNode, AnalysisError> {
@@ -34,7 +37,9 @@ impl<'a> AstParser<'a> {
 
     fn parse_expression(&mut self) -> Result<AstNode, AnalysisError> {
         if self.position >= self.tokens.len() {
-            return Err(AnalysisError::ParseError("Unexpected end of input".to_string()));
+            return Err(AnalysisError::ParseError(
+                "Unexpected end of input".to_string(),
+            ));
         }
 
         let token = &self.tokens[self.position];
@@ -154,20 +159,29 @@ impl Tokenizer {
     fn is_keyword(&self, token: &str) -> bool {
         matches!(
             token,
-            "function" | "class" | "if" | "else" | "while" | "for" | "return" | "var" | "let" | "const"
+            "function"
+                | "class"
+                | "if"
+                | "else"
+                | "while"
+                | "for"
+                | "return"
+                | "var"
+                | "let"
+                | "const"
         )
     }
 
     fn is_literal(&self, token: &str) -> bool {
-        token.parse::<f64>().is_ok() ||
-        token.starts_with('"') ||
-        token.starts_with('\'') ||
-        matches!(token, "true" | "false" | "null")
+        token.parse::<f64>().is_ok()
+            || token.starts_with('"')
+            || token.starts_with('\'')
+            || matches!(token, "true" | "false" | "null")
     }
 
     fn is_identifier(&self, token: &str) -> bool {
-        !token.is_empty() &&
-        token.chars().next().unwrap().is_alphabetic() &&
-        token.chars().all(|c| c.is_alphanumeric() || c == '_')
+        !token.is_empty()
+            && token.chars().next().unwrap().is_alphabetic()
+            && token.chars().all(|c| c.is_alphanumeric() || c == '_')
     }
 }

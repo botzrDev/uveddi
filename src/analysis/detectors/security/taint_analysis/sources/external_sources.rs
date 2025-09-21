@@ -2,8 +2,8 @@
 
 use super::TaintSourceDetector;
 use crate::analysis::detectors::security::taint_analysis::types::TaintSource;
-use crate::ast::{ParsedFile, SourceLanguage};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
 
 /// Detector for external data sources
@@ -82,7 +82,10 @@ impl ExternalSourceDetector {
 
         self.patterns.insert(
             SourceLanguage::TypeScript,
-            self.patterns.get(&SourceLanguage::JavaScript).unwrap().clone(),
+            self.patterns
+                .get(&SourceLanguage::JavaScript)
+                .unwrap()
+                .clone(),
         );
     }
 
@@ -94,46 +97,54 @@ impl ExternalSourceDetector {
                     "rust_file_read".to_string(),
                     "std::fs::read_to_string".to_string(),
                     "File content read operation".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_file_open".to_string(),
                     "std::fs::File::open".to_string(),
                     "File handle opening".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_tokio_read".to_string(),
                     "tokio::fs::read_to_string".to_string(),
                     "Async file read operation".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_file_open".to_string(),
                     "open(".to_string(),
                     "File opening operation".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_file_read".to_string(),
                     "file.read".to_string(),
                     "File content reading".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_json_load".to_string(),
                     "json.load".to_string(),
                     "JSON file loading".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSource::new(
                     "js_fs_read".to_string(),
                     "fs.readFile".to_string(),
                     "Node.js file read operation".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_fs_sync".to_string(),
                     "fs.readFileSync".to_string(),
                     "Synchronous file read".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }
@@ -146,41 +157,48 @@ impl ExternalSourceDetector {
                     "rust_reqwest_get".to_string(),
                     "reqwest::get".to_string(),
                     "HTTP GET request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_reqwest_client".to_string(),
                     "reqwest::Client".to_string(),
                     "HTTP client request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_requests_get".to_string(),
                     "requests.get".to_string(),
                     "HTTP GET request using requests".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_urllib".to_string(),
                     "urllib.request".to_string(),
                     "HTTP request using urllib".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSource::new(
                     "js_fetch".to_string(),
                     "fetch(".to_string(),
                     "Fetch API request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_axios".to_string(),
                     "axios.get".to_string(),
                     "Axios HTTP request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_xhr".to_string(),
                     "XMLHttpRequest".to_string(),
                     "XMLHttpRequest operation".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }
@@ -193,24 +211,28 @@ impl ExternalSourceDetector {
                     "rust_sqlx_query".to_string(),
                     "sqlx::query".to_string(),
                     "Database query result".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_redis_cmd".to_string(),
                     "redis::cmd".to_string(),
                     "Redis command result".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_sqlite_execute".to_string(),
                     "sqlite3.execute".to_string(),
                     "SQLite query result".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_mongo_find".to_string(),
                     "pymongo.find".to_string(),
                     "MongoDB query result".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }

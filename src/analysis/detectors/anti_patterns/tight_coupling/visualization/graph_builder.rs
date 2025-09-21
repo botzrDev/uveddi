@@ -119,10 +119,18 @@ impl GraphBuilder {
     fn component_to_id(&self, component: &ComponentNode) -> String {
         match component {
             ComponentNode::Class { name, file_path } => {
-                format!("class_{}_{}", name, file_path.replace("/", "_").replace(".", "_"))
+                format!(
+                    "class_{}_{}",
+                    name,
+                    file_path.replace("/", "_").replace(".", "_")
+                )
             }
             ComponentNode::Function { name, file_path } => {
-                format!("fn_{}_{}", name, file_path.replace("/", "_").replace(".", "_"))
+                format!(
+                    "fn_{}_{}",
+                    name,
+                    file_path.replace("/", "_").replace(".", "_")
+                )
             }
             ComponentNode::Module { path } => {
                 format!("mod_{}", path.replace("/", "_").replace(".", "_"))
@@ -134,9 +142,7 @@ impl GraphBuilder {
         match component {
             ComponentNode::Class { name, .. } => name.clone(),
             ComponentNode::Function { name, .. } => name.clone(),
-            ComponentNode::Module { path } => {
-                path.split("/").last().unwrap_or(path).to_string()
-            }
+            ComponentNode::Module { path } => path.split("/").last().unwrap_or(path).to_string(),
         }
     }
 
@@ -160,11 +166,11 @@ impl GraphBuilder {
     fn calculate_node_color(&self, metrics: &Option<CouplingMetrics>) -> String {
         if let Some(m) = metrics {
             if m.cbo >= 15 {
-                "red".to_string()      // High coupling
+                "red".to_string() // High coupling
             } else if m.cbo >= 8 {
-                "orange".to_string()   // Medium coupling
+                "orange".to_string() // Medium coupling
             } else if m.cbo >= 3 {
-                "yellow".to_string()   // Low coupling
+                "yellow".to_string() // Low coupling
             } else {
                 "lightgreen".to_string() // Very low coupling
             }

@@ -1,7 +1,7 @@
 //! Main code duplication detector implementation
 
 use super::{
-    algorithms::{CloneDetectionAlgorithm, TokenBasedDetector, AstBasedDetector, SemanticDetector},
+    algorithms::{AstBasedDetector, CloneDetectionAlgorithm, SemanticDetector, TokenBasedDetector},
     config::DuplicationConfig,
     language_support::{LanguageSupport, LanguageSupportFactory},
     metrics::{SimilarityCalculator, ThresholdManager},
@@ -9,8 +9,8 @@ use super::{
 };
 
 use crate::analysis::detectors::base::{
-    AnalysisContext, Detector, DetectorCategory, DetectorConfig, DetectorOutput,
-    DetectionMetrics, Issue, Severity,
+    AnalysisContext, DetectionMetrics, Detector, DetectorCategory, DetectorConfig, DetectorOutput,
+    Issue, Severity,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::SourceLanguage;
@@ -49,10 +49,8 @@ impl CodeDuplicationDetector {
 
     /// Creates a detector with custom configuration
     pub fn with_config(config: DuplicationConfig) -> Self {
-        let token_detector = TokenBasedDetector::new(
-            config.fingerprint_length,
-            config.similarity_threshold,
-        );
+        let token_detector =
+            TokenBasedDetector::new(config.fingerprint_length, config.similarity_threshold);
 
         let ast_detector = AstBasedDetector::new(config.similarity_threshold);
 
@@ -80,17 +78,19 @@ impl CodeDuplicationDetector {
     }
 
     /// Extracts code blocks from all files in the analysis context
-    async fn extract_all_code_blocks(&self, context: &AnalysisContext) -> Result<Vec<CodeBlock>, AnalysisError> {
+    async fn extract_all_code_blocks(
+        &self,
+        context: &AnalysisContext,
+    ) -> Result<Vec<CodeBlock>, AnalysisError> {
         let start_time = Instant::now();
         let mut all_blocks = Vec::new();
 
         if context.parallel && self.config.enable_parallel {
             // Parallel extraction
-            let blocks: Result<Vec<_>, _> = context.files
+            let blocks: Result<Vec<_>, _> = context
+                .files
                 .par_iter()
-                .map(|file| {
-                    self.extract_code_blocks_from_file(file)
-                })
+                .map(|file| self.extract_code_blocks_from_file(file))
                 .collect();
 
             for file_blocks in blocks? {
@@ -117,7 +117,10 @@ impl CodeDuplicationDetector {
     }
 
     /// Extracts code blocks from a single file
-    fn extract_code_blocks_from_file(&self, file: &crate::ast::tree_sitter_impl::ParsedFile) -> Result<Vec<CodeBlock>, AnalysisError> {
+    fn extract_code_blocks_from_file(
+        &self,
+        file: &crate::ast::tree_sitter_impl::ParsedFile,
+    ) -> Result<Vec<CodeBlock>, AnalysisError> {
         // Check cache first
         let file_path = file.path.to_string_lossy().to_string();
         if let Ok(cache) = self.block_cache.lock() {
@@ -132,7 +135,8 @@ impl CodeDuplicationDetector {
         }
 
         // Get language support
-        let language_support = self.language_supports
+        let language_support = self
+            .language_supports
             .get(&file.language)
             .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("{:?}", file.language)))?;
 
@@ -160,14 +164,17 @@ impl CodeDuplicationDetector {
             .into_iter()
             .filter(|block| {
                 // Filter by minimum size requirements
-                block.token_count() >= self.config.min_tokens &&
-                block.line_count() >= self.config.min_lines as u32
+                block.token_count() >= self.config.min_tokens
+                    && block.line_count() >= self.config.min_lines as u32
             })
             .collect())
     }
 
     /// Detects clones using all configured algorithms
-    async fn detect_clones_comprehensive(&self, blocks: &[CodeBlock]) -> Result<Vec<ClonePair>, AnalysisError> {
+    async fn detect_clones_comprehensive(
+        &self,
+        blocks: &[CodeBlock],
+    ) -> Result<Vec<ClonePair>, AnalysisError> {
         let mut all_pairs = Vec::new();
 
         // Token-based detection
@@ -191,7 +198,10 @@ impl CodeDuplicationDetector {
     }
 
     /// Removes duplicate clone pairs and applies threshold filtering
-    fn deduplicate_and_filter_pairs(&self, pairs: Vec<ClonePair>) -> Result<Vec<ClonePair>, AnalysisError> {
+    fn deduplicate_and_filter_pairs(
+        &self,
+        pairs: Vec<ClonePair>,
+    ) -> Result<Vec<ClonePair>, AnalysisError> {
         let mut unique_pairs = Vec::new();
         let mut seen_pairs = std::collections::HashSet::new();
 
@@ -201,7 +211,9 @@ impl CodeDuplicationDetector {
 
             if !seen_pairs.contains(&key) {
                 // Apply threshold filtering
-                let threshold = self.threshold_manager.get_threshold(&pair.clone_type, &pair.block1.language);
+                let threshold = self
+                    .threshold_manager
+                    .get_threshold(&pair.clone_type, &pair.block1.language);
                 if pair.similarity >= threshold {
                     unique_pairs.push(pair);
                     seen_pairs.insert(key);
@@ -210,7 +222,11 @@ impl CodeDuplicationDetector {
         }
 
         // Sort by similarity (highest first)
-        unique_pairs.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+        unique_pairs.sort_by(|a, b| {
+            b.similarity
+                .partial_cmp(&a.similarity)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Apply maximum results limit
         if let Some(max_pairs) = self.config.max_clone_pairs {
@@ -222,11 +238,23 @@ impl CodeDuplicationDetector {
 
     /// Creates a unique key for clone pair deduplication
     fn create_pair_key(&self, pair: &ClonePair) -> String {
-        let (file1, line1, file2, line2) = if pair.block1.file_path < pair.block2.file_path ||
-            (pair.block1.file_path == pair.block2.file_path && pair.block1.start_line < pair.block2.start_line) {
-            (&pair.block1.file_path, pair.block1.start_line, &pair.block2.file_path, pair.block2.start_line)
+        let (file1, line1, file2, line2) = if pair.block1.file_path < pair.block2.file_path
+            || (pair.block1.file_path == pair.block2.file_path
+                && pair.block1.start_line < pair.block2.start_line)
+        {
+            (
+                &pair.block1.file_path,
+                pair.block1.start_line,
+                &pair.block2.file_path,
+                pair.block2.start_line,
+            )
         } else {
-            (&pair.block2.file_path, pair.block2.start_line, &pair.block1.file_path, pair.block1.start_line)
+            (
+                &pair.block2.file_path,
+                pair.block2.start_line,
+                &pair.block1.file_path,
+                pair.block1.start_line,
+            )
         };
 
         format!("{}:{}:{}:{}", file1, line1, file2, line2)
@@ -259,11 +287,30 @@ impl CodeDuplicationDetector {
                     pair.block1.start_line,
                     pair.block1.end_line,
                 )
-                .with_metadata("clone_type".to_string(), serde_json::Value::String(pair.clone_type.to_string()))
-                .with_metadata("similarity".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(pair.similarity).unwrap()))
-                .with_metadata("duplicate_file".to_string(), serde_json::Value::String(pair.block2.file_path.clone()))
-                .with_metadata("duplicate_lines".to_string(), serde_json::Value::String(format!("{}-{}", pair.block2.start_line, pair.block2.end_line)))
-                .with_suggestion(format!("Consider extracting the common logic into a shared function or module"))
+                .with_metadata(
+                    "clone_type".to_string(),
+                    serde_json::Value::String(pair.clone_type.to_string()),
+                )
+                .with_metadata(
+                    "similarity".to_string(),
+                    serde_json::Value::Number(
+                        serde_json::Number::from_f64(pair.similarity).unwrap(),
+                    ),
+                )
+                .with_metadata(
+                    "duplicate_file".to_string(),
+                    serde_json::Value::String(pair.block2.file_path.clone()),
+                )
+                .with_metadata(
+                    "duplicate_lines".to_string(),
+                    serde_json::Value::String(format!(
+                        "{}-{}",
+                        pair.block2.start_line, pair.block2.end_line
+                    )),
+                )
+                .with_suggestion(format!(
+                    "Consider extracting the common logic into a shared function or module"
+                ))
             })
             .collect()
     }

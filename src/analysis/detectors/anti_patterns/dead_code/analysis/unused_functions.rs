@@ -2,10 +2,10 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::analysis::AnalysisError;
 use crate::analysis::detectors::anti_patterns::dead_code::types::{
     DeadCodeIssue, Severity, Symbol, SymbolType,
 };
+use crate::analysis::AnalysisError;
 
 /// Detects unused functions in code
 pub struct UnusedFunctionAnalyzer;
@@ -74,10 +74,7 @@ impl UnusedFunctionAnalyzer {
     }
 
     /// Calculates severity based on function characteristics
-    fn calculate_severity(
-        symbol: &Symbol,
-        call_graph: &HashMap<String, Vec<String>>,
-    ) -> Severity {
+    fn calculate_severity(symbol: &Symbol, call_graph: &HashMap<String, Vec<String>>) -> Severity {
         if symbol.is_exported {
             Severity::Medium
         } else if call_graph.get(&symbol.name).map_or(0, |v| v.len()) > 0 {
@@ -88,10 +85,7 @@ impl UnusedFunctionAnalyzer {
     }
 
     /// Checks if a function is safe to remove
-    fn is_safe_to_remove(
-        symbol: &Symbol,
-        call_graph: &HashMap<String, Vec<String>>,
-    ) -> bool {
+    fn is_safe_to_remove(symbol: &Symbol, call_graph: &HashMap<String, Vec<String>>) -> bool {
         !symbol.is_exported && call_graph.get(&symbol.name).map_or(true, |v| v.is_empty())
     }
 

@@ -11,22 +11,26 @@ pub fn get_rust_sanitizers() -> Vec<SanitizationPoint> {
             "rust_sql_bind".to_string(),
             "sqlx::query!".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.95),
+        )
+        .with_effectiveness(0.95),
         SanitizationPoint::new(
             "rust_html_escape".to_string(),
             "html_escape::encode_text".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.90),
+        )
+        .with_effectiveness(0.90),
         SanitizationPoint::new(
             "rust_shell_escape".to_string(),
             "shell_escape::escape".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
         SanitizationPoint::new(
             "rust_url_encode".to_string(),
             "url::percent_encoding".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.80),
+        )
+        .with_effectiveness(0.80),
     ]
 }
 
@@ -37,42 +41,50 @@ pub fn get_python_sanitizers() -> Vec<SanitizationPoint> {
             "python_html_escape".to_string(),
             "html.escape".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
         SanitizationPoint::new(
             "python_sql_escape".to_string(),
             "sqlite3.connect".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.90),
+        )
+        .with_effectiveness(0.90),
         SanitizationPoint::new(
             "python_shell_quote".to_string(),
             "shlex.quote".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.80),
+        )
+        .with_effectiveness(0.80),
         SanitizationPoint::new(
             "python_url_quote".to_string(),
             "urllib.parse.quote".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.75),
+        )
+        .with_effectiveness(0.75),
         SanitizationPoint::new(
             "python_path_join".to_string(),
             "os.path.join".to_string(),
             vec![SecurityIssueType::PathTraversal],
-        ).with_effectiveness(0.70),
+        )
+        .with_effectiveness(0.70),
         SanitizationPoint::new(
             "python_bleach_clean".to_string(),
             "bleach.clean".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.95),
+        )
+        .with_effectiveness(0.95),
         SanitizationPoint::new(
             "python_markupsafe".to_string(),
             "markupsafe.escape".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.90),
+        )
+        .with_effectiveness(0.90),
         SanitizationPoint::new(
             "python_django_escape".to_string(),
             "django.utils.html.escape".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
     ]
 }
 
@@ -83,62 +95,74 @@ pub fn get_javascript_sanitizers() -> Vec<SanitizationPoint> {
             "js_dompurify".to_string(),
             "DOMPurify.sanitize".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.95),
+        )
+        .with_effectiveness(0.95),
         SanitizationPoint::new(
             "js_he_encode".to_string(),
             "he.encode".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
         SanitizationPoint::new(
             "js_validator_escape".to_string(),
             "validator.escape".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.80),
+        )
+        .with_effectiveness(0.80),
         SanitizationPoint::new(
             "js_escape_html".to_string(),
             "escape-html".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.75),
+        )
+        .with_effectiveness(0.75),
         SanitizationPoint::new(
             "js_encode_uri".to_string(),
             "encodeURIComponent".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.70),
+        )
+        .with_effectiveness(0.70),
         SanitizationPoint::new(
             "js_shell_escape".to_string(),
             "shell-escape".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
         SanitizationPoint::new(
             "js_path_normalize".to_string(),
             "path.normalize".to_string(),
             vec![SecurityIssueType::PathTraversal],
-        ).with_effectiveness(0.70),
+        )
+        .with_effectiveness(0.70),
         SanitizationPoint::new(
             "js_path_resolve".to_string(),
             "path.resolve".to_string(),
             vec![SecurityIssueType::PathTraversal],
-        ).with_effectiveness(0.75),
+        )
+        .with_effectiveness(0.75),
         SanitizationPoint::new(
             "js_url_constructor".to_string(),
             "new URL(".to_string(),
             vec![SecurityIssueType::ServerSideRequestForgery],
-        ).with_effectiveness(0.80),
+        )
+        .with_effectiveness(0.80),
         SanitizationPoint::new(
             "js_validator_isurl".to_string(),
             "validator.isURL".to_string(),
             vec![SecurityIssueType::ServerSideRequestForgery],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
         SanitizationPoint::new(
             "js_json_stringify".to_string(),
             "JSON.stringify".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.60),
+        )
+        .with_effectiveness(0.60),
         SanitizationPoint::new(
             "js_xss_filters".to_string(),
             "xss-filters".to_string(),
             vec![SecurityIssueType::CrossSiteScripting],
-        ).with_effectiveness(0.90),
+        )
+        .with_effectiveness(0.90),
         SanitizationPoint::new(
             "js_node_validator".to_string(),
             "node-validator".to_string(),
@@ -146,16 +170,19 @@ pub fn get_javascript_sanitizers() -> Vec<SanitizationPoint> {
                 SecurityIssueType::CrossSiteScripting,
                 SecurityIssueType::Injection,
             ],
-        ).with_effectiveness(0.80),
+        )
+        .with_effectiveness(0.80),
         SanitizationPoint::new(
             "js_sql_template".to_string(),
             "sql-template-strings".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.85),
+        )
+        .with_effectiveness(0.85),
         SanitizationPoint::new(
             "js_pg_format".to_string(),
             "pg-format".to_string(),
             vec![SecurityIssueType::Injection],
-        ).with_effectiveness(0.90),
+        )
+        .with_effectiveness(0.90),
     ]
 }

@@ -3,9 +3,9 @@
 //! This module detects common default passwords and weak password patterns
 //! in configuration files.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use std::collections::HashSet;
 
 /// Pattern for detecting default password values
@@ -75,54 +75,111 @@ impl PasswordDefaultChecker {
                 description: "Common default password detected".to_string(),
                 severity: ConfigSeverity::Critical,
                 values: [
-                    "admin", "password", "123456", "qwerty", "letmein", "welcome",
-                    "monkey", "dragon", "default", "changeme", "secret", "root",
-                    "guest", "user", "test", "demo", "pass", "pwd", "login",
-                    "temp", "temporary", "example", "sample"
-                ].iter().map(|s| s.to_string()).collect(),
+                    "admin",
+                    "password",
+                    "123456",
+                    "qwerty",
+                    "letmein",
+                    "welcome",
+                    "monkey",
+                    "dragon",
+                    "default",
+                    "changeme",
+                    "secret",
+                    "root",
+                    "guest",
+                    "user",
+                    "test",
+                    "demo",
+                    "pass",
+                    "pwd",
+                    "login",
+                    "temp",
+                    "temporary",
+                    "example",
+                    "sample",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 remediation: "Replace default passwords with strong, unique passwords.".to_string(),
                 cwe_id: Some(521),
-                owasp_category: Some("A07:2021 - Identification and Authentication Failures".to_string()),
+                owasp_category: Some(
+                    "A07:2021 - Identification and Authentication Failures".to_string(),
+                ),
             },
-
             PasswordDefaultPattern {
                 name: "Weak Default Password".to_string(),
                 description: "Weak or predictable default password detected".to_string(),
                 severity: ConfigSeverity::High,
                 values: [
-                    "password123", "admin123", "test123", "user123", "123123",
-                    "111111", "000000", "qwerty123", "abc123", "password1",
-                    "admin1", "guest1", "root123", "12345", "54321"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Use strong passwords with mixed case, numbers, and special characters.".to_string(),
+                    "password123",
+                    "admin123",
+                    "test123",
+                    "user123",
+                    "123123",
+                    "111111",
+                    "000000",
+                    "qwerty123",
+                    "abc123",
+                    "password1",
+                    "admin1",
+                    "guest1",
+                    "root123",
+                    "12345",
+                    "54321",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation:
+                    "Use strong passwords with mixed case, numbers, and special characters."
+                        .to_string(),
                 cwe_id: Some(521),
-                owasp_category: Some("A07:2021 - Identification and Authentication Failures".to_string()),
+                owasp_category: Some(
+                    "A07:2021 - Identification and Authentication Failures".to_string(),
+                ),
             },
-
             PasswordDefaultPattern {
                 name: "Empty Password".to_string(),
                 description: "Empty or blank password detected".to_string(),
                 severity: ConfigSeverity::Critical,
-                values: [
-                    "", " ", "   ", "\t", "\n"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Set a strong password - empty passwords are never acceptable.".to_string(),
+                values: ["", " ", "   ", "\t", "\n"]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+                remediation: "Set a strong password - empty passwords are never acceptable."
+                    .to_string(),
                 cwe_id: Some(521),
-                owasp_category: Some("A07:2021 - Identification and Authentication Failures".to_string()),
+                owasp_category: Some(
+                    "A07:2021 - Identification and Authentication Failures".to_string(),
+                ),
             },
-
             PasswordDefaultPattern {
                 name: "Placeholder Password".to_string(),
                 description: "Placeholder password text detected".to_string(),
                 severity: ConfigSeverity::High,
                 values: [
-                    "your-password", "your_password", "enter-password", "replace-me",
-                    "change-this", "password-here", "insert-password", "put-password-here",
-                    "your-password-here", "set-password", "configure-password"
-                ].iter().map(|s| s.to_string()).collect(),
+                    "your-password",
+                    "your_password",
+                    "enter-password",
+                    "replace-me",
+                    "change-this",
+                    "password-here",
+                    "insert-password",
+                    "put-password-here",
+                    "your-password-here",
+                    "set-password",
+                    "configure-password",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 remediation: "Replace placeholder text with actual strong passwords.".to_string(),
                 cwe_id: Some(521),
-                owasp_category: Some("A07:2021 - Identification and Authentication Failures".to_string()),
+                owasp_category: Some(
+                    "A07:2021 - Identification and Authentication Failures".to_string(),
+                ),
             },
         ]
     }
@@ -130,8 +187,17 @@ impl PasswordDefaultChecker {
     fn contains_password_key(line: &str) -> bool {
         let line_lower = line.to_lowercase();
         let password_keys = [
-            "password", "passwd", "pwd", "pass", "secret", "key", "token",
-            "auth", "credential", "cred", "login"
+            "password",
+            "passwd",
+            "pwd",
+            "pass",
+            "secret",
+            "key",
+            "token",
+            "auth",
+            "credential",
+            "cred",
+            "login",
         ];
 
         password_keys.iter().any(|&key| line_lower.contains(key))
@@ -143,16 +209,16 @@ impl PasswordDefaultChecker {
 
         // Check for exact matches with common delimiters
         let patterns = [
-            format!("\"{}\"", value_lower),  // "value"
-            format!("'{}'", value_lower),    // 'value'
-            format!(": {}", value_lower),    // : value
-            format!("= {}", value_lower),    // = value
-            format!(":{}", value_lower),     // :value
-            format!("={}", value_lower),     // =value
+            format!("\"{}\"", value_lower), // "value"
+            format!("'{}'", value_lower),   // 'value'
+            format!(": {}", value_lower),   // : value
+            format!("= {}", value_lower),   // = value
+            format!(":{}", value_lower),    // :value
+            format!("={}", value_lower),    // =value
         ];
 
-        patterns.iter().any(|pattern| line_lower.contains(pattern)) ||
-            (value.is_empty() && (line_lower.contains(": \"\"") || line_lower.contains(": ''")))
+        patterns.iter().any(|pattern| line_lower.contains(pattern))
+            || (value.is_empty() && (line_lower.contains(": \"\"") || line_lower.contains(": ''")))
     }
 }
 
@@ -197,7 +263,9 @@ mod tests {
 
         let line = "secret: your-password-here";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Placeholder Password")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Placeholder Password")));
     }
 
     #[test]

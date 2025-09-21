@@ -3,10 +3,10 @@
 //! This module coordinates dependency security checks for both Rust and Python
 //! dependencies in TOML configuration files.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::ConfigIssue;
 use super::super::super::config::ConfigSecurityConfig;
-use super::{RustDependencyChecker, PythonDependencyChecker};
+use super::super::super::types::ConfigIssue;
+use super::{PythonDependencyChecker, RustDependencyChecker};
+use crate::analysis::AnalysisError;
 use toml::Value as TomlValue;
 
 /// Main dependency security checker for TOML files
@@ -26,19 +26,31 @@ impl TomlDependencyChecker {
     }
 
     /// Check for dependency security issues in Cargo.toml or pyproject.toml
-    pub fn check_dependency_security(&self, value: &TomlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    pub fn check_dependency_security(
+        &self,
+        value: &TomlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         if let TomlValue::Table(table) = value {
             // Check Rust dependencies (Cargo.toml)
             if let Some(dependencies) = table.get("dependencies") {
-                issues.extend(self.rust_checker.check_rust_dependencies(dependencies, "dependencies")?);
+                issues.extend(
+                    self.rust_checker
+                        .check_rust_dependencies(dependencies, "dependencies")?,
+                );
             }
             if let Some(dev_deps) = table.get("dev-dependencies") {
-                issues.extend(self.rust_checker.check_rust_dependencies(dev_deps, "dev-dependencies")?);
+                issues.extend(
+                    self.rust_checker
+                        .check_rust_dependencies(dev_deps, "dev-dependencies")?,
+                );
             }
             if let Some(build_deps) = table.get("build-dependencies") {
-                issues.extend(self.rust_checker.check_rust_dependencies(build_deps, "build-dependencies")?);
+                issues.extend(
+                    self.rust_checker
+                        .check_rust_dependencies(build_deps, "build-dependencies")?,
+                );
             }
 
             // Check for insecure dependency sources
@@ -51,7 +63,10 @@ impl TomlDependencyChecker {
             if let Some(project) = table.get("project") {
                 if let TomlValue::Table(project_table) = project {
                     if let Some(dependencies) = project_table.get("dependencies") {
-                        issues.extend(self.python_checker.check_python_dependencies(dependencies)?);
+                        issues.extend(
+                            self.python_checker
+                                .check_python_dependencies(dependencies)?,
+                        );
                     }
                 }
             }
@@ -91,7 +106,9 @@ local_crate = { path = "../../external/crate" }
         let issues = checker.check_dependency_security(&parsed).unwrap();
         assert!(!issues.is_empty());
 
-        assert!(issues.iter().any(|i| i.title.contains("Version Constraint")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Version Constraint")));
         assert!(issues.iter().any(|i| i.title.contains("Insecure Git")));
         assert!(issues.iter().any(|i| i.title.contains("Path Dependency")));
     }
@@ -118,7 +135,9 @@ url = "http://internal.pypi.com/simple/"
         let issues = checker.check_dependency_security(&parsed).unwrap();
         assert!(!issues.is_empty());
 
-        assert!(issues.iter().any(|i| i.title.contains("Python") || i.title.contains("Poetry")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Python") || i.title.contains("Poetry")));
     }
 
     #[test]

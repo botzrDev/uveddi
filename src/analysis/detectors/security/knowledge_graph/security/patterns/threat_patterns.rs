@@ -1,10 +1,12 @@
 //! Threat-based security patterns (Simplified)
 
-use super::detection_patterns::{SecurityPatternDetector, PatternApplicationResult, PatternMatch};
+use super::detection_patterns::{PatternApplicationResult, PatternMatch, SecurityPatternDetector};
 use crate::analysis::detectors::security::knowledge_graph::types::{
     CodeEntity, StructuralSemanticGraph,
 };
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType, SecurityLocation};
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityType,
+};
 use crate::analysis::AnalysisError;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -74,7 +76,9 @@ fn create_threat_issue(
         description,
         location: SecurityLocation::new(PathBuf::from("unknown"), 0, 0),
         language: None,
-        remediation: Some("Review security implications and implement appropriate controls".to_string()),
+        remediation: Some(
+            "Review security implications and implement appropriate controls".to_string(),
+        ),
         context: HashMap::new(),
         metadata: Default::default(),
         detected_by: vec!["ThreatPatternDetector".to_string()],

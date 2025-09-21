@@ -12,9 +12,9 @@ pub use env::EnvAnalyzer;
 pub use toml::TomlAnalyzer;
 pub use yaml::YamlAnalyzer;
 
-use crate::analysis::AnalysisError;
 use super::config::ConfigSecurityConfig;
 use super::types::{ConfigIssue, ConfigType};
+use crate::analysis::AnalysisError;
 
 /// Trait for language-specific configuration analyzers
 pub trait LanguageAnalyzer {
@@ -39,15 +39,9 @@ pub fn create_analyzer(
     config: &ConfigSecurityConfig,
 ) -> Result<Box<dyn LanguageAnalyzer>, AnalysisError> {
     match config_type {
-        ConfigType::Yaml | ConfigType::Json => {
-            Ok(Box::new(YamlAnalyzer::new(config)?))
-        }
-        ConfigType::Toml => {
-            Ok(Box::new(TomlAnalyzer::new(config)?))
-        }
-        ConfigType::Environment => {
-            Ok(Box::new(EnvAnalyzer::new(config)?))
-        }
+        ConfigType::Yaml | ConfigType::Json => Ok(Box::new(YamlAnalyzer::new(config)?)),
+        ConfigType::Toml => Ok(Box::new(TomlAnalyzer::new(config)?)),
+        ConfigType::Environment => Ok(Box::new(EnvAnalyzer::new(config)?)),
     }
 }
 
@@ -94,13 +88,30 @@ pub mod utils {
     /// Check if a configuration key suggests sensitive data
     pub fn is_sensitive_key(key: &str) -> bool {
         let sensitive_patterns = [
-            "password", "passwd", "pwd", "secret", "key", "token", "auth",
-            "credential", "private", "api_key", "access_key", "private_key",
-            "cert", "certificate", "ssl", "tls", "oauth", "bearer",
+            "password",
+            "passwd",
+            "pwd",
+            "secret",
+            "key",
+            "token",
+            "auth",
+            "credential",
+            "private",
+            "api_key",
+            "access_key",
+            "private_key",
+            "cert",
+            "certificate",
+            "ssl",
+            "tls",
+            "oauth",
+            "bearer",
         ];
 
         let key_lower = key.to_lowercase();
-        sensitive_patterns.iter().any(|&pattern| key_lower.contains(pattern))
+        sensitive_patterns
+            .iter()
+            .any(|&pattern| key_lower.contains(pattern))
     }
 
     /// Create a standardized configuration issue
@@ -133,13 +144,19 @@ pub mod utils {
 
         // Reduce confidence for test/example contexts
         let test_indicators = ["test", "example", "demo", "sample", "dev", "development"];
-        if test_indicators.iter().any(|&indicator| context.to_lowercase().contains(indicator)) {
+        if test_indicators
+            .iter()
+            .any(|&indicator| context.to_lowercase().contains(indicator))
+        {
             confidence *= 0.5;
         }
 
         // Increase confidence for production contexts
         let prod_indicators = ["prod", "production", "live", "release"];
-        if prod_indicators.iter().any(|&indicator| context.to_lowercase().contains(indicator)) {
+        if prod_indicators
+            .iter()
+            .any(|&indicator| context.to_lowercase().contains(indicator))
+        {
             confidence = (confidence * 1.2).min(1.0);
         }
 
@@ -149,8 +166,8 @@ pub mod utils {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::utils::*;
+    use super::*;
 
     #[test]
     fn test_create_analyzer_factory() {
@@ -197,8 +214,14 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(json_str).unwrap();
         let strings = extract_string_values(&value, "");
 
-        assert!(strings.iter().any(|(path, val)| path == "database.password" && val == "secret123"));
-        assert!(strings.iter().any(|(path, val)| path == "api_key" && val == "key456"));
-        assert!(strings.iter().any(|(path, val)| path == "database.hosts[0]" && val == "host1"));
+        assert!(strings
+            .iter()
+            .any(|(path, val)| path == "database.password" && val == "secret123"));
+        assert!(strings
+            .iter()
+            .any(|(path, val)| path == "api_key" && val == "key456"));
+        assert!(strings
+            .iter()
+            .any(|(path, val)| path == "database.hosts[0]" && val == "host1"));
     }
 }

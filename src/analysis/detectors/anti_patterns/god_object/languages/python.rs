@@ -1,13 +1,13 @@
 //! Python-specific God Object detection
 
+use super::super::config::GodObjectConfig;
+use super::super::detector::{ComplexityMetrics, DetectedPattern};
+use super::super::metrics::MetricsCalculator;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::ErrorHelpers;
-use super::super::config::GodObjectConfig;
-use super::super::detector::{ComplexityMetrics, DetectedPattern};
-use super::super::metrics::MetricsCalculator;
 use std::collections::HashSet;
 use tracing::debug;
 
@@ -53,7 +53,10 @@ impl<'a> PythonGodObjectAnalyzer<'a> {
     }
 
     /// Analyze a Python file for God Objects
-    pub fn analyze(&self, parsed_file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    pub fn analyze(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
@@ -133,9 +136,10 @@ impl<'a> PythonGodObjectAnalyzer<'a> {
     fn analyze_imports(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut detected_frameworks = HashSet::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            ErrorHelpers::ast_error("import analysis")
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("import analysis"))?;
         let language = tree.language();
 
         let query = Query::new(&language, PYTHON_IMPORT_QUERY)
@@ -178,7 +182,10 @@ impl<'a> PythonGodObjectAnalyzer<'a> {
             if field_ratio > 0.7 {
                 // Check for Python DTO frameworks
                 for framework in detected_frameworks {
-                    if ["pydantic", "dataclass"].iter().any(|f| framework.contains(f)) {
+                    if ["pydantic", "dataclass"]
+                        .iter()
+                        .any(|f| framework.contains(f))
+                    {
                         return Some(DetectedPattern::Dto {
                             framework: framework.clone(),
                             field_ratio,
@@ -199,7 +206,10 @@ impl<'a> PythonGodObjectAnalyzer<'a> {
         // Check for framework controller patterns
         for framework in detected_frameworks {
             if ["django", "flask", "fastapi"].contains(&framework.as_str()) {
-                if name.ends_with("View") || name.ends_with("Controller") || name.ends_with("Handler") {
+                if name.ends_with("View")
+                    || name.ends_with("Controller")
+                    || name.ends_with("Handler")
+                {
                     return Some(DetectedPattern::FrameworkController {
                         framework: framework.clone(),
                         base_class: Some(name.to_string()),
@@ -223,7 +233,10 @@ impl<'a> PythonGodObjectAnalyzer<'a> {
     ) -> Option<ArchitecturalIssue> {
         // If excluded by pattern recognition, return None
         if excluded_pattern.is_some() {
-            debug!("Excluding '{}' due to detected pattern: {:?}", name, excluded_pattern);
+            debug!(
+                "Excluding '{}' due to detected pattern: {:?}",
+                name, excluded_pattern
+            );
             return None;
         }
 
@@ -251,7 +264,10 @@ impl<'a> PythonGodObjectAnalyzer<'a> {
         );
 
         if let Some(lcom4) = metrics.lcom4_score {
-            description.push_str(&format!(" LCOM4 score: {} (>1 indicates low cohesion)", lcom4));
+            description.push_str(&format!(
+                " LCOM4 score: {} (>1 indicates low cohesion)",
+                lcom4
+            ));
         }
 
         let mut issue = ArchitecturalIssue::new(

@@ -55,7 +55,9 @@ pub fn get_python_patterns() -> LanguagePatterns {
 }
 
 /// Analyze dangerous Python imports
-pub async fn analyze_dangerous_imports(context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+pub async fn analyze_dangerous_imports(
+    context: &SecurityContext,
+) -> Result<Vec<SecurityIssue>, AnalysisError> {
     let mut issues = Vec::new();
     let content = &context.content;
 
@@ -78,7 +80,8 @@ pub async fn analyze_dangerous_imports(context: &SecurityContext) -> Result<Vec<
                     context.file_path.clone(),
                     (line_num + 1) as i32,
                     (line_num + 1) as i32,
-                ).with_columns(0, line.len() as i32);
+                )
+                .with_columns(0, line.len() as i32);
 
                 let issue = SecurityIssue::new(
                     SecurityIssueType::PotentialMaliciousAgent,
@@ -104,7 +107,9 @@ pub async fn analyze_dangerous_imports(context: &SecurityContext) -> Result<Vec<
 }
 
 /// Analyze Python code execution patterns
-pub async fn analyze_code_execution_patterns(context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+pub async fn analyze_code_execution_patterns(
+    context: &SecurityContext,
+) -> Result<Vec<SecurityIssue>, AnalysisError> {
     let mut issues = Vec::new();
     let content = &context.content;
 
@@ -126,7 +131,8 @@ pub async fn analyze_code_execution_patterns(context: &SecurityContext) -> Resul
                     context.file_path.clone(),
                     (line_num + 1) as i32,
                     (line_num + 1) as i32,
-                ).with_columns(0, line.len() as i32);
+                )
+                .with_columns(0, line.len() as i32);
 
                 let issue = SecurityIssue::new(
                     SecurityIssueType::PotentialMaliciousAgent,
@@ -152,17 +158,15 @@ pub async fn analyze_code_execution_patterns(context: &SecurityContext) -> Resul
 }
 
 /// Analyze Python obfuscation patterns
-pub async fn analyze_obfuscation_patterns(context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+pub async fn analyze_obfuscation_patterns(
+    context: &SecurityContext,
+) -> Result<Vec<SecurityIssue>, AnalysisError> {
     let mut issues = Vec::new();
     let content = &context.content;
 
     // Check for base64 encoding/decoding
     if content.contains("base64") && (content.contains("decode") || content.contains("encode")) {
-        let location = SecurityLocation::new(
-            context.file_path.clone(),
-            1,
-            1,
-        ).with_columns(0, 0);
+        let location = SecurityLocation::new(context.file_path.clone(), 1, 1).with_columns(0, 0);
 
         let issue = SecurityIssue::new(
             SecurityIssueType::PotentialMaliciousAgent,
@@ -196,7 +200,8 @@ pub async fn analyze_obfuscation_patterns(context: &SecurityContext) -> Result<V
                     context.file_path.clone(),
                     (line_num + 1) as i32,
                     (line_num + 1) as i32,
-                ).with_columns(0, line.len() as i32);
+                )
+                .with_columns(0, line.len() as i32);
 
                 let issue = SecurityIssue::new(
                     SecurityIssueType::PotentialMaliciousAgent,
@@ -222,7 +227,9 @@ pub async fn analyze_obfuscation_patterns(context: &SecurityContext) -> Result<V
 }
 
 /// Analyze Python persistence patterns
-pub async fn analyze_persistence_patterns(context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+pub async fn analyze_persistence_patterns(
+    context: &SecurityContext,
+) -> Result<Vec<SecurityIssue>, AnalysisError> {
     let mut issues = Vec::new();
     let content = &context.content;
 
@@ -244,7 +251,8 @@ pub async fn analyze_persistence_patterns(context: &SecurityContext) -> Result<V
                     context.file_path.clone(),
                     (line_num + 1) as i32,
                     (line_num + 1) as i32,
-                ).with_columns(0, line.len() as i32);
+                )
+                .with_columns(0, line.len() as i32);
 
                 let issue = SecurityIssue::new(
                     SecurityIssueType::PotentialMaliciousAgent,

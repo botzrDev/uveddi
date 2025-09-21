@@ -1,12 +1,12 @@
 //! Python import and module boundary analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl ImportAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -66,7 +67,10 @@ impl ImportAnalyzer {
                             if self.is_infrastructure_module(module_name) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Infrastructure module '{}' imported in business layer", module_name),
+                                    &format!(
+                                        "Infrastructure module '{}' imported in business layer",
+                                        module_name
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "high",
@@ -94,21 +98,32 @@ impl ImportAnalyzer {
     /// Checks if a module is considered infrastructure.
     fn is_infrastructure_module(&self, module_name: &str) -> bool {
         let infrastructure_modules = [
-            "django", "flask", "fastapi", "tornado",
-            "sqlalchemy", "peewee", "mongoengine",
-            "requests", "urllib", "http",
-            "tkinter", "wx", "qt",
+            "django",
+            "flask",
+            "fastapi",
+            "tornado",
+            "sqlalchemy",
+            "peewee",
+            "mongoengine",
+            "requests",
+            "urllib",
+            "http",
+            "tkinter",
+            "wx",
+            "qt",
         ];
 
-        infrastructure_modules.iter().any(|pattern| module_name.starts_with(pattern))
+        infrastructure_modules
+            .iter()
+            .any(|pattern| module_name.starts_with(pattern))
     }
 
     /// Checks if a module is considered internal.
     fn is_internal_module(&self, module_name: &str) -> bool {
-        module_name.contains("_internal") ||
-        module_name.contains(".internal") ||
-        module_name.contains("_impl") ||
-        module_name.contains(".impl")
+        module_name.contains("_internal")
+            || module_name.contains(".internal")
+            || module_name.contains("_impl")
+            || module_name.contains(".impl")
     }
 
     /// Extracts the module name from a Python import statement.

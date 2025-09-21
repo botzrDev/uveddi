@@ -3,9 +3,9 @@
 //! This module detects inappropriate user and group assignments
 //! in configuration files, including root user execution.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use regex::Regex;
 
 /// Rule for detecting user/group permission issues
@@ -83,35 +83,41 @@ impl UserGroupChecker {
                 name: "Root User Execution".to_string(),
                 description: "Service configured to run as root user".to_string(),
                 severity: ConfigSeverity::High,
-                user_pattern: Regex::new(r#"(?i)(user|run[_-]?as[_-]?user)[\s]*[:=][\s]*['"]?(root|0)['"]?"#)?,
+                user_pattern: Regex::new(
+                    r#"(?i)(user|run[_-]?as[_-]?user)[\s]*[:=][\s]*['"]?(root|0)['"]?"#,
+                )?,
                 group_pattern: None,
-                remediation: "Create a dedicated service user with minimal privileges instead of using root.".to_string(),
+                remediation:
+                    "Create a dedicated service user with minimal privileges instead of using root."
+                        .to_string(),
                 cwe_id: Some(250),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             UserGroupRule {
                 name: "Privileged Group Assignment".to_string(),
                 description: "Service assigned to privileged group".to_string(),
                 severity: ConfigSeverity::Medium,
-                user_pattern: Regex::new(r#"(?i)(group|run[_-]?as[_-]?group)[\s]*[:=][\s]*['"]?(root|wheel|admin|sudo)['"]?"#)?,
+                user_pattern: Regex::new(
+                    r#"(?i)(group|run[_-]?as[_-]?group)[\s]*[:=][\s]*['"]?(root|wheel|admin|sudo)['"]?"#,
+                )?,
                 group_pattern: None,
                 remediation: "Use a dedicated service group with minimal privileges.".to_string(),
                 cwe_id: Some(250),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             UserGroupRule {
                 name: "System Account Usage".to_string(),
                 description: "Application configured to use system account".to_string(),
                 severity: ConfigSeverity::Medium,
-                user_pattern: Regex::new(r#"(?i)(user|run[_-]?as[_-]?user)[\s]*[:=][\s]*['"]?(bin|daemon|sys|sync|mail|www-data|nobody)['"]?"#)?,
+                user_pattern: Regex::new(
+                    r#"(?i)(user|run[_-]?as[_-]?user)[\s]*[:=][\s]*['"]?(bin|daemon|sys|sync|mail|www-data|nobody)['"]?"#,
+                )?,
                 group_pattern: None,
-                remediation: "Create dedicated application users instead of using system accounts.".to_string(),
+                remediation: "Create dedicated application users instead of using system accounts."
+                    .to_string(),
                 cwe_id: Some(250),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             UserGroupRule {
                 name: "UID Zero Assignment".to_string(),
                 description: "Explicit UID 0 (root) assignment detected".to_string(),
@@ -122,7 +128,6 @@ impl UserGroupChecker {
                 cwe_id: Some(250),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             UserGroupRule {
                 name: "GID Zero Assignment".to_string(),
                 description: "Explicit GID 0 (root group) assignment detected".to_string(),
@@ -133,14 +138,16 @@ impl UserGroupChecker {
                 cwe_id: Some(250),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             UserGroupRule {
                 name: "Database Root User".to_string(),
                 description: "Database configured to use root/admin user".to_string(),
                 severity: ConfigSeverity::High,
-                user_pattern: Regex::new(r#"(?i)(db[_-]?user|database[_-]?user|username)[\s]*[:=][\s]*['"]?(root|admin|sa|postgres|mysql)['"]?"#)?,
+                user_pattern: Regex::new(
+                    r#"(?i)(db[_-]?user|database[_-]?user|username)[\s]*[:=][\s]*['"]?(root|admin|sa|postgres|mysql)['"]?"#,
+                )?,
                 group_pattern: None,
-                remediation: "Create dedicated database users with minimal required privileges.".to_string(),
+                remediation: "Create dedicated database users with minimal required privileges."
+                    .to_string(),
                 cwe_id: Some(250),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },

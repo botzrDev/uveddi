@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 // Include the split modules as submodules
-#[path = "malicious/signatures.rs"]
-mod signatures;
 #[path = "malicious/behaviors.rs"]
 mod behaviors;
+#[path = "malicious/signatures.rs"]
+mod signatures;
 
 // Re-export from submodules
-pub use signatures::{MaliciousPattern, MaliciousPatternType, ThreatLevel, load_default_patterns};
 pub use behaviors::MaliciousPatternDatabase;
+pub use signatures::{load_default_patterns, MaliciousPattern, MaliciousPatternType, ThreatLevel};

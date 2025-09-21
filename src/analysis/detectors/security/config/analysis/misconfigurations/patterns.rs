@@ -2,11 +2,11 @@
 //!
 //! This module provides utilities for building and matching configuration patterns.
 
-use crate::analysis::AnalysisError;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
-use crate::analysis::detectors::security::config::patterns::utils;
+use super::rules::{MisconfigurationPattern, MisconfigurationRule};
 use crate::analysis::detectors::security::config::language_support::utils as lang_utils;
-use super::rules::{MisconfigurationRule, MisconfigurationPattern};
+use crate::analysis::detectors::security::config::patterns::utils;
+use crate::analysis::AnalysisError;
 use regex::Regex;
 
 /// Pattern builder for misconfiguration detection
@@ -21,9 +21,10 @@ impl PatternBuilder {
     ) -> Result<Option<ConfigIssue>, AnalysisError> {
         let matches = match &rule.pattern {
             MisconfigurationPattern::Regex(regex) => regex.is_match(line),
-            MisconfigurationPattern::KeyValue { key_pattern, value_pattern } => {
-                Self::check_key_value_pattern(line, key_pattern, value_pattern.as_ref())
-            }
+            MisconfigurationPattern::KeyValue {
+                key_pattern,
+                value_pattern,
+            } => Self::check_key_value_pattern(line, key_pattern, value_pattern.as_ref()),
             MisconfigurationPattern::Structured(_) => false, // Handled separately
         };
 
@@ -59,7 +60,11 @@ impl PatternBuilder {
         }
     }
 
-    fn check_key_value_pattern(line: &str, key_pattern: &Regex, value_pattern: Option<&Regex>) -> bool {
+    fn check_key_value_pattern(
+        line: &str,
+        key_pattern: &Regex,
+        value_pattern: Option<&Regex>,
+    ) -> bool {
         if !key_pattern.is_match(line) {
             return false;
         }
@@ -85,7 +90,10 @@ impl PatternBuilder {
                     confidence += 0.1; // More specific patterns are more confident
                 }
             }
-            MisconfigurationPattern::KeyValue { key_pattern, value_pattern } => {
+            MisconfigurationPattern::KeyValue {
+                key_pattern,
+                value_pattern,
+            } => {
                 confidence += 0.1; // Key-value patterns are generally more specific
 
                 if value_pattern.is_some() {
@@ -120,11 +128,26 @@ impl PatternBuilder {
     /// Build regex patterns for common configuration formats
     pub fn build_common_patterns() -> Result<Vec<(String, Regex)>, AnalysisError> {
         let patterns = vec![
-            ("yaml_key_value".to_string(), Regex::new(r"^\s*([^:]+):\s*(.+)$")?),
-            ("ini_key_value".to_string(), Regex::new(r"^\s*([^=]+)=\s*(.+)$")?),
-            ("json_key_value".to_string(), Regex::new(r#"^\s*"([^"]+)"\s*:\s*"?([^",}]+)"?[,}]?$"#)?),
-            ("environment_var".to_string(), Regex::new(r"^([A-Z_][A-Z0-9_]*)\s*=\s*(.+)$")?),
-            ("xml_element".to_string(), Regex::new(r"<([^>]+)>([^<]*)</\1>")?),
+            (
+                "yaml_key_value".to_string(),
+                Regex::new(r"^\s*([^:]+):\s*(.+)$")?,
+            ),
+            (
+                "ini_key_value".to_string(),
+                Regex::new(r"^\s*([^=]+)=\s*(.+)$")?,
+            ),
+            (
+                "json_key_value".to_string(),
+                Regex::new(r#"^\s*"([^"]+)"\s*:\s*"?([^",}]+)"?[,}]?$"#)?,
+            ),
+            (
+                "environment_var".to_string(),
+                Regex::new(r"^([A-Z_][A-Z0-9_]*)\s*=\s*(.+)$")?,
+            ),
+            (
+                "xml_element".to_string(),
+                Regex::new(r"<([^>]+)>([^<]*)</\1>")?,
+            ),
         ];
 
         Ok(patterns)
@@ -149,7 +172,10 @@ impl PatternBuilder {
         }
 
         // JSON format: "key": "value"
-        if let Some(captures) = Regex::new(r#"^\s*"([^"]+)"\s*:\s*"?([^",}]+)"?[,}]?$"#).ok()?.captures(line) {
+        if let Some(captures) = Regex::new(r#"^\s*"([^"]+)"\s*:\s*"?([^",}]+)"?[,}]?$"#)
+            .ok()?
+            .captures(line)
+        {
             return Some((
                 captures.get(1)?.as_str().to_string(),
                 captures.get(2)?.as_str().to_string(),
@@ -162,8 +188,8 @@ impl PatternBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::rules::MisconfigurationRule;
+    use super::*;
 
     #[test]
     fn test_key_value_extraction() {
@@ -186,19 +212,26 @@ mod tests {
     #[test]
     fn test_pattern_matching() {
         let rules = MisconfigurationRule::build_default_rules().unwrap();
-        let debug_rule = rules.iter().find(|r| r.name == "Debug Mode Enabled").unwrap();
+        let debug_rule = rules
+            .iter()
+            .find(|r| r.name == "Debug Mode Enabled")
+            .unwrap();
 
         let result = PatternBuilder::check_line_against_rule("debug: true", 1, debug_rule).unwrap();
         assert!(result.is_some());
 
-        let result = PatternBuilder::check_line_against_rule("debug: false", 1, debug_rule).unwrap();
+        let result =
+            PatternBuilder::check_line_against_rule("debug: false", 1, debug_rule).unwrap();
         assert!(result.is_none());
     }
 
     #[test]
     fn test_confidence_calculation() {
         let rules = MisconfigurationRule::build_default_rules().unwrap();
-        let debug_rule = rules.iter().find(|r| r.name == "Debug Mode Enabled").unwrap();
+        let debug_rule = rules
+            .iter()
+            .find(|r| r.name == "Debug Mode Enabled")
+            .unwrap();
 
         let confidence = PatternBuilder::calculate_confidence(debug_rule, "debug: true");
         assert!(confidence > 0.5);

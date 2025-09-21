@@ -3,8 +3,10 @@
 //! This module implements the pattern matching engine for malicious behavior detection,
 //! including signature matching, threat assessment, and security issue generation.
 
-use super::signatures::{load_default_patterns, MaliciousPattern, MaliciousPatternType, ThreatLevel};
 use super::super::{PatternConfig, PatternMatch, PatternMatcher};
+use super::signatures::{
+    load_default_patterns, MaliciousPattern, MaliciousPatternType, ThreatLevel,
+};
 use crate::analysis::detectors::security::core::SecurityContext;
 use crate::analysis::detectors::security::types::{
     SecurityIssue, SecurityIssueType, SecurityLocation, VulnerabilityType,
@@ -26,7 +28,10 @@ impl MaliciousPatternDatabase {
     }
 
     /// Match malicious patterns in context
-    pub async fn match_malicious_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn match_malicious_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         for pattern in &self.patterns {
@@ -100,7 +105,8 @@ impl MaliciousPatternDatabase {
             context.file_path.clone(),
             pattern_match.line_number as i32,
             pattern_match.line_number as i32,
-        ).with_columns(
+        )
+        .with_columns(
             pattern_match.column_start as i32,
             pattern_match.column_end as i32,
         );
@@ -132,10 +138,15 @@ impl MaliciousPatternDatabase {
         &self.patterns
     }
 
-    pub fn get_patterns_by_type(&self, pattern_type: &MaliciousPatternType) -> Vec<&MaliciousPattern> {
+    pub fn get_patterns_by_type(
+        &self,
+        pattern_type: &MaliciousPatternType,
+    ) -> Vec<&MaliciousPattern> {
         self.patterns
             .iter()
-            .filter(|p| std::mem::discriminant(&p.pattern_type) == std::mem::discriminant(pattern_type))
+            .filter(|p| {
+                std::mem::discriminant(&p.pattern_type) == std::mem::discriminant(pattern_type)
+            })
             .collect()
     }
 
@@ -149,7 +160,10 @@ impl MaliciousPatternDatabase {
 
 #[async_trait]
 impl PatternMatcher for MaliciousPatternDatabase {
-    async fn match_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn match_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         self.match_malicious_patterns(context).await
     }
 

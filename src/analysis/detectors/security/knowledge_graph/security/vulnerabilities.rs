@@ -1,7 +1,11 @@
 //! Vulnerability analysis for security patterns (Simplified)
 
-use crate::analysis::detectors::security::knowledge_graph::types::{CodeEntity, StructuralSemanticGraph};
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, VulnerabilityType, SecuritySeverity, SecurityLocation};
+use crate::analysis::detectors::security::knowledge_graph::types::{
+    CodeEntity, StructuralSemanticGraph,
+};
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use std::collections::HashMap;

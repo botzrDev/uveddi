@@ -1,6 +1,8 @@
 //! Risk assessment and scoring for security analysis (Simplified)
 
-use crate::analysis::detectors::security::knowledge_graph::types::{CodeEntity, StructuralSemanticGraph};
+use crate::analysis::detectors::security::knowledge_graph::types::{
+    CodeEntity, StructuralSemanticGraph,
+};
 use crate::analysis::detectors::security::types::SecurityIssue;
 use crate::analysis::AnalysisError;
 use std::collections::HashMap;

@@ -13,34 +13,34 @@ pub mod vulnerabilities;
 
 // Core re-exports
 pub use config::OwaspConfig;
-pub use detector::{OwaspDetector, DetectorStatistics};
-pub use types::{OwaspCategory, OwaspVulnerability, OwaspCategoryDetector};
+pub use detector::{DetectorStatistics, OwaspDetector};
+pub use types::{OwaspCategory, OwaspCategoryDetector, OwaspVulnerability};
 
 // Note: Analysis and reporting modules removed per assignment requirements
 
 // Category detector re-exports
 pub use categories::{
-    InjectionDetector, BrokenAuthDetector, SensitiveDataDetector, XXEDetector,
-    BrokenAccessDetector, SecurityMisconfigDetector, XSSDetector,
-    InsecureDeserializationDetector, VulnerableComponentsDetector, CategoryRegistry,
+    BrokenAccessDetector, BrokenAuthDetector, CategoryRegistry, InjectionDetector,
+    InsecureDeserializationDetector, SecurityMisconfigDetector, SensitiveDataDetector,
+    VulnerableComponentsDetector, XSSDetector, XXEDetector,
 };
 
 // Language support re-exports
 pub use language_support::{
-    RustOwaspAnalyzer, PythonOwaspAnalyzer, JavaScriptOwaspAnalyzer,
-    LanguageSupportCoordinator, WebFrameworkAnalyzer, ApiSecurityAnalyzer, DatabaseSecurityAnalyzer,
+    ApiSecurityAnalyzer, DatabaseSecurityAnalyzer, JavaScriptOwaspAnalyzer,
+    LanguageSupportCoordinator, PythonOwaspAnalyzer, RustOwaspAnalyzer, WebFrameworkAnalyzer,
 };
 
 // Scanner re-exports
 pub use scanners::{
-    StaticAnalysisScanner, PatternScanner, DataFlowScanner, DependencyScanner,
-    Scanner, ScannerOrchestrator, UnifiedScanResult,
+    DataFlowScanner, DependencyScanner, PatternScanner, Scanner, ScannerOrchestrator,
+    StaticAnalysisScanner, UnifiedScanResult,
 };
 
 // Vulnerability detector re-exports
 pub use vulnerabilities::{
-    SqlInjectionDetector, CommandInjectionDetector, PathTraversalDetector,
-    CsrfDetector, SessionManagementDetector, VulnerabilityRegistry,
+    CommandInjectionDetector, CsrfDetector, PathTraversalDetector, SessionManagementDetector,
+    SqlInjectionDetector, VulnerabilityRegistry,
 };
 
 /// OWASP Top 10 2021 categories
@@ -81,7 +81,8 @@ pub fn create_high_sensitivity_detector() -> Result<OwaspDetector, crate::analys
 }
 
 /// Create a detector optimized for low false positives
-pub fn create_low_false_positive_detector() -> Result<OwaspDetector, crate::analysis::AnalysisError> {
+pub fn create_low_false_positive_detector() -> Result<OwaspDetector, crate::analysis::AnalysisError>
+{
     let config = OwaspConfig::low_false_positives();
     OwaspDetector::with_config(config)
 }

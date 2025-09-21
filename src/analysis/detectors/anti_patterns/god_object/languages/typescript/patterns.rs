@@ -1,12 +1,12 @@
 //! TypeScript pattern detection
 
+use super::super::super::config::GodObjectConfig;
+use super::super::super::detector::DetectedPattern;
+use super::queries::TYPESCRIPT_IMPORT_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::error::ErrorHelpers;
-use super::super::super::config::GodObjectConfig;
-use super::super::super::detector::DetectedPattern;
-use super::queries::TYPESCRIPT_IMPORT_QUERY;
 use std::collections::HashSet;
 
 /// TypeScript pattern detector
@@ -20,12 +20,16 @@ impl<'a> TypeScriptPatternDetector<'a> {
     }
 
     /// Analyze imports to detect framework usage
-    pub fn analyze_imports(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
+    pub fn analyze_imports(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<HashSet<String>, AnalysisError> {
         let mut detected_frameworks = HashSet::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            ErrorHelpers::ast_error("import analysis")
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("import analysis"))?;
         let language = tree.language();
 
         let query = Query::new(&language, TYPESCRIPT_IMPORT_QUERY)
@@ -71,9 +75,7 @@ impl<'a> TypeScriptPatternDetector<'a> {
     ) -> Option<DetectedPattern> {
         // Check for Angular Component/Service patterns
         if detected_frameworks.contains("angular") {
-            if name.ends_with("Component")
-                || name.ends_with("Service")
-                || name.ends_with("Module")
+            if name.ends_with("Component") || name.ends_with("Service") || name.ends_with("Module")
             {
                 return Some(DetectedPattern::FrameworkController {
                     framework: "angular".to_string(),
@@ -84,9 +86,7 @@ impl<'a> TypeScriptPatternDetector<'a> {
 
         // Check for NestJS Controller/Service patterns
         if detected_frameworks.contains("nest") || detected_frameworks.contains("nestjs") {
-            if name.ends_with("Controller")
-                || name.ends_with("Service")
-                || name.ends_with("Module")
+            if name.ends_with("Controller") || name.ends_with("Service") || name.ends_with("Module")
             {
                 return Some(DetectedPattern::FrameworkController {
                     framework: "nestjs".to_string(),

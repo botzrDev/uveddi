@@ -36,7 +36,7 @@ use std::path::PathBuf;
 use sysinfo::System;
 use tracing::{info, warn};
 
-use crate::application::{LegacyAnalysisConfig, AnalysisOrchestrator};
+use crate::application::{AnalysisOrchestrator, LegacyAnalysisConfig};
 use crate::error::UveddiError;
 use crate::progress::{create_progress_reporter, AnalysisPhase, ProgressTracker};
 use crate::report::DiagramMode;

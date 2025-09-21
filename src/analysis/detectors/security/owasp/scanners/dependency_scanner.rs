@@ -2,7 +2,9 @@
 
 use super::{Scanner, UnifiedScanResult};
 use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use serde::{Deserialize, Serialize};
@@ -56,12 +58,19 @@ impl VulnerabilityDatabase {
             description: "Directory traversal vulnerability".to_string(),
         };
 
-        self.vulnerabilities.insert("lodash".to_string(), vec![vuln_lodash]);
-        self.vulnerabilities.insert("django".to_string(), vec![vuln_django]);
+        self.vulnerabilities
+            .insert("lodash".to_string(), vec![vuln_lodash]);
+        self.vulnerabilities
+            .insert("django".to_string(), vec![vuln_django]);
     }
 
-    pub fn check_vulnerability(&self, package: &str, version: &str) -> Option<&VulnerableDependency> {
-        self.vulnerabilities.get(package)
+    pub fn check_vulnerability(
+        &self,
+        package: &str,
+        version: &str,
+    ) -> Option<&VulnerableDependency> {
+        self.vulnerabilities
+            .get(package)
             .and_then(|vulns| vulns.iter().find(|v| version.starts_with(&v.version)))
     }
 }
@@ -91,7 +100,8 @@ impl DependencyScanner {
     }
 
     fn parse_requirements_txt(&self, content: &str) -> Vec<(String, String)> {
-        content.lines()
+        content
+            .lines()
             .filter_map(|line| {
                 let line = line.trim();
                 if line.is_empty() || line.starts_with('#') {
@@ -156,15 +166,21 @@ impl DependencyScanner {
     }
 
     fn check_dependencies(&self, dependencies: &[(String, String)]) -> Vec<VulnerableDependency> {
-        dependencies.iter()
+        dependencies
+            .iter()
             .filter_map(|(package, version)| {
-                self.vulnerability_db.check_vulnerability(package, version)
+                self.vulnerability_db
+                    .check_vulnerability(package, version)
                     .cloned()
             })
             .collect()
     }
 
-    fn create_vulnerability(&self, vuln: &VulnerableDependency, location: SecurityLocation) -> OwaspVulnerability {
+    fn create_vulnerability(
+        &self,
+        vuln: &VulnerableDependency,
+        location: SecurityLocation,
+    ) -> OwaspVulnerability {
         OwaspVulnerability::new(
             OwaspCategory::VulnerableComponents,
             SecurityIssueType::VulnerableComponent,
@@ -183,12 +199,15 @@ impl Scanner for DependencyScanner {
         let start_time = Instant::now();
         let mut vulnerabilities = Vec::new();
 
-        let file_name = file.file_path.file_name()
+        let file_name = file
+            .file_path
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
 
-        let content = std::fs::read_to_string(&**file.file_path)
-            .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
+        let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+            AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e)
+        })?;
 
         let dependencies = match file_name {
             "package.json" => self.parse_package_json(&content),
@@ -200,10 +219,7 @@ impl Scanner for DependencyScanner {
         let vulnerable_deps = self.check_dependencies(&dependencies);
 
         for vuln in &vulnerable_deps {
-            let location = SecurityLocation::new(
-                file.file_path.as_ref().to_path_buf(),
-                1, 1,
-            );
+            let location = SecurityLocation::new(file.file_path.as_ref().to_path_buf(), 1, 1);
             vulnerabilities.push(self.create_vulnerability(vuln, location));
         }
 
@@ -225,7 +241,12 @@ impl Scanner for DependencyScanner {
     }
 
     fn supported_languages(&self) -> Vec<SourceLanguage> {
-        vec![SourceLanguage::Rust, SourceLanguage::Python, SourceLanguage::JavaScript, SourceLanguage::TypeScript]
+        vec![
+            SourceLanguage::Rust,
+            SourceLanguage::Python,
+            SourceLanguage::JavaScript,
+            SourceLanguage::TypeScript,
+        ]
     }
 
     fn detectable_categories(&self) -> Vec<OwaspCategory> {

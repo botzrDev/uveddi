@@ -18,14 +18,18 @@ impl CouplingCalculator {
         &self,
         graph: &LocalDependencyGraph,
     ) -> HashMap<ComponentNode, CouplingMetrics> {
-        debug!("Calculating coupling metrics for {} nodes", graph.get_petgraph().node_count());
+        debug!(
+            "Calculating coupling metrics for {} nodes",
+            graph.get_petgraph().node_count()
+        );
 
         let mut metrics = HashMap::new();
         let petgraph = graph.get_petgraph();
 
         for node_index in petgraph.node_indices() {
             if let Some(component) = graph.get_node_from_index(node_index) {
-                let component_metrics = self.calculate_component_metrics(graph, component, node_index);
+                let component_metrics =
+                    self.calculate_component_metrics(graph, component, node_index);
                 metrics.insert(component.clone(), component_metrics);
             }
         }
@@ -128,7 +132,8 @@ impl CouplingCalculator {
         match component {
             ComponentNode::Class { name, .. } => {
                 // Heuristics based on naming conventions
-                if name.contains("Abstract") || name.contains("Base") || name.contains("Interface") {
+                if name.contains("Abstract") || name.contains("Base") || name.contains("Interface")
+                {
                     0.8
                 } else if name.contains("Trait") || name.contains("Protocol") {
                     0.9
@@ -159,13 +164,16 @@ impl CouplingCalculator {
         match component {
             ComponentNode::Class { name, .. } => {
                 // Estimate based on typical class sizes
-                if name.contains("Manager") || name.contains("Controller") || name.contains("Service") {
+                if name.contains("Manager")
+                    || name.contains("Controller")
+                    || name.contains("Service")
+                {
                     8 // Larger service classes
                 } else {
                     5 // Average methods per class
                 }
             }
-            ComponentNode::Module { .. } => 3,   // Average functions per module
+            ComponentNode::Module { .. } => 3, // Average functions per module
             ComponentNode::Function { .. } => 1, // Single function
         }
     }
@@ -229,12 +237,10 @@ impl CouplingCalculator {
         let mut sorted_metrics: Vec<_> = metrics.iter().collect();
 
         // Sort by CBO (primary) and RFC (secondary)
-        sorted_metrics.sort_by(|a, b| {
-            b.1.cbo.cmp(&a.1.cbo)
-                .then(b.1.rfc.cmp(&a.1.rfc))
-        });
+        sorted_metrics.sort_by(|a, b| b.1.cbo.cmp(&a.1.cbo).then(b.1.rfc.cmp(&a.1.rfc)));
 
-        let hotspot_count = ((sorted_metrics.len() as f64) * (1.0 - threshold_percentile)).max(1.0) as usize;
+        let hotspot_count =
+            ((sorted_metrics.len() as f64) * (1.0 - threshold_percentile)).max(1.0) as usize;
 
         sorted_metrics
             .into_iter()

@@ -1,14 +1,16 @@
 //! Security analysis components for knowledge graph
 
 pub mod patterns;
-pub mod vulnerabilities;
 pub mod risk_assessment;
+pub mod vulnerabilities;
 
-pub use patterns::{SecurityPatternDetector, SecurityPatternResult, detect_security_patterns};
-pub use vulnerabilities::{VulnerabilityAnalyzer, VulnerabilityAnalysisResult};
+pub use patterns::{detect_security_patterns, SecurityPatternDetector, SecurityPatternResult};
 pub use risk_assessment::{RiskAssessmentEngine, RiskAssessmentResult};
+pub use vulnerabilities::{VulnerabilityAnalysisResult, VulnerabilityAnalyzer};
 
-use crate::analysis::detectors::security::knowledge_graph::types::{CodeEntity, StructuralSemanticGraph};
+use crate::analysis::detectors::security::knowledge_graph::types::{
+    CodeEntity, StructuralSemanticGraph,
+};
 use crate::analysis::detectors::security::types::SecurityIssue;
 use crate::analysis::AnalysisError;
 
@@ -35,17 +37,26 @@ impl SecurityAnalyzer {
         entities: &[CodeEntity],
     ) -> Result<SecurityAnalysisResult, AnalysisError> {
         // Detect security patterns
-        let pattern_result = self.pattern_detector.detect_patterns(graph, entities).await?;
+        let pattern_result = self
+            .pattern_detector
+            .detect_patterns(graph, entities)
+            .await?;
 
         // Analyze vulnerabilities
-        let vulnerability_result = self.vulnerability_analyzer.analyze_vulnerabilities(graph, entities).await?;
+        let vulnerability_result = self
+            .vulnerability_analyzer
+            .analyze_vulnerabilities(graph, entities)
+            .await?;
 
         // Combine all security issues
         let mut all_issues = pattern_result.detected_issues;
         all_issues.extend(vulnerability_result.vulnerabilities);
 
         // Assess overall risk
-        let risk_result = self.risk_assessor.assess_risk(entities, &all_issues, graph).await?;
+        let risk_result = self
+            .risk_assessor
+            .assess_risk(entities, &all_issues, graph)
+            .await?;
 
         Ok(SecurityAnalysisResult {
             security_issues: all_issues,

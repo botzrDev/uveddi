@@ -29,10 +29,16 @@ impl MatrixBuilder {
         metrics: &HashMap<ComponentNode, CouplingMetrics>,
         dependencies: &[Dependency],
     ) -> CouplingMatrix {
-        debug!("Generating coupling matrix for {} components", metrics.len());
+        debug!(
+            "Generating coupling matrix for {} components",
+            metrics.len()
+        );
 
         let components: Vec<ComponentNode> = metrics.keys().cloned().collect();
-        let labels: Vec<String> = components.iter().map(|c| self.component_to_label(c)).collect();
+        let labels: Vec<String> = components
+            .iter()
+            .map(|c| self.component_to_label(c))
+            .collect();
 
         let matrix = self.build_coupling_matrix(&components, dependencies);
 
@@ -90,24 +96,16 @@ impl MatrixBuilder {
                 let file_name = file_path.split('/').last().unwrap_or(file_path);
                 format!("{}::{}", file_name, name)
             }
-            ComponentNode::Module { path } => {
-                path.split('/').last().unwrap_or(path).to_string()
-            }
+            ComponentNode::Module { path } => path.split('/').last().unwrap_or(path).to_string(),
         }
     }
 
     /// Extract module name from component
     pub fn extract_module_name(&self, component: &ComponentNode) -> String {
         match component {
-            ComponentNode::Class { file_path, .. } => {
-                self.path_to_module_name(file_path)
-            }
-            ComponentNode::Function { file_path, .. } => {
-                self.path_to_module_name(file_path)
-            }
-            ComponentNode::Module { path } => {
-                self.path_to_module_name(path)
-            }
+            ComponentNode::Class { file_path, .. } => self.path_to_module_name(file_path),
+            ComponentNode::Function { file_path, .. } => self.path_to_module_name(file_path),
+            ComponentNode::Module { path } => self.path_to_module_name(path),
         }
     }
 

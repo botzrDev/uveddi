@@ -4,20 +4,20 @@
 //! settings, exposed debug endpoints, and overly permissive CORS settings.
 
 pub mod analyzer;
-pub mod rules;
-pub mod patterns;
-pub mod debug_checker;
-pub mod session_checker;
-pub mod database_checker;
 pub mod checks;
+pub mod database_checker;
+pub mod debug_checker;
+pub mod patterns;
+pub mod rules;
+pub mod session_checker;
 
 // Re-export main analyzer
 pub use analyzer::MisconfigurationAnalyzer;
-pub use rules::{MisconfigurationRule, MisconfigurationPattern};
-pub use patterns::PatternBuilder;
-pub use debug_checker::DebugChecker;
-pub use session_checker::SessionChecker;
 pub use database_checker::DatabaseChecker;
+pub use debug_checker::DebugChecker;
+pub use patterns::PatternBuilder;
+pub use rules::{MisconfigurationPattern, MisconfigurationRule};
+pub use session_checker::SessionChecker;
 
 #[cfg(test)]
 mod tests {

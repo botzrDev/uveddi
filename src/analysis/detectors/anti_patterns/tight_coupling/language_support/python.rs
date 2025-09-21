@@ -53,7 +53,10 @@ impl PythonAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), Self::IMPORT_QUERY) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            Self::IMPORT_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -91,7 +94,10 @@ impl PythonAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), Self::CALL_QUERY) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            Self::CALL_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -131,7 +137,10 @@ impl PythonAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), Self::INHERITANCE_QUERY) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            Self::INHERITANCE_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -180,13 +189,20 @@ impl PythonAnalyzer {
               (identifier) @decorator_name) @decorator_usage
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), decorator_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            decorator_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
             while let Some(m) = matches.next() {
                 for capture in m.captures {
-                    if capture.index == query.capture_index_for_name("decorator_name").unwrap_or(u32::MAX) {
+                    if capture.index
+                        == query
+                            .capture_index_for_name("decorator_name")
+                            .unwrap_or(u32::MAX)
+                    {
                         let decorator_name = capture
                             .node
                             .utf8_text(source.as_bytes())
@@ -227,13 +243,20 @@ impl PythonAnalyzer {
               (identifier) @global_var) @global_usage
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), global_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            global_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
             while let Some(m) = matches.next() {
                 for capture in m.captures {
-                    if capture.index == query.capture_index_for_name("global_var").unwrap_or(u32::MAX) {
+                    if capture.index
+                        == query
+                            .capture_index_for_name("global_var")
+                            .unwrap_or(u32::MAX)
+                    {
                         let global_var = capture
                             .node
                             .utf8_text(source.as_bytes())
@@ -272,8 +295,16 @@ impl LanguageAnalyzer for PythonAnalyzer {
             dependencies.extend(self.extract_imports(file_path, tree, &parsed_file.source)?);
             dependencies.extend(self.extract_calls(file_path, tree, &parsed_file.source)?);
             dependencies.extend(self.extract_inheritance(file_path, tree, &parsed_file.source)?);
-            dependencies.extend(self.extract_decorator_dependencies(file_path, tree, &parsed_file.source)?);
-            dependencies.extend(self.extract_global_dependencies(file_path, tree, &parsed_file.source)?);
+            dependencies.extend(self.extract_decorator_dependencies(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
+            dependencies.extend(self.extract_global_dependencies(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
         }
 
         Ok(dependencies)

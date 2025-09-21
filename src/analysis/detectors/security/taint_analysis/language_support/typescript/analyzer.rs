@@ -1,14 +1,14 @@
 //! TypeScript/JavaScript-specific taint analyzer implementation
 
-use super::patterns::{get_typescript_sources, get_typescript_sinks, get_typescript_sanitizers};
+use super::patterns::{get_typescript_sanitizers, get_typescript_sinks, get_typescript_sources};
 use crate::analysis::detectors::security::taint_analysis::language_support::{
-    LanguageTaintAnalyzer, LanguageAnalysisResult, LanguageSpecificIssue
+    LanguageAnalysisResult, LanguageSpecificIssue, LanguageTaintAnalyzer,
 };
 use crate::analysis::detectors::security::taint_analysis::types::{
-    TaintSource, TaintSink, SanitizationPoint, LanguageTaintPatterns
+    LanguageTaintPatterns, SanitizationPoint, TaintSink, TaintSource,
 };
-use crate::ast::{ParsedFile, SourceLanguage};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// TypeScript/JavaScript-specific taint analyzer
 pub struct TypeScriptTaintAnalyzer {
@@ -151,20 +151,23 @@ impl LanguageTaintAnalyzer for TypeScriptTaintAnalyzer {
     fn get_taint_patterns(&self) -> LanguageTaintPatterns {
         let mut patterns = LanguageTaintPatterns::new();
 
-        patterns.source_patterns.extend(
-            self.sources.iter().map(|s| s.pattern.clone())
-        );
-        patterns.sink_patterns.extend(
-            self.sinks.iter().map(|s| s.pattern.clone())
-        );
-        patterns.sanitizer_patterns.extend(
-            self.sanitizers.iter().map(|s| s.pattern.clone())
-        );
+        patterns
+            .source_patterns
+            .extend(self.sources.iter().map(|s| s.pattern.clone()));
+        patterns
+            .sink_patterns
+            .extend(self.sinks.iter().map(|s| s.pattern.clone()));
+        patterns
+            .sanitizer_patterns
+            .extend(self.sanitizers.iter().map(|s| s.pattern.clone()));
 
         patterns
     }
 
-    fn analyze_language_constructs(&self, file: &ParsedFile) -> Result<LanguageAnalysisResult, AnalysisError> {
+    fn analyze_language_constructs(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<LanguageAnalysisResult, AnalysisError> {
         let mut language_issues = Vec::new();
 
         // Perform TypeScript/JavaScript-specific analysis

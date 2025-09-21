@@ -1,7 +1,7 @@
 //! Graph traversal algorithms for knowledge graph navigation (Simplified)
 
 use crate::analysis::detectors::security::knowledge_graph::types::{
-    StructuralSemanticGraph, CodeEntity,
+    CodeEntity, StructuralSemanticGraph,
 };
 use crate::analysis::AnalysisError;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -27,7 +27,8 @@ impl<'a> GraphTraversal<'a> {
 
     /// Find all neighbors of a node
     pub fn find_neighbors(&self, node_id: &str) -> Vec<String> {
-        self.graph.edges
+        self.graph
+            .edges
             .iter()
             .filter(|edge| edge.from == node_id)
             .map(|edge| edge.to.clone())
@@ -53,7 +54,12 @@ impl<'a> GraphTraversal<'a> {
     }
 
     /// Depth-first search for component finding
-    fn dfs_component(&self, node_id: &str, visited: &mut HashSet<String>, component: &mut Vec<String>) {
+    fn dfs_component(
+        &self,
+        node_id: &str,
+        visited: &mut HashSet<String>,
+        component: &mut Vec<String>,
+    ) {
         if visited.contains(node_id) {
             return;
         }
@@ -85,7 +91,12 @@ impl<'a> GraphTraversal<'a> {
             if distance <= radius {
                 // Apply filter if provided
                 if let Some(filter) = entity_filter {
-                    if let Some((_, entity)) = self.graph.nodes.iter().find(|(node_id, _)| *node_id == &current) {
+                    if let Some((_, entity)) = self
+                        .graph
+                        .nodes
+                        .iter()
+                        .find(|(node_id, _)| *node_id == &current)
+                    {
                         if let Some(code_entity) = &entity.code_entity {
                             if filter(code_entity) {
                                 result.push(current.clone());
@@ -139,7 +150,11 @@ impl<'a> SecurityTraversal<'a> {
     }
 
     /// Find security-sensitive paths
-    pub fn find_security_paths(&self, _start: &str, _config: &SecurityTraversalConfig) -> Vec<Vec<String>> {
+    pub fn find_security_paths(
+        &self,
+        _start: &str,
+        _config: &SecurityTraversalConfig,
+    ) -> Vec<Vec<String>> {
         // Simplified implementation
         Vec::new()
     }

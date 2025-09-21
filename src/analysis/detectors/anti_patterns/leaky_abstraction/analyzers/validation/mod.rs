@@ -1,17 +1,17 @@
 //! Validation coordination module for abstraction boundary checking.
 
-pub mod layer_validator;
 pub mod boundary_validator;
+pub mod layer_validator;
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, ArchitecturalConfig, ArchitecturalLayer,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ArchitecturalConfig, ArchitecturalLayer
-};
 
-pub use layer_validator::LayerValidator;
 pub use boundary_validator::BoundaryValidator;
+pub use layer_validator::LayerValidator;
 
 /// Validates abstraction boundaries and quality.
 pub struct AbstractionValidator {
@@ -37,13 +37,22 @@ impl AbstractionValidator {
         let mut issues = Vec::new();
 
         // Validate architectural layer dependencies
-        issues.extend(self.layer_validator.validate_layer_dependencies(parsed_file, context)?);
+        issues.extend(
+            self.layer_validator
+                .validate_layer_dependencies(parsed_file, context)?,
+        );
 
         // Validate encapsulation boundaries
-        issues.extend(self.boundary_validator.validate_encapsulation(parsed_file, context)?);
+        issues.extend(
+            self.boundary_validator
+                .validate_encapsulation(parsed_file, context)?,
+        );
 
         // Validate interface contracts
-        issues.extend(self.boundary_validator.validate_interface_contracts(parsed_file, context)?);
+        issues.extend(
+            self.boundary_validator
+                .validate_interface_contracts(parsed_file, context)?,
+        );
 
         Ok(issues)
     }
@@ -54,7 +63,8 @@ impl AbstractionValidator {
         from_layer: &ArchitecturalLayer,
         to_layer: &ArchitecturalLayer,
     ) -> bool {
-        self.layer_validator.is_dependency_violation(from_layer, to_layer)
+        self.layer_validator
+            .is_dependency_violation(from_layer, to_layer)
     }
 
     /// Checks if a module is considered internal.
@@ -64,7 +74,8 @@ impl AbstractionValidator {
 
     /// Checks if a module is infrastructure-related.
     pub fn is_infrastructure_module(&self, module_name: &str) -> bool {
-        self.boundary_validator.is_infrastructure_module(module_name)
+        self.boundary_validator
+            .is_infrastructure_module(module_name)
     }
 
     /// Gets the architectural layer for a file path.

@@ -1,12 +1,12 @@
 //! Python framework coupling and decorator analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl FrameworkAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -79,7 +80,10 @@ impl FrameworkAnalyzer {
                             if self.is_framework_decorator(decorator_name) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Framework decorator '{}' used in business logic", decorator_name),
+                                    &format!(
+                                        "Framework decorator '{}' used in business logic",
+                                        decorator_name
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "medium",
@@ -98,23 +102,41 @@ impl FrameworkAnalyzer {
     /// Checks if an object name represents a framework object.
     fn is_framework_object(&self, obj_name: &str) -> bool {
         let framework_objects = [
-            "request", "response", "session", "connection",
-            "db", "cursor", "query", "model",
-            "app", "client", "server", "socket",
+            "request",
+            "response",
+            "session",
+            "connection",
+            "db",
+            "cursor",
+            "query",
+            "model",
+            "app",
+            "client",
+            "server",
+            "socket",
         ];
 
-        framework_objects.iter().any(|pattern| obj_name.contains(pattern))
+        framework_objects
+            .iter()
+            .any(|pattern| obj_name.contains(pattern))
     }
 
     /// Checks if a decorator name represents a framework decorator.
     fn is_framework_decorator(&self, decorator_name: &str) -> bool {
         let framework_decorators = [
-            "app.route", "login_required", "csrf_exempt",
-            "cache_page", "transaction", "atomic",
-            "api_view", "permission_classes",
+            "app.route",
+            "login_required",
+            "csrf_exempt",
+            "cache_page",
+            "transaction",
+            "atomic",
+            "api_view",
+            "permission_classes",
         ];
 
-        framework_decorators.iter().any(|pattern| decorator_name.contains(pattern))
+        framework_decorators
+            .iter()
+            .any(|pattern| decorator_name.contains(pattern))
     }
 
     /// Helper function to create an architectural issue.

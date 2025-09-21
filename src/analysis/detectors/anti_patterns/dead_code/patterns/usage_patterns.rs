@@ -2,8 +2,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::analysis::AnalysisError;
 use crate::analysis::detectors::anti_patterns::dead_code::types::{Symbol, SymbolType};
+use crate::analysis::AnalysisError;
 
 use super::{DeadCodePattern, PatternType};
 
@@ -140,7 +140,10 @@ impl UsageGraph {
     }
 
     pub fn add_edge(&mut self, from: String, to: String) {
-        self.edges.entry(from).or_insert_with(HashSet::new).insert(to);
+        self.edges
+            .entry(from)
+            .or_insert_with(HashSet::new)
+            .insert(to);
     }
 
     pub fn is_indirectly_referenced(&self, symbol_name: &str) -> bool {

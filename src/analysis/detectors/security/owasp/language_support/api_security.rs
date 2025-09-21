@@ -229,6 +229,8 @@ mod tests {
         let insecure_content = "app.get('/api/data', (req, res) => { eval(req.body.code); });";
         let issues = analyzer.analyze_api_security(insecure_content);
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| i.issue_type.contains("Code Injection")));
+        assert!(issues
+            .iter()
+            .any(|i| i.issue_type.contains("Code Injection")));
     }
 }

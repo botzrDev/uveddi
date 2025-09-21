@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use super::traits::{Service, ServiceHealth, HealthCheck};
+use super::traits::{HealthCheck, Service, ServiceHealth};
 
 /// Wrapper for services to make them object-safe
 pub struct ServiceWrapper {
@@ -181,7 +181,7 @@ impl ServiceRegistry {
                 name: name.clone(),
                 is_running: service.is_running(),
                 health: Some(ServiceHealth::Healthy), // Simplified for now
-                dependencies: Vec::new(), // TODO: Implement dependency tracking
+                dependencies: Vec::new(),             // TODO: Implement dependency tracking
             });
         }
 
@@ -247,7 +247,10 @@ impl ServiceBuilder {
         for service_name in &order {
             if !self.registry.startup_order.contains(service_name) {
                 return Err(UveddiError::config_error(
-                    &format!("Service '{}' in startup order is not registered", service_name),
+                    &format!(
+                        "Service '{}' in startup order is not registered",
+                        service_name
+                    ),
                     "startup order validation",
                 ));
             }
@@ -294,7 +297,9 @@ impl Drop for ServiceRegistry {
 #[macro_export]
 macro_rules! register_service {
     ($registry:expr, $name:expr, $service:expr) => {
-        $registry.register_service($name.to_string(), $service).await?;
+        $registry
+            .register_service($name.to_string(), $service)
+            .await?;
     };
 }
 

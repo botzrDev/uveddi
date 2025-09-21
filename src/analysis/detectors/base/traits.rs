@@ -2,7 +2,7 @@
 //!
 //! This module defines the fundamental interfaces that all detectors must implement.
 
-use super::types::{DetectorCategory, AnalysisContext};
+use super::types::{AnalysisContext, DetectorCategory};
 use crate::analysis::AnalysisError;
 use async_trait::async_trait;
 use std::any::Any;

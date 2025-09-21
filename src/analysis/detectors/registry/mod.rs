@@ -3,9 +3,7 @@
 //! This module provides a registry system for managing different types of detectors,
 //! allowing for dynamic registration, discovery, and execution of analysis algorithms.
 
-use crate::analysis::detectors::base::{
-    AnalysisContext, DetectorCategory,
-};
+use crate::analysis::detectors::base::{AnalysisContext, DetectorCategory};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use std::collections::HashMap;
@@ -200,16 +198,21 @@ impl DetectorRegistryFactory {
         let mut registry = DetectorRegistry::new();
 
         // Register code duplication detector
-        let _ = registry.register_info(DetectorInfo::new(
-            "code_duplication",
-            DetectorCategory::AntiPattern,
-            vec![
-                SourceLanguage::Rust,
-                SourceLanguage::Python,
-                SourceLanguage::JavaScript,
-                SourceLanguage::TypeScript,
-            ],
-        ).with_description("Detects duplicate code blocks using token-based and AST-based analysis"));
+        let _ = registry.register_info(
+            DetectorInfo::new(
+                "code_duplication",
+                DetectorCategory::AntiPattern,
+                vec![
+                    SourceLanguage::Rust,
+                    SourceLanguage::Python,
+                    SourceLanguage::JavaScript,
+                    SourceLanguage::TypeScript,
+                ],
+            )
+            .with_description(
+                "Detects duplicate code blocks using token-based and AST-based analysis",
+            ),
+        );
 
         // Add more detectors as they are refactored...
 

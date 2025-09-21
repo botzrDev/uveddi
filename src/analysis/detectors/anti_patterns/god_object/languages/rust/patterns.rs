@@ -1,12 +1,12 @@
 //! Rust pattern detection
 
+use super::super::super::config::GodObjectConfig;
+use super::super::super::detector::DetectedPattern;
+use super::queries::{RUST_DERIVE_QUERY, RUST_USE_QUERY};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::error::ErrorHelpers;
-use super::super::super::config::GodObjectConfig;
-use super::super::super::detector::DetectedPattern;
-use super::queries::{RUST_USE_QUERY, RUST_DERIVE_QUERY};
 use std::collections::HashMap;
 
 /// Rust pattern detector
@@ -23,9 +23,10 @@ impl<'a> RustPatternDetector<'a> {
     pub fn analyze_imports(&self, parsed_file: &ParsedFile) -> Result<Vec<String>, AnalysisError> {
         let mut detected_frameworks = Vec::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            ErrorHelpers::ast_error("import analysis")
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("import analysis"))?;
         let language = tree.language();
 
         let query = Query::new(&language, RUST_USE_QUERY)
@@ -53,12 +54,16 @@ impl<'a> RustPatternDetector<'a> {
     }
 
     /// Analyze derive macros for DTO pattern detection
-    pub fn analyze_derive_macros(&self, parsed_file: &ParsedFile) -> Result<HashMap<String, Vec<String>>, AnalysisError> {
+    pub fn analyze_derive_macros(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<HashMap<String, Vec<String>>, AnalysisError> {
         let mut derive_attributes: HashMap<String, Vec<String>> = HashMap::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            ErrorHelpers::ast_error("derive analysis")
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("derive analysis"))?;
         let language = tree.language();
 
         let derive_query = Query::new(&language, RUST_DERIVE_QUERY)

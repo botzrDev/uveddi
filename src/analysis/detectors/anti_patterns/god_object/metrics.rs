@@ -1,10 +1,10 @@
 //! Metrics calculation for God Object detection
 
+use super::detector::ComplexityMetrics;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::error::ErrorHelpers;
-use super::detector::ComplexityMetrics;
 
 // Query strings for metric calculation
 const RUST_FUNCTION_COUNT_QUERY: &str = "(function_item)";
@@ -65,9 +65,10 @@ impl MetricsCalculator {
         node: Node,
     ) -> Result<usize, AnalysisError> {
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            ErrorHelpers::ast_error("method count calculation")
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("method count calculation"))?;
         let language = tree.language();
 
         let query_str = match parsed_file.language {
@@ -96,9 +97,10 @@ impl MetricsCalculator {
         node: Node,
     ) -> Result<usize, AnalysisError> {
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            ErrorHelpers::ast_error("field count calculation")
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("field count calculation"))?;
         let language = tree.language();
 
         let query_str = match parsed_file.language {
@@ -155,10 +157,7 @@ impl MetricsCalculator {
     }
 
     /// Calculate a simplified LCOM4 score for cohesion analysis
-    pub fn calculate_lcom4(
-        parsed_file: &ParsedFile,
-        node: Node,
-    ) -> Result<u32, AnalysisError> {
+    pub fn calculate_lcom4(parsed_file: &ParsedFile, node: Node) -> Result<u32, AnalysisError> {
         // Simplified implementation - in practice, you'd want sophisticated analysis
         let method_count = Self::calculate_method_count(parsed_file, node)?;
 
@@ -201,10 +200,10 @@ impl MetricsCalculator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::analysis::cache::wrappers::ArchivableSystemTime;
     use std::path::PathBuf;
     use std::sync::Arc;
     use std::time::SystemTime;
-    use crate::analysis::cache::wrappers::ArchivableSystemTime;
 
     fn create_test_parsed_file(source: &str, language: SourceLanguage) -> ParsedFile {
         ParsedFile {

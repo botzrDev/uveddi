@@ -29,7 +29,8 @@ impl ImportAnalyzer {
         source: &str,
         language: SourceLanguage,
     ) -> Result<Vec<Dependency>, AnalysisError> {
-        self.detector.analyze_imports(file_path, tree, source, language)
+        self.detector
+            .analyze_imports(file_path, tree, source, language)
     }
 
     /// Detect wildcard imports which can create tight coupling
@@ -40,7 +41,8 @@ impl ImportAnalyzer {
         source: &str,
         language: SourceLanguage,
     ) -> Result<Vec<Dependency>, AnalysisError> {
-        self.wildcard_analyzer.detect_wildcard_imports(file_path, tree, source, language)
+        self.wildcard_analyzer
+            .detect_wildcard_imports(file_path, tree, source, language)
     }
 
     /// Detect unused imports that increase coupling without benefit
@@ -51,7 +53,8 @@ impl ImportAnalyzer {
         source: &str,
         language: SourceLanguage,
     ) -> Result<Vec<String>, AnalysisError> {
-        self.detector.detect_unused_imports(file_path, tree, source, language)
+        self.detector
+            .detect_unused_imports(file_path, tree, source, language)
     }
 }
 

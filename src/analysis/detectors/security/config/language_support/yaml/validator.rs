@@ -3,12 +3,12 @@
 //! This module provides the main analyzer implementation for YAML and JSON
 //! configuration files with comprehensive security validation.
 
-use crate::analysis::AnalysisError;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::{ConfigIssue, ConfigSeverity, ConfigType};
-use super::super::{LanguageAnalyzer, utils};
+use super::super::{utils, LanguageAnalyzer};
 use super::parser::YamlParser;
 use super::patterns::YamlPatternMatcher;
+use crate::analysis::AnalysisError;
 use serde_yaml::Value as YamlValue;
 
 /// Main analyzer for YAML and JSON configuration files
@@ -53,7 +53,11 @@ impl LanguageAnalyzer for YamlAnalyzer {
 
 impl YamlAnalyzer {
     /// Analyze the structural aspects of the configuration
-    fn analyze_structure(&self, value: &YamlValue, _content: &str) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn analyze_structure(
+        &self,
+        value: &YamlValue,
+        _content: &str,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Check for overly complex structures
@@ -104,12 +108,8 @@ impl YamlAnalyzer {
     /// Count the total number of nodes in the structure
     fn count_nodes(value: &YamlValue) -> usize {
         match value {
-            YamlValue::Mapping(map) => {
-                1 + map.values().map(Self::count_nodes).sum::<usize>()
-            }
-            YamlValue::Sequence(seq) => {
-                1 + seq.iter().map(Self::count_nodes).sum::<usize>()
-            }
+            YamlValue::Mapping(map) => 1 + map.values().map(Self::count_nodes).sum::<usize>(),
+            YamlValue::Sequence(seq) => 1 + seq.iter().map(Self::count_nodes).sum::<usize>(),
             _ => 1,
         }
     }
@@ -121,11 +121,17 @@ impl YamlAnalyzer {
         Ok(issues)
     }
 
-    fn check_duplicate_keys_recursive(&self, value: &YamlValue, path: &str, issues: &mut Vec<ConfigIssue>) {
+    fn check_duplicate_keys_recursive(
+        &self,
+        value: &YamlValue,
+        path: &str,
+        issues: &mut Vec<ConfigIssue>,
+    ) {
         match value {
             YamlValue::Mapping(map) => {
                 // Check for case-insensitive duplicates
-                let mut seen_keys: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+                let mut seen_keys: std::collections::HashMap<String, String> =
+                    std::collections::HashMap::new();
 
                 for key in map.keys() {
                     if let Some(key_str) = key.as_str() {
@@ -141,7 +147,10 @@ impl YamlAnalyzer {
                                 issues.push(utils::create_config_issue(
                                     ConfigSeverity::Medium,
                                     "Case-Insensitive Duplicate Keys",
-                                    format!("Keys '{}' and '{}' differ only in case at path: {}", existing_key, key_str, current_path),
+                                    format!(
+                                        "Keys '{}' and '{}' differ only in case at path: {}",
+                                        existing_key, key_str, current_path
+                                    ),
                                     None,
                                     "Use consistent key naming to avoid confusion",
                                     vec!["structure".to_string(), "naming".to_string()],

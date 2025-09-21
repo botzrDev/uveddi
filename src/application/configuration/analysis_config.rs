@@ -267,7 +267,10 @@ impl AnalysisConfig {
         if let Some(profile) = self.memory_profile.as_deref() {
             if !matches!(profile, "small" | "default" | "large") {
                 return Err(UveddiError::config_error(
-                    &format!("Invalid memory profile '{}', must be one of: small, default, large", profile),
+                    &format!(
+                        "Invalid memory profile '{}', must be one of: small, default, large",
+                        profile
+                    ),
                     "memory configuration",
                 ));
             }

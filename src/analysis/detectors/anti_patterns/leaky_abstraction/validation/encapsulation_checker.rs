@@ -1,11 +1,11 @@
 //! Encapsulation validation for leaky abstraction detection.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
-};
 
 /// Validates encapsulation strength and detects encapsulation violations.
 pub struct EncapsulationChecker;
@@ -127,12 +127,11 @@ impl EncapsulationChecker {
 
     /// Checks if a field declaration violates encapsulation.
     pub fn is_encapsulation_violating_field(&self, field_decl: &str, visibility: &str) -> bool {
-        visibility == "pub" && (
-            field_decl.contains("Vec<") ||
-            field_decl.contains("HashMap<") ||
-            field_decl.contains("internal") ||
-            field_decl.contains("impl")
-        )
+        visibility == "pub"
+            && (field_decl.contains("Vec<")
+                || field_decl.contains("HashMap<")
+                || field_decl.contains("internal")
+                || field_decl.contains("impl"))
     }
 
     /// Helper function to create an architectural issue.

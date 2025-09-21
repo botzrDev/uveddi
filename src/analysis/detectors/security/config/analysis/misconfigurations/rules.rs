@@ -3,8 +3,8 @@
 //! This module defines rules for detecting various security misconfigurations
 //! in configuration files.
 
-use crate::analysis::AnalysisError;
 use super::super::super::types::ConfigSeverity;
+use crate::analysis::AnalysisError;
 use regex::Regex;
 use serde_yaml::Value as YamlValue;
 
@@ -24,7 +24,10 @@ pub enum MisconfigurationPattern {
     /// Simple regex pattern matching
     Regex(Regex),
     /// Key-value pattern matching
-    KeyValue { key_pattern: Regex, value_pattern: Option<Regex> },
+    KeyValue {
+        key_pattern: Regex,
+        value_pattern: Option<Regex>,
+    },
     /// Complex structured pattern matching
     Structured(Box<dyn Fn(&YamlValue) -> bool + Send + Sync>),
 }
@@ -202,7 +205,10 @@ mod tests {
     #[test]
     fn test_rule_properties() {
         let rules = MisconfigurationRule::build_default_rules().unwrap();
-        let debug_rule = rules.iter().find(|r| r.name == "Debug Mode Enabled").unwrap();
+        let debug_rule = rules
+            .iter()
+            .find(|r| r.name == "Debug Mode Enabled")
+            .unwrap();
 
         assert_eq!(debug_rule.severity, ConfigSeverity::Medium);
         assert_eq!(debug_rule.cwe_id, Some(489));

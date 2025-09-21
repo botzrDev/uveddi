@@ -94,7 +94,11 @@ impl IssueEvaluator {
             }
         }
 
-        debug!("Evaluated {} coupling issues for {:?}", issues.len(), language);
+        debug!(
+            "Evaluated {} coupling issues for {:?}",
+            issues.len(),
+            language
+        );
         issues
     }
 

@@ -209,7 +209,12 @@ impl SqlInjectionDetector {
         ]
     }
 
-    fn analyze_line(&self, line: &str, line_number: usize, patterns: &[SqlInjectionPattern]) -> Vec<OwaspVulnerability> {
+    fn analyze_line(
+        &self,
+        line: &str,
+        line_number: usize,
+        patterns: &[SqlInjectionPattern],
+    ) -> Vec<OwaspVulnerability> {
         let mut vulnerabilities = Vec::new();
 
         for pattern in patterns {
@@ -222,11 +227,15 @@ impl SqlInjectionDetector {
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();
-                    metadata.add_metadata("injection_type".to_string(), pattern.injection_type.description().to_string());
+                    metadata.add_metadata(
+                        "injection_type".to_string(),
+                        pattern.injection_type.description().to_string(),
+                    );
                     metadata.add_metadata("context".to_string(), pattern.context.clone());
                     metadata.add_metadata("pattern_matched".to_string(), pattern.pattern.clone());
 
-                    let remediation = Self::generate_remediation(&pattern.injection_type, &pattern.context);
+                    let remediation =
+                        Self::generate_remediation(&pattern.injection_type, &pattern.context);
 
                     let vulnerability = OwaspVulnerability::new(
                         OwaspCategory::Injection,
@@ -260,13 +269,22 @@ impl SqlInjectionDetector {
         };
 
         let context_advice = match context {
-            c if c.contains("string") => " Avoid string concatenation and formatting in SQL queries.",
-            c if c.contains("template") => " Use parameterized queries instead of template literals.",
-            c if c.contains("NoSQL") => " Use proper NoSQL query builders and avoid dynamic query construction.",
+            c if c.contains("string") => {
+                " Avoid string concatenation and formatting in SQL queries."
+            }
+            c if c.contains("template") => {
+                " Use parameterized queries instead of template literals."
+            }
+            c if c.contains("NoSQL") => {
+                " Use proper NoSQL query builders and avoid dynamic query construction."
+            }
             _ => "",
         };
 
-        format!("{}{} Consider using an ORM or query builder library for additional safety.", base_advice, context_advice)
+        format!(
+            "{}{} Consider using an ORM or query builder library for additional safety.",
+            base_advice, context_advice
+        )
     }
 }
 
@@ -323,8 +341,12 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 2);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("SELECT")));
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("UPDATE")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("SELECT")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("UPDATE")));
     }
 
     #[tokio::test]
@@ -344,7 +366,9 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 2);
-        assert!(vulnerabilities.iter().all(|v| v.severity == SecuritySeverity::Critical));
+        assert!(vulnerabilities
+            .iter()
+            .all(|v| v.severity == SecuritySeverity::Critical));
     }
 
     #[tokio::test]
@@ -364,16 +388,18 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 1);
-        assert!(vulnerabilities.iter().any(|v|
-            v.metadata.get_metadata("injection_type").unwrap().contains("NoSQL")
-        ));
+        assert!(vulnerabilities.iter().any(|v| v
+            .metadata
+            .get_metadata("injection_type")
+            .unwrap()
+            .contains("NoSQL")));
     }
 
     #[test]
     fn test_remediation_generation() {
         let remediation = SqlInjectionDetector::generate_remediation(
             &SqlInjectionType::Classical,
-            "String concatenation"
+            "String concatenation",
         );
         assert!(remediation.contains("parameterized queries"));
         assert!(remediation.contains("string concatenation"));

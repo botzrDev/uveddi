@@ -59,7 +59,8 @@ pub struct QueryInferenceResult {
     pub relevant_facts: Vec<InferredFact>,
     pub inferred_relationships: Vec<CodeRelationship>,
     pub confidence_score: f64,
-    pub correlations: Vec<crate::analysis::detectors::security::knowledge_graph::types::ArchitecturalCorrelation>,
+    pub correlations:
+        Vec<crate::analysis::detectors::security::knowledge_graph::types::ArchitecturalCorrelation>,
 }
 
 /// Inferred fact from reasoning

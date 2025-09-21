@@ -95,8 +95,12 @@ impl DeadCodeDetector {
         AnalysisOrchestrator::mark_reachable_symbols(&mut symbols, &references, entry_points);
 
         // Perform analysis
-        let issues =
-            AnalysisOrchestrator::analyze(symbols.clone(), references.clone(), parsed_file.language).await?;
+        let issues = AnalysisOrchestrator::analyze(
+            symbols.clone(),
+            references.clone(),
+            parsed_file.language,
+        )
+        .await?;
 
         // Validate issues
         let validated_issues = ValidationOrchestrator::validate(issues, &symbols).await?;

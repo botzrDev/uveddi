@@ -38,7 +38,9 @@ impl RefactoringSuggester {
                     "Cyclomatic complexity is {} (threshold: {}). Simplify conditional logic.",
                     method.cyclomatic_complexity, thresholds.max_cyclomatic_complexity
                 ),
-                technique: "Use polymorphism, strategy pattern, or guard clauses to reduce complexity".to_string(),
+                technique:
+                    "Use polymorphism, strategy pattern, or guard clauses to reduce complexity"
+                        .to_string(),
                 estimated_effort: EstimatedEffort::High,
             });
         }
@@ -52,7 +54,9 @@ impl RefactoringSuggester {
                     "Maximum nesting depth is {} (threshold: {}). Flatten nested conditions.",
                     method.max_nesting_depth, thresholds.max_nesting_depth
                 ),
-                technique: "Use guard clauses, early returns, or continue statements to reduce nesting".to_string(),
+                technique:
+                    "Use guard clauses, early returns, or continue statements to reduce nesting"
+                        .to_string(),
                 estimated_effort: EstimatedEffort::Low,
             });
         }
@@ -66,7 +70,9 @@ impl RefactoringSuggester {
                     "Method has {} parameters (threshold: {}). Consider using a parameter object.",
                     method.parameter_count, thresholds.max_parameters
                 ),
-                technique: "Group related parameters into a struct/class or use a configuration object".to_string(),
+                technique:
+                    "Group related parameters into a struct/class or use a configuration object"
+                        .to_string(),
                 estimated_effort: EstimatedEffort::Medium,
             });
         }
@@ -158,7 +164,8 @@ impl RefactoringSuggester {
     ) -> RefactoringPlan {
         let suggestions = Self::get_prioritized_suggestions(method, thresholds);
 
-        let total_effort = suggestions.iter()
+        let total_effort = suggestions
+            .iter()
             .map(|s| s.estimated_effort.to_hours())
             .sum();
 
@@ -173,11 +180,14 @@ impl RefactoringSuggester {
     }
 
     /// Group suggestions into logical phases
-    fn group_suggestions_into_phases(suggestions: &[RefactoringSuggestion]) -> Vec<RefactoringPhase> {
+    fn group_suggestions_into_phases(
+        suggestions: &[RefactoringSuggestion],
+    ) -> Vec<RefactoringPhase> {
         let mut phases = Vec::new();
 
         // Phase 1: Quick wins (low effort, immediate improvement)
-        let quick_wins: Vec<_> = suggestions.iter()
+        let quick_wins: Vec<_> = suggestions
+            .iter()
             .filter(|s| s.estimated_effort == EstimatedEffort::Low)
             .cloned()
             .collect();
@@ -191,7 +201,8 @@ impl RefactoringSuggester {
         }
 
         // Phase 2: Structure improvements (medium effort)
-        let structure_improvements: Vec<_> = suggestions.iter()
+        let structure_improvements: Vec<_> = suggestions
+            .iter()
             .filter(|s| s.estimated_effort == EstimatedEffort::Medium)
             .cloned()
             .collect();
@@ -205,7 +216,8 @@ impl RefactoringSuggester {
         }
 
         // Phase 3: Major refactoring (high effort)
-        let major_refactoring: Vec<_> = suggestions.iter()
+        let major_refactoring: Vec<_> = suggestions
+            .iter()
             .filter(|s| s.estimated_effort == EstimatedEffort::High)
             .cloned()
             .collect();

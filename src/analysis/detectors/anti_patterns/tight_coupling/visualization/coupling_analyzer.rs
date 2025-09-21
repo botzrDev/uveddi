@@ -41,23 +41,25 @@ impl CouplingAnalyzer {
         // Group dependencies by module
         for dep in dependencies {
             let module_name = self.matrix_builder.extract_module_name(&dep.from_component);
-            module_deps.entry(module_name).or_insert_with(Vec::new).push(dep);
+            module_deps
+                .entry(module_name)
+                .or_insert_with(Vec::new)
+                .push(dep);
         }
 
         let mut module_data = Vec::new();
 
         for (module_name, deps) in module_deps {
-            let (internal_coupling, external_coupling) = self.calculate_module_coupling_metrics(&deps);
+            let (internal_coupling, external_coupling) =
+                self.calculate_module_coupling_metrics(&deps);
             let coupling_ratio = if internal_coupling > 0.0 {
                 external_coupling / internal_coupling
             } else {
                 external_coupling
             };
 
-            let components: Vec<ComponentNode> = deps
-                .iter()
-                .map(|d| d.from_component.clone())
-                .collect();
+            let components: Vec<ComponentNode> =
+                deps.iter().map(|d| d.from_component.clone()).collect();
 
             module_data.push(ModuleCouplingData {
                 module_name,
@@ -69,7 +71,11 @@ impl CouplingAnalyzer {
         }
 
         // Sort by coupling ratio (descending)
-        module_data.sort_by(|a, b| b.coupling_ratio.partial_cmp(&a.coupling_ratio).unwrap_or(std::cmp::Ordering::Equal));
+        module_data.sort_by(|a, b| {
+            b.coupling_ratio
+                .partial_cmp(&a.coupling_ratio)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         module_data
     }

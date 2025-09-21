@@ -161,10 +161,16 @@ impl GodObjectConfig {
         // Check that thresholds are reasonable
         for (language, threshold) in &self.method_thresholds {
             if *threshold == 0 {
-                return Err(format!("Method threshold for {:?} cannot be zero", language));
+                return Err(format!(
+                    "Method threshold for {:?} cannot be zero",
+                    language
+                ));
             }
             if *threshold > 1000 {
-                return Err(format!("Method threshold for {:?} is unreasonably high: {}", language, threshold));
+                return Err(format!(
+                    "Method threshold for {:?} is unreasonably high: {}",
+                    language, threshold
+                ));
             }
         }
 
@@ -173,7 +179,10 @@ impl GodObjectConfig {
                 return Err(format!("Field threshold for {:?} cannot be zero", language));
             }
             if *threshold > 1000 {
-                return Err(format!("Field threshold for {:?} is unreasonably high: {}", language, threshold));
+                return Err(format!(
+                    "Field threshold for {:?} is unreasonably high: {}",
+                    language, threshold
+                ));
             }
         }
 
@@ -221,7 +230,9 @@ mod tests {
         assert!(config.validate().is_ok());
 
         let mut invalid_config = GodObjectConfig::default();
-        invalid_config.method_thresholds.insert(SourceLanguage::Rust, 0);
+        invalid_config
+            .method_thresholds
+            .insert(SourceLanguage::Rust, 0);
         assert!(invalid_config.validate().is_err());
     }
 }

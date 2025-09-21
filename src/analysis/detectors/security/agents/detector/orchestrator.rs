@@ -3,18 +3,23 @@
 //! This module implements the SecurityOrchestrator that coordinates security analysis
 //! through a multi-agent architecture with task decomposition and result synthesis.
 
+use super::super::analysis::{
+    AgentDetector, AnalysisConfig, AnalysisModule, BehaviorAnalyzer,
+    PatternMatcher as AnalysisPatternMatcher,
+};
+use super::super::config::{AgentConfig, MultiAgentConfig};
+use super::super::language_support::{get_language_analyzer, LanguageAgentAnalyzer};
+use super::super::patterns::{
+    AgentPatternDatabase, MaliciousPatternDatabase, PatternConfig, PatternMatcher,
+};
+use super::super::types::*;
+use super::agents::{ConfigAnalysisAgent, DependencyAgent, TaintAnalysisAgent, ValidationAgent};
 use crate::analysis::detectors::security::core::{
     SecurityAnalysisResult, SecurityContext, VulnerabilityDatabase,
 };
 use crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph;
 use crate::analysis::detectors::security::owasp::OwaspVulnerability;
 use crate::analysis::AnalysisError;
-use super::super::config::{AgentConfig, MultiAgentConfig};
-use super::super::types::*;
-use super::super::analysis::{AgentDetector, AnalysisConfig, AnalysisModule, BehaviorAnalyzer, PatternMatcher as AnalysisPatternMatcher};
-use super::super::language_support::{get_language_analyzer, LanguageAgentAnalyzer};
-use super::super::patterns::{AgentPatternDatabase, MaliciousPatternDatabase, PatternConfig, PatternMatcher};
-use super::agents::{TaintAnalysisAgent, ConfigAnalysisAgent, DependencyAgent, ValidationAgent};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -86,7 +91,8 @@ impl SecurityOrchestrator {
                 self.message_tx.clone(),
                 self.knowledge_graph.clone(),
             )?;
-            self.agents.insert("TaintAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("TaintAgent".to_string(), Box::new(agent));
         }
 
         if self.config.enable_config_agent {
@@ -95,7 +101,8 @@ impl SecurityOrchestrator {
                 self.message_tx.clone(),
                 self.knowledge_graph.clone(),
             )?;
-            self.agents.insert("ConfigAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("ConfigAgent".to_string(), Box::new(agent));
         }
 
         if self.config.enable_dependency_agent {
@@ -104,7 +111,8 @@ impl SecurityOrchestrator {
                 self.message_tx.clone(),
                 self.vulnerability_db.clone(),
             )?;
-            self.agents.insert("DependencyAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("DependencyAgent".to_string(), Box::new(agent));
         }
 
         if self.config.enable_validation_agent {
@@ -112,7 +120,8 @@ impl SecurityOrchestrator {
                 AgentConfig::new("ValidationAgent".to_string()),
                 self.message_tx.clone(),
             )?;
-            self.agents.insert("ValidationAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("ValidationAgent".to_string(), Box::new(agent));
         }
 
         info!("Initialized {} agents", self.agents.len());
@@ -125,7 +134,10 @@ impl SecurityOrchestrator {
         &self,
         context: &SecurityContext,
     ) -> Result<SecurityAnalysisResult, AnalysisError> {
-        info!("Starting multi-agent security analysis for file: {:?}", context.file_path);
+        info!(
+            "Starting multi-agent security analysis for file: {:?}",
+            context.file_path
+        );
 
         let _analysis_id = Uuid::new_v4().to_string();
 
@@ -190,7 +202,9 @@ impl SecurityOrchestrator {
 
         // Synthesize agent results
         let agent_result = self.synthesize_results(agent_results, context).await?;
-        final_result.vulnerabilities.extend(agent_result.vulnerabilities);
+        final_result
+            .vulnerabilities
+            .extend(agent_result.vulnerabilities);
 
         // Apply deduplication and final filtering
         final_result = self.deduplicate_and_filter(final_result).await?;
@@ -202,9 +216,13 @@ impl SecurityOrchestrator {
         Ok(final_result)
     }
 
-    fn convert_issues_to_vulnerabilities(&self, issues: Vec<crate::analysis::detectors::security::types::SecurityIssue>) -> Vec<OwaspVulnerability> {
-        issues.into_iter().map(|issue| {
-            OwaspVulnerability {
+    fn convert_issues_to_vulnerabilities(
+        &self,
+        issues: Vec<crate::analysis::detectors::security::types::SecurityIssue>,
+    ) -> Vec<OwaspVulnerability> {
+        issues
+            .into_iter()
+            .map(|issue| OwaspVulnerability {
                 category: crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
                 issue_type: issue.issue_type,
                 title: issue.title,
@@ -223,12 +241,18 @@ impl SecurityOrchestrator {
                 },
                 remediation: issue.remediation,
                 metadata: issue.metadata,
-                architectural_correlation: issue.correlation_id.map(|id| vec![id]).unwrap_or_default(),
-            }
-        }).collect()
+                architectural_correlation: issue
+                    .correlation_id
+                    .map(|id| vec![id])
+                    .unwrap_or_default(),
+            })
+            .collect()
     }
 
-    async fn decompose_analysis_tasks(&self, context: &SecurityContext) -> Result<Vec<SubTask>, AnalysisError> {
+    async fn decompose_analysis_tasks(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SubTask>, AnalysisError> {
         let mut subtasks = Vec::new();
 
         // Always include OWASP analysis as it's comprehensive
@@ -274,22 +298,47 @@ impl SecurityOrchestrator {
     }
 
     fn is_configuration_file(&self, context: &SecurityContext) -> bool {
-        let file_name = context.file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let file_name = context
+            .file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
         matches!(
             file_name,
-            "config.toml" | "Cargo.toml" | "package.json" | "requirements.txt" | "settings.py" | "Dockerfile"
-        ) || file_name.ends_with(".toml") || file_name.ends_with(".json") || file_name.ends_with(".yml") || file_name.ends_with(".yaml")
+            "config.toml"
+                | "Cargo.toml"
+                | "package.json"
+                | "requirements.txt"
+                | "settings.py"
+                | "Dockerfile"
+        ) || file_name.ends_with(".toml")
+            || file_name.ends_with(".json")
+            || file_name.ends_with(".yml")
+            || file_name.ends_with(".yaml")
     }
 
     fn is_dependency_file(&self, context: &SecurityContext) -> bool {
-        let file_name = context.file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let file_name = context
+            .file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
         matches!(
             file_name,
-            "Cargo.toml" | "Cargo.lock" | "package.json" | "package-lock.json" | "requirements.txt" | "Pipfile" | "Pipfile.lock"
+            "Cargo.toml"
+                | "Cargo.lock"
+                | "package.json"
+                | "package-lock.json"
+                | "requirements.txt"
+                | "Pipfile"
+                | "Pipfile.lock"
         )
     }
 
-    async fn execute_subtask(&self, subtask: SubTask) -> Result<tokio::task::JoinHandle<Result<AgentResult, AnalysisError>>, AnalysisError> {
+    async fn execute_subtask(
+        &self,
+        subtask: SubTask,
+    ) -> Result<tokio::task::JoinHandle<Result<AgentResult, AnalysisError>>, AnalysisError> {
         let task_metadata = TaskMetadata {
             task_id: subtask.task_id.clone(),
             task_type: subtask.task_type.clone(),
@@ -313,7 +362,9 @@ impl SecurityOrchestrator {
                     let context = subtask.context.clone();
                     tokio::spawn(async move { agent.execute_task(task_id, context).await })
                 } else {
-                    return Err(AnalysisError::DetectionError("TaintAgent not available".to_string()));
+                    return Err(AnalysisError::DetectionError(
+                        "TaintAgent not available".to_string(),
+                    ));
                 }
             }
             TaskType::ConfigurationAnalysis => {
@@ -322,45 +373,56 @@ impl SecurityOrchestrator {
                     let context = subtask.context.clone();
                     tokio::spawn(async move { agent.execute_task(task_id, context).await })
                 } else {
-                    return Err(AnalysisError::DetectionError("ConfigAgent not available".to_string()));
+                    return Err(AnalysisError::DetectionError(
+                        "ConfigAgent not available".to_string(),
+                    ));
                 }
             }
             _ => {
-                return Err(AnalysisError::DetectionError(format!("Unsupported task type: {:?}", subtask.task_type)));
+                return Err(AnalysisError::DetectionError(format!(
+                    "Unsupported task type: {:?}",
+                    subtask.task_type
+                )));
             }
         };
 
         Ok(handle)
     }
 
-    async fn synthesize_results(&self, agent_results: Vec<AgentResult>, _context: &SecurityContext) -> Result<SecurityAnalysisResult, AnalysisError> {
+    async fn synthesize_results(
+        &self,
+        agent_results: Vec<AgentResult>,
+        _context: &SecurityContext,
+    ) -> Result<SecurityAnalysisResult, AnalysisError> {
         let mut final_result = SecurityAnalysisResult::new();
 
         for result in agent_results {
             match result {
                 AgentResult::TaintAnalysis(issues) => {
-                    final_result.vulnerabilities.extend(issues.into_iter().map(|issue| {
-                        OwaspVulnerability {
-                            category: crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
-                            issue_type: issue.issue_type,
-                            title: issue.title,
-                            description: issue.description,
-                            severity: issue.severity,
-                            confidence_score: issue.confidence_score,
-                            location: crate::analysis::detectors::security::types::SecurityLocation {
-                                file_path: issue.location.file_path,
-                                start_line: issue.location.start_line,
-                                end_line: issue.location.end_line,
-                                start_column: issue.location.start_column,
-                                end_column: issue.location.end_column,
-                                function_name: issue.location.function_name,
-                                class_name: issue.location.class_name,
-                                module_name: issue.location.module_name,
-                            },
-                            remediation: issue.remediation,
-                            metadata: issue.metadata,
-                            architectural_correlation: issue.correlation_id.map(|id| vec![id]).unwrap_or_default(),
-                        }
+                    final_result
+                        .vulnerabilities
+                        .extend(issues.into_iter().map(|issue| OwaspVulnerability {
+                        category:
+                            crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
+                        issue_type: issue.issue_type,
+                        title: issue.title,
+                        description: issue.description,
+                        severity: issue.severity,
+                        confidence_score: issue.confidence_score,
+                        location: crate::analysis::detectors::security::types::SecurityLocation {
+                            file_path: issue.location.file_path,
+                            start_line: issue.location.start_line,
+                            end_line: issue.location.end_line,
+                            start_column: issue.location.start_column,
+                            end_column: issue.location.end_column,
+                            function_name: issue.location.function_name,
+                            class_name: issue.location.class_name,
+                            module_name: issue.location.module_name,
+                        },
+                        remediation: issue.remediation,
+                        metadata: issue.metadata,
+                        architectural_correlation:
+                            issue.correlation_id.map(|id| vec![id]).unwrap_or_default(),
                     }));
                 }
                 AgentResult::OwaspAnalysis(vulnerabilities) => {
@@ -378,10 +440,15 @@ impl SecurityOrchestrator {
         Ok(final_result)
     }
 
-    async fn deduplicate_and_filter(&self, mut result: SecurityAnalysisResult) -> Result<SecurityAnalysisResult, AnalysisError> {
+    async fn deduplicate_and_filter(
+        &self,
+        mut result: SecurityAnalysisResult,
+    ) -> Result<SecurityAnalysisResult, AnalysisError> {
         // Simple deduplication based on location and issue type
         result.vulnerabilities.sort_by(|a, b| {
-            a.location.file_path.cmp(&b.location.file_path)
+            a.location
+                .file_path
+                .cmp(&b.location.file_path)
                 .then(a.location.start_line.cmp(&b.location.start_line))
                 .then(a.issue_type.to_string().cmp(&b.issue_type.to_string()))
         });
@@ -394,9 +461,14 @@ impl SecurityOrchestrator {
 
         // Filter by confidence threshold
         let min_confidence = 0.5;
-        result.vulnerabilities.retain(|v| v.confidence_score >= min_confidence);
+        result
+            .vulnerabilities
+            .retain(|v| v.confidence_score >= min_confidence);
 
-        info!("After deduplication and filtering: {} vulnerabilities remain", result.vulnerabilities.len());
+        info!(
+            "After deduplication and filtering: {} vulnerabilities remain",
+            result.vulnerabilities.len()
+        );
         Ok(result)
     }
 }

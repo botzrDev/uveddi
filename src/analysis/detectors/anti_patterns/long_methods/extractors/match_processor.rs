@@ -81,10 +81,9 @@ impl MatchProcessor {
         source: &[u8],
         file_path: &str,
     ) -> Result<Option<MethodMetrics>, AnalysisError> {
-        if let (Some(function_capture), Some(body_capture)) = (
-            query_match.captures.get(0),
-            query_match.captures.get(2),
-        ) {
+        if let (Some(function_capture), Some(body_capture)) =
+            (query_match.captures.get(0), query_match.captures.get(2))
+        {
             let function_node = function_capture.node;
             let body_node = body_capture.node;
 

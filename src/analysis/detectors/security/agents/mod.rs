@@ -45,30 +45,29 @@ pub mod types;
 // Re-export public types and interfaces
 pub use config::{AgentConfig, MultiAgentConfig};
 pub use detector::{
-    SecurityOrchestrator, TaintAnalysisAgent, ConfigAnalysisAgent,
-    DependencyAgent, ValidationAgent
+    ConfigAnalysisAgent, DependencyAgent, SecurityOrchestrator, TaintAnalysisAgent, ValidationAgent,
 };
 pub use types::{
-    AgentMessage, AgentResult, TaskType, SecurityAgent, SubTask, TaskMetadata, TaskStatus,
-    ValidationReport, AiEnhancementReport, CorrelationReport, AgentBehaviorPattern,
-    MaliciousAgentDetection
+    AgentBehaviorPattern, AgentMessage, AgentResult, AiEnhancementReport, CorrelationReport,
+    MaliciousAgentDetection, SecurityAgent, SubTask, TaskMetadata, TaskStatus, TaskType,
+    ValidationReport,
 };
 
 // Re-export analysis modules
 pub use analysis::{
-    AgentDetector, BehaviorAnalyzer, PatternMatcher, AnalysisModule, AnalysisConfig
+    AgentDetector, AnalysisConfig, AnalysisModule, BehaviorAnalyzer, PatternMatcher,
 };
 
 // Re-export language support
 pub use language_support::{
-    LanguageAgentAnalyzer, RustAgentAnalyzer, PythonAgentAnalyzer, JavaScriptAgentAnalyzer,
-    get_language_analyzer
+    get_language_analyzer, JavaScriptAgentAnalyzer, LanguageAgentAnalyzer, PythonAgentAnalyzer,
+    RustAgentAnalyzer,
 };
 
 // Re-export pattern matching
 pub use patterns::{
-    AgentPattern, AgentPatternDatabase, MaliciousPattern, MaliciousPatternDatabase,
-    PatternMatcher as PatternMatcherTrait, PatternConfig, PatternMatch
+    AgentPattern, AgentPatternDatabase, MaliciousPattern, MaliciousPatternDatabase, PatternConfig,
+    PatternMatch, PatternMatcher as PatternMatcherTrait,
 };
 
 use crate::analysis::detectors::security::core::{SecurityAnalysisResult, SecurityContext};
@@ -81,10 +80,10 @@ pub async fn analyze_with_agents(
 ) -> Result<SecurityAnalysisResult, AnalysisError> {
     // Create knowledge graph and vulnerability database
     let knowledge_graph = std::sync::Arc::new(
-        crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph::new()?
+        crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph::new()?,
     );
     let vulnerability_db = std::sync::Arc::new(
-        crate::analysis::detectors::security::core::VulnerabilityDatabase::new()?
+        crate::analysis::detectors::security::core::VulnerabilityDatabase::new()?,
     );
 
     // Create orchestrator
@@ -116,10 +115,11 @@ mod tests {
     async fn test_orchestrator_creation() {
         let config = MultiAgentConfig::development();
         let knowledge_graph = std::sync::Arc::new(
-            crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph::new().unwrap()
+            crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph::new()
+                .unwrap(),
         );
         let vulnerability_db = std::sync::Arc::new(
-            crate::analysis::detectors::security::core::VulnerabilityDatabase::new().unwrap()
+            crate::analysis::detectors::security::core::VulnerabilityDatabase::new().unwrap(),
         );
 
         let orchestrator = SecurityOrchestrator::new(config, knowledge_graph, vulnerability_db);

@@ -59,7 +59,10 @@ impl RustAgentAnalyzer {
     }
 
     /// Analyze Rust-specific agent patterns
-    async fn analyze_rust_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_rust_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -78,7 +81,10 @@ impl RustAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_unsafe_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_unsafe_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -88,7 +94,8 @@ impl RustAgentAnalyzer {
                     context.file_path.clone(),
                     (line_num + 1) as i32,
                     (line_num + 1) as i32,
-                ).with_columns(0, line.len() as i32);
+                )
+                .with_columns(0, line.len() as i32);
 
                 let issue = SecurityIssue::new(
                     SecurityIssueType::PotentialMaliciousAgent,
@@ -108,7 +115,10 @@ impl RustAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_async_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_async_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -119,7 +129,8 @@ impl RustAgentAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -144,11 +155,20 @@ impl RustAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_ffi_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_ffi_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
-        let ffi_patterns = ["extern \"C\"", "libc::", "std::ffi::", "CString::", "CStr::"];
+        let ffi_patterns = [
+            "extern \"C\"",
+            "libc::",
+            "std::ffi::",
+            "CString::",
+            "CStr::",
+        ];
 
         for pattern in &ffi_patterns {
             for (line_num, line) in content.lines().enumerate() {
@@ -157,7 +177,8 @@ impl RustAgentAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -182,7 +203,10 @@ impl RustAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_macro_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_macro_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -196,7 +220,8 @@ impl RustAgentAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,

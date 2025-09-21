@@ -3,23 +3,23 @@
 //! This module provides specialized security analysis for different programming
 //! languages and frameworks.
 
-pub mod rust;
-pub mod python;
-pub mod javascript;
-pub mod web_frameworks;
 pub mod api_security;
 pub mod database_security;
+pub mod javascript;
+pub mod python;
+pub mod rust;
+pub mod web_frameworks;
 
 // Re-exports
-pub use rust::RustOwaspAnalyzer;
-pub use python::PythonOwaspAnalyzer;
-pub use javascript::JavaScriptOwaspAnalyzer;
-pub use web_frameworks::WebFrameworkAnalyzer;
 pub use api_security::ApiSecurityAnalyzer;
 pub use database_security::DatabaseSecurityAnalyzer;
+pub use javascript::JavaScriptOwaspAnalyzer;
+pub use python::PythonOwaspAnalyzer;
+pub use rust::RustOwaspAnalyzer;
+pub use web_frameworks::WebFrameworkAnalyzer;
 
-use crate::ast::SourceLanguage;
 use crate::analysis::AnalysisError;
+use crate::ast::SourceLanguage;
 
 /// Language support coordinator for OWASP analysis
 pub struct LanguageSupportCoordinator {
@@ -40,7 +40,10 @@ impl LanguageSupportCoordinator {
     pub fn supports_language(&self, language: &SourceLanguage) -> bool {
         matches!(
             language,
-            SourceLanguage::Rust | SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript
+            SourceLanguage::Rust
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 

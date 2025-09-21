@@ -177,7 +177,7 @@ mod tests {
             ConfigSeverity::High,
             0.9,
             "Hardcoded Password",
-            "Password found in configuration"
+            "Password found in configuration",
         )
         .with_location(10, 15)
         .with_snippet("password: 'secret123'")

@@ -1,6 +1,6 @@
 //! TypeScript/JavaScript-specific language support for code duplication detection
 
-use super::{LanguageSupport, FunctionSignature, CommentSyntax};
+use super::{CommentSyntax, FunctionSignature, LanguageSupport};
 use crate::analysis::detectors::anti_patterns::code_duplication::types::CodeBlock;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
@@ -14,17 +14,78 @@ impl TypeScriptLanguageSupport {
     }
 
     const KEYWORDS: &'static [&'static str] = &[
-        "function", "class", "interface", "type", "enum", "namespace", "module", "import",
-        "export", "default", "const", "let", "var", "if", "else", "switch", "case", "while",
-        "for", "do", "try", "catch", "finally", "throw", "return", "break", "continue",
-        "new", "this", "super", "extends", "implements", "static", "private", "protected",
-        "public", "readonly", "abstract", "async", "await", "yield", "typeof", "instanceof",
+        "function",
+        "class",
+        "interface",
+        "type",
+        "enum",
+        "namespace",
+        "module",
+        "import",
+        "export",
+        "default",
+        "const",
+        "let",
+        "var",
+        "if",
+        "else",
+        "switch",
+        "case",
+        "while",
+        "for",
+        "do",
+        "try",
+        "catch",
+        "finally",
+        "throw",
+        "return",
+        "break",
+        "continue",
+        "new",
+        "this",
+        "super",
+        "extends",
+        "implements",
+        "static",
+        "private",
+        "protected",
+        "public",
+        "readonly",
+        "abstract",
+        "async",
+        "await",
+        "yield",
+        "typeof",
+        "instanceof",
     ];
 
     const BUILTIN_TYPES: &'static [&'static str] = &[
-        "string", "number", "boolean", "object", "undefined", "null", "void", "any", "unknown",
-        "never", "Array", "Object", "Function", "Promise", "Date", "RegExp", "Error", "Map",
-        "Set", "WeakMap", "WeakSet", "Symbol", "BigInt", "Partial", "Required", "Readonly",
+        "string",
+        "number",
+        "boolean",
+        "object",
+        "undefined",
+        "null",
+        "void",
+        "any",
+        "unknown",
+        "never",
+        "Array",
+        "Object",
+        "Function",
+        "Promise",
+        "Date",
+        "RegExp",
+        "Error",
+        "Map",
+        "Set",
+        "WeakMap",
+        "WeakSet",
+        "Symbol",
+        "BigInt",
+        "Partial",
+        "Required",
+        "Readonly",
     ];
 }
 
@@ -99,12 +160,19 @@ impl LanguageSupport for TypeScriptLanguageSupport {
                     token.clone()
                 } else if token.chars().all(|c| c.is_numeric() || c == '.') {
                     "NUMBER".to_string()
-                } else if (token.starts_with('"') && token.ends_with('"')) ||
-                          (token.starts_with('\'') && token.ends_with('\'')) ||
-                          (token.starts_with('`') && token.ends_with('`')) {
+                } else if (token.starts_with('"') && token.ends_with('"'))
+                    || (token.starts_with('\'') && token.ends_with('\''))
+                    || (token.starts_with('`') && token.ends_with('`'))
+                {
                     "STRING".to_string()
-                } else if token.chars().next().map_or(false, |c| c.is_alphabetic() || c == '_' || c == '$') &&
-                         token.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$') {
+                } else if token
+                    .chars()
+                    .next()
+                    .map_or(false, |c| c.is_alphabetic() || c == '_' || c == '$')
+                    && token
+                        .chars()
+                        .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+                {
                     "IDENTIFIER".to_string()
                 } else {
                     token.clone()
@@ -160,10 +228,10 @@ impl LanguageSupport for TypeScriptLanguageSupport {
 
 impl TypeScriptLanguageSupport {
     fn is_function_start(&self, line: &str) -> bool {
-        line.contains("function ") ||
-        line.contains(" => ") ||
-        (line.contains("(") && line.contains(")") && line.contains("{")) ||
-        line.trim_start().starts_with("async ")
+        line.contains("function ")
+            || line.contains(" => ")
+            || (line.contains("(") && line.contains(")") && line.contains("{"))
+            || line.trim_start().starts_with("async ")
     }
 
     fn parse_function_signature(&self, line: &str) -> Option<FunctionSignature> {
@@ -174,7 +242,9 @@ impl TypeScriptLanguageSupport {
             // Traditional function declaration
             let name_start = func_pos + 9;
             if let Some(paren_pos) = trimmed[name_start..].find('(') {
-                let name = trimmed[name_start..name_start + paren_pos].trim().to_string();
+                let name = trimmed[name_start..name_start + paren_pos]
+                    .trim()
+                    .to_string();
                 return Some(FunctionSignature {
                     name,
                     parameter_types: Vec::new(),

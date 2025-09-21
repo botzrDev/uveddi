@@ -4,9 +4,7 @@
 //! to identify potential security vulnerabilities without executing the code.
 
 use super::{Scanner, UnifiedScanResult};
-use crate::analysis::detectors::security::owasp::types::{
-    OwaspCategory, OwaspVulnerability,
-};
+use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
 use crate::analysis::detectors::security::types::{
     SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
 };
@@ -43,13 +41,23 @@ pub struct StaticAnalysisScanner {
 
 impl StaticAnalysisScanner {
     pub fn new() -> Result<Self, AnalysisError> {
-        let mut language_analyzers: HashMap<SourceLanguage, Box<dyn LanguageAnalyzer>> = HashMap::new();
+        let mut language_analyzers: HashMap<SourceLanguage, Box<dyn LanguageAnalyzer>> =
+            HashMap::new();
 
         // Initialize language-specific analyzers
         language_analyzers.insert(SourceLanguage::Rust, Box::new(RustStaticAnalyzer::new()));
-        language_analyzers.insert(SourceLanguage::Python, Box::new(PythonStaticAnalyzer::new()));
-        language_analyzers.insert(SourceLanguage::JavaScript, Box::new(JavaScriptStaticAnalyzer::new()));
-        language_analyzers.insert(SourceLanguage::TypeScript, Box::new(TypeScriptStaticAnalyzer::new()));
+        language_analyzers.insert(
+            SourceLanguage::Python,
+            Box::new(PythonStaticAnalyzer::new()),
+        );
+        language_analyzers.insert(
+            SourceLanguage::JavaScript,
+            Box::new(JavaScriptStaticAnalyzer::new()),
+        );
+        language_analyzers.insert(
+            SourceLanguage::TypeScript,
+            Box::new(TypeScriptStaticAnalyzer::new()),
+        );
 
         Ok(Self { language_analyzers })
     }
@@ -106,7 +114,10 @@ impl StaticAnalysisScanner {
 impl Scanner for StaticAnalysisScanner {
     async fn scan(&self, file: &ParsedFile) -> Result<UnifiedScanResult, AnalysisError> {
         let start_time = Instant::now();
-        info!("Starting static analysis scan for: {}", file.file_path.display());
+        info!(
+            "Starting static analysis scan for: {}",
+            file.file_path.display()
+        );
 
         let mut all_vulnerabilities = Vec::new();
         let mut nodes_analyzed = 0;
@@ -119,7 +130,8 @@ impl Scanner for StaticAnalysisScanner {
         if let Some(analyzer) = self.language_analyzers.get(&file.language) {
             match analyzer.analyze(file).await {
                 Ok(mut lang_vulns) => {
-                    nodes_analyzed = lang_vulns.analysis_metadata
+                    nodes_analyzed = lang_vulns
+                        .analysis_metadata
                         .get("nodes_analyzed")
                         .and_then(|v| v.as_u64())
                         .unwrap_or(0) as usize;
@@ -135,9 +147,18 @@ impl Scanner for StaticAnalysisScanner {
         let owasp_vulnerabilities = self.convert_to_owasp(all_vulnerabilities);
 
         let mut metadata = HashMap::new();
-        metadata.insert("scanner_type".to_string(), serde_json::Value::String("static".to_string()));
-        metadata.insert("nodes_analyzed".to_string(), serde_json::Value::Number(nodes_analyzed.into()));
-        metadata.insert("language".to_string(), serde_json::Value::String(file.language.to_string()));
+        metadata.insert(
+            "scanner_type".to_string(),
+            serde_json::Value::String("static".to_string()),
+        );
+        metadata.insert(
+            "nodes_analyzed".to_string(),
+            serde_json::Value::Number(nodes_analyzed.into()),
+        );
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String(file.language.to_string()),
+        );
 
         info!(
             "Static analysis completed: {} vulnerabilities found in {}ms",
@@ -219,8 +240,14 @@ impl LanguageAnalyzer for RustStaticAnalyzer {
         }
 
         let mut metadata = HashMap::new();
-        metadata.insert("language".to_string(), serde_json::Value::String("rust".to_string()));
-        metadata.insert("nodes_analyzed".to_string(), serde_json::Value::Number(nodes_analyzed.into()));
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String("rust".to_string()),
+        );
+        metadata.insert(
+            "nodes_analyzed".to_string(),
+            serde_json::Value::Number(nodes_analyzed.into()),
+        );
 
         Ok(StaticScanResult {
             vulnerabilities,
@@ -269,8 +296,14 @@ impl LanguageAnalyzer for PythonStaticAnalyzer {
         }
 
         let mut metadata = HashMap::new();
-        metadata.insert("language".to_string(), serde_json::Value::String("python".to_string()));
-        metadata.insert("nodes_analyzed".to_string(), serde_json::Value::Number(nodes_analyzed.into()));
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String("python".to_string()),
+        );
+        metadata.insert(
+            "nodes_analyzed".to_string(),
+            serde_json::Value::Number(nodes_analyzed.into()),
+        );
 
         Ok(StaticScanResult {
             vulnerabilities,
@@ -319,8 +352,14 @@ impl LanguageAnalyzer for JavaScriptStaticAnalyzer {
         }
 
         let mut metadata = HashMap::new();
-        metadata.insert("language".to_string(), serde_json::Value::String("javascript".to_string()));
-        metadata.insert("nodes_analyzed".to_string(), serde_json::Value::Number(nodes_analyzed.into()));
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String("javascript".to_string()),
+        );
+        metadata.insert(
+            "nodes_analyzed".to_string(),
+            serde_json::Value::Number(nodes_analyzed.into()),
+        );
 
         Ok(StaticScanResult {
             vulnerabilities,
@@ -369,8 +408,14 @@ impl LanguageAnalyzer for TypeScriptStaticAnalyzer {
         }
 
         let mut metadata = HashMap::new();
-        metadata.insert("language".to_string(), serde_json::Value::String("typescript".to_string()));
-        metadata.insert("nodes_analyzed".to_string(), serde_json::Value::Number(nodes_analyzed.into()));
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String("typescript".to_string()),
+        );
+        metadata.insert(
+            "nodes_analyzed".to_string(),
+            serde_json::Value::Number(nodes_analyzed.into()),
+        );
 
         Ok(StaticScanResult {
             vulnerabilities,
@@ -403,7 +448,9 @@ mod tests {
         let file = ParsedFile {
             file_path: Arc::new(PathBuf::from("test.rs")),
             language: SourceLanguage::Rust,
-            source: Arc::new("fn test() {\n    unsafe {\n        // dangerous code\n    }\n}".to_string()),
+            source: Arc::new(
+                "fn test() {\n    unsafe {\n        // dangerous code\n    }\n}".to_string(),
+            ),
             tree: None,
             custom_ast: Arc::new(None),
             modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime::now(),
@@ -411,6 +458,9 @@ mod tests {
 
         let result = scanner.scan(&file).await.unwrap();
         assert!(!result.vulnerabilities.is_empty());
-        assert_eq!(result.vulnerabilities[0].category, OwaspCategory::SecurityMisconfiguration);
+        assert_eq!(
+            result.vulnerabilities[0].category,
+            OwaspCategory::SecurityMisconfiguration
+        );
     }
 }

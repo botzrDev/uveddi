@@ -28,17 +28,17 @@
 //! let detector = GodObjectDetector::with_config(config);
 //! ```
 
-use async_trait::async_trait;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use async_trait::async_trait;
 use tracing::{debug, info};
 
 // Public module exports
 pub mod config;
 pub mod detector;
-pub mod metrics;
 pub mod languages;
+pub mod metrics;
 pub mod reports;
 
 // Tests module
@@ -52,9 +52,7 @@ pub use reports::GodObjectReportFormatter;
 
 // Re-export language analyzers
 pub use languages::{
-    RustGodObjectAnalyzer,
-    PythonGodObjectAnalyzer,
-    JavaScriptGodObjectAnalyzer,
+    JavaScriptGodObjectAnalyzer, PythonGodObjectAnalyzer, RustGodObjectAnalyzer,
     TypeScriptGodObjectAnalyzer,
 };
 
@@ -217,7 +215,9 @@ impl AnalysisDetector for GodObjectDetector {
             parsed_file.file_path.display()
         );
 
-        let result = self.analyze_with_language_specific_analyzer(parsed_file).await;
+        let result = self
+            .analyze_with_language_specific_analyzer(parsed_file)
+            .await;
 
         match &result {
             Ok(issues) => {
@@ -281,4 +281,3 @@ impl GodObjectDetector {
         self.config.get_field_threshold(SourceLanguage::Rust) // Default to Rust
     }
 }
-

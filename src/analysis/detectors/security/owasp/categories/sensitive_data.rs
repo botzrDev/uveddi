@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -150,7 +152,8 @@ impl SensitiveDataDetector {
                 "Encrypt SSN data and limit access to authorized personnel".to_string()
             }
             SensitiveDataType::ApiKeys => {
-                "Store API keys in environment variables or secure key management systems".to_string()
+                "Store API keys in environment variables or secure key management systems"
+                    .to_string()
             }
             SensitiveDataType::DatabaseCredentials => {
                 "Use connection pooling and secure credential storage".to_string()
@@ -169,11 +172,13 @@ impl SensitiveDataDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "encrypt", "hash", "secure", "aes", "sha256", "bcrypt",
-            "vault", "keystore", "env", "config",
+            "encrypt", "hash", "secure", "aes", "sha256", "bcrypt", "vault", "keystore", "env",
+            "config",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
     }
 }
 
@@ -228,6 +233,9 @@ mod tests {
         std::fs::remove_file("test.rs").unwrap();
 
         assert!(!vulnerabilities.is_empty());
-        assert_eq!(vulnerabilities[0].category, OwaspCategory::CryptographicFailures);
+        assert_eq!(
+            vulnerabilities[0].category,
+            OwaspCategory::CryptographicFailures
+        );
     }
 }

@@ -1,15 +1,15 @@
 //! Rust language support coordination module.
 
-pub mod trait_analyzer;
 pub mod module_analyzer;
+pub mod trait_analyzer;
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::AnalysisContext;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::AnalysisContext;
 
-pub use trait_analyzer::TraitAnalyzer;
 pub use module_analyzer::ModuleAnalyzer;
+pub use trait_analyzer::TraitAnalyzer;
 
 /// Provides Rust-specific leaky abstraction detection capabilities.
 #[derive(Clone)]
@@ -36,19 +36,32 @@ impl RustLanguageSupport {
         let mut issues = Vec::new();
 
         // Analyze trait exposure and implementation details
-        issues.extend(self.trait_analyzer.analyze_trait_exposure(parsed_file, context)?);
-        issues.extend(self.trait_analyzer.analyze_impl_details(parsed_file, context)?);
+        issues.extend(
+            self.trait_analyzer
+                .analyze_trait_exposure(parsed_file, context)?,
+        );
+        issues.extend(
+            self.trait_analyzer
+                .analyze_impl_details(parsed_file, context)?,
+        );
 
         // Analyze error propagation and module privacy
-        issues.extend(self.module_analyzer.analyze_error_propagation(parsed_file, context)?);
-        issues.extend(self.module_analyzer.analyze_module_privacy(parsed_file, context)?);
+        issues.extend(
+            self.module_analyzer
+                .analyze_error_propagation(parsed_file, context)?,
+        );
+        issues.extend(
+            self.module_analyzer
+                .analyze_module_privacy(parsed_file, context)?,
+        );
 
         Ok(issues)
     }
 
     /// Extracts the module name from a use statement.
     pub fn extract_module_from_use_statement(&self, use_text: &str) -> Option<String> {
-        self.module_analyzer.extract_module_from_use_statement(use_text)
+        self.module_analyzer
+            .extract_module_from_use_statement(use_text)
     }
 }
 

@@ -7,7 +7,9 @@ use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueTy
 use crate::analysis::AnalysisError;
 use std::path::PathBuf;
 
-use super::analysis::{CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer};
+use super::analysis::{
+    CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer,
+};
 use super::config::ConfigSecurityConfig;
 use super::language_support::{EnvAnalyzer, TomlAnalyzer, YamlAnalyzer};
 use super::patterns::{PatternMatcher, SecretPatternMatcher, VulnerabilityPatternMatcher};
@@ -134,7 +136,10 @@ impl ConfigSecurityDetector {
         })
     }
 
-    fn validate_config_issues(&self, issues: Vec<ConfigIssue>) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn validate_config_issues(
+        &self,
+        issues: Vec<ConfigIssue>,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut validated = Vec::new();
 
         for issue in issues {
@@ -170,7 +175,10 @@ api:
 "#;
 
         let file_path = PathBuf::from("/test/config.yaml");
-        let issues = detector.analyze_config(&file_path, yaml_content).await.unwrap();
+        let issues = detector
+            .analyze_config(&file_path, yaml_content)
+            .await
+            .unwrap();
 
         assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.title.contains("hardcoded")));
@@ -188,7 +196,10 @@ DEBUG=true
 "#;
 
         let file_path = PathBuf::from("/test/.env");
-        let issues = detector.analyze_config(&file_path, env_content).await.unwrap();
+        let issues = detector
+            .analyze_config(&file_path, env_content)
+            .await
+            .unwrap();
 
         assert!(!issues.is_empty());
     }
@@ -199,11 +210,15 @@ DEBUG=true
         let detector = ConfigSecurityDetector::new(config).unwrap();
 
         assert_eq!(
-            detector.detect_config_type(&PathBuf::from("config.yaml")).unwrap(),
+            detector
+                .detect_config_type(&PathBuf::from("config.yaml"))
+                .unwrap(),
             ConfigType::Yaml
         );
         assert_eq!(
-            detector.detect_config_type(&PathBuf::from("Cargo.toml")).unwrap(),
+            detector
+                .detect_config_type(&PathBuf::from("Cargo.toml"))
+                .unwrap(),
             ConfigType::Toml
         );
         assert_eq!(

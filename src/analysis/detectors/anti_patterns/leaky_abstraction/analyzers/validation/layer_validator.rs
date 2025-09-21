@@ -1,11 +1,11 @@
 //! Layer dependency validation for abstraction boundary checking.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, ArchitecturalConfig, ArchitecturalLayer, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ArchitecturalConfig, ArchitecturalLayer, LeakType
-};
 
 /// Validates architectural layer dependencies.
 pub struct LayerValidator {
@@ -28,11 +28,8 @@ impl LayerValidator {
 
         if let Some(current_layer) = &context.current_layer {
             // Check for inappropriate dependencies based on architectural rules
-            let violations = self.check_layer_dependency_violations(
-                parsed_file,
-                current_layer,
-                context,
-            )?;
+            let violations =
+                self.check_layer_dependency_violations(parsed_file, current_layer, context)?;
             issues.extend(violations);
         }
 
@@ -50,13 +47,25 @@ impl LayerValidator {
 
         match parsed_file.language {
             crate::ast::SourceLanguage::Rust => {
-                issues.extend(self.check_rust_layer_violations(parsed_file, current_layer, context)?);
+                issues.extend(self.check_rust_layer_violations(
+                    parsed_file,
+                    current_layer,
+                    context,
+                )?);
             }
             crate::ast::SourceLanguage::Python => {
-                issues.extend(self.check_python_layer_violations(parsed_file, current_layer, context)?);
+                issues.extend(self.check_python_layer_violations(
+                    parsed_file,
+                    current_layer,
+                    context,
+                )?);
             }
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
-                issues.extend(self.check_js_layer_violations(parsed_file, current_layer, context)?);
+                issues.extend(self.check_js_layer_violations(
+                    parsed_file,
+                    current_layer,
+                    context,
+                )?);
             }
         }
 
@@ -79,7 +88,9 @@ impl LayerValidator {
 
         // Application layer should not depend on presentation
         if *current_layer == ArchitecturalLayer::Application {
-            issues.extend(self.detect_presentation_dependencies_in_application(parsed_file, context)?);
+            issues.extend(
+                self.detect_presentation_dependencies_in_application(parsed_file, context)?,
+            );
         }
 
         Ok(issues)
@@ -112,7 +123,10 @@ impl LayerValidator {
         let mut issues = Vec::new();
 
         // Check for DOM dependencies in business logic
-        if matches!(current_layer, ArchitecturalLayer::Domain | ArchitecturalLayer::Application) {
+        if matches!(
+            current_layer,
+            ArchitecturalLayer::Domain | ArchitecturalLayer::Application
+        ) {
             issues.extend(self.detect_dom_dependencies_in_business_logic(parsed_file, context)?);
         }
 

@@ -1,4 +1,6 @@
-use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
+use crate::analysis::graph::dependency::{
+    ComponentNode, LocalDependencyGraph, LocalDependencyType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use petgraph::visit::EdgeRef;
@@ -7,8 +9,8 @@ use std::path::Path;
 use tracing::{debug, info};
 
 use super::super::{
-    types::{Dependency, DependencyStrength},
     language_support::LanguageAnalyzer,
+    types::{Dependency, DependencyStrength},
 };
 
 /// Analyzes dependencies between components for coupling detection
@@ -35,7 +37,10 @@ impl DependencyAnalyzer {
     pub fn build_project_dependency_graph(
         &self,
         files: &[(String, ParsedFile)],
-        analyzers: &HashMap<crate::ast::tree_sitter_impl::SourceLanguage, Box<dyn LanguageAnalyzer>>,
+        analyzers: &HashMap<
+            crate::ast::tree_sitter_impl::SourceLanguage,
+            Box<dyn LanguageAnalyzer>,
+        >,
     ) -> Result<LocalDependencyGraph, AnalysisError> {
         info!("Building dependency graph for {} files", files.len());
 
@@ -44,7 +49,11 @@ impl DependencyAnalyzer {
             .iter()
             .map(|(file_path, parsed_file)| {
                 if let Some(analyzer) = analyzers.get(&parsed_file.language) {
-                    self.extract_file_dependencies(Path::new(file_path), parsed_file, analyzer.as_ref())
+                    self.extract_file_dependencies(
+                        Path::new(file_path),
+                        parsed_file,
+                        analyzer.as_ref(),
+                    )
                 } else {
                     Ok(Vec::new())
                 }
@@ -77,7 +86,10 @@ impl DependencyAnalyzer {
         &self,
         changed_files: &[(String, ParsedFile)],
         _existing_graph: &LocalDependencyGraph,
-        analyzers: &HashMap<crate::ast::tree_sitter_impl::SourceLanguage, Box<dyn LanguageAnalyzer>>,
+        analyzers: &HashMap<
+            crate::ast::tree_sitter_impl::SourceLanguage,
+            Box<dyn LanguageAnalyzer>,
+        >,
     ) -> Result<LocalDependencyGraph, AnalysisError> {
         info!(
             "Building incremental dependency graph for {} changed files",
@@ -90,7 +102,10 @@ impl DependencyAnalyzer {
     }
 
     /// Detect circular dependencies in the graph
-    pub fn detect_circular_dependencies(&self, graph: &LocalDependencyGraph) -> Vec<Vec<ComponentNode>> {
+    pub fn detect_circular_dependencies(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> Vec<Vec<ComponentNode>> {
         let mut cycles = Vec::new();
         let petgraph = graph.get_petgraph();
 
@@ -102,7 +117,13 @@ impl DependencyAnalyzer {
             if let Some(component) = graph.get_node_from_index(node_index) {
                 if !visited.contains(&node_index) {
                     let mut path = Vec::new();
-                    if self.dfs_cycle_detection(graph, node_index, &mut visited, &mut rec_stack, &mut path) {
+                    if self.dfs_cycle_detection(
+                        graph,
+                        node_index,
+                        &mut visited,
+                        &mut rec_stack,
+                        &mut path,
+                    ) {
                         cycles.push(path);
                     }
                 }

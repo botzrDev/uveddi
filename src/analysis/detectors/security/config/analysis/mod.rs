@@ -16,9 +16,9 @@ pub use defaults::DefaultsAnalyzer;
 pub use misconfigurations::MisconfigurationAnalyzer;
 pub use permissions::PermissionAnalyzer;
 
-use crate::analysis::AnalysisError;
 use super::config::ConfigSecurityConfig;
-use super::types::{ConfigIssue, ConfigAnalysisContext};
+use super::types::{ConfigAnalysisContext, ConfigIssue};
+use crate::analysis::AnalysisError;
 
 /// Orchestrates all configuration security analysis
 pub struct AnalysisOrchestrator {
@@ -108,7 +108,7 @@ impl AnalysisOrchestrator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::detectors::security::config::types::{ConfigType, ConfigSeverity};
+    use crate::analysis::detectors::security::config::types::{ConfigSeverity, ConfigType};
     use std::collections::HashMap;
 
     #[tokio::test]
@@ -132,7 +132,10 @@ server:
             metadata: HashMap::new(),
         };
 
-        let issues = orchestrator.analyze_comprehensive(content, &context).await.unwrap();
+        let issues = orchestrator
+            .analyze_comprehensive(content, &context)
+            .await
+            .unwrap();
         assert!(!issues.is_empty());
     }
 
@@ -149,7 +152,12 @@ server:
             ConfigIssue::new(ConfigSeverity::Low, 0.5, "Low severity", "Low"),
             ConfigIssue::new(ConfigSeverity::High, 0.9, "High severity", "High"),
             ConfigIssue::new(ConfigSeverity::Medium, 0.8, "Medium severity", "Medium"),
-            ConfigIssue::new(ConfigSeverity::Critical, 0.95, "Critical severity", "Critical"),
+            ConfigIssue::new(
+                ConfigSeverity::Critical,
+                0.95,
+                "Critical severity",
+                "Critical",
+            ),
         ];
 
         let filtered = orchestrator.filter_and_rank_issues(issues).unwrap();

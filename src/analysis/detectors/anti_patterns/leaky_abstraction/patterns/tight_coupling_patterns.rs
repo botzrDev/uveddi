@@ -1,11 +1,11 @@
 //! Detection of tight coupling patterns that indicate leaky abstractions.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
-};
 
 /// Detects tight coupling patterns that violate abstraction boundaries.
 pub struct TightCouplingPattern;
@@ -91,41 +91,69 @@ impl TightCouplingPattern {
     pub fn is_tight_coupling_dependency(&self, dependency: &str) -> bool {
         // Common patterns that indicate tight coupling
         let tight_coupling_indicators = [
-            "diesel::", "sqlx::", "sea_orm::",  // Database ORMs in business logic
-            "axum::", "warp::", "actix_web::",  // Web frameworks in domain
-            "tokio::", "async_std::",           // Async runtime in domain
-            "serde::", "serde_json::",          // Serialization in domain
+            "diesel::",
+            "sqlx::",
+            "sea_orm::", // Database ORMs in business logic
+            "axum::",
+            "warp::",
+            "actix_web::", // Web frameworks in domain
+            "tokio::",
+            "async_std::", // Async runtime in domain
+            "serde::",
+            "serde_json::", // Serialization in domain
         ];
 
-        tight_coupling_indicators.iter().any(|indicator| dependency.contains(indicator))
+        tight_coupling_indicators
+            .iter()
+            .any(|indicator| dependency.contains(indicator))
     }
 
     /// Checks if a type represents a framework-specific type.
     pub fn is_framework_type(&self, type_name: &str) -> bool {
         let framework_types = [
-            "Request", "Response", "HttpRequest", "HttpResponse",
-            "Model", "QuerySet", "Session", "Connection",
-            "Component", "Props", "State", "Context",
+            "Request",
+            "Response",
+            "HttpRequest",
+            "HttpResponse",
+            "Model",
+            "QuerySet",
+            "Session",
+            "Connection",
+            "Component",
+            "Props",
+            "State",
+            "Context",
         ];
 
-        framework_types.iter().any(|pattern| type_name.contains(pattern))
+        framework_types
+            .iter()
+            .any(|pattern| type_name.contains(pattern))
     }
 
     /// Checks if a method call indicates tight coupling.
     pub fn is_tight_coupling_method_call(&self, method_call: &str) -> bool {
         let coupling_methods = [
-            ".execute(", ".query(", ".fetch(",  // Direct database calls
-            ".render(", ".redirect(",           // Web framework calls
-            ".getElementById(", ".querySelector(", // DOM manipulation
+            ".execute(",
+            ".query(",
+            ".fetch(", // Direct database calls
+            ".render(",
+            ".redirect(", // Web framework calls
+            ".getElementById(",
+            ".querySelector(", // DOM manipulation
         ];
 
-        coupling_methods.iter().any(|pattern| method_call.contains(pattern))
+        coupling_methods
+            .iter()
+            .any(|pattern| method_call.contains(pattern))
     }
 
     /// Analyzes import statements for tight coupling indicators.
     pub fn analyze_import_coupling(&self, import_statement: &str) -> Option<String> {
         if self.is_tight_coupling_dependency(import_statement) {
-            Some(format!("Tight coupling detected in import: {}", import_statement))
+            Some(format!(
+                "Tight coupling detected in import: {}",
+                import_statement
+            ))
         } else {
             None
         }
@@ -136,7 +164,10 @@ impl TightCouplingPattern {
         let mut coupling_issues = Vec::new();
 
         if self.is_framework_type(signature) {
-            coupling_issues.push(format!("Framework type in function signature: {}", signature));
+            coupling_issues.push(format!(
+                "Framework type in function signature: {}",
+                signature
+            ));
         }
 
         coupling_issues

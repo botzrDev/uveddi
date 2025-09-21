@@ -4,8 +4,8 @@
 //! configuration files with proper error handling.
 
 use crate::analysis::AnalysisError;
-use serde_yaml::Value as YamlValue;
 use serde_json::Value as JsonValue;
+use serde_yaml::Value as YamlValue;
 
 /// YAML/JSON parser with error handling
 pub struct YamlParser;
@@ -20,9 +20,10 @@ impl YamlParser {
                 // If YAML parsing fails, try JSON
                 match serde_json::from_str::<JsonValue>(content) {
                     Ok(json_value) => Self::json_to_yaml(json_value),
-                    Err(_json_err) => {
-                        Err(AnalysisError::ParseError(format!("Invalid YAML/JSON: {}", yaml_err)))
-                    }
+                    Err(_json_err) => Err(AnalysisError::ParseError(format!(
+                        "Invalid YAML/JSON: {}",
+                        yaml_err
+                    ))),
                 }
             }
         }
@@ -35,7 +36,9 @@ impl YamlParser {
         } else if serde_json::from_str::<JsonValue>(content).is_ok() {
             Ok(())
         } else {
-            Err(AnalysisError::ParseError("Invalid YAML/JSON syntax".to_string()))
+            Err(AnalysisError::ParseError(
+                "Invalid YAML/JSON syntax".to_string(),
+            ))
         }
     }
 
@@ -52,15 +55,15 @@ impl YamlParser {
                 } else if let Some(f) = n.as_f64() {
                     Ok(YamlValue::Number(serde_yaml::Number::from(f)))
                 } else {
-                    Err(AnalysisError::ParseError("Invalid number format".to_string()))
+                    Err(AnalysisError::ParseError(
+                        "Invalid number format".to_string(),
+                    ))
                 }
             }
             JsonValue::String(s) => Ok(YamlValue::String(s)),
             JsonValue::Array(arr) => {
-                let yaml_seq: Result<Vec<YamlValue>, AnalysisError> = arr
-                    .into_iter()
-                    .map(Self::json_to_yaml)
-                    .collect();
+                let yaml_seq: Result<Vec<YamlValue>, AnalysisError> =
+                    arr.into_iter().map(Self::json_to_yaml).collect();
                 Ok(YamlValue::Sequence(yaml_seq?))
             }
             JsonValue::Object(obj) => {
@@ -101,8 +104,17 @@ impl YamlParser {
 
         // Skip common test/placeholder values
         let test_values = [
-            "test", "example", "demo", "placeholder", "xxx", "***",
-            "changeme", "password", "secret", "token", "key",
+            "test",
+            "example",
+            "demo",
+            "placeholder",
+            "xxx",
+            "***",
+            "changeme",
+            "password",
+            "secret",
+            "token",
+            "key",
         ];
 
         let value_lower = value.to_lowercase();
@@ -116,8 +128,8 @@ impl YamlParser {
         }
 
         // Look for characteristics of real credentials
-        let has_mixed_case = value.chars().any(|c| c.is_lowercase()) &&
-                           value.chars().any(|c| c.is_uppercase());
+        let has_mixed_case =
+            value.chars().any(|c| c.is_lowercase()) && value.chars().any(|c| c.is_uppercase());
         let has_numbers = value.chars().any(|c| c.is_numeric());
         let has_special = value.chars().any(|c| !c.is_alphanumeric());
         let reasonable_length = value.len() >= 8 && value.len() <= 128;

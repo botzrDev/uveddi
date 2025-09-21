@@ -1,16 +1,16 @@
 //! Taint sink detection modules
 
+pub mod command_sinks;
 pub mod file_sinks;
 pub mod network_sinks;
-pub mod command_sinks;
 
+pub use command_sinks::CommandSinkDetector;
 pub use file_sinks::FileSinkDetector;
 pub use network_sinks::NetworkSinkDetector;
-pub use command_sinks::CommandSinkDetector;
 
-use crate::analysis::detectors::security::taint_analysis::types::{TaintSink, SourceLocation};
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::analysis::detectors::security::taint_analysis::types::{SourceLocation, TaintSink};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// Trait for taint sink detection
 pub trait TaintSinkDetector {

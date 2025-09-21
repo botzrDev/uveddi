@@ -2,13 +2,13 @@
 //!
 //! This module coordinates compliance validation and enhancement of security issues.
 
-use crate::analysis::AnalysisError;
-use crate::analysis::detectors::security::types::SecurityIssue;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::ConfigIssue;
-use super::types::{ComplianceStandard, ComplianceRequirement};
-use super::standards::StandardsBuilder;
 use super::coverage::{ComplianceCoverage, CoverageCalculator};
+use super::standards::StandardsBuilder;
+use super::types::{ComplianceRequirement, ComplianceStandard};
+use crate::analysis::detectors::security::types::SecurityIssue;
+use crate::analysis::AnalysisError;
 use std::collections::HashMap;
 
 /// Compliance validator for configuration security issues
@@ -51,8 +51,7 @@ impl ComplianceValidator {
                     if !requirement.remediation_guidance.is_empty() {
                         enhanced_remediation.push_str(&format!(
                             "\n\nCompliance Guidance ({}): {}",
-                            standard.name,
-                            requirement.remediation_guidance
+                            standard.name, requirement.remediation_guidance
                         ));
                     }
                 }
@@ -72,7 +71,10 @@ impl ComplianceValidator {
     }
 
     /// Enhance a security issue with compliance information
-    pub fn enhance_security_issue(&self, issue: SecurityIssue) -> Result<SecurityIssue, AnalysisError> {
+    pub fn enhance_security_issue(
+        &self,
+        issue: SecurityIssue,
+    ) -> Result<SecurityIssue, AnalysisError> {
         // For now, return the issue as-is since SecurityIssue enhancement
         // would require modifying the SecurityIssue struct
         Ok(issue)
@@ -84,7 +86,10 @@ impl ComplianceValidator {
     }
 
     /// Get compliance coverage report using the CoverageCalculator
-    pub fn get_compliance_coverage(&self, issues: &[ConfigIssue]) -> HashMap<String, ComplianceCoverage> {
+    pub fn get_compliance_coverage(
+        &self,
+        issues: &[ConfigIssue],
+    ) -> HashMap<String, ComplianceCoverage> {
         CoverageCalculator::calculate_coverage(&self.standards, issues)
     }
 
@@ -95,19 +100,27 @@ impl ComplianceValidator {
 
     /// Check if a specific standard is enabled
     pub fn is_standard_enabled(&self, standard_name: &str) -> bool {
-        self.standards.iter()
+        self.standards
+            .iter()
             .any(|s| s.name == standard_name && s.enabled)
     }
 
     /// Get requirements for a specific standard
-    pub fn get_standard_requirements(&self, standard_name: &str) -> Option<&Vec<ComplianceRequirement>> {
-        self.standards.iter()
+    pub fn get_standard_requirements(
+        &self,
+        standard_name: &str,
+    ) -> Option<&Vec<ComplianceRequirement>> {
+        self.standards
+            .iter()
             .find(|s| s.name == standard_name)
             .map(|s| &s.requirements)
     }
 
     /// Batch enhance multiple issues
-    pub fn enhance_issues(&self, issues: Vec<ConfigIssue>) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    pub fn enhance_issues(
+        &self,
+        issues: Vec<ConfigIssue>,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut enhanced_issues = Vec::with_capacity(issues.len());
 
         for issue in issues {
@@ -126,13 +139,18 @@ impl ComplianceValidator {
             coverage,
             summary,
             total_issues: issues.len(),
-            enhanced_issues: issues.iter()
+            enhanced_issues: issues
+                .iter()
                 .filter(|issue| issue.tags.iter().any(|tag| tag.starts_with("compliance:")))
                 .count(),
         }
     }
 
-    fn requirement_applies_to_issue(&self, issue: &ConfigIssue, requirement: &ComplianceRequirement) -> bool {
+    fn requirement_applies_to_issue(
+        &self,
+        issue: &ConfigIssue,
+        requirement: &ComplianceRequirement,
+    ) -> bool {
         // Check CWE ID match
         if let Some(cwe_id) = issue.cwe_id {
             if requirement.applicable_cwe_ids.contains(&cwe_id) {
@@ -142,10 +160,10 @@ impl ComplianceValidator {
 
         // Check tag match
         for req_tag in &requirement.applicable_tags {
-            if issue.tags.iter().any(|issue_tag|
-                issue_tag.to_lowercase().contains(&req_tag.to_lowercase()) ||
-                req_tag.to_lowercase().contains(&issue_tag.to_lowercase())
-            ) {
+            if issue.tags.iter().any(|issue_tag| {
+                issue_tag.to_lowercase().contains(&req_tag.to_lowercase())
+                    || req_tag.to_lowercase().contains(&issue_tag.to_lowercase())
+            }) {
                 return true;
             }
         }
@@ -186,8 +204,8 @@ impl ComplianceSummaryResult {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::super::types::ConfigSeverity;
+    use super::*;
 
     #[test]
     fn test_compliance_validator_creation() {
@@ -211,7 +229,10 @@ mod tests {
         .with_tag("injection".to_string());
 
         let enhanced = validator.enhance_issue(issue).unwrap();
-        assert!(enhanced.tags.iter().any(|tag| tag.starts_with("compliance:")));
+        assert!(enhanced
+            .tags
+            .iter()
+            .any(|tag| tag.starts_with("compliance:")));
     }
 
     #[test]
@@ -225,13 +246,15 @@ mod tests {
                 0.8,
                 "Access Control Issue",
                 "Test issue",
-            ).with_cwe(284),
+            )
+            .with_cwe(284),
             ConfigIssue::new(
                 ConfigSeverity::Medium,
                 0.6,
                 "Crypto Issue",
                 "Test crypto issue",
-            ).with_cwe(327),
+            )
+            .with_cwe(327),
         ];
 
         let coverage = validator.get_compliance_coverage(&issues);
@@ -243,14 +266,11 @@ mod tests {
         let config = ConfigSecurityConfig::default();
         let validator = ComplianceValidator::new(&config).unwrap();
 
-        let issues = vec![
-            ConfigIssue::new(
-                ConfigSeverity::High,
-                0.8,
-                "Test Issue",
-                "Test description",
-            ).with_tag("compliance:OWASP-Top-10-2021:A01".to_string()),
-        ];
+        let issues =
+            vec![
+                ConfigIssue::new(ConfigSeverity::High, 0.8, "Test Issue", "Test description")
+                    .with_tag("compliance:OWASP-Top-10-2021:A01".to_string()),
+            ];
 
         let summary = validator.get_compliance_summary(&issues);
         assert_eq!(summary.total_issues, 1);

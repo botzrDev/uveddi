@@ -1,19 +1,19 @@
 //! Interface analysis coordination module.
 
-pub mod rust_interface;
-pub mod python_interface;
 pub mod js_interface;
+pub mod python_interface;
+pub mod rust_interface;
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, InterfaceAnalysisResult, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, InterfaceAnalysisResult, LeakType
-};
 
-pub use rust_interface::RustInterfaceAnalyzer;
-pub use python_interface::PythonInterfaceAnalyzer;
 pub use js_interface::JsInterfaceAnalyzer;
+pub use python_interface::PythonInterfaceAnalyzer;
+pub use rust_interface::RustInterfaceAnalyzer;
 
 /// Analyzes public interfaces for potential abstraction leaks.
 #[derive(Clone)]
@@ -40,12 +40,12 @@ impl InterfaceAnalyzer {
         context: &AnalysisContext,
     ) -> Result<InterfaceAnalysisResult, AnalysisError> {
         match parsed_file.language {
-            crate::ast::SourceLanguage::Rust => {
-                self.rust_analyzer.analyze_rust_interface(parsed_file, context)
-            }
-            crate::ast::SourceLanguage::Python => {
-                self.python_analyzer.analyze_python_interface(parsed_file, context)
-            }
+            crate::ast::SourceLanguage::Rust => self
+                .rust_analyzer
+                .analyze_rust_interface(parsed_file, context),
+            crate::ast::SourceLanguage::Python => self
+                .python_analyzer
+                .analyze_python_interface(parsed_file, context),
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 self.js_analyzer.analyze_js_interface(parsed_file, context)
             }

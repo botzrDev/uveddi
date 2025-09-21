@@ -260,7 +260,8 @@ impl DuplicationResults {
 
     /// Filters clone pairs by clone type
     pub fn filter_by_type(mut self, clone_types: &[CloneType]) -> Self {
-        self.clone_pairs.retain(|pair| clone_types.contains(&pair.clone_type));
+        self.clone_pairs
+            .retain(|pair| clone_types.contains(&pair.clone_type));
         self.summary = DuplicationSummary::from_clone_pairs(&self.clone_pairs);
         self
     }

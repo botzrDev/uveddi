@@ -1,6 +1,6 @@
 //! Path tracking and confidence calculation for taint flows
 
-use crate::analysis::detectors::security::taint_analysis::types::{TaintLevel, DataFlowGraph};
+use crate::analysis::detectors::security::taint_analysis::types::{DataFlowGraph, TaintLevel};
 use std::collections::HashMap;
 
 /// Tracker for taint flow paths and confidence calculation
@@ -34,15 +34,12 @@ impl PathTracker {
         let complexity_score = self.calculate_complexity_score(path);
 
         // Weighted combination of factors
-        let confidence = (
-            path_length_score * self.confidence_weights.path_length +
-            taint_strength_score * self.confidence_weights.taint_strength +
-            complexity_score * self.confidence_weights.control_flow_complexity
-        ) / (
-            self.confidence_weights.path_length +
-            self.confidence_weights.taint_strength +
-            self.confidence_weights.control_flow_complexity
-        );
+        let confidence = (path_length_score * self.confidence_weights.path_length
+            + taint_strength_score * self.confidence_weights.taint_strength
+            + complexity_score * self.confidence_weights.control_flow_complexity)
+            / (self.confidence_weights.path_length
+                + self.confidence_weights.taint_strength
+                + self.confidence_weights.control_flow_complexity);
 
         confidence.clamp(0.0, 1.0)
     }
@@ -76,14 +73,15 @@ impl PathTracker {
     pub fn track_control_flow(&mut self, node_id: &str, control_type: ControlFlowType) {
         let complexity_factor = match control_type {
             ControlFlowType::Sequential => 1.0,
-            ControlFlowType::Conditional => 0.8,  // Some uncertainty in branches
-            ControlFlowType::Loop => 0.7,         // Loops add complexity
+            ControlFlowType::Conditional => 0.8, // Some uncertainty in branches
+            ControlFlowType::Loop => 0.7,        // Loops add complexity
             ControlFlowType::FunctionCall => 0.9, // Function calls are generally reliable
-            ControlFlowType::Exception => 0.5,    // Exception handling is complex
-            ControlFlowType::Async => 0.6,        // Async operations add uncertainty
+            ControlFlowType::Exception => 0.5,   // Exception handling is complex
+            ControlFlowType::Async => 0.6,       // Async operations add uncertainty
         };
 
-        self.path_complexity_factors.insert(node_id.to_string(), complexity_factor);
+        self.path_complexity_factors
+            .insert(node_id.to_string(), complexity_factor);
     }
 
     /// Calculate path divergence score for multiple paths
@@ -169,12 +167,16 @@ impl PathTracker {
     }
 
     /// Estimate false positive likelihood
-    pub fn estimate_false_positive_likelihood(&self, path: &[String], taint_level: &TaintLevel) -> f64 {
+    pub fn estimate_false_positive_likelihood(
+        &self,
+        path: &[String],
+        taint_level: &TaintLevel,
+    ) -> f64 {
         let path_length_factor = match path.len() {
-            1..=3 => 0.1,   // Short paths are less likely to be false positives
-            4..=6 => 0.2,   // Medium paths have moderate false positive risk
-            7..=10 => 0.4,  // Long paths have higher false positive risk
-            _ => 0.6,       // Very long paths are often false positives
+            1..=3 => 0.1,  // Short paths are less likely to be false positives
+            4..=6 => 0.2,  // Medium paths have moderate false positive risk
+            7..=10 => 0.4, // Long paths have higher false positive risk
+            _ => 0.6,      // Very long paths are often false positives
         };
 
         let taint_strength_factor = 1.0 - taint_level.score();
@@ -209,12 +211,12 @@ pub struct DataTransformation {
 
 #[derive(Debug, Clone)]
 pub enum TransformationType {
-    Encoding,     // HTML encoding, URL encoding, etc.
-    Validation,   // Input validation
-    Filtering,    // Data filtering
-    Conversion,   // Type conversion
-    Aggregation,  // Data aggregation
-    Unknown,      // Unknown transformation
+    Encoding,    // HTML encoding, URL encoding, etc.
+    Validation,  // Input validation
+    Filtering,   // Data filtering
+    Conversion,  // Type conversion
+    Aggregation, // Data aggregation
+    Unknown,     // Unknown transformation
 }
 
 impl Default for ConfidenceWeights {

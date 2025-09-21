@@ -2,11 +2,11 @@
 
 use crate::analysis::detectors::security::taint_analysis::{
     config::TaintAnalysisConfig,
-    types::{TaintSource, TaintSink, SanitizationPoint, LanguageTaintPatterns},
-    sources::UnifiedSourceDetector,
-    sinks::UnifiedSinkDetector,
-    propagation::PropagationAnalyzer,
     language_support::LanguageAnalyzerFactory,
+    propagation::PropagationAnalyzer,
+    sinks::UnifiedSinkDetector,
+    sources::UnifiedSourceDetector,
+    types::{LanguageTaintPatterns, SanitizationPoint, TaintSink, TaintSource},
 };
 use crate::analysis::detectors::security::types::SecurityIssue;
 use crate::analysis::AnalysisError;

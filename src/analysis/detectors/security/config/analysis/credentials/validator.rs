@@ -15,13 +15,19 @@ pub fn calculate_confidence(pattern: &CredentialPattern, matched_text: &str, lin
     }
 
     // Reduce confidence for obviously fake values
-    if matched_text.chars().all(|c| c == 'x' || c == '*' || c == '0') {
+    if matched_text
+        .chars()
+        .all(|c| c == 'x' || c == '*' || c == '0')
+    {
         confidence *= 0.1;
     }
 
     // Increase confidence for production-like contexts
     let prod_indicators = ["prod", "production", "live", "release"];
-    if prod_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator)) {
+    if prod_indicators
+        .iter()
+        .any(|&indicator| line.to_lowercase().contains(indicator))
+    {
         confidence = (confidence * 1.2).min(1.0);
     }
 
@@ -35,13 +41,25 @@ pub fn looks_like_credential(value: &str) -> bool {
         return false;
     }
 
-    let fake_indicators = ["test", "example", "demo", "placeholder", "xxx", "***", "changeme"];
-    if fake_indicators.iter().any(|&indicator| value.to_lowercase().contains(indicator)) {
+    let fake_indicators = [
+        "test",
+        "example",
+        "demo",
+        "placeholder",
+        "xxx",
+        "***",
+        "changeme",
+    ];
+    if fake_indicators
+        .iter()
+        .any(|&indicator| value.to_lowercase().contains(indicator))
+    {
         return false;
     }
 
     // Look for credential-like patterns
-    let has_mixed_case = value.chars().any(|c| c.is_uppercase()) && value.chars().any(|c| c.is_lowercase());
+    let has_mixed_case =
+        value.chars().any(|c| c.is_uppercase()) && value.chars().any(|c| c.is_lowercase());
     let has_numbers = value.chars().any(|c| c.is_numeric());
     let has_special = value.chars().any(|c| !c.is_alphanumeric());
     let reasonable_length = value.len() >= 8 && value.len() <= 256;
@@ -51,8 +69,8 @@ pub fn looks_like_credential(value: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::super::types::ConfigSeverity;
+    use super::*;
     use regex::Regex;
 
     #[test]
@@ -71,7 +89,8 @@ mod tests {
         assert!(confidence1 < 0.5);
 
         // Production password should have higher confidence
-        let confidence2 = calculate_confidence(&pattern, "Xy9$kL2mN8pQ", "prod_password: Xy9$kL2mN8pQ");
+        let confidence2 =
+            calculate_confidence(&pattern, "Xy9$kL2mN8pQ", "prod_password: Xy9$kL2mN8pQ");
         assert!(confidence2 > 0.7);
     }
 

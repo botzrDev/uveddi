@@ -1,9 +1,9 @@
 //! Core detector trait and pattern types for God Object detection
 
+use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::AnalysisError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -49,14 +49,27 @@ pub trait GodObjectDetector {
     fn detect(&self, parsed_file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
 
     /// Calculate complexity metrics for a given node
-    fn calculate_metrics(&self, parsed_file: &ParsedFile, node: Node) -> Result<ComplexityMetrics, AnalysisError>;
+    fn calculate_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+        node: Node,
+    ) -> Result<ComplexityMetrics, AnalysisError>;
 
     /// Check if this detector applies to the given language
     fn applies_to_language(&self, language: &SourceLanguage) -> bool;
 
     /// Detect design patterns that should exclude from God Object detection
-    fn detect_patterns(&self, parsed_file: &ParsedFile, node: Node, class_name: &str) -> Option<DetectedPattern>;
+    fn detect_patterns(
+        &self,
+        parsed_file: &ParsedFile,
+        node: Node,
+        class_name: &str,
+    ) -> Option<DetectedPattern>;
 
     /// Score the severity of a detected God Object
-    fn score_severity(&self, metrics: &ComplexityMetrics, language: SourceLanguage) -> Option<String>;
+    fn score_severity(
+        &self,
+        metrics: &ComplexityMetrics,
+        language: SourceLanguage,
+    ) -> Option<String>;
 }

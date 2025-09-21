@@ -95,65 +95,73 @@ pub fn build_default_policies(config: &ConfigSecurityConfig) -> Vec<SecurityPoli
     let mut policies = Vec::new();
 
     // High-severity policy - only critical and high severity issues
-    policies.push(SecurityPolicy::new("High Severity Policy".to_string())
-        .with_severity_threshold(ConfigSeverity::High)
-        .with_confidence_threshold(config.confidence_threshold)
-        .with_blocked_tags(vec!["test".to_string(), "example".to_string()])
-        .with_suppression_patterns(vec![
-            "UVEDDI:IGNORE".to_string(),
-            "SECURITY:OK".to_string(),
-            "FALSE-POSITIVE".to_string(),
-            "NOSONAR".to_string(),
-        ]));
+    policies.push(
+        SecurityPolicy::new("High Severity Policy".to_string())
+            .with_severity_threshold(ConfigSeverity::High)
+            .with_confidence_threshold(config.confidence_threshold)
+            .with_blocked_tags(vec!["test".to_string(), "example".to_string()])
+            .with_suppression_patterns(vec![
+                "UVEDDI:IGNORE".to_string(),
+                "SECURITY:OK".to_string(),
+                "FALSE-POSITIVE".to_string(),
+                "NOSONAR".to_string(),
+            ]),
+    );
 
     // Credential-specific policy
-    policies.push(SecurityPolicy::new("Credential Protection Policy".to_string())
-        .with_severity_threshold(ConfigSeverity::Medium)
-        .with_confidence_threshold(0.6) // Lower threshold for credentials
-        .with_allowed_tags(vec![
-            "credential".to_string(),
-            "secret".to_string(),
-            "password".to_string(),
-            "api-key".to_string(),
-        ])
-        .with_blocked_tags(vec!["test-credential".to_string()])
-        .with_allowed_cwe_ids(vec![798, 521, 522]) // Common credential CWEs
-        .with_file_patterns(vec![
-            "*.test.*".to_string(),
-            "*.example.*".to_string(),
-            "**/test/**".to_string(),
-        ])
-        .with_suppression_patterns(vec![
-            "TEST-CREDENTIAL".to_string(),
-            "EXAMPLE-PASSWORD".to_string(),
-        ]));
+    policies.push(
+        SecurityPolicy::new("Credential Protection Policy".to_string())
+            .with_severity_threshold(ConfigSeverity::Medium)
+            .with_confidence_threshold(0.6) // Lower threshold for credentials
+            .with_allowed_tags(vec![
+                "credential".to_string(),
+                "secret".to_string(),
+                "password".to_string(),
+                "api-key".to_string(),
+            ])
+            .with_blocked_tags(vec!["test-credential".to_string()])
+            .with_allowed_cwe_ids(vec![798, 521, 522]) // Common credential CWEs
+            .with_file_patterns(vec![
+                "*.test.*".to_string(),
+                "*.example.*".to_string(),
+                "**/test/**".to_string(),
+            ])
+            .with_suppression_patterns(vec![
+                "TEST-CREDENTIAL".to_string(),
+                "EXAMPLE-PASSWORD".to_string(),
+            ]),
+    );
 
     // Production environment policy
-    policies.push(SecurityPolicy::new("Production Environment Policy".to_string())
-        .with_severity_threshold(ConfigSeverity::Low)
-        .with_confidence_threshold(0.8) // Higher threshold for production
-        .with_blocked_tags(vec![
-            "development".to_string(),
-            "local".to_string(),
-            "test".to_string(),
-        ])
-        .with_file_patterns(vec![
-            "**/dev/**".to_string(),
-            "**/test/**".to_string(),
-            "**/local/**".to_string(),
-        ]));
+    policies.push(
+        SecurityPolicy::new("Production Environment Policy".to_string())
+            .with_severity_threshold(ConfigSeverity::Low)
+            .with_confidence_threshold(0.8) // Higher threshold for production
+            .with_blocked_tags(vec![
+                "development".to_string(),
+                "local".to_string(),
+                "test".to_string(),
+            ])
+            .with_file_patterns(vec![
+                "**/dev/**".to_string(),
+                "**/test/**".to_string(),
+                "**/local/**".to_string(),
+            ]),
+    );
 
     // Compliance-focused policy
-    policies.push(SecurityPolicy::new("Compliance Policy".to_string())
-        .set_enabled(config.enable_compliance_validation)
-        .with_severity_threshold(ConfigSeverity::Info)
-        .with_confidence_threshold(0.7)
-        .with_allowed_cwe_ids(vec![
-            // OWASP Top 10 related CWEs
-            79, 89, 22, 352, 863, 94, 287, 798, 311, 918,
-            // Common configuration CWEs
-            1188, 489, 319, 326, 327, 250, 732,
-        ]));
+    policies.push(
+        SecurityPolicy::new("Compliance Policy".to_string())
+            .set_enabled(config.enable_compliance_validation)
+            .with_severity_threshold(ConfigSeverity::Info)
+            .with_confidence_threshold(0.7)
+            .with_allowed_cwe_ids(vec![
+                // OWASP Top 10 related CWEs
+                79, 89, 22, 352, 863, 94, 287, 798, 311, 918,
+                // Common configuration CWEs
+                1188, 489, 319, 326, 327, 250, 732,
+            ]),
+    );
 
     policies
 }

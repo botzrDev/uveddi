@@ -1,9 +1,9 @@
 //! Main credential detection logic
 
-use super::{CredentialPattern, scanner, validator};
-use crate::analysis::AnalysisError;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use super::{scanner, validator, CredentialPattern};
+use crate::analysis::AnalysisError;
 use regex::Regex;
 
 /// Analyzes configuration files for credential exposure
@@ -71,7 +71,9 @@ impl CredentialAnalyzer {
             },
             CredentialPattern {
                 name: "Generic API Key".to_string(),
-                regex: Regex::new(r#"(?i)(api[_-]?key|secret[_-]?key)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_-]{20,})['"]?"#)?,
+                regex: Regex::new(
+                    r#"(?i)(api[_-]?key|secret[_-]?key)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_-]{20,})['"]?"#,
+                )?,
                 severity: ConfigSeverity::High,
                 confidence_base: 0.85,
                 cwe_id: Some(798),
@@ -80,11 +82,15 @@ impl CredentialAnalyzer {
             // Database Credentials
             CredentialPattern {
                 name: "Database Password".to_string(),
-                regex: Regex::new(r#"(?i)(password|passwd|pwd)[\s]*[:=][\s]*['"]?([^'\s\n]{6,})['"]?"#)?,
+                regex: Regex::new(
+                    r#"(?i)(password|passwd|pwd)[\s]*[:=][\s]*['"]?([^'\s\n]{6,})['"]?"#,
+                )?,
                 severity: ConfigSeverity::High,
                 confidence_base: 0.8,
                 cwe_id: Some(798),
-                owasp_category: Some("A07:2021 - Identification and Authentication Failures".to_string()),
+                owasp_category: Some(
+                    "A07:2021 - Identification and Authentication Failures".to_string(),
+                ),
             },
             CredentialPattern {
                 name: "Database Connection String".to_string(),
@@ -115,7 +121,9 @@ impl CredentialAnalyzer {
             // OAuth Tokens
             CredentialPattern {
                 name: "OAuth Token".to_string(),
-                regex: Regex::new(r#"(?i)(access[_-]?token|bearer[_-]?token)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_.-]{32,})['"]?"#)?,
+                regex: Regex::new(
+                    r#"(?i)(access[_-]?token|bearer[_-]?token)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_.-]{32,})['"]?"#,
+                )?,
                 severity: ConfigSeverity::High,
                 confidence_base: 0.85,
                 cwe_id: Some(798),

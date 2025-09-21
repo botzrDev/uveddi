@@ -10,7 +10,10 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl AnalysisDetector for LongMethodsDetector {
-    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         debug!(
             "Long Methods Detector analyzing file: {}",
@@ -23,9 +26,10 @@ impl AnalysisDetector for LongMethodsDetector {
             method_metrics.len()
         );
 
-        let thresholds = self.config().get_threshold(file.language).ok_or_else(|| {
-            AnalysisError::UnsupportedLanguage(format!("{:?}", file.language))
-        })?;
+        let thresholds = self
+            .config()
+            .get_threshold(file.language)
+            .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("{:?}", file.language)))?;
 
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);

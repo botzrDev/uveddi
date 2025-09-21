@@ -66,7 +66,11 @@ impl StructuralFeatures {
         (depth_sim + children_sim) / 2.0
     }
 
-    fn distribution_similarity(&self, dist1: &HashMap<String, usize>, dist2: &HashMap<String, usize>) -> f64 {
+    fn distribution_similarity(
+        &self,
+        dist1: &HashMap<String, usize>,
+        dist2: &HashMap<String, usize>,
+    ) -> f64 {
         let all_keys: std::collections::HashSet<_> = dist1.keys().chain(dist2.keys()).collect();
 
         if all_keys.is_empty() {

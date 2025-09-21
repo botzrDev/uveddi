@@ -1,14 +1,14 @@
 //! Rust struct analysis
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::database::models::ArchitecturalIssue;
 use super::super::super::config::GodObjectConfig;
 use super::super::super::detector::{ComplexityMetrics, DetectedPattern};
 use super::super::super::metrics::MetricsCalculator;
 use super::patterns::RustPatternDetector;
 use super::queries::RUST_STRUCT_QUERY;
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 use std::collections::HashMap;
 use tracing::debug;
 
@@ -50,14 +50,16 @@ impl<'a> RustStructAnalyzer<'a> {
 
         while let Some(mat) = matches.next() {
             if let (Some(name_capture), Some(body_capture)) =
-                (mat.captures.first(), mat.captures.get(1)) {
+                (mat.captures.first(), mat.captures.get(1))
+            {
                 let name_node = name_capture.node;
                 let body_node = body_capture.node;
                 let container_node = name_node.parent().unwrap_or(name_node);
 
                 if let Ok(name) = name_node.utf8_text(source) {
                     let method_count = impl_method_counts.get(name).cloned().unwrap_or(0);
-                    let field_count = MetricsCalculator::calculate_field_count(parsed_file, body_node)?;
+                    let field_count =
+                        MetricsCalculator::calculate_field_count(parsed_file, body_node)?;
 
                     let method_threshold = self.config.get_method_threshold(parsed_file.language);
                     let field_threshold = self.config.get_field_threshold(parsed_file.language);
@@ -81,7 +83,8 @@ impl<'a> RustStructAnalyzer<'a> {
                     };
 
                     // Create metrics and issue
-                    let mut metrics = MetricsCalculator::calculate_metrics(parsed_file, container_node)?;
+                    let mut metrics =
+                        MetricsCalculator::calculate_metrics(parsed_file, container_node)?;
                     metrics.method_count = method_count;
                     metrics.field_count = field_count;
 
@@ -114,7 +117,10 @@ impl<'a> RustStructAnalyzer<'a> {
     ) -> Option<ArchitecturalIssue> {
         // If excluded by pattern recognition, return None
         if excluded_pattern.is_some() {
-            debug!("Excluding '{}' due to detected pattern: {:?}", name, excluded_pattern);
+            debug!(
+                "Excluding '{}' due to detected pattern: {:?}",
+                name, excluded_pattern
+            );
             return None;
         }
 
@@ -142,7 +148,10 @@ impl<'a> RustStructAnalyzer<'a> {
         );
 
         if let Some(lcom4) = metrics.lcom4_score {
-            description.push_str(&format!(" LCOM4 score: {} (>1 indicates low cohesion)", lcom4));
+            description.push_str(&format!(
+                " LCOM4 score: {} (>1 indicates low cohesion)",
+                lcom4
+            ));
         }
 
         let mut issue = ArchitecturalIssue::new(

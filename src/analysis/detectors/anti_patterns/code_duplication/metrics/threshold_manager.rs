@@ -56,45 +56,57 @@ impl ThresholdManager {
         let mut language_thresholds = HashMap::new();
 
         // Language-specific tuning
-        language_thresholds.insert(SourceLanguage::Rust, LanguageThresholds {
-            type1_threshold: 0.95,
-            type2_threshold: 0.85,
-            type3_threshold: 0.75,
-            type4_threshold: 0.65,
-            min_tokens: 50,
-            min_lines: 8,
-            max_false_positive_rate: 0.05,
-        });
+        language_thresholds.insert(
+            SourceLanguage::Rust,
+            LanguageThresholds {
+                type1_threshold: 0.95,
+                type2_threshold: 0.85,
+                type3_threshold: 0.75,
+                type4_threshold: 0.65,
+                min_tokens: 50,
+                min_lines: 8,
+                max_false_positive_rate: 0.05,
+            },
+        );
 
-        language_thresholds.insert(SourceLanguage::Python, LanguageThresholds {
-            type1_threshold: 0.92,
-            type2_threshold: 0.80,
-            type3_threshold: 0.70,
-            type4_threshold: 0.60,
-            min_tokens: 40,
-            min_lines: 6,
-            max_false_positive_rate: 0.08,
-        });
+        language_thresholds.insert(
+            SourceLanguage::Python,
+            LanguageThresholds {
+                type1_threshold: 0.92,
+                type2_threshold: 0.80,
+                type3_threshold: 0.70,
+                type4_threshold: 0.60,
+                min_tokens: 40,
+                min_lines: 6,
+                max_false_positive_rate: 0.08,
+            },
+        );
 
-        language_thresholds.insert(SourceLanguage::JavaScript, LanguageThresholds {
-            type1_threshold: 0.90,
-            type2_threshold: 0.78,
-            type3_threshold: 0.68,
-            type4_threshold: 0.58,
-            min_tokens: 35,
-            min_lines: 5,
-            max_false_positive_rate: 0.10,
-        });
+        language_thresholds.insert(
+            SourceLanguage::JavaScript,
+            LanguageThresholds {
+                type1_threshold: 0.90,
+                type2_threshold: 0.78,
+                type3_threshold: 0.68,
+                type4_threshold: 0.58,
+                min_tokens: 35,
+                min_lines: 5,
+                max_false_positive_rate: 0.10,
+            },
+        );
 
-        language_thresholds.insert(SourceLanguage::TypeScript, LanguageThresholds {
-            type1_threshold: 0.93,
-            type2_threshold: 0.82,
-            type3_threshold: 0.72,
-            type4_threshold: 0.62,
-            min_tokens: 45,
-            min_lines: 7,
-            max_false_positive_rate: 0.06,
-        });
+        language_thresholds.insert(
+            SourceLanguage::TypeScript,
+            LanguageThresholds {
+                type1_threshold: 0.93,
+                type2_threshold: 0.82,
+                type3_threshold: 0.72,
+                type4_threshold: 0.62,
+                min_tokens: 45,
+                min_lines: 7,
+                max_false_positive_rate: 0.06,
+            },
+        );
 
         Self {
             language_thresholds,
@@ -105,7 +117,8 @@ impl ThresholdManager {
 
     /// Gets the threshold for a specific clone type and language
     pub fn get_threshold(&self, clone_type: &CloneType, language: &SourceLanguage) -> f64 {
-        let thresholds = self.language_thresholds
+        let thresholds = self
+            .language_thresholds
             .get(language)
             .unwrap_or(&self.default_thresholds);
 
@@ -134,8 +147,14 @@ impl ThresholdManager {
     }
 
     /// Updates threshold for a specific clone type and language
-    pub fn update_threshold(&mut self, clone_type: &CloneType, language: &SourceLanguage, new_threshold: f64) {
-        let thresholds = self.language_thresholds
+    pub fn update_threshold(
+        &mut self,
+        clone_type: &CloneType,
+        language: &SourceLanguage,
+        new_threshold: f64,
+    ) {
+        let thresholds = self
+            .language_thresholds
             .entry(*language)
             .or_insert_with(|| self.default_thresholds.clone());
 
@@ -148,20 +167,27 @@ impl ThresholdManager {
     }
 
     /// Adjusts thresholds based on false positive feedback
-    pub fn adjust_for_false_positives(&mut self, language: &SourceLanguage, clone_type: &CloneType, false_positive_rate: f64) {
+    pub fn adjust_for_false_positives(
+        &mut self,
+        language: &SourceLanguage,
+        clone_type: &CloneType,
+        false_positive_rate: f64,
+    ) {
         if !self.adaptive_settings.enabled {
             return;
         }
 
         let current_threshold = self.get_threshold(clone_type, language);
-        let max_fp_rate = self.language_thresholds
+        let max_fp_rate = self
+            .language_thresholds
             .get(language)
             .map(|t| t.max_false_positive_rate)
             .unwrap_or(self.default_thresholds.max_false_positive_rate);
 
         if false_positive_rate > max_fp_rate {
             // Increase threshold to reduce false positives
-            let adjustment = self.adaptive_settings.learning_rate * (false_positive_rate - max_fp_rate);
+            let adjustment =
+                self.adaptive_settings.learning_rate * (false_positive_rate - max_fp_rate);
             let new_threshold = (current_threshold + adjustment).min(1.0);
 
             // Apply safety bounds
@@ -171,14 +197,20 @@ impl ThresholdManager {
     }
 
     /// Adjusts thresholds based on false negative feedback
-    pub fn adjust_for_false_negatives(&mut self, language: &SourceLanguage, clone_type: &CloneType, false_negative_rate: f64) {
+    pub fn adjust_for_false_negatives(
+        &mut self,
+        language: &SourceLanguage,
+        clone_type: &CloneType,
+        false_negative_rate: f64,
+    ) {
         if !self.adaptive_settings.enabled {
             return;
         }
 
         let current_threshold = self.get_threshold(clone_type, language);
 
-        if false_negative_rate > 0.1 { // Threshold for concerning false negative rate
+        if false_negative_rate > 0.1 {
+            // Threshold for concerning false negative rate
             // Decrease threshold to reduce false negatives
             let adjustment = self.adaptive_settings.learning_rate * false_negative_rate;
             let new_threshold = (current_threshold - adjustment).max(0.0);
@@ -209,8 +241,14 @@ impl ThresholdManager {
     }
 
     /// Gets recommended threshold based on codebase characteristics
-    pub fn get_recommended_threshold(&self, language: &SourceLanguage, codebase_size: usize, diversity_score: f64) -> LanguageThresholds {
-        let base_thresholds = self.language_thresholds
+    pub fn get_recommended_threshold(
+        &self,
+        language: &SourceLanguage,
+        codebase_size: usize,
+        diversity_score: f64,
+    ) -> LanguageThresholds {
+        let base_thresholds = self
+            .language_thresholds
             .get(language)
             .unwrap_or(&self.default_thresholds)
             .clone();

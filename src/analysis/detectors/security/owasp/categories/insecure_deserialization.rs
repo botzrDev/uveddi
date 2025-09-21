@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -181,11 +183,19 @@ impl InsecureDeserializationDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "safe_load", "yaml.safe_load", "validate", "schema",
-            "whitelist", "allowlist", "verify", "signature",
+            "safe_load",
+            "yaml.safe_load",
+            "validate",
+            "schema",
+            "whitelist",
+            "allowlist",
+            "verify",
+            "signature",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
     }
 }
 
@@ -217,7 +227,6 @@ impl OwaspCategoryDetector for InsecureDeserializationDetector {
 
         Ok(vulnerabilities)
     }
-
 }
 
 #[cfg(test)]
@@ -241,6 +250,9 @@ mod tests {
         std::fs::remove_file("test.py").unwrap();
 
         assert!(!vulnerabilities.is_empty());
-        assert_eq!(vulnerabilities[0].category, OwaspCategory::DataIntegrityFailures);
+        assert_eq!(
+            vulnerabilities[0].category,
+            OwaspCategory::DataIntegrityFailures
+        );
     }
 }

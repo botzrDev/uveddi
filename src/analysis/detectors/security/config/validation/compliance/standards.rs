@@ -4,7 +4,7 @@
 
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::ConfigSeverity;
-use super::types::{ComplianceStandard, ComplianceRequirement};
+use super::types::{ComplianceRequirement, ComplianceStandard};
 use std::collections::HashMap;
 
 /// Standards builder for compliance validation
@@ -97,29 +97,50 @@ impl StandardsBuilder {
                 ComplianceRequirement {
                     id: "3.3".to_string(),
                     title: "Configure Data Access Control Lists".to_string(),
-                    description: "Configure data access control lists based on a user's need to know".to_string(),
-                    severity_mapping: create_severity_mapping(&[(ConfigSeverity::High, 0.8), (ConfigSeverity::Medium, 0.6)]),
+                    description:
+                        "Configure data access control lists based on a user's need to know"
+                            .to_string(),
+                    severity_mapping: create_severity_mapping(&[
+                        (ConfigSeverity::High, 0.8),
+                        (ConfigSeverity::Medium, 0.6),
+                    ]),
                     applicable_cwe_ids: vec![732, 284],
-                    applicable_tags: vec!["access-control".to_string(), "file-permissions".to_string()],
+                    applicable_tags: vec![
+                        "access-control".to_string(),
+                        "file-permissions".to_string(),
+                    ],
                     remediation_guidance: "Implement least privilege access controls".to_string(),
                 },
                 ComplianceRequirement {
                     id: "3.11".to_string(),
                     title: "Encrypt Sensitive Data at Rest".to_string(),
                     description: "Encrypt sensitive data at rest".to_string(),
-                    severity_mapping: create_severity_mapping(&[(ConfigSeverity::High, 0.9), (ConfigSeverity::Medium, 0.7)]),
+                    severity_mapping: create_severity_mapping(&[
+                        (ConfigSeverity::High, 0.9),
+                        (ConfigSeverity::Medium, 0.7),
+                    ]),
                     applicable_cwe_ids: vec![311, 326, 327],
                     applicable_tags: vec!["encryption".to_string(), "data-at-rest".to_string()],
-                    remediation_guidance: "Use strong encryption for sensitive data storage".to_string(),
+                    remediation_guidance: "Use strong encryption for sensitive data storage"
+                        .to_string(),
                 },
                 ComplianceRequirement {
                     id: "16.7".to_string(),
                     title: "Establish and Maintain a Vulnerability Management Process".to_string(),
-                    description: "Establish and maintain a vulnerability management process".to_string(),
-                    severity_mapping: create_severity_mapping(&[(ConfigSeverity::Medium, 0.6), (ConfigSeverity::Low, 0.4)]),
+                    description: "Establish and maintain a vulnerability management process"
+                        .to_string(),
+                    severity_mapping: create_severity_mapping(&[
+                        (ConfigSeverity::Medium, 0.6),
+                        (ConfigSeverity::Low, 0.4),
+                    ]),
                     applicable_cwe_ids: vec![1188],
-                    applicable_tags: vec!["vulnerability-management".to_string(), "patching".to_string()],
-                    remediation_guidance: "Implement regular vulnerability scanning and remediation processes".to_string(),
+                    applicable_tags: vec![
+                        "vulnerability-management".to_string(),
+                        "patching".to_string(),
+                    ],
+                    remediation_guidance:
+                        "Implement regular vulnerability scanning and remediation processes"
+                            .to_string(),
                 },
             ],
         }

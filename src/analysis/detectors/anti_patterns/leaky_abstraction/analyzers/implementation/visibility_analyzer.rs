@@ -1,12 +1,12 @@
 //! Visibility and access pattern analysis for implementation leaks.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ImplementationVisibilityIssue, LeakType
+    AnalysisContext, ImplementationVisibilityIssue, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl VisibilityAnalyzer {
         let mut visibility_issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -71,9 +72,12 @@ impl VisibilityAnalyzer {
                         if let Ok(vis_text) = node.utf8_text(source_bytes) {
                             if vis_text == "pub" {
                                 if let Some(field_name_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "field_name"
+                                    &match_.captures,
+                                    &query,
+                                    "field_name",
                                 ) {
-                                    if let Ok(field_name) = field_name_node.utf8_text(source_bytes) {
+                                    if let Ok(field_name) = field_name_node.utf8_text(source_bytes)
+                                    {
                                         if self.is_internal_field_name(field_name) {
                                             visibility_issues.push(ImplementationVisibilityIssue {
                                                 description: format!(
@@ -98,7 +102,8 @@ impl VisibilityAnalyzer {
                                         "Import of internal module '{}'",
                                         module_name
                                     ),
-                                    visibility_problem: "Accessing internal module from outside".to_string(),
+                                    visibility_problem: "Accessing internal module from outside"
+                                        .to_string(),
                                     line_number: node.start_position().row as u32 + 1,
                                     severity: "high".to_string(),
                                 });
@@ -108,9 +113,9 @@ impl VisibilityAnalyzer {
                     "mod_vis" => {
                         if let Ok(vis_text) = node.utf8_text(source_bytes) {
                             if vis_text == "pub" {
-                                if let Some(mod_name_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "mod_name"
-                                ) {
+                                if let Some(mod_name_node) =
+                                    self.find_sibling_capture(&match_.captures, &query, "mod_name")
+                                {
                                     if let Ok(mod_name) = mod_name_node.utf8_text(source_bytes) {
                                         if self.is_internal_module(mod_name) {
                                             visibility_issues.push(ImplementationVisibilityIssue {
@@ -145,9 +150,10 @@ impl VisibilityAnalyzer {
         let mut visibility_issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -166,7 +172,10 @@ impl VisibilityAnalyzer {
         "#;
 
         let query = Query::new(&language, query_source).map_err(|e| {
-            AnalysisError::DetectionError(format!("Failed to create Python visibility query: {}", e))
+            AnalysisError::DetectionError(format!(
+                "Failed to create Python visibility query: {}",
+                e
+            ))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -195,7 +204,9 @@ impl VisibilityAnalyzer {
                     }
                     "func_name" => {
                         if let Ok(func_name) = node.utf8_text(source_bytes) {
-                            if self.is_private_function(func_name) && self.is_likely_exported(func_name) {
+                            if self.is_private_function(func_name)
+                                && self.is_likely_exported(func_name)
+                            {
                                 visibility_issues.push(ImplementationVisibilityIssue {
                                     description: format!(
                                         "Private function '{}' may be exposed",
@@ -225,9 +236,10 @@ impl VisibilityAnalyzer {
         let mut visibility_issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -268,7 +280,8 @@ impl VisibilityAnalyzer {
                                         "Access to private property '{}'",
                                         prop_name
                                     ),
-                                    visibility_problem: "Accessing private property from outside".to_string(),
+                                    visibility_problem: "Accessing private property from outside"
+                                        .to_string(),
                                     line_number: node.start_position().row as u32 + 1,
                                     severity: "medium".to_string(),
                                 });
@@ -283,7 +296,8 @@ impl VisibilityAnalyzer {
                                         "Private method '{}' may be exposed",
                                         method_name
                                     ),
-                                    visibility_problem: "Method name suggests private use".to_string(),
+                                    visibility_problem: "Method name suggests private use"
+                                        .to_string(),
                                     line_number: node.start_position().row as u32 + 1,
                                     severity: "low".to_string(),
                                 });
@@ -300,18 +314,18 @@ impl VisibilityAnalyzer {
 
     /// Checks if a field name indicates internal use.
     fn is_internal_field_name(&self, field_name: &str) -> bool {
-        field_name.starts_with('_') ||
-        field_name.contains("internal") ||
-        field_name.contains("impl") ||
-        field_name.contains("private")
+        field_name.starts_with('_')
+            || field_name.contains("internal")
+            || field_name.contains("impl")
+            || field_name.contains("private")
     }
 
     /// Checks if a module name indicates internal use.
     fn is_internal_module(&self, module_name: &str) -> bool {
-        module_name.contains("internal") ||
-        module_name.contains("impl") ||
-        module_name.contains("detail") ||
-        module_name.starts_with('_')
+        module_name.contains("internal")
+            || module_name.contains("impl")
+            || module_name.contains("detail")
+            || module_name.starts_with('_')
     }
 
     /// Checks if an attribute access is to a private attribute.
@@ -332,15 +346,14 @@ impl VisibilityAnalyzer {
 
     /// Checks if a property name indicates private use.
     fn is_private_property(&self, prop_name: &str) -> bool {
-        prop_name.starts_with('_') ||
-        prop_name.starts_with('#') // Private fields in modern JS
+        prop_name.starts_with('_') || prop_name.starts_with('#') // Private fields in modern JS
     }
 
     /// Checks if a method name indicates private use in JS/TS.
     fn is_private_method_js(&self, method_name: &str) -> bool {
-        method_name.starts_with('_') ||
-        method_name.starts_with('#') ||
-        method_name.contains("internal")
+        method_name.starts_with('_')
+            || method_name.starts_with('#')
+            || method_name.contains("internal")
     }
 
     /// Helper function to find a sibling capture by name.
@@ -350,9 +363,10 @@ impl VisibilityAnalyzer {
         query: &Query,
         capture_name: &str,
     ) -> Option<Node<'a>> {
-        captures.iter().find(|capture| {
-            query.capture_names()[capture.index as usize] == capture_name
-        }).map(|capture| capture.node)
+        captures
+            .iter()
+            .find(|capture| query.capture_names()[capture.index as usize] == capture_name)
+            .map(|capture| capture.node)
     }
 }
 

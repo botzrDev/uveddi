@@ -1,12 +1,12 @@
 //! Dependency coupling analysis for implementation leaks.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ImplementationExposure, LeakType
+    AnalysisContext, ImplementationExposure, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl DependencyAnalyzer {
         let mut implementation_exposures = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -54,7 +55,10 @@ impl DependencyAnalyzer {
         "#;
 
         let query = Query::new(&language, query_source).map_err(|e| {
-            AnalysisError::DetectionError(format!("Failed to create Python dependency query: {}", e))
+            AnalysisError::DetectionError(format!(
+                "Failed to create Python dependency query: {}",
+                e
+            ))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -113,9 +117,10 @@ impl DependencyAnalyzer {
         let mut implementation_exposures = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -192,43 +197,85 @@ impl DependencyAnalyzer {
     /// Checks if a class name represents an infrastructure class.
     fn is_infrastructure_class(&self, class_name: &str) -> bool {
         let infrastructure_classes = [
-            "Model", "View", "Serializer", "Form",
-            "Request", "Response", "HttpRequest", "HttpResponse",
-            "Connection", "Session", "Transaction",
-            "Component", "Widget", "Handler",
+            "Model",
+            "View",
+            "Serializer",
+            "Form",
+            "Request",
+            "Response",
+            "HttpRequest",
+            "HttpResponse",
+            "Connection",
+            "Session",
+            "Transaction",
+            "Component",
+            "Widget",
+            "Handler",
         ];
 
-        infrastructure_classes.iter().any(|pattern| class_name.contains(pattern))
+        infrastructure_classes
+            .iter()
+            .any(|pattern| class_name.contains(pattern))
     }
 
     /// Checks if a module is considered infrastructure.
     fn is_infrastructure_module(&self, module_name: &str) -> bool {
         let infrastructure_modules = [
-            "django", "flask", "fastapi", "tornado",
-            "sqlalchemy", "peewee", "mongoengine",
-            "requests", "urllib", "http",
-            "express", "koa", "fastify", "nest",
-            "mongoose", "sequelize", "typeorm", "prisma",
-            "react", "vue", "angular", "next",
+            "django",
+            "flask",
+            "fastapi",
+            "tornado",
+            "sqlalchemy",
+            "peewee",
+            "mongoengine",
+            "requests",
+            "urllib",
+            "http",
+            "express",
+            "koa",
+            "fastify",
+            "nest",
+            "mongoose",
+            "sequelize",
+            "typeorm",
+            "prisma",
+            "react",
+            "vue",
+            "angular",
+            "next",
         ];
 
-        infrastructure_modules.iter().any(|pattern| module_name.starts_with(pattern))
+        infrastructure_modules
+            .iter()
+            .any(|pattern| module_name.starts_with(pattern))
     }
 
     /// Checks if a class represents a framework class.
     fn is_framework_class(&self, class_name: &str) -> bool {
         let framework_classes = [
-            "Component", "Controller", "Service", "Repository",
-            "Model", "Entity", "Document", "Schema",
-            "Middleware", "Guard", "Interceptor", "Pipe",
+            "Component",
+            "Controller",
+            "Service",
+            "Repository",
+            "Model",
+            "Entity",
+            "Document",
+            "Schema",
+            "Middleware",
+            "Guard",
+            "Interceptor",
+            "Pipe",
         ];
 
-        framework_classes.iter().any(|pattern| class_name.contains(pattern))
+        framework_classes
+            .iter()
+            .any(|pattern| class_name.contains(pattern))
     }
 
     /// Analyzes coupling strength between components.
     pub fn analyze_coupling_strength(&self, dependencies: &[String]) -> f64 {
-        let infrastructure_deps = dependencies.iter()
+        let infrastructure_deps = dependencies
+            .iter()
             .filter(|dep| self.is_infrastructure_module(dep))
             .count();
 
@@ -241,25 +288,41 @@ impl DependencyAnalyzer {
     }
 
     /// Provides recommendations for reducing coupling.
-    pub fn suggest_decoupling_strategies(&self, exposures: &[ImplementationExposure]) -> Vec<String> {
+    pub fn suggest_decoupling_strategies(
+        &self,
+        exposures: &[ImplementationExposure],
+    ) -> Vec<String> {
         let mut suggestions = Vec::new();
 
         for exposure in exposures {
-            if exposure.exposed_detail.contains("Model") || exposure.exposed_detail.contains("Entity") {
-                suggestions.push("Consider using Data Transfer Objects (DTOs) instead of direct model usage".to_string());
+            if exposure.exposed_detail.contains("Model")
+                || exposure.exposed_detail.contains("Entity")
+            {
+                suggestions.push(
+                    "Consider using Data Transfer Objects (DTOs) instead of direct model usage"
+                        .to_string(),
+                );
             }
 
-            if exposure.exposed_detail.contains("Request") || exposure.exposed_detail.contains("Response") {
-                suggestions.push("Abstract HTTP concerns behind domain-specific interfaces".to_string());
+            if exposure.exposed_detail.contains("Request")
+                || exposure.exposed_detail.contains("Response")
+            {
+                suggestions
+                    .push("Abstract HTTP concerns behind domain-specific interfaces".to_string());
             }
 
-            if exposure.exposed_detail.contains("Connection") || exposure.exposed_detail.contains("Session") {
-                suggestions.push("Use repository pattern to abstract data access details".to_string());
+            if exposure.exposed_detail.contains("Connection")
+                || exposure.exposed_detail.contains("Session")
+            {
+                suggestions
+                    .push("Use repository pattern to abstract data access details".to_string());
             }
         }
 
         if suggestions.is_empty() {
-            suggestions.push("Consider using dependency injection to invert control dependencies".to_string());
+            suggestions.push(
+                "Consider using dependency injection to invert control dependencies".to_string(),
+            );
         }
 
         suggestions

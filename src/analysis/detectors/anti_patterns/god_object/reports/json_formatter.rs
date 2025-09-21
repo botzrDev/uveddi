@@ -1,8 +1,8 @@
 //! JSON formatting for God Object reports
 
+use super::utils::calculate_severity_distribution;
 use crate::database::models::ArchitecturalIssue;
 use serde_json::{json, Value};
-use super::utils::calculate_severity_distribution;
 
 /// JSON formatter for God Object reports
 pub struct JsonFormatter;

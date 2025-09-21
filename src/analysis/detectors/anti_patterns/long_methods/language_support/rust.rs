@@ -1,7 +1,7 @@
 //! Rust-specific method analysis
 
-use crate::analysis::AnalysisError;
 use crate::analysis::detectors::anti_patterns::long_methods::types::MethodMetrics;
+use crate::analysis::AnalysisError;
 #[cfg(feature = "tree-sitter")]
 use crate::ast::tree_sitter::{Language, Node, Query};
 

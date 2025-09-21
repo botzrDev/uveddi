@@ -1,11 +1,11 @@
 //! Boundary and encapsulation validation for abstraction checking.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, ArchitecturalConfig, ArchitecturalLayer, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ArchitecturalConfig, ArchitecturalLayer, LeakType
-};
 
 /// Validates encapsulation boundaries and interface contracts.
 pub struct BoundaryValidator {

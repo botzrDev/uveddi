@@ -4,18 +4,18 @@
 //! types of secrets and credentials in configuration files.
 
 pub mod api_keys;
-pub mod credentials;
 pub mod certificates;
+pub mod credentials;
 
 // Re-export main types
 pub use api_keys::build_api_key_patterns;
-pub use credentials::build_credential_patterns;
 pub use certificates::build_certificate_patterns;
+pub use credentials::build_credential_patterns;
 
-use crate::analysis::AnalysisError;
 use super::super::config::ConfigSecurityConfig;
 use super::super::types::{ConfigIssue, ConfigSeverity, PatternMatch};
-use super::{ConfigPatternMatcher, PatternMatcher, utils};
+use super::{utils, ConfigPatternMatcher, PatternMatcher};
+use crate::analysis::AnalysisError;
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -89,7 +89,10 @@ impl ConfigPatternMatcher for SecretPatternMatcher {
         Ok(matches)
     }
 
-    fn matches_to_issues(&self, matches: Vec<PatternMatch>) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn matches_to_issues(
+        &self,
+        matches: Vec<PatternMatch>,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         for pattern_match in matches {
@@ -153,25 +156,46 @@ impl SecretPatternMatcher {
         Ok(patterns)
     }
 
-    fn calculate_match_confidence(&self, pattern: &SecretPattern, matched_text: &str, line: &str) -> f64 {
+    fn calculate_match_confidence(
+        &self,
+        pattern: &SecretPattern,
+        matched_text: &str,
+        line: &str,
+    ) -> f64 {
         let mut confidence = pattern.confidence;
 
         // Reduce confidence for common test/example values
-        let test_indicators = ["test", "example", "demo", "placeholder", "xxx", "***", "changeme"];
+        let test_indicators = [
+            "test",
+            "example",
+            "demo",
+            "placeholder",
+            "xxx",
+            "***",
+            "changeme",
+        ];
         if test_indicators.iter().any(|&indicator| {
-            matched_text.to_lowercase().contains(indicator) || line.to_lowercase().contains(indicator)
+            matched_text.to_lowercase().contains(indicator)
+                || line.to_lowercase().contains(indicator)
         }) {
             confidence *= 0.3;
         }
 
         // Reduce confidence for obviously fake values
-        if matched_text.chars().all(|c| c == 'x' || c == '*' || c == '0') || matched_text.len() < 6 {
+        if matched_text
+            .chars()
+            .all(|c| c == 'x' || c == '*' || c == '0')
+            || matched_text.len() < 6
+        {
             confidence *= 0.1;
         }
 
         // Increase confidence for production-like contexts
         let prod_indicators = ["prod", "production", "live", "release"];
-        if prod_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator)) {
+        if prod_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
+        {
             confidence = (confidence * 1.2).min(1.0);
         }
 
@@ -193,7 +217,8 @@ impl SecretPatternMatcher {
         }
 
         let text_len = text.len() as f64;
-        char_counts.values()
+        char_counts
+            .values()
             .map(|&count| {
                 let p = count as f64 / text_len;
                 -p * p.log2()

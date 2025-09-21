@@ -17,17 +17,16 @@ pub mod config;
 pub mod detector;
 pub mod graph;
 pub mod knowledge;
+pub mod language_support;
 pub mod security;
 pub mod types;
-pub mod language_support;
 
 // Re-export main public interfaces
 pub use config::KnowledgeGraphConfig;
 pub use detector::KnowledgeGraphDetector;
 pub use types::{
-    SecurityKnowledgeResult, SecurityQuery, ArchitecturalCorrelation,
-    CodeEntity, FileAnalysis, StructuralSemanticGraph,
-    StructuralQueryResult, SemanticQueryResult, RAGQueryResult,
+    ArchitecturalCorrelation, CodeEntity, FileAnalysis, RAGQueryResult, SecurityKnowledgeResult,
+    SecurityQuery, SemanticQueryResult, StructuralQueryResult, StructuralSemanticGraph,
 };
 
 use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType};
@@ -122,7 +121,10 @@ impl SecurityKnowledgeGraph {
     }
 
     /// Build the graph from file paths
-    pub async fn build_from_files(&mut self, file_paths: Vec<PathBuf>) -> Result<(), AnalysisError> {
+    pub async fn build_from_files(
+        &mut self,
+        file_paths: Vec<PathBuf>,
+    ) -> Result<(), AnalysisError> {
         let result = self.builder.build_from_codebase(file_paths).await?;
         self.current_result = Some(result);
         Ok(())
@@ -146,7 +148,9 @@ impl SecurityKnowledgeGraph {
         &self,
         security_issue: &SecurityIssue,
     ) -> Result<ArchitecturalCorrelation, AnalysisError> {
-        self.builder.correlate_with_architecture(security_issue).await
+        self.builder
+            .correlate_with_architecture(security_issue)
+            .await
     }
 
     /// Get summary of extracted security issues

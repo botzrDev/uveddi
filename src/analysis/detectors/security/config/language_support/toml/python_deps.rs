@@ -3,10 +3,10 @@
 //! This module checks for security issues in Python dependency configurations
 //! in pyproject.toml files.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::utils;
+use crate::analysis::AnalysisError;
 use toml::Value as TomlValue;
 
 /// Python dependency security checker
@@ -22,14 +22,20 @@ impl PythonDependencyChecker {
     }
 
     /// Check for Python dependency security issues in pyproject.toml
-    pub fn check_python_dependencies(&self, deps: &TomlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    pub fn check_python_dependencies(
+        &self,
+        deps: &TomlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         if let TomlValue::Array(deps_array) = deps {
             for dep in deps_array {
                 if let TomlValue::String(dep_str) = dep {
                     // Parse dependency string (e.g., "package>=1.0.0")
-                    let dep_name = dep_str.split(['=', '>', '<', '~', '!']).next().unwrap_or(dep_str);
+                    let dep_name = dep_str
+                        .split(['=', '>', '<', '~', '!'])
+                        .next()
+                        .unwrap_or(dep_str);
 
                     // Check for known vulnerable Python packages
                     if self.is_known_vulnerable_python_package(dep_name) {
@@ -60,10 +66,17 @@ impl PythonDependencyChecker {
                         issues.push(utils::create_config_issue(
                             ConfigSeverity::Low,
                             "Development Dependency in Production",
-                            format!("Development package '{}' included in production dependencies", dep_name),
+                            format!(
+                                "Development package '{}' included in production dependencies",
+                                dep_name
+                            ),
                             None,
                             "Move development packages to optional dependencies",
-                            vec!["dependency".to_string(), "python".to_string(), "development".to_string()],
+                            vec![
+                                "dependency".to_string(),
+                                "python".to_string(),
+                                "development".to_string(),
+                            ],
                         ));
                     }
                 }
@@ -83,14 +96,21 @@ impl PythonDependencyChecker {
                 if let TomlValue::Table(source_table) = source {
                     if let Some(TomlValue::String(url)) = source_table.get("url") {
                         if url.starts_with("http://") {
-                            issues.push(utils::create_config_issue(
-                                ConfigSeverity::High,
-                                "Insecure Poetry Source",
-                                format!("Poetry source uses HTTP: {}", url),
-                                None,
-                                "Use HTTPS URLs for Poetry package sources",
-                                vec!["poetry".to_string(), "http".to_string(), "toml".to_string()],
-                            ).with_cwe(319));
+                            issues.push(
+                                utils::create_config_issue(
+                                    ConfigSeverity::High,
+                                    "Insecure Poetry Source",
+                                    format!("Poetry source uses HTTP: {}", url),
+                                    None,
+                                    "Use HTTPS URLs for Poetry package sources",
+                                    vec![
+                                        "poetry".to_string(),
+                                        "http".to_string(),
+                                        "toml".to_string(),
+                                    ],
+                                )
+                                .with_cwe(319),
+                            );
                         }
                     }
                 }
@@ -103,14 +123,24 @@ impl PythonDependencyChecker {
                 if let TomlValue::Table(config_table) = dep_config {
                     if let Some(TomlValue::String(git_url)) = config_table.get("git") {
                         if git_url.starts_with("http://") {
-                            issues.push(utils::create_config_issue(
-                                ConfigSeverity::Medium,
-                                "Insecure Poetry Git Dependency",
-                                format!("Poetry dependency '{}' uses insecure HTTP git URL", dep_name),
-                                None,
-                                "Use HTTPS or SSH URLs for git dependencies",
-                                vec!["poetry".to_string(), "git".to_string(), "http".to_string()],
-                            ).with_cwe(319));
+                            issues.push(
+                                utils::create_config_issue(
+                                    ConfigSeverity::Medium,
+                                    "Insecure Poetry Git Dependency",
+                                    format!(
+                                        "Poetry dependency '{}' uses insecure HTTP git URL",
+                                        dep_name
+                                    ),
+                                    None,
+                                    "Use HTTPS or SSH URLs for git dependencies",
+                                    vec![
+                                        "poetry".to_string(),
+                                        "git".to_string(),
+                                        "http".to_string(),
+                                    ],
+                                )
+                                .with_cwe(319),
+                            );
                         }
                     }
                 }
@@ -129,14 +159,17 @@ impl PythonDependencyChecker {
             // Check for insecure index URLs
             if let Some(TomlValue::String(index_url)) = pip.get("index-url") {
                 if index_url.starts_with("http://") {
-                    issues.push(utils::create_config_issue(
-                        ConfigSeverity::High,
-                        "Insecure Pip Index URL",
-                        "Pip configured with insecure HTTP index URL",
-                        None,
-                        "Use HTTPS URLs for pip package indexes",
-                        vec!["pip".to_string(), "http".to_string(), "toml".to_string()],
-                    ).with_cwe(319));
+                    issues.push(
+                        utils::create_config_issue(
+                            ConfigSeverity::High,
+                            "Insecure Pip Index URL",
+                            "Pip configured with insecure HTTP index URL",
+                            None,
+                            "Use HTTPS URLs for pip package indexes",
+                            vec!["pip".to_string(), "http".to_string(), "toml".to_string()],
+                        )
+                        .with_cwe(319),
+                    );
                 }
             }
 
@@ -145,14 +178,17 @@ impl PythonDependencyChecker {
                 for url in extra_urls {
                     if let TomlValue::String(url_str) = url {
                         if url_str.starts_with("http://") {
-                            issues.push(utils::create_config_issue(
-                                ConfigSeverity::High,
-                                "Insecure Extra Index URL",
-                                format!("Extra index URL uses HTTP: {}", url_str),
-                                None,
-                                "Use HTTPS URLs for all package indexes",
-                                vec!["pip".to_string(), "http".to_string(), "toml".to_string()],
-                            ).with_cwe(319));
+                            issues.push(
+                                utils::create_config_issue(
+                                    ConfigSeverity::High,
+                                    "Insecure Extra Index URL",
+                                    format!("Extra index URL uses HTTP: {}", url_str),
+                                    None,
+                                    "Use HTTPS URLs for all package indexes",
+                                    vec!["pip".to_string(), "http".to_string(), "toml".to_string()],
+                                )
+                                .with_cwe(319),
+                            );
                         }
                     }
                 }
@@ -179,8 +215,17 @@ impl PythonDependencyChecker {
 
     fn is_development_package(&self, package_name: &str) -> bool {
         let dev_packages = [
-            "pytest", "black", "flake8", "mypy", "tox", "coverage",
-            "sphinx", "pre-commit", "isort", "bandit", "safety"
+            "pytest",
+            "black",
+            "flake8",
+            "mypy",
+            "tox",
+            "coverage",
+            "sphinx",
+            "pre-commit",
+            "isort",
+            "bandit",
+            "safety",
         ];
 
         dev_packages.contains(&package_name)
@@ -205,7 +250,9 @@ mod tests {
         let issues = checker.check_python_dependencies(&deps).unwrap();
         assert!(issues.iter().any(|i| i.title.contains("Vulnerable Python")));
         assert!(issues.iter().any(|i| i.title.contains("Unpinned Python")));
-        assert!(issues.iter().any(|i| i.title.contains("Development Dependency")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Development Dependency")));
     }
 
     #[test]
@@ -214,18 +261,24 @@ mod tests {
         let checker = PythonDependencyChecker::new(&config);
 
         let mut poetry_table = toml::value::Table::new();
-        let sources = toml::Value::Array(vec![
-            toml::Value::Table({
-                let mut source = toml::value::Table::new();
-                source.insert("name".to_string(), toml::Value::String("internal".to_string()));
-                source.insert("url".to_string(), toml::Value::String("http://internal.pypi.com/simple/".to_string()));
-                source
-            })
-        ]);
+        let sources = toml::Value::Array(vec![toml::Value::Table({
+            let mut source = toml::value::Table::new();
+            source.insert(
+                "name".to_string(),
+                toml::Value::String("internal".to_string()),
+            );
+            source.insert(
+                "url".to_string(),
+                toml::Value::String("http://internal.pypi.com/simple/".to_string()),
+            );
+            source
+        })]);
         poetry_table.insert("source".to_string(), sources);
 
         let issues = checker.check_poetry_dependencies(&poetry_table);
-        assert!(issues.iter().any(|i| i.title.contains("Insecure Poetry Source")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Insecure Poetry Source")));
     }
 
     #[test]
@@ -235,10 +288,15 @@ mod tests {
 
         let mut pip_table = toml::value::Table::new();
         let mut pip_config = toml::value::Table::new();
-        pip_config.insert("index-url".to_string(), toml::Value::String("http://pypi.example.com/simple/".to_string()));
+        pip_config.insert(
+            "index-url".to_string(),
+            toml::Value::String("http://pypi.example.com/simple/".to_string()),
+        );
         pip_table.insert("pip".to_string(), toml::Value::Table(pip_config));
 
         let issues = checker.check_pip_configuration(&pip_table);
-        assert!(issues.iter().any(|i| i.title.contains("Insecure Pip Index")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Insecure Pip Index")));
     }
 }

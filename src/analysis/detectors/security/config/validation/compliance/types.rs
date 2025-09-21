@@ -59,9 +59,9 @@ impl ComplianceStandard {
         }
 
         self.requirements.iter().any(|req| {
-            req.applicable_tags.iter().any(|tag| {
-                tags.iter().any(|issue_tag| issue_tag.contains(tag))
-            })
+            req.applicable_tags
+                .iter()
+                .any(|tag| tags.iter().any(|issue_tag| issue_tag.contains(tag)))
         })
     }
 }
@@ -118,8 +118,8 @@ impl ComplianceRequirement {
     pub fn applies_to_tags(&self, tags: &[String]) -> bool {
         self.applicable_tags.iter().any(|req_tag| {
             tags.iter().any(|issue_tag| {
-                issue_tag.to_lowercase().contains(&req_tag.to_lowercase()) ||
-                req_tag.to_lowercase().contains(&issue_tag.to_lowercase())
+                issue_tag.to_lowercase().contains(&req_tag.to_lowercase())
+                    || req_tag.to_lowercase().contains(&issue_tag.to_lowercase())
             })
         })
     }
@@ -136,11 +136,7 @@ mod tests {
 
     #[test]
     fn test_compliance_standard_creation() {
-        let standard = ComplianceStandard::new(
-            "OWASP".to_string(),
-            "2021".to_string(),
-            true,
-        );
+        let standard = ComplianceStandard::new("OWASP".to_string(), "2021".to_string(), true);
 
         assert_eq!(standard.name, "OWASP");
         assert_eq!(standard.version, "2021");
@@ -155,15 +151,15 @@ mod tests {
             "Injection".to_string(),
             "Test requirement".to_string(),
         )
-        .with_severity_mapping(&[
-            (ConfigSeverity::High, 9.0),
-            (ConfigSeverity::Medium, 6.0),
-        ])
+        .with_severity_mapping(&[(ConfigSeverity::High, 9.0), (ConfigSeverity::Medium, 6.0)])
         .with_cwe_ids(vec![79, 89])
         .with_tags(vec!["injection".to_string()]);
 
         assert_eq!(requirement.id, "A01");
-        assert_eq!(requirement.get_score_for_severity(&ConfigSeverity::High), 9.0);
+        assert_eq!(
+            requirement.get_score_for_severity(&ConfigSeverity::High),
+            9.0
+        );
         assert!(requirement.applies_to_cwe(79));
         assert!(requirement.applies_to_tags(&["sql-injection".to_string()]));
     }
@@ -176,11 +172,9 @@ mod tests {
             "Test requirement".to_string(),
         );
 
-        let standard = ComplianceStandard::new(
-            "Test Standard".to_string(),
-            "1.0".to_string(),
-            true,
-        ).add_requirement(requirement);
+        let standard =
+            ComplianceStandard::new("Test Standard".to_string(), "1.0".to_string(), true)
+                .add_requirement(requirement);
 
         assert_eq!(standard.requirements.len(), 1);
         assert_eq!(standard.get_enabled_requirements().len(), 1);
@@ -188,11 +182,8 @@ mod tests {
 
     #[test]
     fn test_disabled_standard() {
-        let standard = ComplianceStandard::new(
-            "Disabled Standard".to_string(),
-            "1.0".to_string(),
-            false,
-        );
+        let standard =
+            ComplianceStandard::new("Disabled Standard".to_string(), "1.0".to_string(), false);
 
         assert!(standard.get_enabled_requirements().is_empty());
         assert!(!standard.is_applicable_for_tags(&["any-tag".to_string()]));

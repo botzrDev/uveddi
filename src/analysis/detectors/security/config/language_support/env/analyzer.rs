@@ -3,13 +3,13 @@
 //! This module coordinates all environment variable security checks
 //! including secret detection, validation, and structural analysis.
 
-use crate::analysis::AnalysisError;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::{ConfigIssue, ConfigType};
-use super::super::{LanguageAnalyzer, utils};
+use super::super::{utils, LanguageAnalyzer};
+use super::parser::EnvParser;
 use super::secret_patterns::EnvSecretPatternChecker;
 use super::validator::EnvValidator;
-use super::parser::EnvParser;
+use crate::analysis::AnalysisError;
 
 /// Analyzer for environment variable files (.env)
 pub struct EnvAnalyzer {
@@ -83,18 +83,29 @@ impl EnvAnalyzer {
         Ok(issues)
     }
 
-    fn check_file_path_issues(&self, key: &str, value: &str, line_number: usize) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn check_file_path_issues(
+        &self,
+        key: &str,
+        value: &str,
+        line_number: usize,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         if self.is_sensitive_file_path(key, value) {
-            issues.push(utils::create_config_issue(
-                super::super::super::types::ConfigSeverity::Medium,
-                "Sensitive File Path".to_string(),
-                format!("Environment variable '{}' contains a sensitive file path", key),
-                Some(line_number),
-                "Ensure file paths don't expose sensitive information".to_string(),
-                vec!["environment".to_string(), "file-path".to_string()],
-            ).with_cwe(200));
+            issues.push(
+                utils::create_config_issue(
+                    super::super::super::types::ConfigSeverity::Medium,
+                    "Sensitive File Path".to_string(),
+                    format!(
+                        "Environment variable '{}' contains a sensitive file path",
+                        key
+                    ),
+                    Some(line_number),
+                    "Ensure file paths don't expose sensitive information".to_string(),
+                    vec!["environment".to_string(), "file-path".to_string()],
+                )
+                .with_cwe(200),
+            );
         }
 
         Ok(issues)
@@ -104,17 +115,32 @@ impl EnvAnalyzer {
         let key_lower = key.to_lowercase();
         let path_indicators = ["file", "path", "cert", "key", "config"];
 
-        if !path_indicators.iter().any(|&indicator| key_lower.contains(indicator)) {
+        if !path_indicators
+            .iter()
+            .any(|&indicator| key_lower.contains(indicator))
+        {
             return false;
         }
 
         let sensitive_paths = [
-            "/etc/", "/root/", "/home/", "/.ssh/", "/var/", "/tmp/",
-            "private", "secret", "credential", ".pem", ".key", ".p12",
+            "/etc/",
+            "/root/",
+            "/home/",
+            "/.ssh/",
+            "/var/",
+            "/tmp/",
+            "private",
+            "secret",
+            "credential",
+            ".pem",
+            ".key",
+            ".p12",
         ];
 
         let value_lower = value.to_lowercase();
-        sensitive_paths.iter().any(|&path| value_lower.contains(path))
+        sensitive_paths
+            .iter()
+            .any(|&path| value_lower.contains(path))
     }
 }
 
@@ -158,7 +184,9 @@ SECRET_KEY=changeme
         assert!(issues.iter().any(|i| i.title.contains("AWS Access Key")));
         assert!(issues.iter().any(|i| i.title.contains("Debug Mode")));
         assert!(issues.iter().any(|i| i.title.contains("HTTP URL")));
-        assert!(issues.iter().any(|i| i.title.contains("Default Environment")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Environment")));
     }
 
     #[test]
@@ -185,8 +213,12 @@ KEY3='single quoted'
         let config = ConfigSecurityConfig::default();
         let analyzer = EnvAnalyzer::new(&config).unwrap();
 
-        let issues = analyzer.check_file_path_issues("SSL_CERT_PATH", "/etc/ssl/private/cert.pem", 1).unwrap();
-        assert!(issues.iter().any(|i| i.title.contains("Sensitive File Path")));
+        let issues = analyzer
+            .check_file_path_issues("SSL_CERT_PATH", "/etc/ssl/private/cert.pem", 1)
+            .unwrap();
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Sensitive File Path")));
     }
 
     #[test]

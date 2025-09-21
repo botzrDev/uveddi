@@ -1,9 +1,11 @@
 #[cfg(test)]
 mod detector_tests {
     use crate::analysis::detectors::anti_patterns::tight_coupling::{
-        TightCouplingDetector, TightCouplingConfig, Dependency, DependencyStrength,
+        Dependency, DependencyStrength, TightCouplingConfig, TightCouplingDetector,
     };
-    use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
+    use crate::analysis::graph::dependency::{
+        ComponentNode, LocalDependencyGraph, LocalDependencyType,
+    };
     use crate::analysis::AnalysisDetector;
     use crate::ast::tree_sitter_impl::SourceLanguage;
 

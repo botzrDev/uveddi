@@ -9,7 +9,7 @@ pub mod registry;
 
 pub use file_processor::FileProcessor;
 pub use progress_tracker::{ProgressTracker, ProgressUpdate};
-pub use registry::{ServiceRegistry, ServiceBuilder};
+pub use registry::{ServiceBuilder, ServiceRegistry};
 
 /// Common service traits and interfaces
 pub mod traits {

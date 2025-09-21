@@ -42,7 +42,10 @@ impl TaintSource {
         self
     }
 
-    pub fn with_severity(mut self, severity: crate::analysis::detectors::security::types::SecuritySeverity) -> Self {
+    pub fn with_severity(
+        mut self,
+        severity: crate::analysis::detectors::security::types::SecuritySeverity,
+    ) -> Self {
         self.default_severity = severity;
         self
     }
@@ -130,7 +133,11 @@ pub struct SanitizationPoint {
 }
 
 impl SanitizationPoint {
-    pub fn new(id: String, pattern: String, prevents: Vec<crate::analysis::detectors::security::types::SecurityIssueType>) -> Self {
+    pub fn new(
+        id: String,
+        pattern: String,
+        prevents: Vec<crate::analysis::detectors::security::types::SecurityIssueType>,
+    ) -> Self {
         Self {
             id,
             pattern,

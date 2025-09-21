@@ -1,12 +1,12 @@
 //! Language-specific support for knowledge graph construction
 
-pub mod rust;
-pub mod python;
 pub mod javascript;
+pub mod python;
+pub mod rust;
 
-pub use rust::RustEntityProcessor;
-pub use python::PythonEntityProcessor;
 pub use javascript::JavaScriptEntityProcessor;
+pub use python::PythonEntityProcessor;
+pub use rust::RustEntityProcessor;
 
 use crate::analysis::detectors::security::knowledge_graph::types::CodeEntity;
 use crate::analysis::AnalysisError;
@@ -38,13 +38,19 @@ impl LanguageEntityProcessor {
     ) -> Result<Vec<CodeEntity>, AnalysisError> {
         match language {
             SourceLanguage::Rust => {
-                self.rust_processor.process_rust_entities(file_path, content).await
+                self.rust_processor
+                    .process_rust_entities(file_path, content)
+                    .await
             }
             SourceLanguage::Python => {
-                self.python_processor.process_python_entities(file_path, content).await
+                self.python_processor
+                    .process_python_entities(file_path, content)
+                    .await
             }
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
-                self.js_processor.process_js_entities(file_path, content).await
+                self.js_processor
+                    .process_js_entities(file_path, content)
+                    .await
             }
         }
     }

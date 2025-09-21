@@ -4,15 +4,15 @@
 //! passwords, default encryption keys, and other dangerous default settings.
 
 pub mod analyzer;
-pub mod password_defaults;
 pub mod crypto_defaults;
 pub mod database_defaults;
+pub mod password_defaults;
 
 // Re-export main analyzer
 pub use analyzer::DefaultsAnalyzer;
-pub use password_defaults::PasswordDefaultChecker;
 pub use crypto_defaults::CryptoDefaultChecker;
 pub use database_defaults::DatabaseDefaultChecker;
+pub use password_defaults::PasswordDefaultChecker;
 
 #[cfg(test)]
 mod tests {

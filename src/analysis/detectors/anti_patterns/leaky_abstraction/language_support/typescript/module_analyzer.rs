@@ -1,12 +1,12 @@
 //! TypeScript module boundary analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl ModuleAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -55,7 +56,10 @@ impl ModuleAnalyzer {
         "#;
 
         let query = Query::new(&language, query_source).map_err(|e| {
-            AnalysisError::DetectionError(format!("Failed to create TypeScript import query: {}", e))
+            AnalysisError::DetectionError(format!(
+                "Failed to create TypeScript import query: {}",
+                e
+            ))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -73,7 +77,10 @@ impl ModuleAnalyzer {
                             if self.is_infrastructure_module(module_name) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Infrastructure module '{}' imported in business layer", module_name),
+                                    &format!(
+                                        "Infrastructure module '{}' imported in business layer",
+                                        module_name
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "high",
@@ -115,9 +122,10 @@ impl ModuleAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -136,7 +144,10 @@ impl ModuleAnalyzer {
         "#;
 
         let query = Query::new(&language, query_source).map_err(|e| {
-            AnalysisError::DetectionError(format!("Failed to create TypeScript export query: {}", e))
+            AnalysisError::DetectionError(format!(
+                "Failed to create TypeScript export query: {}",
+                e
+            ))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -173,25 +184,37 @@ impl ModuleAnalyzer {
     /// Checks if a module is considered infrastructure.
     fn is_infrastructure_module(&self, module_name: &str) -> bool {
         let infrastructure_modules = [
-            "express", "koa", "fastify", "nest",
-            "mongoose", "sequelize", "typeorm", "prisma",
-            "socket.io", "ws", "redis", "aws-sdk",
-            "react", "vue", "angular", "next",
+            "express",
+            "koa",
+            "fastify",
+            "nest",
+            "mongoose",
+            "sequelize",
+            "typeorm",
+            "prisma",
+            "socket.io",
+            "ws",
+            "redis",
+            "aws-sdk",
+            "react",
+            "vue",
+            "angular",
+            "next",
         ];
 
-        infrastructure_modules.iter().any(|pattern|
-            module_name.starts_with(pattern) || module_name.contains(pattern)
-        )
+        infrastructure_modules
+            .iter()
+            .any(|pattern| module_name.starts_with(pattern) || module_name.contains(pattern))
     }
 
     /// Checks if a module is considered internal.
     fn is_internal_module(&self, module_name: &str) -> bool {
-        module_name.contains("/internal/") ||
-        module_name.contains("\\internal\\") ||
-        module_name.contains("/impl/") ||
-        module_name.contains("\\impl\\") ||
-        module_name.starts_with("./internal") ||
-        module_name.starts_with("../internal")
+        module_name.contains("/internal/")
+            || module_name.contains("\\internal\\")
+            || module_name.contains("/impl/")
+            || module_name.contains("\\impl\\")
+            || module_name.starts_with("./internal")
+            || module_name.starts_with("../internal")
     }
 
     /// Helper function to create an architectural issue.

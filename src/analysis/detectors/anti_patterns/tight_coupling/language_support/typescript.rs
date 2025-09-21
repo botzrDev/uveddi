@@ -4,8 +4,7 @@ use std::path::Path;
 
 use super::super::types::Dependency;
 use super::{
-    typescript_imports::TypeScriptImportAnalyzer,
-    typescript_modules::TypeScriptModuleAnalyzer,
+    typescript_imports::TypeScriptImportAnalyzer, typescript_modules::TypeScriptModuleAnalyzer,
     LanguageAnalyzer,
 };
 
@@ -34,7 +33,11 @@ impl LanguageAnalyzer for TypeScriptAnalyzer {
         let mut dependencies = Vec::new();
 
         if let Some(tree) = &parsed_file.tree {
-            dependencies.extend(self.import_analyzer.extract_es6_imports(file_path, tree, &parsed_file.source)?);
+            dependencies.extend(self.import_analyzer.extract_es6_imports(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
             dependencies.extend(self.import_analyzer.extract_commonjs_requires(
                 file_path,
                 tree,

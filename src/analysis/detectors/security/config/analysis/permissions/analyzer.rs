@@ -3,13 +3,13 @@
 //! This module coordinates all permission-related security checks
 //! including file permissions, user/group settings, access control, and privilege escalation.
 
-use crate::analysis::AnalysisError;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
-use super::file_permissions::FilePermissionChecker;
-use super::user_group::UserGroupChecker;
 use super::access_control::AccessControlChecker;
+use super::file_permissions::FilePermissionChecker;
 use super::privilege_escalation::PrivilegeEscalationChecker;
+use super::user_group::UserGroupChecker;
+use crate::analysis::AnalysisError;
 use serde_yaml::Value as YamlValue;
 
 /// Analyzes configuration files for permission and access control issues
@@ -61,7 +61,10 @@ impl PermissionAnalyzer {
         Ok(issues)
     }
 
-    fn analyze_structured_permissions(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn analyze_structured_permissions(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         issues.extend(self.check_kubernetes_security_context(value)?);
@@ -71,7 +74,10 @@ impl PermissionAnalyzer {
         Ok(issues)
     }
 
-    fn check_kubernetes_security_context(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn check_kubernetes_security_context(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         if let YamlValue::Mapping(map) = value {
@@ -79,7 +85,9 @@ impl PermissionAnalyzer {
                 if key.as_str() == Some("securityContext") {
                     if let YamlValue::Mapping(security_context) = val {
                         // Check for runAsRoot
-                        if let Some(run_as_user) = security_context.get(&YamlValue::String("runAsUser".to_string())) {
+                        if let Some(run_as_user) =
+                            security_context.get(&YamlValue::String("runAsUser".to_string()))
+                        {
                             if run_as_user.as_u64() == Some(0) {
                                 issues.push(ConfigIssue::new(
                                     ConfigSeverity::High,
@@ -94,7 +102,9 @@ impl PermissionAnalyzer {
                         }
 
                         // Check for privileged containers
-                        if let Some(privileged) = security_context.get(&YamlValue::String("privileged".to_string())) {
+                        if let Some(privileged) =
+                            security_context.get(&YamlValue::String("privileged".to_string()))
+                        {
                             if privileged.as_bool() == Some(true) {
                                 issues.push(ConfigIssue::new(
                                     ConfigSeverity::Critical,
@@ -115,7 +125,10 @@ impl PermissionAnalyzer {
         Ok(issues)
     }
 
-    fn check_database_user_permissions(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn check_database_user_permissions(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         self.check_database_permissions_recursive(value, "", &mut issues);
@@ -123,7 +136,12 @@ impl PermissionAnalyzer {
         Ok(issues)
     }
 
-    fn check_database_permissions_recursive(&self, value: &YamlValue, path: &str, issues: &mut Vec<ConfigIssue>) {
+    fn check_database_permissions_recursive(
+        &self,
+        value: &YamlValue,
+        path: &str,
+        issues: &mut Vec<ConfigIssue>,
+    ) {
         match value {
             YamlValue::Mapping(map) => {
                 // Look for database configuration patterns
@@ -134,7 +152,8 @@ impl PermissionAnalyzer {
                         // Check for database admin users
                         if key_lower.contains("user") && key_lower.contains("database") {
                             if let Some(user_str) = val.as_str() {
-                                if ["root", "admin", "sa", "postgres", "mysql"].contains(&user_str) {
+                                if ["root", "admin", "sa", "postgres", "mysql"].contains(&user_str)
+                                {
                                     issues.push(ConfigIssue::new(
                                         ConfigSeverity::High,
                                         0.85,
@@ -167,7 +186,10 @@ impl PermissionAnalyzer {
         }
     }
 
-    fn check_service_user_configuration(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn check_service_user_configuration(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         if let YamlValue::Mapping(map) = value {
@@ -179,7 +201,9 @@ impl PermissionAnalyzer {
                     if key_lower.contains("service") || key_lower.contains("daemon") {
                         if let YamlValue::Mapping(service_map) = val {
                             // Check user setting
-                            if let Some(user_val) = service_map.get(&YamlValue::String("user".to_string())) {
+                            if let Some(user_val) =
+                                service_map.get(&YamlValue::String("user".to_string()))
+                            {
                                 if let Some(user_str) = user_val.as_str() {
                                     if user_str == "root" || user_str == "0" {
                                         issues.push(ConfigIssue::new(
@@ -251,8 +275,12 @@ spec:
 "#;
 
         let issues = analyzer.analyze(k8s_config).unwrap();
-        assert!(issues.iter().any(|i| i.title.contains("Container Running as Root")));
-        assert!(issues.iter().any(|i| i.title.contains("Privileged Container")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Container Running as Root")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Privileged Container")));
     }
 
     #[test]

@@ -49,10 +49,12 @@ impl MethodMetrics {
 
         // Complexity metrics (40% weight)
         if self.cyclomatic_complexity > thresholds.max_cyclomatic_complexity {
-            score += ((self.cyclomatic_complexity - thresholds.max_cyclomatic_complexity) * 3).min(30);
+            score +=
+                ((self.cyclomatic_complexity - thresholds.max_cyclomatic_complexity) * 3).min(30);
         }
         if self.cognitive_complexity > thresholds.max_cognitive_complexity {
-            score += ((self.cognitive_complexity - thresholds.max_cognitive_complexity) * 2).min(20);
+            score +=
+                ((self.cognitive_complexity - thresholds.max_cognitive_complexity) * 2).min(20);
         }
 
         // Structural metrics (20% weight)
@@ -97,15 +99,13 @@ impl MethodMetrics {
         }
 
         if self.max_nesting_depth > thresholds.max_nesting_depth + 2 {
-            suggestions.push(
-                "Flatten nested conditions using guard clauses or early returns".to_string(),
-            );
+            suggestions
+                .push("Flatten nested conditions using guard clauses or early returns".to_string());
         }
 
         if self.parameter_count > thresholds.max_parameters + 3 {
-            suggestions.push(
-                "Consider using a parameter object to group related parameters".to_string(),
-            );
+            suggestions
+                .push("Consider using a parameter object to group related parameters".to_string());
         }
 
         suggestions

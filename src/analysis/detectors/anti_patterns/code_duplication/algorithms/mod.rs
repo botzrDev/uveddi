@@ -14,8 +14,8 @@ pub use ast_based::AstBasedDetector;
 pub use semantic_based::SemanticDetector;
 pub use token_based::TokenBasedDetector;
 
+use super::types::{ClonePair, CodeBlock};
 use crate::analysis::AnalysisError;
-use super::types::{CodeBlock, ClonePair};
 
 /// Trait for clone detection algorithms
 pub trait CloneDetectionAlgorithm: Send + Sync {
@@ -23,7 +23,11 @@ pub trait CloneDetectionAlgorithm: Send + Sync {
     fn name(&self) -> &'static str;
 
     /// Detects clones between two code blocks
-    fn detect_clones(&self, block1: &CodeBlock, block2: &CodeBlock) -> Result<Option<ClonePair>, AnalysisError>;
+    fn detect_clones(
+        &self,
+        block1: &CodeBlock,
+        block2: &CodeBlock,
+    ) -> Result<Option<ClonePair>, AnalysisError>;
 
     /// Detects clones within a collection of code blocks
     fn detect_all_clones(&self, blocks: &[CodeBlock]) -> Result<Vec<ClonePair>, AnalysisError> {

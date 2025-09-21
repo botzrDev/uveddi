@@ -146,7 +146,11 @@ impl WebFrameworkAnalyzer {
         self.framework_patterns.get(framework_name)
     }
 
-    pub fn detect_framework_from_content(&self, content: &str, language: &SourceLanguage) -> Option<String> {
+    pub fn detect_framework_from_content(
+        &self,
+        content: &str,
+        language: &SourceLanguage,
+    ) -> Option<String> {
         for (framework_name, profile) in &self.framework_patterns {
             if profile.language == *language && content.contains(framework_name) {
                 return Some(framework_name.clone());
@@ -177,7 +181,8 @@ mod tests {
         assert_eq!(detected, Some("actix-web".to_string()));
 
         let python_content = "from flask import Flask, request";
-        let detected = analyzer.detect_framework_from_content(python_content, &SourceLanguage::Python);
+        let detected =
+            analyzer.detect_framework_from_content(python_content, &SourceLanguage::Python);
         assert_eq!(detected, Some("flask".to_string()));
     }
 

@@ -1,21 +1,21 @@
 //! Implementation analysis coordination module.
 
+pub mod dependency_analyzer;
 pub mod field_analyzer;
 pub mod method_analyzer;
-pub mod dependency_analyzer;
 pub mod visibility_analyzer;
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, ImplementationAnalysisResult, ImplementationExposure,
+    ImplementationVisibilityIssue, LeakType, TypeLeakage,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ImplementationAnalysisResult, ImplementationExposure,
-    TypeLeakage, ImplementationVisibilityIssue, LeakType
-};
 
+pub use dependency_analyzer::DependencyAnalyzer;
 pub use field_analyzer::FieldAnalyzer;
 pub use method_analyzer::MethodAnalyzer;
-pub use dependency_analyzer::DependencyAnalyzer;
 pub use visibility_analyzer::VisibilityAnalyzer;
 
 /// Coordinates implementation analysis across multiple specialized analyzers.
@@ -45,8 +45,12 @@ impl ImplementationAnalyzer {
         context: &AnalysisContext,
     ) -> Result<ImplementationAnalysisResult, AnalysisError> {
         match parsed_file.language {
-            crate::ast::SourceLanguage::Rust => self.analyze_rust_implementation(parsed_file, context),
-            crate::ast::SourceLanguage::Python => self.analyze_python_implementation(parsed_file, context),
+            crate::ast::SourceLanguage::Rust => {
+                self.analyze_rust_implementation(parsed_file, context)
+            }
+            crate::ast::SourceLanguage::Python => {
+                self.analyze_python_implementation(parsed_file, context)
+            }
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 self.analyze_js_implementation(parsed_file, context)
             }
@@ -64,17 +68,23 @@ impl ImplementationAnalyzer {
         let mut visibility_issues = Vec::new();
 
         // Analyze fields
-        let (field_exposures, field_leakages) = self.field_analyzer.analyze_rust_fields(parsed_file, context)?;
+        let (field_exposures, field_leakages) = self
+            .field_analyzer
+            .analyze_rust_fields(parsed_file, context)?;
         implementation_exposures.extend(field_exposures);
         type_leakages.extend(field_leakages);
 
         // Analyze methods
-        let (method_leakages, method_visibility) = self.method_analyzer.analyze_rust_methods(parsed_file, context)?;
+        let (method_leakages, method_visibility) = self
+            .method_analyzer
+            .analyze_rust_methods(parsed_file, context)?;
         type_leakages.extend(method_leakages);
         visibility_issues.extend(method_visibility);
 
         // Analyze visibility
-        let vis_issues = self.visibility_analyzer.analyze_rust_visibility(parsed_file, context)?;
+        let vis_issues = self
+            .visibility_analyzer
+            .analyze_rust_visibility(parsed_file, context)?;
         visibility_issues.extend(vis_issues);
 
         Ok(ImplementationAnalysisResult {
@@ -95,20 +105,28 @@ impl ImplementationAnalyzer {
         let mut visibility_issues = Vec::new();
 
         // Analyze fields
-        let (field_exposures, field_leakages) = self.field_analyzer.analyze_python_fields(parsed_file, context)?;
+        let (field_exposures, field_leakages) = self
+            .field_analyzer
+            .analyze_python_fields(parsed_file, context)?;
         implementation_exposures.extend(field_exposures);
         type_leakages.extend(field_leakages);
 
         // Analyze methods
-        let method_visibility = self.method_analyzer.analyze_python_methods(parsed_file, context)?;
+        let method_visibility = self
+            .method_analyzer
+            .analyze_python_methods(parsed_file, context)?;
         visibility_issues.extend(method_visibility);
 
         // Analyze dependencies
-        let dep_exposures = self.dependency_analyzer.analyze_python_dependencies(parsed_file, context)?;
+        let dep_exposures = self
+            .dependency_analyzer
+            .analyze_python_dependencies(parsed_file, context)?;
         implementation_exposures.extend(dep_exposures);
 
         // Analyze visibility
-        let vis_issues = self.visibility_analyzer.analyze_python_visibility(parsed_file, context)?;
+        let vis_issues = self
+            .visibility_analyzer
+            .analyze_python_visibility(parsed_file, context)?;
         visibility_issues.extend(vis_issues);
 
         Ok(ImplementationAnalysisResult {
@@ -129,15 +147,21 @@ impl ImplementationAnalyzer {
         let mut visibility_issues = Vec::new();
 
         // Analyze methods
-        let method_visibility = self.method_analyzer.analyze_js_methods(parsed_file, context)?;
+        let method_visibility = self
+            .method_analyzer
+            .analyze_js_methods(parsed_file, context)?;
         visibility_issues.extend(method_visibility);
 
         // Analyze dependencies
-        let dep_exposures = self.dependency_analyzer.analyze_js_dependencies(parsed_file, context)?;
+        let dep_exposures = self
+            .dependency_analyzer
+            .analyze_js_dependencies(parsed_file, context)?;
         implementation_exposures.extend(dep_exposures);
 
         // Analyze visibility
-        let vis_issues = self.visibility_analyzer.analyze_js_visibility(parsed_file, context)?;
+        let vis_issues = self
+            .visibility_analyzer
+            .analyze_js_visibility(parsed_file, context)?;
         visibility_issues.extend(vis_issues);
 
         Ok(ImplementationAnalysisResult {

@@ -70,43 +70,40 @@
 //! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
 
 // Re-export main components for public API
-pub mod types;
+pub mod analyzers;
 pub mod config;
 pub mod detector;
-pub mod analyzers;
-pub mod patterns;
 pub mod language_support;
+pub mod patterns;
+pub mod types;
 pub mod validation;
 
 // Public API exports
+pub use config::{create_default_config, ConfigBuilder};
 pub use detector::LeakyAbstractionDetector;
 pub use types::{
-    ArchitecturalConfig, ArchitecturalLayer, LeakType, AnalysisContext,
-    InterfaceAnalysisResult, ImplementationAnalysisResult,
-    ApiElement, VisibilityViolation, ContractViolation,
-    ImplementationExposure, TypeLeakage, ImplementationVisibilityIssue,
+    AnalysisContext, ApiElement, ArchitecturalConfig, ArchitecturalLayer, ContractViolation,
+    ImplementationAnalysisResult, ImplementationExposure, ImplementationVisibilityIssue,
+    InterfaceAnalysisResult, LeakType, TypeLeakage, VisibilityViolation,
 };
-pub use config::{ConfigBuilder, create_default_config};
 
 // Analyzer exports
 pub use analyzers::{
-    InterfaceAnalyzer, ImplementationAnalyzer, AbstractionValidator, LeakDetector
+    AbstractionValidator, ImplementationAnalyzer, InterfaceAnalyzer, LeakDetector,
 };
 
 // Pattern exports
 pub use patterns::{
-    ExposedInternalsPattern, TightCouplingPattern, StateExposurePattern, DataStructureLeaksPattern
+    DataStructureLeaksPattern, ExposedInternalsPattern, StateExposurePattern, TightCouplingPattern,
 };
 
 // Language support exports
-pub use language_support::{
-    RustLanguageSupport, PythonLanguageSupport, TypeScriptLanguageSupport
-};
+pub use language_support::{PythonLanguageSupport, RustLanguageSupport, TypeScriptLanguageSupport};
 
 // Validation exports
 pub use validation::{
-    EncapsulationChecker, BoundaryValidator, AbstractionScorer,
-    EncapsulationScore, BoundaryIntegrityScore, AbstractionQualityScore,
+    AbstractionQualityScore, AbstractionScorer, BoundaryIntegrityScore, BoundaryValidator,
+    EncapsulationChecker, EncapsulationScore,
 };
 
 /// Convenience function to create a new detector with default configuration.
@@ -124,10 +121,19 @@ pub fn create_basic_config() -> ArchitecturalConfig {
     use std::collections::{HashMap, HashSet};
 
     let mut layer_mappings = HashMap::new();
-    layer_mappings.insert("**/controllers/**".to_string(), ArchitecturalLayer::Presentation);
-    layer_mappings.insert("**/services/**".to_string(), ArchitecturalLayer::Application);
+    layer_mappings.insert(
+        "**/controllers/**".to_string(),
+        ArchitecturalLayer::Presentation,
+    );
+    layer_mappings.insert(
+        "**/services/**".to_string(),
+        ArchitecturalLayer::Application,
+    );
     layer_mappings.insert("**/domain/**".to_string(), ArchitecturalLayer::Domain);
-    layer_mappings.insert("**/infrastructure/**".to_string(), ArchitecturalLayer::Infrastructure);
+    layer_mappings.insert(
+        "**/infrastructure/**".to_string(),
+        ArchitecturalLayer::Infrastructure,
+    );
 
     let mut infrastructure_modules = HashSet::new();
     infrastructure_modules.insert("sqlx".to_string());
@@ -178,7 +184,8 @@ mod tests {
         let anti_pattern_types = detector.get_anti_pattern_types();
         assert_eq!(anti_pattern_types.len(), 6);
 
-        let names: Vec<&str> = anti_pattern_types.iter()
+        let names: Vec<&str> = anti_pattern_types
+            .iter()
             .map(|apt| apt.name.as_str())
             .collect();
 

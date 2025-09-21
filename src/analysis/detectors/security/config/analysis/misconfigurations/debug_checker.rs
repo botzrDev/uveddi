@@ -3,9 +3,9 @@
 //! This module provides specialized checks for debug mode and logging
 //! configuration security issues.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use serde_yaml::Value as YamlValue;
 
 /// Checker for debug-related misconfigurations
@@ -21,30 +21,38 @@ impl DebugChecker {
     }
 
     /// Check for debug mode enabled in production
-    pub fn check_debug_in_production(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    pub fn check_debug_in_production(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         if let YamlValue::Mapping(map) = value {
             let is_production = map.iter().any(|(k, v)| {
-                k.as_str().map_or(false, |key| key.to_lowercase().contains("env")) &&
-                v.as_str().map_or(false, |val| val.to_lowercase().contains("prod"))
+                k.as_str()
+                    .map_or(false, |key| key.to_lowercase().contains("env"))
+                    && v.as_str()
+                        .map_or(false, |val| val.to_lowercase().contains("prod"))
             });
 
             let debug_enabled = map.iter().any(|(k, v)| {
-                k.as_str().map_or(false, |key| key.to_lowercase().contains("debug")) &&
-                v.as_bool().unwrap_or(false)
+                k.as_str()
+                    .map_or(false, |key| key.to_lowercase().contains("debug"))
+                    && v.as_bool().unwrap_or(false)
             });
 
             if is_production && debug_enabled {
-                issues.push(ConfigIssue::new(
-                    ConfigSeverity::High,
-                    0.9,
-                    "Debug Mode in Production",
-                    "Debug mode is enabled in production environment",
-                )
-                .with_tag("production-debug")
-                .with_remediation("Disable debug mode in production environments")
-                .with_cwe(489));
+                issues.push(
+                    ConfigIssue::new(
+                        ConfigSeverity::High,
+                        0.9,
+                        "Debug Mode in Production",
+                        "Debug mode is enabled in production environment",
+                    )
+                    .with_tag("production-debug")
+                    .with_remediation("Disable debug mode in production environments")
+                    .with_cwe(489),
+                );
             }
         }
 
@@ -62,15 +70,19 @@ impl DebugChecker {
                     if key_lower.contains("log") && key_lower.contains("level") {
                         if let Some(level) = val.as_str() {
                             if level.to_lowercase() == "debug" || level.to_lowercase() == "trace" {
-                                issues.push(ConfigIssue::new(
-                                    ConfigSeverity::Medium,
-                                    0.7,
-                                    "Verbose Logging Enabled",
-                                    "Debug or trace logging may expose sensitive information",
-                                )
-                                .with_tag("logging-security")
-                                .with_remediation("Use info or warn level logging in production")
-                                .with_cwe(532));
+                                issues.push(
+                                    ConfigIssue::new(
+                                        ConfigSeverity::Medium,
+                                        0.7,
+                                        "Verbose Logging Enabled",
+                                        "Debug or trace logging may expose sensitive information",
+                                    )
+                                    .with_tag("logging-security")
+                                    .with_remediation(
+                                        "Use info or warn level logging in production",
+                                    )
+                                    .with_cwe(532),
+                                );
                             }
                         }
                     }
@@ -91,14 +103,16 @@ impl DebugChecker {
                     let key_lower = key_str.to_lowercase();
                     if key_lower.contains("dev") || key_lower.contains("development") {
                         if val.as_bool() == Some(true) {
-                            issues.push(ConfigIssue::new(
-                                ConfigSeverity::Medium,
-                                0.6,
-                                "Development Mode Enabled",
-                                "Development mode features are enabled",
-                            )
-                            .with_tag("development-mode")
-                            .with_remediation("Disable development mode in production"));
+                            issues.push(
+                                ConfigIssue::new(
+                                    ConfigSeverity::Medium,
+                                    0.6,
+                                    "Development Mode Enabled",
+                                    "Development mode features are enabled",
+                                )
+                                .with_tag("development-mode")
+                                .with_remediation("Disable development mode in production"),
+                            );
                         }
                     }
                 }
@@ -118,15 +132,17 @@ impl DebugChecker {
                     let key_lower = key_str.to_lowercase();
                     if key_lower.contains("error") && key_lower.contains("report") {
                         if val.as_bool() == Some(true) {
-                            issues.push(ConfigIssue::new(
-                                ConfigSeverity::Low,
-                                0.5,
-                                "Error Reporting Enabled",
-                                "Detailed error reporting may expose sensitive information",
-                            )
-                            .with_tag("error-reporting")
-                            .with_remediation("Disable detailed error reporting in production")
-                            .with_cwe(209));
+                            issues.push(
+                                ConfigIssue::new(
+                                    ConfigSeverity::Low,
+                                    0.5,
+                                    "Error Reporting Enabled",
+                                    "Detailed error reporting may expose sensitive information",
+                                )
+                                .with_tag("error-reporting")
+                                .with_remediation("Disable detailed error reporting in production")
+                                .with_cwe(209),
+                            );
                         }
                     }
                 }
@@ -152,7 +168,9 @@ debug: true
 "#;
         let value: YamlValue = serde_yaml::from_str(yaml_content).unwrap();
         let issues = checker.check_debug_in_production(&value).unwrap();
-        assert!(issues.iter().any(|i| i.title.contains("Debug Mode in Production")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Debug Mode in Production")));
     }
 
     #[test]

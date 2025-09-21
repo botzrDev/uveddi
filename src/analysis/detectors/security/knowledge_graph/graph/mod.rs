@@ -12,7 +12,7 @@ pub use builder::GraphBuilder;
 pub use traversal::{GraphTraversal, SecurityTraversal};
 
 use crate::analysis::detectors::security::knowledge_graph::types::{
-    FileAnalysis, StructuralSemanticGraph, AntiPatternInfo,
+    AntiPatternInfo, FileAnalysis, StructuralSemanticGraph,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
@@ -33,7 +33,10 @@ impl GraphManager {
     }
 
     /// Build graph from file analyses
-    pub async fn build_from_analyses(&mut self, analyses: Vec<FileAnalysis>) -> Result<(), AnalysisError> {
+    pub async fn build_from_analyses(
+        &mut self,
+        analyses: Vec<FileAnalysis>,
+    ) -> Result<(), AnalysisError> {
         info!("Building graph from {} analyses", analyses.len());
 
         let mut builder = GraphBuilder::new(self.graph.metadata.language.clone());
@@ -66,11 +69,17 @@ impl GraphManager {
 
     /// Get graph statistics
     pub fn get_statistics(&self) -> GraphStatistics {
-        let node_types = self.graph.nodes.values()
+        let node_types = self
+            .graph
+            .nodes
+            .values()
             .map(|node| std::mem::discriminant(&node.node_type))
             .collect::<HashSet<_>>();
 
-        let edge_types = self.graph.edges.iter()
+        let edge_types = self
+            .graph
+            .edges
+            .iter()
             .map(|edge| std::mem::discriminant(&edge.edge_type))
             .collect::<HashSet<_>>();
 
@@ -100,10 +109,10 @@ pub struct GraphStatistics {
 mod tests {
     use super::*;
     use crate::analysis::detectors::security::knowledge_graph::types::{
-        CodeEntity, EntityType, CodeLocation,
+        CodeEntity, CodeLocation, EntityType,
     };
-    use std::path::PathBuf;
     use std::collections::HashMap;
+    use std::path::PathBuf;
 
     #[tokio::test]
     async fn test_graph_manager_creation() {
@@ -119,22 +128,20 @@ mod tests {
 
         let file_analysis = FileAnalysis {
             file_path: PathBuf::from("test.rs"),
-            entities: vec![
-                CodeEntity {
-                    id: "test_func".to_string(),
-                    name: "test_function".to_string(),
-                    entity_type: EntityType::Function,
-                    location: CodeLocation {
-                        file_path: PathBuf::from("test.rs"),
-                        start_line: 1,
-                        end_line: 10,
-                        start_column: 0,
-                        end_column: 0,
-                    },
-                    metadata: HashMap::new(),
-                    language: SourceLanguage::Rust,
-                }
-            ],
+            entities: vec![CodeEntity {
+                id: "test_func".to_string(),
+                name: "test_function".to_string(),
+                entity_type: EntityType::Function,
+                location: CodeLocation {
+                    file_path: PathBuf::from("test.rs"),
+                    start_line: 1,
+                    end_line: 10,
+                    start_column: 0,
+                    end_column: 0,
+                },
+                metadata: HashMap::new(),
+                language: SourceLanguage::Rust,
+            }],
             security_issues: Vec::new(),
             anti_patterns: Vec::new(),
         };

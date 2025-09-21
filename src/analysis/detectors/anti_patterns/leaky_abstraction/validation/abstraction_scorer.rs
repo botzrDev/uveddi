@@ -1,11 +1,11 @@
 //! Abstraction quality scoring for leaky abstraction detection.
 
+use super::{BoundaryIntegrityScore, EncapsulationScore};
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, ArchitecturalConfig,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ArchitecturalConfig
-};
-use super::{EncapsulationScore, BoundaryIntegrityScore};
 
 /// Provides comprehensive abstraction quality scoring.
 pub struct AbstractionScorer {
@@ -86,12 +86,14 @@ impl AbstractionScorer {
     fn calculate_weighted_score(&self, score: &AbstractionQualityScore) -> f64 {
         let weights = ScoreWeights::default();
 
-        (score.encapsulation_score * weights.encapsulation_weight +
-         score.boundary_score * weights.boundary_weight +
-         score.interface_score * weights.interface_weight +
-         score.dependency_score * weights.dependency_weight) /
-        (weights.encapsulation_weight + weights.boundary_weight +
-         weights.interface_weight + weights.dependency_weight)
+        (score.encapsulation_score * weights.encapsulation_weight
+            + score.boundary_score * weights.boundary_weight
+            + score.interface_score * weights.interface_weight
+            + score.dependency_score * weights.dependency_weight)
+            / (weights.encapsulation_weight
+                + weights.boundary_weight
+                + weights.interface_weight
+                + weights.dependency_weight)
     }
 
     /// Analyzes abstraction patterns for scoring.
@@ -180,23 +182,36 @@ impl AbstractionScorer {
         let mut recommendations = Vec::new();
 
         if score.encapsulation_score < 0.6 {
-            recommendations.push("Consider improving encapsulation by using private fields and getter methods".to_string());
+            recommendations.push(
+                "Consider improving encapsulation by using private fields and getter methods"
+                    .to_string(),
+            );
         }
 
         if score.boundary_score < 0.6 {
-            recommendations.push("Review architectural boundaries and reduce cross-layer dependencies".to_string());
+            recommendations.push(
+                "Review architectural boundaries and reduce cross-layer dependencies".to_string(),
+            );
         }
 
         if score.interface_score < 0.6 {
-            recommendations.push("Improve interface design by using abstractions instead of concrete types".to_string());
+            recommendations.push(
+                "Improve interface design by using abstractions instead of concrete types"
+                    .to_string(),
+            );
         }
 
         if score.dependency_score < 0.6 {
-            recommendations.push("Reduce coupling by using dependency injection and interface segregation".to_string());
+            recommendations.push(
+                "Reduce coupling by using dependency injection and interface segregation"
+                    .to_string(),
+            );
         }
 
         if score.overall_score < 0.5 {
-            recommendations.push("Consider a major refactoring to improve overall abstraction quality".to_string());
+            recommendations.push(
+                "Consider a major refactoring to improve overall abstraction quality".to_string(),
+            );
         }
 
         recommendations
@@ -297,10 +312,10 @@ impl AbstractionPatternAnalysis {
 
     /// Gets the total number of patterns detected.
     pub fn total_patterns(&self) -> usize {
-        self.visibility_patterns.len() +
-        self.interface_patterns.len() +
-        self.dependency_patterns.len() +
-        self.encapsulation_patterns.len()
+        self.visibility_patterns.len()
+            + self.interface_patterns.len()
+            + self.dependency_patterns.len()
+            + self.encapsulation_patterns.len()
     }
 }
 

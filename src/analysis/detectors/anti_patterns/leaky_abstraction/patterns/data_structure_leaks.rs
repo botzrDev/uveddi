@@ -1,11 +1,11 @@
 //! Detection of data structure leakage patterns.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
-};
 
 /// Detects patterns where internal data structures are inappropriately exposed.
 pub struct DataStructureLeaksPattern;
@@ -90,12 +90,23 @@ impl DataStructureLeaksPattern {
     /// Checks if a type represents a leaky data structure.
     pub fn is_leaky_data_structure(&self, type_name: &str) -> bool {
         let leaky_types = [
-            "Vec<", "HashMap<", "HashSet<", "BTreeMap<", "BTreeSet<",  // Rust collections
-            "list", "dict", "set",                                      // Python collections
-            "Array<", "Object", "Map<", "Set<",                        // JS/TS collections
+            "Vec<",
+            "HashMap<",
+            "HashSet<",
+            "BTreeMap<",
+            "BTreeSet<", // Rust collections
+            "list",
+            "dict",
+            "set", // Python collections
+            "Array<",
+            "Object",
+            "Map<",
+            "Set<", // JS/TS collections
         ];
 
-        leaky_types.iter().any(|pattern| type_name.contains(pattern))
+        leaky_types
+            .iter()
+            .any(|pattern| type_name.contains(pattern))
     }
 
     /// Checks if a return type exposes internal collection structure.
@@ -106,12 +117,19 @@ impl DataStructureLeaksPattern {
     /// Checks if a collection type uses a safe interface.
     fn is_safe_collection_interface(&self, type_name: &str) -> bool {
         let safe_interfaces = [
-            "&[", "Iterator<", "IntoIterator<",  // Rust safe interfaces
-            "Iterable", "Iterator", "Generator",  // Python safe interfaces
-            "ReadonlyArray<", "Readonly<",       // TypeScript safe interfaces
+            "&[",
+            "Iterator<",
+            "IntoIterator<", // Rust safe interfaces
+            "Iterable",
+            "Iterator",
+            "Generator", // Python safe interfaces
+            "ReadonlyArray<",
+            "Readonly<", // TypeScript safe interfaces
         ];
 
-        safe_interfaces.iter().any(|pattern| type_name.contains(pattern))
+        safe_interfaces
+            .iter()
+            .any(|pattern| type_name.contains(pattern))
     }
 
     /// Analyzes method signatures for data structure leaks.
@@ -119,7 +137,10 @@ impl DataStructureLeaksPattern {
         let mut issues = Vec::new();
 
         if self.is_collection_exposing_return_type(signature) {
-            issues.push(format!("Method returns concrete collection type: {}", signature));
+            issues.push(format!(
+                "Method returns concrete collection type: {}",
+                signature
+            ));
         }
 
         if signature.contains("&mut Vec<") || signature.contains("&mut HashMap<") {
@@ -132,7 +153,10 @@ impl DataStructureLeaksPattern {
     /// Analyzes field declarations for data structure leaks.
     pub fn analyze_field_declaration(&self, field_decl: &str, visibility: &str) -> Option<String> {
         if visibility == "pub" && self.is_leaky_data_structure(field_decl) {
-            Some(format!("Public field exposes concrete data structure: {}", field_decl))
+            Some(format!(
+                "Public field exposes concrete data structure: {}",
+                field_decl
+            ))
         } else {
             None
         }
@@ -140,9 +164,9 @@ impl DataStructureLeaksPattern {
 
     /// Checks if a type alias creates a data structure leak.
     pub fn is_leaky_type_alias(&self, alias_definition: &str) -> bool {
-        alias_definition.contains("type ") &&
-        alias_definition.contains("pub ") &&
-        self.is_leaky_data_structure(alias_definition)
+        alias_definition.contains("type ")
+            && alias_definition.contains("pub ")
+            && self.is_leaky_data_structure(alias_definition)
     }
 
     /// Analyzes generic type parameters for potential leaks.
@@ -160,9 +184,13 @@ impl DataStructureLeaksPattern {
     pub fn suggest_alternative(&self, exposed_type: &str) -> Option<String> {
         match exposed_type {
             t if t.contains("Vec<") => Some("Consider using &[T] or Iterator<Item=T>".to_string()),
-            t if t.contains("HashMap<") => Some("Consider using a trait or &dyn Iterator".to_string()),
+            t if t.contains("HashMap<") => {
+                Some("Consider using a trait or &dyn Iterator".to_string())
+            }
             t if t.contains("list") => Some("Consider using an iterator or protocol".to_string()),
-            t if t.contains("Array<") => Some("Consider using ReadonlyArray<T> or Iterable<T>".to_string()),
+            t if t.contains("Array<") => {
+                Some("Consider using ReadonlyArray<T> or Iterable<T>".to_string())
+            }
             _ => None,
         }
     }

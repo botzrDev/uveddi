@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -154,30 +156,43 @@ impl XSSDetector {
                 "Validate and encode all user input before reflecting it in responses".to_string()
             }
             XSSIssueType::StoredXss => {
-                "Sanitize and validate data before storing, encode output when displaying".to_string()
+                "Sanitize and validate data before storing, encode output when displaying"
+                    .to_string()
             }
             XSSIssueType::DomBasedXss => {
-                "Use safe DOM manipulation methods and avoid eval() or innerHTML with user data".to_string()
+                "Use safe DOM manipulation methods and avoid eval() or innerHTML with user data"
+                    .to_string()
             }
             XSSIssueType::UnsafeOutputRendering => {
-                "Use context-aware output encoding and template engines with auto-escaping".to_string()
+                "Use context-aware output encoding and template engines with auto-escaping"
+                    .to_string()
             }
             XSSIssueType::MissingContentSecurityPolicy => {
                 "Implement Content Security Policy (CSP) headers to prevent XSS attacks".to_string()
             }
             XSSIssueType::UnsafeDomManipulation => {
-                "Use textContent instead of innerHTML, and validate all DOM modifications".to_string()
+                "Use textContent instead of innerHTML, and validate all DOM modifications"
+                    .to_string()
             }
         }
     }
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "escape", "encode", "sanitize", "textContent", "createTextNode",
-            "DOMPurify", "xss", "csp", "content-security-policy",
+            "escape",
+            "encode",
+            "sanitize",
+            "textContent",
+            "createTextNode",
+            "DOMPurify",
+            "xss",
+            "csp",
+            "content-security-policy",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
     }
 }
 
@@ -209,7 +224,6 @@ impl OwaspCategoryDetector for XSSDetector {
 
         Ok(vulnerabilities)
     }
-
 }
 
 #[cfg(test)]

@@ -4,16 +4,16 @@
 //! codebases, with support for filtering, progress tracking, and efficient
 //! resource utilization.
 
-use crate::error::UveddiError;
 use crate::core::logging::{debug, info, warn};
+use crate::error::UveddiError;
+use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use rayon::prelude::*;
 
 use super::progress_tracker::{ProgressTracker, ProgressUpdate};
-use super::traits::{Service, HealthCheck, ServiceHealth};
+use super::traits::{HealthCheck, Service, ServiceHealth};
 
 /// File processing service for handling analysis target files
 pub struct FileProcessor {
@@ -136,9 +136,10 @@ impl FileProcessor {
         // Spawn discovery task
         let root_path = root_path.to_path_buf();
         let config = self.config.clone();
-        let discovery_handle = tokio::spawn(async move {
-            Self::discover_files_recursive(&root_path, &config, tx).await
-        });
+        let discovery_handle =
+            tokio::spawn(
+                async move { Self::discover_files_recursive(&root_path, &config, tx).await },
+            );
 
         // Handle progress updates
         let progress_tracker = self.progress_tracker.clone();
@@ -154,7 +155,9 @@ impl FileProcessor {
         match discovery_handle.await {
             Ok(Ok(files)) => {
                 discovered_files = files;
-                self.stats.files_discovered.store(discovered_files.len(), Ordering::Relaxed);
+                self.stats
+                    .files_discovered
+                    .store(discovered_files.len(), Ordering::Relaxed);
             }
             Ok(Err(e)) => errors.push(e),
             Err(e) => errors.push(UveddiError::config_error(
@@ -176,7 +179,10 @@ impl FileProcessor {
     }
 
     /// Process the discovered files in parallel
-    pub async fn process_files(&mut self, files: Vec<FileInfo>) -> Result<ProcessingResult, UveddiError> {
+    pub async fn process_files(
+        &mut self,
+        files: Vec<FileInfo>,
+    ) -> Result<ProcessingResult, UveddiError> {
         if !self.is_running {
             return Err(UveddiError::config_error(
                 "File processor is not running",
@@ -186,17 +192,19 @@ impl FileProcessor {
 
         debug!("Starting parallel processing of {} files", files.len());
 
-        let processable_files: Vec<_> = files.iter()
-            .filter(|f| f.should_process)
-            .collect();
+        let processable_files: Vec<_> = files.iter().filter(|f| f.should_process).collect();
 
-        let skipped_files: Vec<_> = files.iter()
-            .filter(|f| !f.should_process)
-            .collect();
+        let skipped_files: Vec<_> = files.iter().filter(|f| !f.should_process).collect();
 
-        self.stats.files_skipped.store(skipped_files.len(), Ordering::Relaxed);
+        self.stats
+            .files_skipped
+            .store(skipped_files.len(), Ordering::Relaxed);
 
-        info!("Processing {} files ({} skipped)", processable_files.len(), skipped_files.len());
+        info!(
+            "Processing {} files ({} skipped)",
+            processable_files.len(),
+            skipped_files.len()
+        );
 
         // Set up parallel processing
         let processed_files = Arc::new(std::sync::Mutex::new(Vec::new()));
@@ -211,7 +219,9 @@ impl FileProcessor {
                         processed.push(file_info.path.clone());
                     }
                     stats.files_processed.fetch_add(1, Ordering::Relaxed);
-                    stats.bytes_processed.fetch_add(bytes_read, Ordering::Relaxed);
+                    stats
+                        .bytes_processed
+                        .fetch_add(bytes_read, Ordering::Relaxed);
                 }
                 Err(e) => {
                     if let Ok(mut errors_vec) = errors.lock() {
@@ -223,9 +233,13 @@ impl FileProcessor {
         });
 
         let processed_files = Arc::try_unwrap(processed_files)
-            .map_err(|_| UveddiError::config_error("Failed to unwrap processed files", "synchronization"))?
+            .map_err(|_| {
+                UveddiError::config_error("Failed to unwrap processed files", "synchronization")
+            })?
             .into_inner()
-            .map_err(|_| UveddiError::config_error("Failed to lock processed files", "synchronization"))?;
+            .map_err(|_| {
+                UveddiError::config_error("Failed to lock processed files", "synchronization")
+            })?;
 
         let errors = Arc::try_unwrap(errors)
             .map_err(|_| UveddiError::config_error("Failed to unwrap errors", "synchronization"))?
@@ -235,8 +249,11 @@ impl FileProcessor {
         let stats = Arc::try_unwrap(stats)
             .map_err(|_| UveddiError::config_error("Failed to unwrap stats", "synchronization"))?;
 
-        info!("File processing completed: {} processed, {} failed",
-              processed_files.len(), errors.len());
+        info!(
+            "File processing completed: {} processed, {} failed",
+            processed_files.len(),
+            errors.len()
+        );
 
         Ok(ProcessingResult {
             discovered_files: files,
@@ -332,7 +349,10 @@ impl FileProcessor {
     }
 
     /// Create file info with filtering logic
-    fn create_file_info(path: &Path, config: &FileProcessorConfig) -> Result<FileInfo, UveddiError> {
+    fn create_file_info(
+        path: &Path,
+        config: &FileProcessorConfig,
+    ) -> Result<FileInfo, UveddiError> {
         let metadata = std::fs::metadata(path).map_err(|e| UveddiError::PathError {
             path: path.display().to_string(),
             reason: format!("Failed to read file metadata: {}", e),
@@ -340,11 +360,13 @@ impl FileProcessor {
         })?;
 
         let size = metadata.len();
-        let extension = path.extension()
+        let extension = path
+            .extension()
             .and_then(|ext| ext.to_str())
             .map(|s| s.to_lowercase());
 
-        let (should_process, skip_reason) = Self::should_process_file(path, size, &extension, config);
+        let (should_process, skip_reason) =
+            Self::should_process_file(path, size, &extension, config);
 
         Ok(FileInfo {
             path: path.to_path_buf(),
@@ -371,10 +393,16 @@ impl FileProcessor {
         if !config.include_extensions.is_empty() {
             if let Some(ext) = extension {
                 if !config.include_extensions.contains(ext) {
-                    return (false, Some(format!("Extension '{}' not in include list", ext)));
+                    return (
+                        false,
+                        Some(format!("Extension '{}' not in include list", ext)),
+                    );
                 }
             } else {
-                return (false, Some("No extension and include list specified".to_string()));
+                return (
+                    false,
+                    Some("No extension and include list specified".to_string()),
+                );
             }
         }
 
@@ -390,7 +418,10 @@ impl FileProcessor {
     }
 
     /// Process a single file
-    fn process_single_file(path: &Path, config: &FileProcessorConfig) -> Result<usize, UveddiError> {
+    fn process_single_file(
+        path: &Path,
+        config: &FileProcessorConfig,
+    ) -> Result<usize, UveddiError> {
         let content = std::fs::read(path).map_err(|e| UveddiError::PathError {
             path: path.display().to_string(),
             reason: format!("Failed to read file: {}", e),
@@ -485,7 +516,9 @@ impl HealthCheck for FileProcessor {
         // Check if we can access the file system
         let temp_dir = std::env::temp_dir();
         if !temp_dir.exists() {
-            return Ok(ServiceHealth::Unhealthy("Cannot access file system".to_string()));
+            return Ok(ServiceHealth::Unhealthy(
+                "Cannot access file system".to_string(),
+            ));
         }
 
         Ok(ServiceHealth::Healthy)

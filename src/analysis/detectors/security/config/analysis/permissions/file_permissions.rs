@@ -3,9 +3,9 @@
 //! This module detects overly permissive file permissions and
 //! inappropriate access controls on sensitive files.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use regex::Regex;
 
 /// Rule for detecting file permission issues
@@ -68,48 +68,59 @@ impl FilePermissionChecker {
                 name: "World-Writable File".to_string(),
                 description: "File or directory is world-writable".to_string(),
                 severity: ConfigSeverity::High,
-                pattern: Regex::new(r#"(?i)(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[2367][0-7]*['"]?"#)?,
-                remediation: "Remove world-write permissions. Use 644 for files and 755 for directories.".to_string(),
+                pattern: Regex::new(
+                    r#"(?i)(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[2367][0-7]*['"]?"#,
+                )?,
+                remediation:
+                    "Remove world-write permissions. Use 644 for files and 755 for directories."
+                        .to_string(),
                 cwe_id: Some(732),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             FilePermissionRule {
                 name: "World-Readable Sensitive File".to_string(),
                 description: "Sensitive file is world-readable".to_string(),
                 severity: ConfigSeverity::Medium,
-                pattern: Regex::new(r#"(?i)(secret|private|key|password).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[4567][0-7]*['"]?"#)?,
-                remediation: "Restrict read permissions on sensitive files to owner only (600).".to_string(),
+                pattern: Regex::new(
+                    r#"(?i)(secret|private|key|password).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[4567][0-7]*['"]?"#,
+                )?,
+                remediation: "Restrict read permissions on sensitive files to owner only (600)."
+                    .to_string(),
                 cwe_id: Some(732),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             FilePermissionRule {
                 name: "Executable Bit on Data File".to_string(),
                 description: "Data file has execute permissions".to_string(),
                 severity: ConfigSeverity::Low,
-                pattern: Regex::new(r#"(?i)(config|data|log|\.txt|\.json|\.xml|\.yaml).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[1357][0-7]*['"]?"#)?,
+                pattern: Regex::new(
+                    r#"(?i)(config|data|log|\.txt|\.json|\.xml|\.yaml).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[1357][0-7]*['"]?"#,
+                )?,
                 remediation: "Remove execute permissions from data files.".to_string(),
                 cwe_id: Some(732),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             FilePermissionRule {
                 name: "Overly Permissive Directory".to_string(),
                 description: "Directory has overly permissive access".to_string(),
                 severity: ConfigSeverity::Medium,
-                pattern: Regex::new(r#"(?i)(directory|dir|folder).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?777['"]?"#)?,
-                remediation: "Use more restrictive directory permissions like 755 or 750.".to_string(),
+                pattern: Regex::new(
+                    r#"(?i)(directory|dir|folder).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?777['"]?"#,
+                )?,
+                remediation: "Use more restrictive directory permissions like 755 or 750."
+                    .to_string(),
                 cwe_id: Some(732),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
-
             FilePermissionRule {
                 name: "Unsafe Temporary File Permissions".to_string(),
                 description: "Temporary files created with unsafe permissions".to_string(),
                 severity: ConfigSeverity::Medium,
-                pattern: Regex::new(r#"(?i)(temp|tmp|temporary).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[4567][4567][4567]['"]?"#)?,
-                remediation: "Create temporary files with restrictive permissions (600).".to_string(),
+                pattern: Regex::new(
+                    r#"(?i)(temp|tmp|temporary).*?(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[4567][4567][4567]['"]?"#,
+                )?,
+                remediation: "Create temporary files with restrictive permissions (600)."
+                    .to_string(),
                 cwe_id: Some(732),
                 owasp_category: Some("A01:2021 - Broken Access Control".to_string()),
             },
@@ -140,7 +151,9 @@ mod tests {
 
         let line = "private_key_mode: 644";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("World-Readable Sensitive")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("World-Readable Sensitive")));
     }
 
     #[test]

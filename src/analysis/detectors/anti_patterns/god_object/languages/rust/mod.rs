@@ -1,18 +1,18 @@
 //! Rust-specific God Object detection
 
-mod structs;
 mod implementations;
 mod patterns;
 mod queries;
+mod structs;
 
-pub use structs::RustStructAnalyzer;
 pub use implementations::RustImplAnalyzer;
 pub use patterns::RustPatternDetector;
+pub use structs::RustStructAnalyzer;
 
+use super::super::config::GodObjectConfig;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use super::super::config::GodObjectConfig;
 use tracing::debug;
 
 /// Rust-specific God Object analyzer
@@ -34,7 +34,10 @@ impl<'a> RustGodObjectAnalyzer<'a> {
     }
 
     /// Analyze a Rust file for God Objects
-    pub fn analyze(&self, parsed_file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    pub fn analyze(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Stage 1: Framework Detection

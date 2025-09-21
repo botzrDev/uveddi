@@ -25,7 +25,9 @@ impl InterfaceExtractor {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         match language {
             SourceLanguage::Rust => self.extract_rust_trait_dependencies(file_path, tree, source),
-            SourceLanguage::Python => self.extract_python_protocol_dependencies(file_path, tree, source),
+            SourceLanguage::Python => {
+                self.extract_python_protocol_dependencies(file_path, tree, source)
+            }
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.extract_javascript_interface_dependencies(file_path, tree, source)
             }
@@ -49,9 +51,9 @@ impl InterfaceExtractor {
                     &crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(),
                     r#"(field_expression value: (identifier) @object field: (field_identifier) @field) @access"#,
                 ) {
-                    field_access_deps.extend(self.extract_field_access_dependencies(
-                        file_path, &query, tree, source,
-                    )?);
+                    field_access_deps.extend(
+                        self.extract_field_access_dependencies(file_path, &query, tree, source)?,
+                    );
                 }
             }
             SourceLanguage::Python => {
@@ -60,9 +62,9 @@ impl InterfaceExtractor {
                     &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
                     r#"(attribute object: (identifier) @object attribute: (identifier) @field) @access"#,
                 ) {
-                    field_access_deps.extend(self.extract_field_access_dependencies(
-                        file_path, &query, tree, source,
-                    )?);
+                    field_access_deps.extend(
+                        self.extract_field_access_dependencies(file_path, &query, tree, source)?,
+                    );
                 }
             }
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
@@ -71,9 +73,9 @@ impl InterfaceExtractor {
                     &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
                     r#"(member_expression object: (identifier) @object property: (property_identifier) @field) @access"#,
                 ) {
-                    field_access_deps.extend(self.extract_field_access_dependencies(
-                        file_path, &query, tree, source,
-                    )?);
+                    field_access_deps.extend(
+                        self.extract_field_access_dependencies(file_path, &query, tree, source)?,
+                    );
                 }
             }
         }
@@ -95,7 +97,10 @@ impl InterfaceExtractor {
               type: (type_identifier) @type_name) @impl_block
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(), impl_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(),
+            impl_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -141,7 +146,10 @@ impl InterfaceExtractor {
                 (identifier) @parent_class)) @class_def
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), inheritance_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            inheritance_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -192,7 +200,10 @@ impl InterfaceExtractor {
                   (type_identifier) @interface_name))) @class_def
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), implements_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            implements_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 

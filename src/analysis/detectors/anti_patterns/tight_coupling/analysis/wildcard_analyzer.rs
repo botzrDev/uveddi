@@ -32,9 +32,9 @@ impl WildcardAnalyzer {
                     &crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(),
                     r#"(use_declaration (scoped_use_list path: (identifier) @module "*")) @wildcard"#,
                 ) {
-                    wildcard_deps.extend(self.extract_wildcard_dependencies(
-                        file_path, &query, tree, source,
-                    )?);
+                    wildcard_deps.extend(
+                        self.extract_wildcard_dependencies(file_path, &query, tree, source)?,
+                    );
                 }
             }
             SourceLanguage::Python => {
@@ -43,9 +43,9 @@ impl WildcardAnalyzer {
                     &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
                     r#"(import_from_statement module_name: (dotted_name) @module "*") @wildcard"#,
                 ) {
-                    wildcard_deps.extend(self.extract_wildcard_dependencies(
-                        file_path, &query, tree, source,
-                    )?);
+                    wildcard_deps.extend(
+                        self.extract_wildcard_dependencies(file_path, &query, tree, source)?,
+                    );
                 }
             }
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
@@ -54,9 +54,9 @@ impl WildcardAnalyzer {
                     &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
                     r#"(import_statement (import_clause (namespace_import)) source: (string) @module) @wildcard"#,
                 ) {
-                    wildcard_deps.extend(self.extract_wildcard_dependencies(
-                        file_path, &query, tree, source,
-                    )?);
+                    wildcard_deps.extend(
+                        self.extract_wildcard_dependencies(file_path, &query, tree, source)?,
+                    );
                 }
             }
         }

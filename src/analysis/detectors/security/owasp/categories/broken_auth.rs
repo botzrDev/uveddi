@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -165,11 +167,20 @@ impl BrokenAuthDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "bcrypt", "scrypt", "argon2", "pbkdf2", "hash", "salt",
-            "SecureRandom", "crypto.randomBytes", "os.urandom",
+            "bcrypt",
+            "scrypt",
+            "argon2",
+            "pbkdf2",
+            "hash",
+            "salt",
+            "SecureRandom",
+            "crypto.randomBytes",
+            "os.urandom",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.contains(indicator))
     }
 }
 
@@ -224,6 +235,9 @@ mod tests {
         std::fs::remove_file("test.rs").unwrap();
 
         assert!(!vulnerabilities.is_empty());
-        assert_eq!(vulnerabilities[0].category, OwaspCategory::AuthenticationFailures);
+        assert_eq!(
+            vulnerabilities[0].category,
+            OwaspCategory::AuthenticationFailures
+        );
     }
 }

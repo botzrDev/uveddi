@@ -1,11 +1,11 @@
 //! Rust interface analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, InterfaceAnalysisResult, ApiElement, VisibilityViolation
+    AnalysisContext, ApiElement, InterfaceAnalysisResult, VisibilityViolation,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -30,9 +30,10 @@ impl RustInterfaceAnalyzer {
         let contract_violations = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -80,9 +81,12 @@ impl RustInterfaceAnalyzer {
                         if let Ok(vis_text) = node.utf8_text(source_bytes) {
                             if vis_text == "pub" {
                                 if let Some(field_name_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "field_name"
+                                    &match_.captures,
+                                    &query,
+                                    "field_name",
                                 ) {
-                                    if let Ok(field_name) = field_name_node.utf8_text(source_bytes) {
+                                    if let Ok(field_name) = field_name_node.utf8_text(source_bytes)
+                                    {
                                         public_api.push(ApiElement {
                                             name: field_name.to_string(),
                                             element_type: "field".to_string(),
@@ -107,9 +111,9 @@ impl RustInterfaceAnalyzer {
                     "fn_vis" => {
                         if let Ok(vis_text) = node.utf8_text(source_bytes) {
                             if vis_text == "pub" {
-                                if let Some(fn_name_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "fn_name"
-                                ) {
+                                if let Some(fn_name_node) =
+                                    self.find_sibling_capture(&match_.captures, &query, "fn_name")
+                                {
                                     if let Ok(fn_name) = fn_name_node.utf8_text(source_bytes) {
                                         public_api.push(ApiElement {
                                             name: fn_name.to_string(),
@@ -123,9 +127,9 @@ impl RustInterfaceAnalyzer {
                         }
                     }
                     "struct_name" => {
-                        if let Some(vis_node) = self.find_sibling_capture(
-                            &match_.captures, &query, "pub_vis"
-                        ) {
+                        if let Some(vis_node) =
+                            self.find_sibling_capture(&match_.captures, &query, "pub_vis")
+                        {
                             if let Ok(vis_text) = vis_node.utf8_text(source_bytes) {
                                 if vis_text == "pub" {
                                     if let Ok(struct_name) = node.utf8_text(source_bytes) {
@@ -159,9 +163,10 @@ impl RustInterfaceAnalyzer {
         query: &Query,
         capture_name: &str,
     ) -> Option<Node<'a>> {
-        captures.iter().find(|capture| {
-            query.capture_names()[capture.index as usize] == capture_name
-        }).map(|capture| capture.node)
+        captures
+            .iter()
+            .find(|capture| query.capture_names()[capture.index as usize] == capture_name)
+            .map(|capture| capture.node)
     }
 }
 

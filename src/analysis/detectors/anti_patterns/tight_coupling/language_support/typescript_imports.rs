@@ -42,8 +42,10 @@ impl TypeScriptImportAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), Self::IMPORT_QUERY)
-        {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            Self::IMPORT_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -91,7 +93,10 @@ impl TypeScriptImportAnalyzer {
               arguments: (arguments (string) @module)) @require_call
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), require_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            require_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -138,13 +143,20 @@ impl TypeScriptImportAnalyzer {
               (type_identifier) @type_name) @type_usage
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), type_annotation_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            type_annotation_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
             while let Some(m) = matches.next() {
                 for capture in m.captures {
-                    if capture.index == query.capture_index_for_name("type_name").unwrap_or(u32::MAX) {
+                    if capture.index
+                        == query
+                            .capture_index_for_name("type_name")
+                            .unwrap_or(u32::MAX)
+                    {
                         let type_name = capture
                             .node
                             .utf8_text(source.as_bytes())
@@ -186,13 +198,20 @@ impl TypeScriptImportAnalyzer {
                 (type_identifier) @constraint_type)) @generic_param
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), generic_constraint_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            generic_constraint_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
             while let Some(m) = matches.next() {
                 for capture in m.captures {
-                    if capture.index == query.capture_index_for_name("constraint_type").unwrap_or(u32::MAX) {
+                    if capture.index
+                        == query
+                            .capture_index_for_name("constraint_type")
+                            .unwrap_or(u32::MAX)
+                    {
                         let constraint_type = capture
                             .node
                             .utf8_text(source.as_bytes())

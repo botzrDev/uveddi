@@ -3,13 +3,13 @@
 //! This module contains security patterns specific to YAML and JSON
 //! configuration files, including credential detection and structural analysis.
 
-use crate::analysis::AnalysisError;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::utils;
-use super::parser::YamlParser;
-use super::database_patterns::DatabasePatternChecker;
 use super::container_patterns::ContainerPatternChecker;
+use super::database_patterns::DatabasePatternChecker;
+use super::parser::YamlParser;
+use crate::analysis::AnalysisError;
 use serde_yaml::Value as YamlValue;
 
 /// Security rule for YAML/JSON analysis
@@ -46,21 +46,15 @@ impl YamlPatternMatcher {
                 name: "Credential Exposure".to_string(),
                 description: "Hardcoded credentials detected in YAML/JSON".to_string(),
                 severity: ConfigSeverity::High,
-                checker: Box::new(|value, _content| {
-                    Self::check_credentials(value)
-                }),
+                checker: Box::new(|value, _content| Self::check_credentials(value)),
             },
-
             // Insecure service configuration
             YamlSecurityRule {
                 name: "Insecure Service Configuration".to_string(),
                 description: "Insecure service settings detected".to_string(),
                 severity: ConfigSeverity::Medium,
-                checker: Box::new(|value, _content| {
-                    Self::check_service_security(value)
-                }),
+                checker: Box::new(|value, _content| Self::check_service_security(value)),
             },
-
             // Database security
             YamlSecurityRule {
                 name: "Database Security Issues".to_string(),
@@ -70,17 +64,13 @@ impl YamlPatternMatcher {
                     DatabasePatternChecker::check_database_security(value)
                 }),
             },
-
             // Network security
             YamlSecurityRule {
                 name: "Network Security Issues".to_string(),
                 description: "Insecure network configuration detected".to_string(),
                 severity: ConfigSeverity::Medium,
-                checker: Box::new(|value, _content| {
-                    Self::check_network_security(value)
-                }),
+                checker: Box::new(|value, _content| Self::check_network_security(value)),
             },
-
             // Container security (Kubernetes/Docker)
             YamlSecurityRule {
                 name: "Container Security Issues".to_string(),
@@ -114,14 +104,17 @@ impl YamlPatternMatcher {
                         if utils::is_sensitive_key(key_str) {
                             if let Some(val_str) = val.as_str() {
                                 if YamlParser::looks_like_credential(val_str) {
-                                    issues.push(utils::create_config_issue(
-                                        ConfigSeverity::High,
-                                        "Hardcoded Credential in YAML/JSON",
-                                        format!("Found credential at path: {}", new_path),
-                                        None,
-                                        "Use environment variables or secure secret management",
-                                        vec!["credential".to_string(), "yaml".to_string()],
-                                    ).with_cwe(798));
+                                    issues.push(
+                                        utils::create_config_issue(
+                                            ConfigSeverity::High,
+                                            "Hardcoded Credential in YAML/JSON",
+                                            format!("Found credential at path: {}", new_path),
+                                            None,
+                                            "Use environment variables or secure secret management",
+                                            vec!["credential".to_string(), "yaml".to_string()],
+                                        )
+                                        .with_cwe(798),
+                                    );
                                 }
                             }
                         }
@@ -162,14 +155,17 @@ impl YamlPatternMatcher {
             if let Some(key_str) = key.as_str() {
                 if key_str.to_lowercase().contains("debug") {
                     if val.as_bool() == Some(true) {
-                        issues.push(utils::create_config_issue(
-                            ConfigSeverity::Medium,
-                            "Debug Mode Enabled",
-                            "Debug mode is enabled which may expose sensitive information",
-                            None,
-                            "Disable debug mode in production environments",
-                            vec!["debug".to_string(), "configuration".to_string()],
-                        ).with_cwe(489));
+                        issues.push(
+                            utils::create_config_issue(
+                                ConfigSeverity::Medium,
+                                "Debug Mode Enabled",
+                                "Debug mode is enabled which may expose sensitive information",
+                                None,
+                                "Disable debug mode in production environments",
+                                vec!["debug".to_string(), "configuration".to_string()],
+                            )
+                            .with_cwe(489),
+                        );
                     }
                 }
             }
@@ -184,14 +180,20 @@ impl YamlPatternMatcher {
                     if let Some(level_str) = val.as_str() {
                         let level_lower = level_str.to_lowercase();
                         if level_lower == "debug" || level_lower == "trace" {
-                            issues.push(utils::create_config_issue(
-                                ConfigSeverity::Low,
-                                "Verbose Logging Enabled",
-                                "Verbose logging may expose sensitive information in logs",
-                                None,
-                                "Use INFO or WARN log level in production",
-                                vec!["logging".to_string(), "information-disclosure".to_string()],
-                            ).with_cwe(532));
+                            issues.push(
+                                utils::create_config_issue(
+                                    ConfigSeverity::Low,
+                                    "Verbose Logging Enabled",
+                                    "Verbose logging may expose sensitive information in logs",
+                                    None,
+                                    "Use INFO or WARN log level in production",
+                                    vec![
+                                        "logging".to_string(),
+                                        "information-disclosure".to_string(),
+                                    ],
+                                )
+                                .with_cwe(532),
+                            );
                         }
                     }
                 }
@@ -236,16 +238,22 @@ impl YamlPatternMatcher {
             for (key, val) in map {
                 if let Some(key_str) = key.as_str() {
                     let key_lower = key_str.to_lowercase();
-                    if key_lower.contains("bind") || key_lower.contains("listen") || key_lower == "host" {
+                    if key_lower.contains("bind")
+                        || key_lower.contains("listen")
+                        || key_lower == "host"
+                    {
                         if val.as_str() == Some("0.0.0.0") {
-                            issues.push(utils::create_config_issue(
-                                ConfigSeverity::Medium,
-                                "Insecure Network Binding",
-                                "Service bound to all interfaces (0.0.0.0)",
-                                None,
-                                "Bind to specific interfaces instead of 0.0.0.0",
-                                vec!["network".to_string(), "binding".to_string()],
-                            ).with_cwe(1188));
+                            issues.push(
+                                utils::create_config_issue(
+                                    ConfigSeverity::Medium,
+                                    "Insecure Network Binding",
+                                    "Service bound to all interfaces (0.0.0.0)",
+                                    None,
+                                    "Bind to specific interfaces instead of 0.0.0.0",
+                                    vec!["network".to_string(), "binding".to_string()],
+                                )
+                                .with_cwe(1188),
+                            );
                         }
                     }
                 }
@@ -260,8 +268,8 @@ impl YamlPatternMatcher {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::config::ConfigSecurityConfig;
+    use super::*;
 
     #[test]
     fn test_pattern_detection() {
@@ -280,6 +288,8 @@ cors:
         let issues = matcher.apply_rules(&parsed, yaml_content);
 
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| i.title.contains("Credential") || i.title.contains("Debug") || i.title.contains("CORS")));
+        assert!(issues.iter().any(|i| i.title.contains("Credential")
+            || i.title.contains("Debug")
+            || i.title.contains("CORS")));
     }
 }

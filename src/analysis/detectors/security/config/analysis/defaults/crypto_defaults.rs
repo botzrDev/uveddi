@@ -3,9 +3,9 @@
 //! This module detects default encryption keys, salts, JWT secrets,
 //! and other cryptographic defaults in configuration files.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use std::collections::HashSet;
 
 /// Pattern for detecting cryptographic default values
@@ -75,70 +75,147 @@ impl CryptoDefaultChecker {
                 description: "Default or weak encryption key detected".to_string(),
                 severity: ConfigSeverity::Critical,
                 values: [
-                    "secret", "secretkey", "mySecretKey", "defaultkey", "changeme",
-                    "key123", "your-secret-key", "your_secret_key", "replace-me",
-                    "example-key", "test-key", "development-key", "demo-key",
-                    "sample-key", "encryption-key", "default-encryption-key"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Generate strong, random encryption keys unique to each environment.".to_string(),
+                    "secret",
+                    "secretkey",
+                    "mySecretKey",
+                    "defaultkey",
+                    "changeme",
+                    "key123",
+                    "your-secret-key",
+                    "your_secret_key",
+                    "replace-me",
+                    "example-key",
+                    "test-key",
+                    "development-key",
+                    "demo-key",
+                    "sample-key",
+                    "encryption-key",
+                    "default-encryption-key",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation: "Generate strong, random encryption keys unique to each environment."
+                    .to_string(),
                 cwe_id: Some(798),
                 owasp_category: Some("A02:2021 - Cryptographic Failures".to_string()),
             },
-
             CryptoDefaultPattern {
                 name: "Default Salt Value".to_string(),
                 description: "Default or weak salt value detected".to_string(),
                 severity: ConfigSeverity::High,
                 values: [
-                    "salt", "mysalt", "defaultsalt", "pepper", "seasoning",
-                    "somesalt", "your-salt", "changethis", "example-salt",
-                    "test-salt", "demo-salt", "salt123", "salted", "saltvalue"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Use cryptographically random salt values unique to each password.".to_string(),
+                    "salt",
+                    "mysalt",
+                    "defaultsalt",
+                    "pepper",
+                    "seasoning",
+                    "somesalt",
+                    "your-salt",
+                    "changethis",
+                    "example-salt",
+                    "test-salt",
+                    "demo-salt",
+                    "salt123",
+                    "salted",
+                    "saltvalue",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation: "Use cryptographically random salt values unique to each password."
+                    .to_string(),
                 cwe_id: Some(916),
                 owasp_category: Some("A02:2021 - Cryptographic Failures".to_string()),
             },
-
             CryptoDefaultPattern {
                 name: "Default JWT Secret".to_string(),
                 description: "Default or weak JWT signing secret detected".to_string(),
                 severity: ConfigSeverity::Critical,
                 values: [
-                    "jwt-secret", "jwtSecret", "your-jwt-secret", "secret-key",
-                    "supersecret", "jwtsecretkey", "my-jwt-secret", "change-me",
-                    "jwt_secret_key", "jwt-key", "token-secret", "signing-key",
-                    "jwt_secret", "jsonwebtoken", "jwt-signing-key"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Use a cryptographically strong, random JWT signing secret.".to_string(),
+                    "jwt-secret",
+                    "jwtSecret",
+                    "your-jwt-secret",
+                    "secret-key",
+                    "supersecret",
+                    "jwtsecretkey",
+                    "my-jwt-secret",
+                    "change-me",
+                    "jwt_secret_key",
+                    "jwt-key",
+                    "token-secret",
+                    "signing-key",
+                    "jwt_secret",
+                    "jsonwebtoken",
+                    "jwt-signing-key",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation: "Use a cryptographically strong, random JWT signing secret."
+                    .to_string(),
                 cwe_id: Some(798),
                 owasp_category: Some("A02:2021 - Cryptographic Failures".to_string()),
             },
-
             CryptoDefaultPattern {
                 name: "Default Token/Secret".to_string(),
                 description: "Default or placeholder token/secret detected".to_string(),
                 severity: ConfigSeverity::High,
                 values: [
-                    "your-token-here", "your_token_here", "insert-token-here",
-                    "replace-with-token", "your-api-key", "your_api_key",
-                    "token123", "secret123", "api-key-here", "put-your-key-here",
-                    "example-token", "test-token", "demo-token", "sample-secret"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Replace placeholder values with actual tokens/secrets from secure storage.".to_string(),
+                    "your-token-here",
+                    "your_token_here",
+                    "insert-token-here",
+                    "replace-with-token",
+                    "your-api-key",
+                    "your_api_key",
+                    "token123",
+                    "secret123",
+                    "api-key-here",
+                    "put-your-key-here",
+                    "example-token",
+                    "test-token",
+                    "demo-token",
+                    "sample-secret",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation:
+                    "Replace placeholder values with actual tokens/secrets from secure storage."
+                        .to_string(),
                 cwe_id: Some(798),
                 owasp_category: Some("A02:2021 - Cryptographic Failures".to_string()),
             },
-
             CryptoDefaultPattern {
                 name: "Weak Cryptographic Value".to_string(),
                 description: "Weak or predictable cryptographic value detected".to_string(),
                 severity: ConfigSeverity::Medium,
                 values: [
-                    "abc123", "123abc", "test123", "key1", "key2", "key3",
-                    "simple", "basic", "easy", "weak", "default", "standard",
-                    "common", "public", "open", "shared", "temp", "temporary"
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Use cryptographically strong, random values for all cryptographic purposes.".to_string(),
+                    "abc123",
+                    "123abc",
+                    "test123",
+                    "key1",
+                    "key2",
+                    "key3",
+                    "simple",
+                    "basic",
+                    "easy",
+                    "weak",
+                    "default",
+                    "standard",
+                    "common",
+                    "public",
+                    "open",
+                    "shared",
+                    "temp",
+                    "temporary",
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation:
+                    "Use cryptographically strong, random values for all cryptographic purposes."
+                        .to_string(),
                 cwe_id: Some(330),
                 owasp_category: Some("A02:2021 - Cryptographic Failures".to_string()),
             },
@@ -148,9 +225,24 @@ impl CryptoDefaultChecker {
     fn contains_crypto_key(line: &str) -> bool {
         let line_lower = line.to_lowercase();
         let crypto_keys = [
-            "key", "secret", "token", "salt", "pepper", "encrypt", "decrypt",
-            "crypto", "cipher", "hash", "jwt", "signature", "signing",
-            "hmac", "aes", "rsa", "private", "public"
+            "key",
+            "secret",
+            "token",
+            "salt",
+            "pepper",
+            "encrypt",
+            "decrypt",
+            "crypto",
+            "cipher",
+            "hash",
+            "jwt",
+            "signature",
+            "signing",
+            "hmac",
+            "aes",
+            "rsa",
+            "private",
+            "public",
         ];
 
         crypto_keys.iter().any(|&key| line_lower.contains(key))
@@ -162,12 +254,12 @@ impl CryptoDefaultChecker {
 
         // Check for exact matches with common delimiters
         let patterns = [
-            format!("\"{}\"", value_lower),  // "value"
-            format!("'{}'", value_lower),    // 'value'
-            format!(": {}", value_lower),    // : value
-            format!("= {}", value_lower),    // = value
-            format!(":{}", value_lower),     // :value
-            format!("={}", value_lower),     // =value
+            format!("\"{}\"", value_lower), // "value"
+            format!("'{}'", value_lower),   // 'value'
+            format!(": {}", value_lower),   // : value
+            format!("= {}", value_lower),   // = value
+            format!(":{}", value_lower),    // :value
+            format!("={}", value_lower),    // =value
         ];
 
         patterns.iter().any(|pattern| line_lower.contains(pattern))
@@ -185,7 +277,9 @@ mod tests {
 
         let line = "encryption_key: secretkey";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Encryption Key")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Encryption Key")));
     }
 
     #[test]
@@ -195,7 +289,9 @@ mod tests {
 
         let line = "password_salt: \"salt\"";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Salt Value")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Salt Value")));
     }
 
     #[test]
@@ -205,7 +301,9 @@ mod tests {
 
         let line = "jwt_secret: jwt-secret";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default JWT Secret")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default JWT Secret")));
     }
 
     #[test]
@@ -215,7 +313,9 @@ mod tests {
 
         let line = "api_token: your-token-here";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Token/Secret")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Token/Secret")));
     }
 
     #[test]

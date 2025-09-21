@@ -4,9 +4,9 @@
 //! configuration security issues.
 
 // Re-export checkers for convenient access
+pub use super::database_checker::DatabaseChecker;
 pub use super::debug_checker::DebugChecker;
 pub use super::session_checker::SessionChecker;
-pub use super::database_checker::DatabaseChecker;
 
 #[cfg(test)]
 mod tests {

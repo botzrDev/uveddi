@@ -31,7 +31,7 @@ pub use leaky_abstraction::LeakyAbstractionDetector;
 pub use long_methods::LongMethodsDetector;
 pub use magic_values::MagicValuesDetector;
 // pub use shotgun_surgery::{ShotgunSurgeryConfig, ShotgunSurgeryDetector};
-pub use tight_coupling::{TightCouplingDetector, TightCouplingConfig, CouplingMetrics};
+pub use tight_coupling::{CouplingMetrics, TightCouplingConfig, TightCouplingDetector};
 // pub use state_synchronization::StateSynchronizationDetector;
 
 // Security detector integration

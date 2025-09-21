@@ -18,7 +18,10 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait PatternMatcher: Send + Sync {
     /// Match patterns in the given context
-    async fn match_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError>;
+    async fn match_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError>;
 
     /// Get the name of this pattern matcher
     fn matcher_name(&self) -> &'static str;

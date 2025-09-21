@@ -114,7 +114,8 @@ impl CsrfDetector {
     fn python_patterns() -> Vec<CsrfPattern> {
         vec![
             CsrfPattern {
-                pattern: r#"@app\.route.*methods=\[.*POST.*\].*\n.*def.*\(.*\):.*\n(?!.*csrf)"#.to_string(),
+                pattern: r#"@app\.route.*methods=\[.*POST.*\].*\n.*def.*\(.*\):.*\n(?!.*csrf)"#
+                    .to_string(),
                 description: "POST route without CSRF token validation".to_string(),
                 confidence: 0.75,
                 severity: SecuritySeverity::High,
@@ -130,7 +131,8 @@ impl CsrfDetector {
                 framework_context: "Flask-WTF configuration".to_string(),
             },
             CsrfPattern {
-                pattern: r#"SECRET_KEY\s*=\s*['""].*['""].*\n.*CSRF_COOKIE_SECURE\s*=\s*False"#.to_string(),
+                pattern: r#"SECRET_KEY\s*=\s*['""].*['""].*\n.*CSRF_COOKIE_SECURE\s*=\s*False"#
+                    .to_string(),
                 description: "CSRF cookie not marked as secure".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::Medium,
@@ -183,7 +185,8 @@ impl CsrfDetector {
                 framework_context: "Cookie options".to_string(),
             },
             CsrfPattern {
-                pattern: r#"app\.get\(.*\)\s*{[\s\S]*(?:delete|update|create|modify)[\s\S]*}"#.to_string(),
+                pattern: r#"app\.get\(.*\)\s*{[\s\S]*(?:delete|update|create|modify)[\s\S]*}"#
+                    .to_string(),
                 description: "State-changing operation via GET request".to_string(),
                 confidence: 0.75,
                 severity: SecuritySeverity::Medium,
@@ -209,7 +212,12 @@ impl CsrfDetector {
         ]
     }
 
-    fn analyze_line(&self, line: &str, line_number: usize, patterns: &[CsrfPattern]) -> Vec<OwaspVulnerability> {
+    fn analyze_line(
+        &self,
+        line: &str,
+        line_number: usize,
+        patterns: &[CsrfPattern],
+    ) -> Vec<OwaspVulnerability> {
         let mut vulnerabilities = Vec::new();
 
         for pattern in patterns {
@@ -222,12 +230,19 @@ impl CsrfDetector {
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();
-                    metadata.add_metadata("csrf_type".to_string(), pattern.csrf_type.description().to_string());
-                    metadata.add_metadata("framework_context".to_string(), pattern.framework_context.clone());
+                    metadata.add_metadata(
+                        "csrf_type".to_string(),
+                        pattern.csrf_type.description().to_string(),
+                    );
+                    metadata.add_metadata(
+                        "framework_context".to_string(),
+                        pattern.framework_context.clone(),
+                    );
                     metadata.add_metadata("pattern_matched".to_string(), pattern.pattern.clone());
                     metadata.add_metadata("line_content".to_string(), line.trim().to_string());
 
-                    let remediation = Self::generate_remediation(&pattern.csrf_type, &pattern.framework_context);
+                    let remediation =
+                        Self::generate_remediation(&pattern.csrf_type, &pattern.framework_context);
 
                     let vulnerability = OwaspVulnerability::new(
                         OwaspCategory::InsecureDesign, // CSRF often falls under insecure design
@@ -275,14 +290,23 @@ impl CsrfDetector {
         };
 
         let framework_advice = match framework_context {
-            c if c.contains("Express") => " Consider using csurf middleware for Express.js applications.",
+            c if c.contains("Express") => {
+                " Consider using csurf middleware for Express.js applications."
+            }
             c if c.contains("Flask") => " Use Flask-WTF for CSRF protection in Flask applications.",
-            c if c.contains("Django") => " Ensure Django's built-in CSRF middleware is enabled and properly configured.",
-            c if c.contains("CORS") => " Review and restrict CORS policies to trusted domains only.",
+            c if c.contains("Django") => {
+                " Ensure Django's built-in CSRF middleware is enabled and properly configured."
+            }
+            c if c.contains("CORS") => {
+                " Review and restrict CORS policies to trusted domains only."
+            }
             _ => "",
         };
 
-        format!("{}{} Also consider implementing double-submit cookie pattern for additional security.", base_advice, framework_advice)
+        format!(
+            "{}{} Also consider implementing double-submit cookie pattern for additional security.",
+            base_advice, framework_advice
+        )
     }
 }
 
@@ -345,7 +369,9 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 2);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("CORS")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("CORS")));
     }
 
     #[tokio::test]
@@ -370,7 +396,9 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 2);
-        assert!(vulnerabilities.iter().any(|v| v.severity == SecuritySeverity::Critical));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.severity == SecuritySeverity::Critical));
     }
 
     #[tokio::test]
@@ -394,14 +422,16 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 1);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("CORS")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("CORS")));
     }
 
     #[test]
     fn test_remediation_generation() {
         let remediation = CsrfDetector::generate_remediation(
             &CsrfType::MissingTokenValidation,
-            "Express.js route"
+            "Express.js route",
         );
         assert!(remediation.contains("CSRF token validation"));
         assert!(remediation.contains("csurf middleware"));

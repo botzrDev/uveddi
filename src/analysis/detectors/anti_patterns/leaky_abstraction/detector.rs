@@ -1,15 +1,17 @@
 //! Main detector implementation for leaky abstraction analysis.
 
-use async_trait::async_trait;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::ast::SourceLanguage;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use async_trait::async_trait;
 
-use super::types::{AnalysisContext, ArchitecturalConfig, LeakType};
-use super::config::create_default_config;
 use super::analyzers::LeakDetector;
-use super::language_support::{RustLanguageSupport, PythonLanguageSupport, TypeScriptLanguageSupport};
+use super::config::create_default_config;
+use super::language_support::{
+    PythonLanguageSupport, RustLanguageSupport, TypeScriptLanguageSupport,
+};
+use super::types::{AnalysisContext, ArchitecturalConfig, LeakType};
 
 /// The primary detector for identifying leaky abstractions in a codebase.
 ///
@@ -131,12 +133,8 @@ impl LeakyAbstractionDetector {
         context: &AnalysisContext,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         match parsed_file.language {
-            SourceLanguage::Rust => {
-                self.rust_support.analyze_file(parsed_file, context)
-            }
-            SourceLanguage::Python => {
-                self.python_support.analyze_file(parsed_file, context)
-            }
+            SourceLanguage::Rust => self.rust_support.analyze_file(parsed_file, context),
+            SourceLanguage::Python => self.python_support.analyze_file(parsed_file, context),
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.typescript_support.analyze_file(parsed_file, context)
             }
@@ -155,7 +153,12 @@ impl LeakyAbstractionDetector {
         let mut seen_descriptions = std::collections::HashSet::new();
 
         for issue in issues {
-            let key = format!("{}:{}:{}", issue.file_path, issue.start_line.unwrap_or(0), issue.description);
+            let key = format!(
+                "{}:{}:{}",
+                issue.file_path,
+                issue.start_line.unwrap_or(0),
+                issue.description
+            );
             if !seen_descriptions.contains(&key) {
                 seen_descriptions.insert(key);
                 deduplicated.push(issue);
@@ -302,7 +305,8 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             AntiPatternType {
                 anti_pattern_type_id: Some(3),
                 name: "Implementation Exposure".to_string(),
-                description: "Internal implementation details exposed through public APIs".to_string(),
+                description: "Internal implementation details exposed through public APIs"
+                    .to_string(),
                 category: "encapsulation".to_string(),
             },
             AntiPatternType {
@@ -314,7 +318,8 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             AntiPatternType {
                 anti_pattern_type_id: Some(5),
                 name: "Error Propagation".to_string(),
-                description: "Low-level errors propagated across abstraction boundaries".to_string(),
+                description: "Low-level errors propagated across abstraction boundaries"
+                    .to_string(),
                 category: "error_handling".to_string(),
             },
             AntiPatternType {

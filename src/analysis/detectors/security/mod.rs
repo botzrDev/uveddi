@@ -78,17 +78,15 @@ pub use config::{
 };
 pub use core::{ConfidenceScore, SecurityAnalysisResult, SecurityContext, VulnerabilityDatabase};
 pub use detector::SecurityDetector;
-pub use knowledge_graph::{
-    KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph,
-};
-pub use owasp::{OwaspCategory, OwaspDetector, OwaspVulnerability, OwaspConfig};
+pub use knowledge_graph::{KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph};
+pub use owasp::{OwaspCategory, OwaspConfig, OwaspDetector, OwaspVulnerability};
 pub use strategies::{
     ConfigFileAnalyzer, DeterministicPatternMatcher, SoftwareCompositionAnalyzer,
     VulnerabilityCorrelationEngine,
 };
 pub use taint_analysis::{
-    DataFlowGraph, SanitizationPoint, TaintAnalysisEngine, TaintSink, TaintSource,
-    TaintLevel, TaintFlow, UnifiedSourceDetector, UnifiedSinkDetector,
+    DataFlowGraph, SanitizationPoint, TaintAnalysisEngine, TaintFlow, TaintLevel, TaintSink,
+    TaintSource, UnifiedSinkDetector, UnifiedSourceDetector,
 };
 pub use types::{
     SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityMetadata, VulnerabilityType,

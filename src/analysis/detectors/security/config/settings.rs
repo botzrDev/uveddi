@@ -280,10 +280,7 @@ impl LanguageConfig {
     /// Rust-specific language configuration
     pub fn rust() -> Self {
         Self {
-            custom_sources: vec![
-                "std::env::args".to_string(),
-                "std::env::var".to_string(),
-            ],
+            custom_sources: vec!["std::env::args".to_string(), "std::env::var".to_string()],
             custom_sinks: vec![
                 "std::process::Command::new".to_string(),
                 "sqlx::query".to_string(),

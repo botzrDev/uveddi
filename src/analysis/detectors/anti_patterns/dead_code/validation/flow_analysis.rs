@@ -54,11 +54,7 @@ impl FlowAnalyzer {
     }
 
     /// Analyze reachability from entry points
-    fn analyze_reachability(
-        cfg: &ControlFlowGraph,
-        entry_points: &[String],
-        target: &str,
-    ) -> bool {
+    fn analyze_reachability(cfg: &ControlFlowGraph, entry_points: &[String], target: &str) -> bool {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
 

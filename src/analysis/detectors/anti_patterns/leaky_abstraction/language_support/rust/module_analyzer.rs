@@ -1,12 +1,12 @@
 //! Rust module privacy and error propagation analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl ModuleAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -68,7 +69,10 @@ impl ModuleAnalyzer {
                         if self.is_infrastructure_error_type(err_type_text) {
                             issues.push(self.create_issue(
                                 context,
-                                &format!("Infrastructure error type '{}' propagated to public API", err_type_text),
+                                &format!(
+                                    "Infrastructure error type '{}' propagated to public API",
+                                    err_type_text
+                                ),
                                 node.start_position().row as u32 + 1,
                                 LeakType::ErrorPropagation,
                                 "high",
@@ -91,9 +95,10 @@ impl ModuleAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -143,24 +148,30 @@ impl ModuleAnalyzer {
     /// Checks if a type represents an infrastructure error type.
     fn is_infrastructure_error_type(&self, type_text: &str) -> bool {
         let infrastructure_error_patterns = [
-            "DieselError", "SqlxError", "SeaOrmError",
-            "tokio::Error", "std::io::Error", "reqwest::Error",
-            "serde_json::Error", "toml::de::Error",
-            "rusqlite::Error", "postgres::Error",
+            "DieselError",
+            "SqlxError",
+            "SeaOrmError",
+            "tokio::Error",
+            "std::io::Error",
+            "reqwest::Error",
+            "serde_json::Error",
+            "toml::de::Error",
+            "rusqlite::Error",
+            "postgres::Error",
         ];
 
         infrastructure_error_patterns.iter().any(|pattern| {
-            type_text.contains(pattern) ||
-            (type_text.contains("Result<") && type_text.contains(pattern))
+            type_text.contains(pattern)
+                || (type_text.contains("Result<") && type_text.contains(pattern))
         })
     }
 
     /// Checks if a module is considered internal.
     fn is_internal_module(&self, module_name: &str) -> bool {
-        module_name.contains("internal") ||
-        module_name.contains("impl") ||
-        module_name.contains("detail") ||
-        module_name.starts_with('_')
+        module_name.contains("internal")
+            || module_name.contains("impl")
+            || module_name.contains("detail")
+            || module_name.starts_with('_')
     }
 
     /// Extracts the module name from a use statement.

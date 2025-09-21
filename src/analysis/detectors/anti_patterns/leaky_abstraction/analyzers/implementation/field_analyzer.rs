@@ -1,12 +1,12 @@
 //! Field and property analysis for implementation leaks.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ImplementationExposure, TypeLeakage, LeakType
+    AnalysisContext, ImplementationExposure, LeakType, TypeLeakage,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -30,9 +30,10 @@ impl FieldAnalyzer {
         let mut type_leakages = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -69,9 +70,9 @@ impl FieldAnalyzer {
                     "field_type" => {
                         if let Ok(field_type_text) = node.utf8_text(source_bytes) {
                             if self.is_concrete_implementation_type(field_type_text) {
-                                if let Some(field_vis_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "field_vis"
-                                ) {
+                                if let Some(field_vis_node) =
+                                    self.find_sibling_capture(&match_.captures, &query, "field_vis")
+                                {
                                     if let Ok(vis_text) = field_vis_node.utf8_text(source_bytes) {
                                         if vis_text == "pub" {
                                             implementation_exposures.push(ImplementationExposure {
@@ -92,9 +93,9 @@ impl FieldAnalyzer {
                     "type_def" => {
                         if let Ok(type_def_text) = node.utf8_text(source_bytes) {
                             if self.is_infrastructure_type(type_def_text) {
-                                if let Some(type_vis_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "type_vis"
-                                ) {
+                                if let Some(type_vis_node) =
+                                    self.find_sibling_capture(&match_.captures, &query, "type_vis")
+                                {
                                     if let Ok(vis_text) = type_vis_node.utf8_text(source_bytes) {
                                         if vis_text == "pub" {
                                             type_leakages.push(TypeLeakage {
@@ -130,9 +131,10 @@ impl FieldAnalyzer {
         let mut type_leakages = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -188,21 +190,28 @@ impl FieldAnalyzer {
     /// Checks if a type represents a concrete implementation type.
     fn is_concrete_implementation_type(&self, type_text: &str) -> bool {
         let concrete_patterns = [
-            "Connection", "Pool", "Transaction", "Session",
-            "Client", "Builder", "Config", "Context",
+            "Connection",
+            "Pool",
+            "Transaction",
+            "Session",
+            "Client",
+            "Builder",
+            "Config",
+            "Context",
         ];
 
-        concrete_patterns.iter().any(|pattern| type_text.contains(pattern))
+        concrete_patterns
+            .iter()
+            .any(|pattern| type_text.contains(pattern))
     }
 
     /// Checks if a type represents an infrastructure type.
     fn is_infrastructure_type(&self, type_text: &str) -> bool {
-        self.is_concrete_implementation_type(type_text) ||
-        type_text.contains("Error") && (
-            type_text.contains("Diesel") ||
-            type_text.contains("Sqlx") ||
-            type_text.contains("tokio")
-        )
+        self.is_concrete_implementation_type(type_text)
+            || type_text.contains("Error")
+                && (type_text.contains("Diesel")
+                    || type_text.contains("Sqlx")
+                    || type_text.contains("tokio"))
     }
 
     /// Helper function to find a sibling capture by name.
@@ -212,9 +221,10 @@ impl FieldAnalyzer {
         query: &Query,
         capture_name: &str,
     ) -> Option<Node<'a>> {
-        captures.iter().find(|capture| {
-            query.capture_names()[capture.index as usize] == capture_name
-        }).map(|capture| capture.node)
+        captures
+            .iter()
+            .find(|capture| query.capture_names()[capture.index as usize] == capture_name)
+            .map(|capture| capture.node)
     }
 }
 

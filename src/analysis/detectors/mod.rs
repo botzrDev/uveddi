@@ -12,8 +12,8 @@ pub mod registry;
 pub mod security;
 
 pub use base::{
-    AnalysisContext, BaseConfig, BaseMetrics, Detector, DetectorCategory, DetectorConfig,
-    DetectorOutput, DetectionMetrics, Issue, Severity,
+    AnalysisContext, BaseConfig, BaseMetrics, DetectionMetrics, Detector, DetectorCategory,
+    DetectorConfig, DetectorOutput, Issue, Severity,
 };
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};

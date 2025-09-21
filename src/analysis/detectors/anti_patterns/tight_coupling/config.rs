@@ -83,20 +83,31 @@ impl TightCouplingConfig {
     /// Configure for strict coupling detection (lower thresholds)
     pub fn with_strict_thresholds(mut self) -> Self {
         // Reduce all thresholds by 30%
-        self.rust_thresholds.fan_out_warning = (self.rust_thresholds.fan_out_warning as f64 * 0.7) as usize;
-        self.rust_thresholds.fan_out_critical = (self.rust_thresholds.fan_out_critical as f64 * 0.7) as usize;
+        self.rust_thresholds.fan_out_warning =
+            (self.rust_thresholds.fan_out_warning as f64 * 0.7) as usize;
+        self.rust_thresholds.fan_out_critical =
+            (self.rust_thresholds.fan_out_critical as f64 * 0.7) as usize;
         self.rust_thresholds.cbo_warning = (self.rust_thresholds.cbo_warning as f64 * 0.7) as usize;
-        self.rust_thresholds.cbo_critical = (self.rust_thresholds.cbo_critical as f64 * 0.7) as usize;
+        self.rust_thresholds.cbo_critical =
+            (self.rust_thresholds.cbo_critical as f64 * 0.7) as usize;
 
-        self.python_thresholds.fan_out_warning = (self.python_thresholds.fan_out_warning as f64 * 0.7) as usize;
-        self.python_thresholds.fan_out_critical = (self.python_thresholds.fan_out_critical as f64 * 0.7) as usize;
-        self.python_thresholds.cbo_warning = (self.python_thresholds.cbo_warning as f64 * 0.7) as usize;
-        self.python_thresholds.cbo_critical = (self.python_thresholds.cbo_critical as f64 * 0.7) as usize;
+        self.python_thresholds.fan_out_warning =
+            (self.python_thresholds.fan_out_warning as f64 * 0.7) as usize;
+        self.python_thresholds.fan_out_critical =
+            (self.python_thresholds.fan_out_critical as f64 * 0.7) as usize;
+        self.python_thresholds.cbo_warning =
+            (self.python_thresholds.cbo_warning as f64 * 0.7) as usize;
+        self.python_thresholds.cbo_critical =
+            (self.python_thresholds.cbo_critical as f64 * 0.7) as usize;
 
-        self.javascript_thresholds.fan_out_warning = (self.javascript_thresholds.fan_out_warning as f64 * 0.7) as usize;
-        self.javascript_thresholds.fan_out_critical = (self.javascript_thresholds.fan_out_critical as f64 * 0.7) as usize;
-        self.javascript_thresholds.cbo_warning = (self.javascript_thresholds.cbo_warning as f64 * 0.7) as usize;
-        self.javascript_thresholds.cbo_critical = (self.javascript_thresholds.cbo_critical as f64 * 0.7) as usize;
+        self.javascript_thresholds.fan_out_warning =
+            (self.javascript_thresholds.fan_out_warning as f64 * 0.7) as usize;
+        self.javascript_thresholds.fan_out_critical =
+            (self.javascript_thresholds.fan_out_critical as f64 * 0.7) as usize;
+        self.javascript_thresholds.cbo_warning =
+            (self.javascript_thresholds.cbo_warning as f64 * 0.7) as usize;
+        self.javascript_thresholds.cbo_critical =
+            (self.javascript_thresholds.cbo_critical as f64 * 0.7) as usize;
 
         self
     }
@@ -104,20 +115,31 @@ impl TightCouplingConfig {
     /// Configure for lenient coupling detection (higher thresholds)
     pub fn with_lenient_thresholds(mut self) -> Self {
         // Increase all thresholds by 50%
-        self.rust_thresholds.fan_out_warning = (self.rust_thresholds.fan_out_warning as f64 * 1.5) as usize;
-        self.rust_thresholds.fan_out_critical = (self.rust_thresholds.fan_out_critical as f64 * 1.5) as usize;
+        self.rust_thresholds.fan_out_warning =
+            (self.rust_thresholds.fan_out_warning as f64 * 1.5) as usize;
+        self.rust_thresholds.fan_out_critical =
+            (self.rust_thresholds.fan_out_critical as f64 * 1.5) as usize;
         self.rust_thresholds.cbo_warning = (self.rust_thresholds.cbo_warning as f64 * 1.5) as usize;
-        self.rust_thresholds.cbo_critical = (self.rust_thresholds.cbo_critical as f64 * 1.5) as usize;
+        self.rust_thresholds.cbo_critical =
+            (self.rust_thresholds.cbo_critical as f64 * 1.5) as usize;
 
-        self.python_thresholds.fan_out_warning = (self.python_thresholds.fan_out_warning as f64 * 1.5) as usize;
-        self.python_thresholds.fan_out_critical = (self.python_thresholds.fan_out_critical as f64 * 1.5) as usize;
-        self.python_thresholds.cbo_warning = (self.python_thresholds.cbo_warning as f64 * 1.5) as usize;
-        self.python_thresholds.cbo_critical = (self.python_thresholds.cbo_critical as f64 * 1.5) as usize;
+        self.python_thresholds.fan_out_warning =
+            (self.python_thresholds.fan_out_warning as f64 * 1.5) as usize;
+        self.python_thresholds.fan_out_critical =
+            (self.python_thresholds.fan_out_critical as f64 * 1.5) as usize;
+        self.python_thresholds.cbo_warning =
+            (self.python_thresholds.cbo_warning as f64 * 1.5) as usize;
+        self.python_thresholds.cbo_critical =
+            (self.python_thresholds.cbo_critical as f64 * 1.5) as usize;
 
-        self.javascript_thresholds.fan_out_warning = (self.javascript_thresholds.fan_out_warning as f64 * 1.5) as usize;
-        self.javascript_thresholds.fan_out_critical = (self.javascript_thresholds.fan_out_critical as f64 * 1.5) as usize;
-        self.javascript_thresholds.cbo_warning = (self.javascript_thresholds.cbo_warning as f64 * 1.5) as usize;
-        self.javascript_thresholds.cbo_critical = (self.javascript_thresholds.cbo_critical as f64 * 1.5) as usize;
+        self.javascript_thresholds.fan_out_warning =
+            (self.javascript_thresholds.fan_out_warning as f64 * 1.5) as usize;
+        self.javascript_thresholds.fan_out_critical =
+            (self.javascript_thresholds.fan_out_critical as f64 * 1.5) as usize;
+        self.javascript_thresholds.cbo_warning =
+            (self.javascript_thresholds.cbo_warning as f64 * 1.5) as usize;
+        self.javascript_thresholds.cbo_critical =
+            (self.javascript_thresholds.cbo_critical as f64 * 1.5) as usize;
 
         self
     }

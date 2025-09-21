@@ -3,7 +3,9 @@
 //! This module provides JavaScript and TypeScript-specific security analysis for OWASP Top 10 vulnerabilities.
 
 use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -64,7 +66,8 @@ impl JavaScriptOwaspAnalyzer {
                 pattern: "child_process.exec(".to_string(),
                 category: OwaspCategory::Injection,
                 severity: SecuritySeverity::Critical,
-                description: "Process execution with user input enables command injection".to_string(),
+                description: "Process execution with user input enables command injection"
+                    .to_string(),
             },
             JSSecurityPattern {
                 name: "Crypto Random".to_string(),
@@ -104,8 +107,14 @@ impl JavaScriptOwaspAnalyzer {
         ]
     }
 
-    pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
-        if !matches!(file.language, SourceLanguage::JavaScript | SourceLanguage::TypeScript) {
+    pub async fn analyze(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
+        if !matches!(
+            file.language,
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript
+        ) {
             return Ok(vec![]);
         }
 
@@ -201,11 +210,23 @@ impl JavaScriptOwaspAnalyzer {
     /// Check if a JavaScript package is known to be vulnerable
     pub fn check_vulnerable_packages(package: &str, version: &str) -> Option<String> {
         let vulnerable_packages = vec![
-            ("lodash", "4.17.0", "Lodash < 4.17.21 has prototype pollution"),
-            ("express", "4.16.0", "Express < 4.17.1 has security vulnerabilities"),
+            (
+                "lodash",
+                "4.17.0",
+                "Lodash < 4.17.21 has prototype pollution",
+            ),
+            (
+                "express",
+                "4.16.0",
+                "Express < 4.17.1 has security vulnerabilities",
+            ),
             ("axios", "0.18.0", "Axios < 0.21.1 has SSRF vulnerability"),
             ("jquery", "3.3.0", "jQuery < 3.5.0 has XSS vulnerabilities"),
-            ("moment", "2.24.0", "Moment.js is deprecated, use date-fns or dayjs"),
+            (
+                "moment",
+                "2.24.0",
+                "Moment.js is deprecated, use date-fns or dayjs",
+            ),
         ];
 
         for (name, vuln_version, message) in vulnerable_packages {

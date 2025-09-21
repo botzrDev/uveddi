@@ -1,11 +1,11 @@
 //! Language-specific support for code duplication detection
 
-pub mod rust;
 pub mod python;
+pub mod rust;
 pub mod typescript;
 
-pub use rust::RustLanguageSupport;
 pub use python::PythonLanguageSupport;
+pub use rust::RustLanguageSupport;
 pub use typescript::TypeScriptLanguageSupport;
 
 use crate::analysis::detectors::anti_patterns::code_duplication::types::CodeBlock;

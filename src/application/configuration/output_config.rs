@@ -45,7 +45,7 @@ impl OutputConfig {
     pub fn validate(&self) -> Result<(), UveddiError> {
         // Validate output format
         match self.format.as_str() {
-            "json" | "markdown" | "html" => {},
+            "json" | "markdown" | "html" => {}
             _ => {
                 return Err(UveddiError::config_error(
                     &format!("Unsupported output format: {}", self.format),
@@ -113,10 +113,9 @@ impl OutputConfig {
 
     /// Check if interactive features should be enabled
     pub fn supports_interactive_features(&self) -> bool {
-        self.is_html_format() && (
-            self.template_options.custom_js.is_some() ||
-            self.template_options.syntax_highlighting
-        )
+        self.is_html_format()
+            && (self.template_options.custom_js.is_some()
+                || self.template_options.syntax_highlighting)
     }
 }
 
@@ -185,7 +184,8 @@ impl TemplateOptions {
         if other.include_snippets {
             self.include_snippets = other.include_snippets;
         }
-        if other.max_snippet_lines != 50 { // 50 is default
+        if other.max_snippet_lines != 50 {
+            // 50 is default
             self.max_snippet_lines = other.max_snippet_lines;
         }
 

@@ -126,7 +126,11 @@ impl ConfigValidator {
     }
 
     /// Validate that a string is not empty
-    pub fn validate_non_empty_string(value: &str, field_name: &str, context: &str) -> Result<(), UveddiError> {
+    pub fn validate_non_empty_string(
+        value: &str,
+        field_name: &str,
+        context: &str,
+    ) -> Result<(), UveddiError> {
         if value.trim().is_empty() {
             return Err(UveddiError::config_error(
                 &format!("{} {} cannot be empty", context, field_name),
@@ -164,7 +168,12 @@ impl ConfigValidator {
     }
 
     /// Validate memory size in bytes
-    pub fn validate_memory_size(size_bytes: usize, min_mb: usize, max_gb: usize, context: &str) -> Result<(), UveddiError> {
+    pub fn validate_memory_size(
+        size_bytes: usize,
+        min_mb: usize,
+        max_gb: usize,
+        context: &str,
+    ) -> Result<(), UveddiError> {
         let min_bytes = min_mb * 1024 * 1024;
         let max_bytes = max_gb * 1024 * 1024 * 1024;
 
@@ -196,7 +205,12 @@ impl ConfigValidator {
     }
 
     /// Validate a timeout value in seconds
-    pub fn validate_timeout(timeout_seconds: u64, min_seconds: u64, max_seconds: u64, context: &str) -> Result<(), UveddiError> {
+    pub fn validate_timeout(
+        timeout_seconds: u64,
+        min_seconds: u64,
+        max_seconds: u64,
+        context: &str,
+    ) -> Result<(), UveddiError> {
         if timeout_seconds > 0 && timeout_seconds < min_seconds {
             return Err(UveddiError::config_error(
                 &format!(
@@ -221,7 +235,11 @@ impl ConfigValidator {
     }
 
     /// Validate a percentage value (0.0 to 1.0)
-    pub fn validate_percentage(value: f64, field_name: &str, context: &str) -> Result<(), UveddiError> {
+    pub fn validate_percentage(
+        value: f64,
+        field_name: &str,
+        context: &str,
+    ) -> Result<(), UveddiError> {
         Self::validate_range(value, 0.0, 1.0, field_name, context)
     }
 
@@ -273,9 +291,7 @@ pub struct ValidationResult {
 impl ValidationResult {
     /// Create a new validation result
     pub fn new() -> Self {
-        Self {
-            errors: Vec::new(),
-        }
+        Self { errors: Vec::new() }
     }
 
     /// Add a validation error
@@ -316,12 +332,13 @@ impl ValidationResult {
         } else if self.errors.len() == 1 {
             Err(self.errors.into_iter().next().unwrap())
         } else {
-            let error_messages: Vec<String> = self.errors
-                .into_iter()
-                .map(|e| e.to_string())
-                .collect();
+            let error_messages: Vec<String> =
+                self.errors.into_iter().map(|e| e.to_string()).collect();
             Err(UveddiError::config_error(
-                &format!("Multiple configuration errors: {}", error_messages.join("; ")),
+                &format!(
+                    "Multiple configuration errors: {}",
+                    error_messages.join("; ")
+                ),
                 "combined validation",
             ))
         }

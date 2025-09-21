@@ -10,10 +10,10 @@ pub mod policy_check;
 pub use compliance::ComplianceValidator;
 pub use policy_check::PolicyValidator;
 
-use crate::analysis::AnalysisError;
 use super::super::types::SecurityIssue;
 use super::config::ConfigSecurityConfig;
 use super::types::ConfigIssue;
+use crate::analysis::AnalysisError;
 
 /// Combined validation orchestrator
 pub struct ValidationOrchestrator {
@@ -105,12 +105,8 @@ mod tests {
         let config = ConfigSecurityConfig::default();
         let orchestrator = ValidationOrchestrator::new(&config).unwrap();
 
-        let test_issue = ConfigIssue::new(
-            ConfigSeverity::High,
-            0.9,
-            "Test Issue",
-            "Test description",
-        );
+        let test_issue =
+            ConfigIssue::new(ConfigSeverity::High, 0.9, "Test Issue", "Test description");
 
         let issues = vec![test_issue];
         let validated = orchestrator.validate_issues(issues).await.unwrap();

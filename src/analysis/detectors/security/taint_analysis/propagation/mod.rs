@@ -2,15 +2,15 @@
 
 pub mod flow_analyzer;
 pub mod path_tracker;
-pub mod sanitizer_detector;
 pub mod patterns;
+pub mod sanitizer_detector;
 
 pub use flow_analyzer::FlowAnalyzer;
 pub use path_tracker::PathTracker;
 pub use sanitizer_detector::SanitizerDetector;
 
 use crate::analysis::detectors::security::taint_analysis::types::{
-    DataFlowGraph, TaintFlow, TaintLevel, DataFlowNode
+    DataFlowGraph, DataFlowNode, TaintFlow, TaintLevel,
 };
 use crate::analysis::AnalysisError;
 
@@ -31,7 +31,10 @@ impl PropagationAnalyzer {
     }
 
     /// Analyze taint flows in the data flow graph
-    pub fn analyze_taint_flows(&self, graph: &DataFlowGraph) -> Result<Vec<TaintFlow>, AnalysisError> {
+    pub fn analyze_taint_flows(
+        &self,
+        graph: &DataFlowGraph,
+    ) -> Result<Vec<TaintFlow>, AnalysisError> {
         let mut flows = Vec::new();
 
         // For each taint source, perform forward data flow analysis
@@ -40,7 +43,7 @@ impl PropagationAnalyzer {
                 graph,
                 source_id,
                 &self.path_tracker,
-                &self.sanitizer_detector
+                &self.sanitizer_detector,
             )?;
             flows.extend(source_flows);
         }
@@ -50,7 +53,8 @@ impl PropagationAnalyzer {
 
     /// Propagate taint through a node, considering sanitizers
     pub fn propagate_taint(&self, current_taint: TaintLevel, node: &DataFlowNode) -> TaintLevel {
-        self.sanitizer_detector.detect_sanitization(node, current_taint)
+        self.sanitizer_detector
+            .detect_sanitization(node, current_taint)
     }
 
     /// Calculate confidence score for a taint flow

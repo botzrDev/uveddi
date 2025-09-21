@@ -22,7 +22,10 @@ impl BehaviorAnalyzer {
     }
 
     /// Analyze behavioral patterns in code
-    pub async fn analyze_behavior(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn analyze_behavior(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Analyze for stealth behaviors
@@ -40,7 +43,10 @@ impl BehaviorAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_stealth_behavior(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_stealth_behavior(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -64,7 +70,8 @@ impl BehaviorAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -88,7 +95,10 @@ impl BehaviorAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_persistence_behavior(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_persistence_behavior(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -112,7 +122,8 @@ impl BehaviorAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -136,7 +147,10 @@ impl BehaviorAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_evasion_behavior(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_evasion_behavior(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -160,7 +174,8 @@ impl BehaviorAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -184,7 +199,10 @@ impl BehaviorAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_exfiltration_behavior(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_exfiltration_behavior(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -208,7 +226,8 @@ impl BehaviorAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -235,7 +254,10 @@ impl BehaviorAnalyzer {
 
 #[async_trait]
 impl AnalysisModule for BehaviorAnalyzer {
-    async fn analyze(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         debug!("Starting behavior analysis for {:?}", context.file_path);
         self.analyze_behavior(context).await
     }
@@ -247,7 +269,10 @@ impl AnalysisModule for BehaviorAnalyzer {
     fn can_analyze(&self, context: &SecurityContext) -> bool {
         matches!(
             context.language,
-            SourceLanguage::Rust | SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript
+            SourceLanguage::Rust
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 }

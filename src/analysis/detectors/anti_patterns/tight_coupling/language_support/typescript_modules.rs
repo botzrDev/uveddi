@@ -49,7 +49,10 @@ impl TypeScriptModuleAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), Self::CALL_QUERY) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            Self::CALL_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -89,7 +92,10 @@ impl TypeScriptModuleAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), Self::CLASS_EXTENDS_QUERY) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            Self::CLASS_EXTENDS_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -133,7 +139,10 @@ impl TypeScriptModuleAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), Self::INTERFACE_IMPLEMENTS_QUERY) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            Self::INTERFACE_IMPLEMENTS_QUERY,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 

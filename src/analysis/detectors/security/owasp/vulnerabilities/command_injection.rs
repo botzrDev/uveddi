@@ -135,7 +135,12 @@ impl CommandInjectionDetector {
         ]
     }
 
-    fn analyze_line(&self, line: &str, line_number: usize, patterns: &[CommandInjectionPattern]) -> Vec<OwaspVulnerability> {
+    fn analyze_line(
+        &self,
+        line: &str,
+        line_number: usize,
+        patterns: &[CommandInjectionPattern],
+    ) -> Vec<OwaspVulnerability> {
         let mut vulnerabilities = Vec::new();
 
         for pattern in patterns {
@@ -148,12 +153,21 @@ impl CommandInjectionDetector {
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();
-                    metadata.add_metadata("command_type".to_string(), pattern.command_type.description().to_string());
-                    metadata.add_metadata("execution_context".to_string(), pattern.execution_context.clone());
+                    metadata.add_metadata(
+                        "command_type".to_string(),
+                        pattern.command_type.description().to_string(),
+                    );
+                    metadata.add_metadata(
+                        "execution_context".to_string(),
+                        pattern.execution_context.clone(),
+                    );
                     metadata.add_metadata("pattern_matched".to_string(), pattern.pattern.clone());
                     metadata.add_metadata("line_content".to_string(), line.trim().to_string());
 
-                    let remediation = Self::generate_remediation(&pattern.command_type, &pattern.execution_context);
+                    let remediation = Self::generate_remediation(
+                        &pattern.command_type,
+                        &pattern.execution_context,
+                    );
 
                     let vulnerability = OwaspVulnerability::new(
                         OwaspCategory::Injection,
@@ -195,8 +209,12 @@ impl CommandInjectionDetector {
         let context_advice = match context {
             c if c.contains("format") => " Avoid string formatting in command construction.",
             c if c.contains("concat") => " Use argument arrays instead of string concatenation.",
-            c if c.contains("template") => " Replace template literals with parameterized execution.",
-            c if c.contains("shell") => " Disable shell execution or implement command whitelisting.",
+            c if c.contains("template") => {
+                " Replace template literals with parameterized execution."
+            }
+            c if c.contains("shell") => {
+                " Disable shell execution or implement command whitelisting."
+            }
             _ => "",
         };
 

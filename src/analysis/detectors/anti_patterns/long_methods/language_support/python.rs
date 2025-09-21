@@ -253,9 +253,9 @@ impl PythonPatternAnalysis {
     /// Calculate pattern complexity score
     pub fn complexity_score(&self) -> u32 {
         // Comprehensions can reduce complexity compared to loops
-        let comprehension_benefit = (self.list_comprehensions +
-                                   self.dict_comprehensions +
-                                   self.set_comprehensions).saturating_sub(2);
+        let comprehension_benefit =
+            (self.list_comprehensions + self.dict_comprehensions + self.set_comprehensions)
+                .saturating_sub(2);
 
         // Exception handling adds complexity
         let exception_penalty = (self.try_statements + self.except_clauses) * 2;

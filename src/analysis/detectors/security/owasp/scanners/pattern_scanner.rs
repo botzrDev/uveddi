@@ -293,10 +293,7 @@ impl PatternScanner {
                     .with_severity(pattern.severity)
                     .with_metadata(
                         VulnerabilityMetadata::new()
-                            .with_tags(vec![
-                                "pattern-match".to_string(),
-                                pattern.id.clone(),
-                            ])
+                            .with_tags(vec!["pattern-match".to_string(), pattern.id.clone()]),
                     );
 
                     vulnerabilities.push(vulnerability);
@@ -312,7 +309,10 @@ impl PatternScanner {
 impl Scanner for PatternScanner {
     async fn scan(&self, file: &ParsedFile) -> Result<UnifiedScanResult, AnalysisError> {
         let start_time = Instant::now();
-        info!("Starting pattern-based scan for: {}", file.file_path.display());
+        info!(
+            "Starting pattern-based scan for: {}",
+            file.file_path.display()
+        );
 
         let scan_result = self.scan_patterns(file)?;
         let vulnerabilities = self.convert_matches_to_vulnerabilities(scan_result.matches, file);
@@ -320,9 +320,18 @@ impl Scanner for PatternScanner {
         let scan_duration = start_time.elapsed().as_millis() as u64;
 
         let mut metadata = HashMap::new();
-        metadata.insert("scanner_type".to_string(), serde_json::Value::String("pattern".to_string()));
-        metadata.insert("patterns_tested".to_string(), serde_json::Value::Number(scan_result.patterns_tested.into()));
-        metadata.insert("language".to_string(), serde_json::Value::String(file.language.to_string()));
+        metadata.insert(
+            "scanner_type".to_string(),
+            serde_json::Value::String("pattern".to_string()),
+        );
+        metadata.insert(
+            "patterns_tested".to_string(),
+            serde_json::Value::Number(scan_result.patterns_tested.into()),
+        );
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String(file.language.to_string()),
+        );
 
         info!(
             "Pattern scan completed: {} vulnerabilities found from {} patterns in {}ms",
@@ -379,7 +388,9 @@ mod tests {
         let file = ParsedFile {
             file_path: Arc::new(PathBuf::from("test.py")),
             language: SourceLanguage::Python,
-            source: Arc::new("query = \"SELECT * FROM users WHERE id = \" + user_input".to_string()),
+            source: Arc::new(
+                "query = \"SELECT * FROM users WHERE id = \" + user_input".to_string(),
+            ),
             tree: None,
             custom_ast: Arc::new(None),
             modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime::now(),
@@ -404,7 +415,10 @@ mod tests {
 
         let result = scanner.scan(&file).await.unwrap();
         assert!(!result.vulnerabilities.is_empty());
-        assert_eq!(result.vulnerabilities[0].category, OwaspCategory::CryptographicFailures);
+        assert_eq!(
+            result.vulnerabilities[0].category,
+            OwaspCategory::CryptographicFailures
+        );
     }
 
     #[test]

@@ -1,12 +1,12 @@
 //! Python class and method analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl ClassAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -72,7 +73,10 @@ impl ClassAnalyzer {
                             if self.is_infrastructure_class(parent_class) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Class inherits from infrastructure class '{}'", parent_class),
+                                    &format!(
+                                        "Class inherits from infrastructure class '{}'",
+                                        parent_class
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "high",
@@ -110,9 +114,10 @@ impl ClassAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -173,13 +178,25 @@ impl ClassAnalyzer {
     /// Checks if a class name represents an infrastructure class.
     fn is_infrastructure_class(&self, class_name: &str) -> bool {
         let infrastructure_classes = [
-            "Model", "View", "Serializer", "Form",
-            "Request", "Response", "HttpRequest", "HttpResponse",
-            "Connection", "Session", "Transaction",
-            "Component", "Widget", "Handler",
+            "Model",
+            "View",
+            "Serializer",
+            "Form",
+            "Request",
+            "Response",
+            "HttpRequest",
+            "HttpResponse",
+            "Connection",
+            "Session",
+            "Transaction",
+            "Component",
+            "Widget",
+            "Handler",
         ];
 
-        infrastructure_classes.iter().any(|pattern| class_name.contains(pattern))
+        infrastructure_classes
+            .iter()
+            .any(|pattern| class_name.contains(pattern))
     }
 
     /// Helper function to create an architectural issue.

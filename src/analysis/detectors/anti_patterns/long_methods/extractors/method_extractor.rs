@@ -51,13 +51,17 @@ impl MethodExtractor {
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    fn extract_rust_metrics(_parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    fn extract_rust_metrics(
+        _parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         Ok(Vec::new())
     }
 
     /// Extract metrics for Python functions
     #[cfg(feature = "tree-sitter")]
-    fn extract_python_metrics(parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    fn extract_python_metrics(
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         use crate::analysis::detectors::anti_patterns::long_methods::language_support::python::PythonMethodAnalyzer;
         use crate::ast::tree_sitter::QueryCursor;
 
@@ -86,7 +90,9 @@ impl MethodExtractor {
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    fn extract_python_metrics(_parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    fn extract_python_metrics(
+        _parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         Ok(Vec::new())
     }
 
@@ -128,5 +134,4 @@ impl MethodExtractor {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         Ok(Vec::new())
     }
-
 }

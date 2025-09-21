@@ -1,6 +1,8 @@
 //! Python-specific knowledge graph support
 
-use crate::analysis::detectors::security::knowledge_graph::types::{CodeEntity, EntityType, CodeLocation};
+use crate::analysis::detectors::security::knowledge_graph::types::{
+    CodeEntity, CodeLocation, EntityType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use std::collections::HashMap;
@@ -15,7 +17,11 @@ impl PythonEntityProcessor {
     }
 
     /// Process Python-specific entities
-    pub async fn process_python_entities(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    pub async fn process_python_entities(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut entities = Vec::new();
 
         entities.extend(self.extract_functions(file_path, content)?);
@@ -24,7 +30,11 @@ impl PythonEntityProcessor {
         Ok(entities)
     }
 
-    fn extract_functions(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_functions(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut functions = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -40,7 +50,11 @@ impl PythonEntityProcessor {
         Ok(functions)
     }
 
-    fn extract_classes(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_classes(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut classes = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -56,7 +70,12 @@ impl PythonEntityProcessor {
         Ok(classes)
     }
 
-    fn parse_function_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_function_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(def_part) = trimmed.strip_prefix("def ") {
             if let Some(name_end) = def_part.find('(') {
@@ -87,10 +106,19 @@ impl PythonEntityProcessor {
         Ok(None)
     }
 
-    fn parse_class_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_class_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(class_part) = trimmed.strip_prefix("class ") {
-            let name = class_part.split(['(', ':']).next().unwrap_or("unknown").trim();
+            let name = class_part
+                .split(['(', ':'])
+                .next()
+                .unwrap_or("unknown")
+                .trim();
             let metadata = HashMap::new();
 
             return Ok(Some(CodeEntity {

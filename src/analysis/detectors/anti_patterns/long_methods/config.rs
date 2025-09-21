@@ -51,8 +51,10 @@ impl LongMethodsConfig {
         // Make thresholds more strict
         for threshold in config.thresholds.values_mut() {
             threshold.max_logical_loc = (threshold.max_logical_loc as f32 * 0.7) as u32;
-            threshold.max_cyclomatic_complexity = (threshold.max_cyclomatic_complexity as f32 * 0.8) as u32;
-            threshold.max_cognitive_complexity = (threshold.max_cognitive_complexity as f32 * 0.8) as u32;
+            threshold.max_cyclomatic_complexity =
+                (threshold.max_cyclomatic_complexity as f32 * 0.8) as u32;
+            threshold.max_cognitive_complexity =
+                (threshold.max_cognitive_complexity as f32 * 0.8) as u32;
         }
 
         config.min_severity_score = 10;
@@ -67,8 +69,10 @@ impl LongMethodsConfig {
         // Make thresholds more lenient
         for threshold in config.thresholds.values_mut() {
             threshold.max_logical_loc = (threshold.max_logical_loc as f32 * 1.5) as u32;
-            threshold.max_cyclomatic_complexity = (threshold.max_cyclomatic_complexity as f32 * 1.3) as u32;
-            threshold.max_cognitive_complexity = (threshold.max_cognitive_complexity as f32 * 1.3) as u32;
+            threshold.max_cyclomatic_complexity =
+                (threshold.max_cyclomatic_complexity as f32 * 1.3) as u32;
+            threshold.max_cognitive_complexity =
+                (threshold.max_cognitive_complexity as f32 * 1.3) as u32;
         }
 
         config.min_severity_score = 50;
@@ -102,16 +106,16 @@ impl LongMethodsConfig {
 
 /// Check if a file is a test file
 fn is_test_file(file_path: &str) -> bool {
-    file_path.contains("/test/") ||
-    file_path.contains("/tests/") ||
-    file_path.contains("_test.") ||
-    file_path.contains(".test.") ||
-    file_path.ends_with("_spec.rs") ||
-    file_path.ends_with("_test.rs") ||
-    file_path.ends_with(".test.js") ||
-    file_path.ends_with(".spec.js") ||
-    file_path.ends_with("_test.py") ||
-    file_path.ends_with("test_")
+    file_path.contains("/test/")
+        || file_path.contains("/tests/")
+        || file_path.contains("_test.")
+        || file_path.contains(".test.")
+        || file_path.ends_with("_spec.rs")
+        || file_path.ends_with("_test.rs")
+        || file_path.ends_with(".test.js")
+        || file_path.ends_with(".spec.js")
+        || file_path.ends_with("_test.py")
+        || file_path.ends_with("test_")
 }
 
 /// Check if a file is generated
@@ -120,5 +124,5 @@ fn is_generated_file(file_path: &str) -> bool {
     file_path.contains("/gen/") ||
     file_path.contains(".generated.") ||
     file_path.contains(".pb.") ||  // Protocol buffers
-    file_path.contains(".g.")       // Generated files
+    file_path.contains(".g.") // Generated files
 }

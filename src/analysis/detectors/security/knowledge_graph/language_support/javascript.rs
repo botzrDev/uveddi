@@ -1,6 +1,8 @@
 //! JavaScript/TypeScript-specific knowledge graph support
 
-use crate::analysis::detectors::security::knowledge_graph::types::{CodeEntity, EntityType, CodeLocation};
+use crate::analysis::detectors::security::knowledge_graph::types::{
+    CodeEntity, CodeLocation, EntityType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use std::collections::HashMap;
@@ -15,7 +17,11 @@ impl JavaScriptEntityProcessor {
     }
 
     /// Process JavaScript/TypeScript-specific entities
-    pub async fn process_js_entities(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    pub async fn process_js_entities(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut entities = Vec::new();
 
         entities.extend(self.extract_functions(file_path, content)?);
@@ -25,13 +31,20 @@ impl JavaScriptEntityProcessor {
         Ok(entities)
     }
 
-    fn extract_functions(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_functions(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut functions = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
         for (line_num, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
-            if trimmed.starts_with("function ") || trimmed.contains("=> ") || trimmed.contains(": function") {
+            if trimmed.starts_with("function ")
+                || trimmed.contains("=> ")
+                || trimmed.contains(": function")
+            {
                 if let Some(entity) = self.parse_function_entity(file_path, line, line_num + 1)? {
                     functions.push(entity);
                 }
@@ -41,7 +54,11 @@ impl JavaScriptEntityProcessor {
         Ok(functions)
     }
 
-    fn extract_classes(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_classes(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut classes = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -57,7 +74,11 @@ impl JavaScriptEntityProcessor {
         Ok(classes)
     }
 
-    fn extract_interfaces(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_interfaces(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut interfaces = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -73,7 +94,12 @@ impl JavaScriptEntityProcessor {
         Ok(interfaces)
     }
 
-    fn parse_function_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_function_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         let mut metadata = HashMap::new();
 
@@ -123,10 +149,19 @@ impl JavaScriptEntityProcessor {
         }));
     }
 
-    fn parse_class_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_class_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(class_part) = trimmed.strip_prefix("class ") {
-            let name = class_part.split([' ', '{']).next().unwrap_or("unknown").trim();
+            let name = class_part
+                .split([' ', '{'])
+                .next()
+                .unwrap_or("unknown")
+                .trim();
             let mut metadata = HashMap::new();
 
             if line.contains("extends ") {
@@ -151,10 +186,19 @@ impl JavaScriptEntityProcessor {
         Ok(None)
     }
 
-    fn parse_interface_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_interface_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(interface_part) = trimmed.strip_prefix("interface ") {
-            let name = interface_part.split([' ', '{']).next().unwrap_or("unknown").trim();
+            let name = interface_part
+                .split([' ', '{'])
+                .next()
+                .unwrap_or("unknown")
+                .trim();
             let metadata = HashMap::new();
 
             return Ok(Some(CodeEntity {

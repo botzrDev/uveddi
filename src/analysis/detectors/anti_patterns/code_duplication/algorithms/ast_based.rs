@@ -1,7 +1,12 @@
 //! AST-based clone detection using structural comparison
 
-use super::{CloneDetectionAlgorithm, ast::{AstNode, AstParser, FeatureExtractor, Tokenizer}};
-use crate::analysis::detectors::anti_patterns::code_duplication::types::{CodeBlock, ClonePair, CloneType};
+use super::{
+    ast::{AstNode, AstParser, FeatureExtractor, Tokenizer},
+    CloneDetectionAlgorithm,
+};
+use crate::analysis::detectors::anti_patterns::code_duplication::types::{
+    ClonePair, CloneType, CodeBlock,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::SourceLanguage;
 
@@ -52,7 +57,11 @@ impl AstBasedDetector {
     }
 
     /// Parses source code and extracts AST structure
-    pub fn parse_ast(&self, source: &str, _language: &SourceLanguage) -> Result<AstNode, AnalysisError> {
+    pub fn parse_ast(
+        &self,
+        source: &str,
+        _language: &SourceLanguage,
+    ) -> Result<AstNode, AnalysisError> {
         let tokens = self.tokenizer.tokenize(source);
         let mut parser = AstParser::new(&tokens);
         parser.parse()
@@ -80,7 +89,8 @@ impl AstBasedDetector {
         }
 
         // Compare node values based on settings
-        let value_similarity = self.compute_value_similarity(&node1.value, &node2.value, &node1.node_type);
+        let value_similarity =
+            self.compute_value_similarity(&node1.value, &node2.value, &node1.node_type);
 
         if value_similarity == 0.0 {
             return 0.0;
@@ -98,32 +108,62 @@ impl AstBasedDetector {
     }
 
     /// Computes similarity between node values
-    fn compute_value_similarity(&self, value1: &str, value2: &str, node_type: &super::ast::NodeType) -> f64 {
+    fn compute_value_similarity(
+        &self,
+        value1: &str,
+        value2: &str,
+        node_type: &super::ast::NodeType,
+    ) -> f64 {
         use super::ast::NodeType;
 
         match node_type {
             NodeType::Keyword(_) => {
-                if value1 == value2 { 1.0 } else { 0.0 }
+                if value1 == value2 {
+                    1.0
+                } else {
+                    0.0
+                }
             }
             NodeType::Identifier(_) => {
-                if self.ignore_identifiers { 1.0 } else {
-                    if value1 == value2 { 1.0 } else { 0.0 }
+                if self.ignore_identifiers {
+                    1.0
+                } else {
+                    if value1 == value2 {
+                        1.0
+                    } else {
+                        0.0
+                    }
                 }
             }
             NodeType::Literal(_) => {
-                if self.ignore_literals { 1.0 } else {
-                    if value1 == value2 { 1.0 } else { 0.0 }
+                if self.ignore_literals {
+                    1.0
+                } else {
+                    if value1 == value2 {
+                        1.0
+                    } else {
+                        0.0
+                    }
                 }
             }
             NodeType::Operator(_) => {
-                if value1 == value2 { 1.0 } else { 0.0 }
+                if value1 == value2 {
+                    1.0
+                } else {
+                    0.0
+                }
             }
             _ => 1.0, // Other node types are considered similar by default
         }
     }
 
     /// Computes similarity between lists of child nodes
-    fn compute_children_similarity(&self, children1: &[AstNode], children2: &[AstNode], depth: usize) -> f64 {
+    fn compute_children_similarity(
+        &self,
+        children1: &[AstNode],
+        children2: &[AstNode],
+        depth: usize,
+    ) -> f64 {
         if children1.is_empty() && children2.is_empty() {
             return 1.0;
         }
@@ -153,10 +193,15 @@ impl CloneDetectionAlgorithm for AstBasedDetector {
         "AST-based Structural"
     }
 
-    fn detect_clones(&self, block1: &CodeBlock, block2: &CodeBlock) -> Result<Option<ClonePair>, AnalysisError> {
+    fn detect_clones(
+        &self,
+        block1: &CodeBlock,
+        block2: &CodeBlock,
+    ) -> Result<Option<ClonePair>, AnalysisError> {
         // Skip if same file and overlapping regions
-        if block1.file_path == block2.file_path &&
-           !(block1.end_line < block2.start_line || block2.end_line < block1.start_line) {
+        if block1.file_path == block2.file_path
+            && !(block1.end_line < block2.start_line || block2.end_line < block1.start_line)
+        {
             return Ok(None);
         }
 

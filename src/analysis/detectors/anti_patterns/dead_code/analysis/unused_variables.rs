@@ -2,10 +2,10 @@
 
 use std::collections::HashSet;
 
-use crate::analysis::AnalysisError;
 use crate::analysis::detectors::anti_patterns::dead_code::types::{
     DeadCodeIssue, Severity, Symbol, SymbolType,
 };
+use crate::analysis::AnalysisError;
 
 /// Detects unused variables in code
 pub struct UnusedVariableAnalyzer;
@@ -41,10 +41,7 @@ impl UnusedVariableAnalyzer {
     }
 
     /// Checks if a variable is used in specific contexts
-    pub fn is_variable_used_in_context(
-        variable_name: &str,
-        context_symbols: &[Symbol],
-    ) -> bool {
+    pub fn is_variable_used_in_context(variable_name: &str, context_symbols: &[Symbol]) -> bool {
         for symbol in context_symbols {
             if symbol.code_snippet.contains(variable_name) {
                 return true;

@@ -62,7 +62,10 @@ impl JavaScriptAgentAnalyzer {
     }
 
     /// Analyze JavaScript/TypeScript-specific agent patterns
-    async fn analyze_js_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_js_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Check for dangerous JavaScript patterns
@@ -80,7 +83,10 @@ impl JavaScriptAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_dangerous_functions(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_dangerous_functions(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -102,7 +108,8 @@ impl JavaScriptAgentAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -127,7 +134,10 @@ impl JavaScriptAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_code_execution_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_code_execution_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -149,7 +159,8 @@ impl JavaScriptAgentAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -174,7 +185,10 @@ impl JavaScriptAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_dom_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_dom_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -200,11 +214,8 @@ impl JavaScriptAgentAnalyzer {
 
         // Only flag if there's significant DOM manipulation
         if dom_manipulation_count > 5 {
-            let location = SecurityLocation::new(
-                context.file_path.clone(),
-                1,
-                1,
-            ).with_columns(0, 0);
+            let location =
+                SecurityLocation::new(context.file_path.clone(), 1, 1).with_columns(0, 0);
 
             let issue = SecurityIssue::new(
                 SecurityIssueType::PotentialMaliciousAgent,
@@ -226,7 +237,10 @@ impl JavaScriptAgentAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_browser_api_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_browser_api_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -248,7 +262,8 @@ impl JavaScriptAgentAnalyzer {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -294,6 +309,9 @@ impl LanguageAgentAnalyzer for JavaScriptAgentAnalyzer {
     }
 
     fn can_analyze(&self, context: &SecurityContext) -> bool {
-        matches!(context.language, SourceLanguage::JavaScript | SourceLanguage::TypeScript)
+        matches!(
+            context.language,
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript
+        )
     }
 }

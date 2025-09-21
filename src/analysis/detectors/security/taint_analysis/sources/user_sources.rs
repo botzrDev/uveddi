@@ -2,8 +2,8 @@
 
 use super::TaintSourceDetector;
 use crate::analysis::detectors::security::taint_analysis::types::TaintSource;
-use crate::ast::{ParsedFile, SourceLanguage};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
 
 /// Detector for user input sources
@@ -71,7 +71,10 @@ impl UserSourceDetector {
 
         self.patterns.insert(
             SourceLanguage::TypeScript,
-            self.patterns.get(&SourceLanguage::JavaScript).unwrap().clone(),
+            self.patterns
+                .get(&SourceLanguage::JavaScript)
+                .unwrap()
+                .clone(),
         );
     }
 
@@ -83,51 +86,60 @@ impl UserSourceDetector {
                     "rust_env_args".to_string(),
                     "std::env::args".to_string(),
                     "Command line arguments".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_clap_args".to_string(),
                     "clap::".to_string(),
                     "Clap command line parser".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_structopt".to_string(),
                     "structopt::".to_string(),
                     "StructOpt command line parser".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_sys_argv".to_string(),
                     "sys.argv".to_string(),
                     "Command line arguments via sys.argv".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_argparse".to_string(),
                     "argparse.".to_string(),
                     "Argument parser module".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_click".to_string(),
                     "click.".to_string(),
                     "Click command line interface".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSource::new(
                     "js_process_argv".to_string(),
                     "process.argv".to_string(),
                     "Node.js command line arguments".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_commander".to_string(),
                     "commander.".to_string(),
                     "Commander.js CLI framework".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_yargs".to_string(),
                     "yargs.".to_string(),
                     "Yargs command line parser".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }
@@ -140,32 +152,35 @@ impl UserSourceDetector {
                     "rust_env_var".to_string(),
                     "std::env::var".to_string(),
                     "Environment variable access".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_env_vars".to_string(),
                     "std::env::vars".to_string(),
                     "All environment variables".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_os_environ".to_string(),
                     "os.environ".to_string(),
                     "Environment variables via os.environ".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_os_getenv".to_string(),
                     "os.getenv".to_string(),
                     "Environment variable via os.getenv".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
-            SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
-                TaintSource::new(
-                    "js_process_env".to_string(),
-                    "process.env".to_string(),
-                    "Node.js environment variables".to_string(),
-                ).with_language(language),
-            ],
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![TaintSource::new(
+                "js_process_env".to_string(),
+                "process.env".to_string(),
+                "Node.js environment variables".to_string(),
+            )
+            .with_language(language)],
         }
     }
 
@@ -177,51 +192,60 @@ impl UserSourceDetector {
                     "rust_stdin".to_string(),
                     "std::io::stdin".to_string(),
                     "Standard input stream".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_read_line".to_string(),
                     "std::io::BufRead::read_line".to_string(),
                     "Line reading from input".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_dialoguer".to_string(),
                     "dialoguer::".to_string(),
                     "Interactive dialog input".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_input".to_string(),
                     "input(".to_string(),
                     "User input via input() function".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_stdin".to_string(),
                     "sys.stdin".to_string(),
                     "Standard input stream".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_getpass".to_string(),
                     "getpass.getpass".to_string(),
                     "Password input without echo".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSource::new(
                     "js_process_stdin".to_string(),
                     "process.stdin".to_string(),
                     "Node.js standard input".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_readline".to_string(),
                     "readline.".to_string(),
                     "Readline interface for input".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_inquirer".to_string(),
                     "inquirer.".to_string(),
                     "Inquirer interactive prompts".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }

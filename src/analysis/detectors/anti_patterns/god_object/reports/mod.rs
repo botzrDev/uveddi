@@ -39,7 +39,9 @@ impl GodObjectReportFormatter {
     }
 
     /// Calculate severity distribution (shared utility)
-    pub fn calculate_severity_distribution(issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+    pub fn calculate_severity_distribution(
+        issues: &[ArchitecturalIssue],
+    ) -> HashMap<String, usize> {
         calculate_severity_distribution(issues)
     }
 }

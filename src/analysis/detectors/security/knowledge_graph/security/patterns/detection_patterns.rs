@@ -4,9 +4,11 @@
 //! for identifying security issues through graph analysis.
 
 use crate::analysis::detectors::security::knowledge_graph::types::{
-    CodeEntity, StructuralSemanticGraph, AntiPatternInfo,
+    AntiPatternInfo, CodeEntity, StructuralSemanticGraph,
 };
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType};
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType,
+};
 use crate::analysis::AnalysisError;
 use std::collections::HashMap;
 use tracing::{debug, info};
@@ -31,20 +33,27 @@ impl SecurityPatternDetector {
         graph: &StructuralSemanticGraph,
         entities: &[CodeEntity],
     ) -> Result<SecurityPatternResult, AnalysisError> {
-        info!("Detecting security patterns in graph with {} nodes", graph.nodes.len());
+        info!(
+            "Detecting security patterns in graph with {} nodes",
+            graph.nodes.len()
+        );
 
         let mut detected_issues = Vec::new();
         let mut pattern_matches = Vec::new();
 
         // Apply each security pattern
         for pattern in &self.patterns {
-            let pattern_result = self.apply_security_pattern(pattern, graph, entities).await?;
+            let pattern_result = self
+                .apply_security_pattern(pattern, graph, entities)
+                .await?;
             detected_issues.extend(pattern_result.security_issues);
             pattern_matches.extend(pattern_result.pattern_matches);
         }
 
         // Analyze pattern interactions
-        let interaction_issues = self.analyze_pattern_interactions(&pattern_matches, graph).await?;
+        let interaction_issues = self
+            .analyze_pattern_interactions(&pattern_matches, graph)
+            .await?;
         detected_issues.extend(interaction_issues);
 
         let confidence_score = self.calculate_overall_confidence(&detected_issues);
@@ -67,22 +76,26 @@ impl SecurityPatternDetector {
                 super::threat_patterns::detect_privilege_escalation(self, graph, entities).await
             }
             SecurityPattern::TrustBoundaryViolation => {
-                super::threat_patterns::detect_trust_boundary_violations(self, graph, entities).await
+                super::threat_patterns::detect_trust_boundary_violations(self, graph, entities)
+                    .await
             }
             SecurityPattern::UnsafeDataFlow => {
                 super::behavioral_patterns::detect_unsafe_data_flows(self, graph, entities).await
             }
             SecurityPattern::OverPrivilegedComponents => {
-                super::behavioral_patterns::detect_overprivileged_components(self, graph, entities).await
+                super::behavioral_patterns::detect_overprivileged_components(self, graph, entities)
+                    .await
             }
             SecurityPattern::WeakAuthenticationPaths => {
-                super::threat_patterns::detect_weak_authentication_paths(self, graph, entities).await
+                super::threat_patterns::detect_weak_authentication_paths(self, graph, entities)
+                    .await
             }
             SecurityPattern::InsecureDefaults => {
                 super::behavioral_patterns::detect_insecure_defaults(self, graph, entities).await
             }
             SecurityPattern::UnvalidatedInputPaths => {
-                super::behavioral_patterns::detect_unvalidated_input_paths(self, graph, entities).await
+                super::behavioral_patterns::detect_unvalidated_input_paths(self, graph, entities)
+                    .await
             }
             SecurityPattern::ExposedInternalAPIs => {
                 super::threat_patterns::detect_exposed_internal_apis(self, graph, entities).await
@@ -102,7 +115,8 @@ impl SecurityPatternDetector {
         let mut entity_patterns: HashMap<String, Vec<&PatternMatch>> = HashMap::new();
         for pattern_match in pattern_matches {
             for entity_id in &pattern_match.affected_entities {
-                entity_patterns.entry(entity_id.clone())
+                entity_patterns
+                    .entry(entity_id.clone())
                     .or_default()
                     .push(pattern_match);
             }
@@ -111,7 +125,8 @@ impl SecurityPatternDetector {
         // Look for entities with multiple security patterns (amplification)
         for (entity_id, patterns) in entity_patterns {
             if patterns.len() > 1 {
-                let combined_severity = patterns.iter()
+                let combined_severity = patterns
+                    .iter()
                     .map(|p| p.severity)
                     .fold(0.0, |acc, s| acc + s * 0.7); // Amplification factor
 

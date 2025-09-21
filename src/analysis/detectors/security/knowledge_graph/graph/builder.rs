@@ -1,8 +1,8 @@
 //! Graph construction for knowledge graph (Simplified)
 
 use crate::analysis::detectors::security::knowledge_graph::types::{
-    StructuralSemanticGraph, GraphNode, GraphEdge, GraphNodeType, GraphEdgeType,
-    GraphMetadata, FileAnalysis, CodeEntity,
+    CodeEntity, FileAnalysis, GraphEdge, GraphEdgeType, GraphMetadata, GraphNode, GraphNodeType,
+    StructuralSemanticGraph,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
@@ -31,7 +31,10 @@ impl GraphBuilder {
     }
 
     /// Build graph from file analyses (simplified)
-    pub async fn build_from_analyses(&mut self, analyses: Vec<FileAnalysis>) -> Result<(), AnalysisError> {
+    pub async fn build_from_analyses(
+        &mut self,
+        analyses: Vec<FileAnalysis>,
+    ) -> Result<(), AnalysisError> {
         debug!("Building graph from {} analyses", analyses.len());
 
         for analysis in analyses {
@@ -84,7 +87,12 @@ impl GraphBuilder {
         };
 
         self.graph.edges.push(edge);
-        debug!("Added edge: {} -> {} ({:?})", from_node_id, to_node_id, edge_type.clone());
+        debug!(
+            "Added edge: {} -> {} ({:?})",
+            from_node_id,
+            to_node_id,
+            edge_type.clone()
+        );
 
         Ok(())
     }
@@ -101,7 +109,8 @@ impl GraphBuilder {
 
     /// Find node by entity ID (simplified)
     pub fn find_node_by_entity_id(&self, entity_id: &str) -> Option<&GraphNode> {
-        self.graph.nodes
+        self.graph
+            .nodes
             .iter()
             .find(|(_, node)| {
                 if let Some(entity) = &node.code_entity {

@@ -42,29 +42,29 @@ impl NestingAnalyzer {
         matches!(
             node_kind,
             "block"
-            | "statement_block"
-            | "if_statement"
-            | "if_expression"
-            | "else_clause"
-            | "elif_clause"
-            | "while_statement"
-            | "while_expression"
-            | "for_statement"
-            | "for_expression"
-            | "loop_expression"
-            | "match_expression"
-            | "match_arm"
-            | "switch_statement"
-            | "case_statement"
-            | "try_statement"
-            | "try_expression"
-            | "catch_clause"
-            | "except_clause"
-            | "finally_clause"
-            | "with_statement"
-            | "closure_expression"
-            | "lambda_expression"
-            | "arrow_function"
+                | "statement_block"
+                | "if_statement"
+                | "if_expression"
+                | "else_clause"
+                | "elif_clause"
+                | "while_statement"
+                | "while_expression"
+                | "for_statement"
+                | "for_expression"
+                | "loop_expression"
+                | "match_expression"
+                | "match_arm"
+                | "switch_statement"
+                | "case_statement"
+                | "try_statement"
+                | "try_expression"
+                | "catch_clause"
+                | "except_clause"
+                | "finally_clause"
+                | "with_statement"
+                | "closure_expression"
+                | "lambda_expression"
+                | "arrow_function"
         )
     }
 
@@ -97,7 +97,8 @@ impl NestingAnalyzer {
         // Process children
         for i in 0..node.child_count() {
             if let Some(child) = node.child(i) {
-                let (child_total, child_count) = Self::sum_nesting_depths(&child, _source, new_depth);
+                let (child_total, child_count) =
+                    Self::sum_nesting_depths(&child, _source, new_depth);
                 total_depth += child_total;
                 count += child_count;
             }
@@ -115,7 +116,12 @@ impl NestingAnalyzer {
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn count_nesting_levels(node: &Node, _source: &[u8], current_depth: u32, counts: &mut Vec<u32>) {
+    fn count_nesting_levels(
+        node: &Node,
+        _source: &[u8],
+        current_depth: u32,
+        counts: &mut Vec<u32>,
+    ) {
         let node_kind = node.kind();
         let increases_nesting = Self::increases_nesting(node_kind);
 
@@ -139,7 +145,11 @@ impl NestingAnalyzer {
 
     /// Identify deeply nested blocks that should be refactored
     #[cfg(feature = "tree-sitter")]
-    pub fn find_deep_nesting_locations(node: &Node, source: &[u8], threshold: u32) -> Vec<(u32, u32)> {
+    pub fn find_deep_nesting_locations(
+        node: &Node,
+        source: &[u8],
+        threshold: u32,
+    ) -> Vec<(u32, u32)> {
         let mut locations = Vec::new();
         Self::find_deep_nesting_recursive(node, source, 0, threshold, &mut locations);
         locations

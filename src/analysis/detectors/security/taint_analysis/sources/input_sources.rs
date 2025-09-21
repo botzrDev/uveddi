@@ -2,8 +2,8 @@
 
 use super::TaintSourceDetector;
 use crate::analysis::detectors::security::taint_analysis::types::TaintSource;
-use crate::ast::{ParsedFile, SourceLanguage};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
 
 /// Detector for input-based taint sources
@@ -80,7 +80,10 @@ impl InputSourceDetector {
 
         self.patterns.insert(
             SourceLanguage::TypeScript,
-            self.patterns.get(&SourceLanguage::JavaScript).unwrap().clone(),
+            self.patterns
+                .get(&SourceLanguage::JavaScript)
+                .unwrap()
+                .clone(),
         );
     }
 
@@ -92,71 +95,84 @@ impl InputSourceDetector {
                     "rust_http_body".to_string(),
                     "request.body".to_string(),
                     "HTTP request body data".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_http_query".to_string(),
                     "request.query".to_string(),
                     "HTTP query parameters".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_http_headers".to_string(),
                     "request.headers".to_string(),
                     "HTTP request headers".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "rust_actix_form".to_string(),
                     "actix_web::web::Form".to_string(),
                     "Actix web form data".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSource::new(
                     "python_flask_request".to_string(),
                     "flask.request".to_string(),
                     "Flask request object".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_request_form".to_string(),
                     "request.form".to_string(),
                     "Form data from request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_request_args".to_string(),
                     "request.args".to_string(),
                     "URL arguments from request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "python_request_json".to_string(),
                     "request.json".to_string(),
                     "JSON data from request".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSource::new(
                     "js_req_body".to_string(),
                     "req.body".to_string(),
                     "Express.js request body".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_req_query".to_string(),
                     "req.query".to_string(),
                     "Express.js query parameters".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_req_params".to_string(),
                     "req.params".to_string(),
                     "Express.js route parameters".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_location_search".to_string(),
                     "location.search".to_string(),
                     "Browser URL search parameters".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSource::new(
                     "js_form_data".to_string(),
                     "FormData".to_string(),
                     "Browser form data".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }

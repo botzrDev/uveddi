@@ -4,13 +4,13 @@
 //! of the analysis process, including target analysis, output generation,
 //! and AI integration settings.
 
-pub mod analysis_config;
 pub mod ai_config;
+pub mod analysis_config;
 pub mod output_config;
 pub mod validation;
 
-pub use analysis_config::AnalysisConfig;
 pub use ai_config::AiConfig;
+pub use analysis_config::AnalysisConfig;
 pub use output_config::OutputConfig;
 pub use validation::ConfigValidator;
 
@@ -30,11 +30,7 @@ pub struct ApplicationConfig {
 
 impl ApplicationConfig {
     /// Create a new application configuration
-    pub fn new(
-        target_path: PathBuf,
-        output_format: String,
-        output_file: Option<PathBuf>,
-    ) -> Self {
+    pub fn new(target_path: PathBuf, output_format: String, output_file: Option<PathBuf>) -> Self {
         Self {
             analysis: AnalysisConfig::new(target_path),
             output: OutputConfig::new(output_format, output_file),

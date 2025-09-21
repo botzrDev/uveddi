@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -181,11 +183,12 @@ impl VulnerableComponentsDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "latest", "^", "~", ">=", "audit", "security",
-            "updated", "patched", "secure",
+            "latest", "^", "~", ">=", "audit", "security", "updated", "patched", "secure",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.contains(indicator))
     }
 }
 
@@ -195,13 +198,22 @@ impl OwaspCategoryDetector for VulnerableComponentsDetector {
         let mut vulnerabilities = Vec::new();
 
         // Only check dependency files
-        let filename = file.file_path.file_name()
+        let filename = file
+            .file_path
+            .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("");
 
-        let is_dependency_file = matches!(filename,
-            "Cargo.toml" | "requirements.txt" | "package.json" | "package-lock.json" |
-            "yarn.lock" | "Pipfile" | "setup.py" | "pyproject.toml"
+        let is_dependency_file = matches!(
+            filename,
+            "Cargo.toml"
+                | "requirements.txt"
+                | "package.json"
+                | "package-lock.json"
+                | "yarn.lock"
+                | "Pipfile"
+                | "setup.py"
+                | "pyproject.toml"
         );
 
         if !is_dependency_file {
@@ -231,7 +243,6 @@ impl OwaspCategoryDetector for VulnerableComponentsDetector {
 
         Ok(vulnerabilities)
     }
-
 }
 
 #[cfg(test)]
@@ -255,6 +266,9 @@ mod tests {
         std::fs::remove_file("package.json").unwrap();
 
         assert!(!vulnerabilities.is_empty());
-        assert_eq!(vulnerabilities[0].category, OwaspCategory::VulnerableComponents);
+        assert_eq!(
+            vulnerabilities[0].category,
+            OwaspCategory::VulnerableComponents
+        );
     }
 }

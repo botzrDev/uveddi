@@ -11,8 +11,8 @@ pub use flow_scanner::DataFlowScanner;
 pub use pattern_scanner::PatternScanner;
 pub use static_scanner::StaticAnalysisScanner;
 
-use crate::analysis::AnalysisError;
 use crate::analysis::detectors::security::owasp::types::OwaspVulnerability;
+use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use serde_json::Value;
 use std::time::Instant;
@@ -33,7 +33,9 @@ pub trait Scanner: Send + Sync {
     fn name(&self) -> &'static str;
     fn supported_languages(&self) -> Vec<SourceLanguage>;
     /// The OWASP categories this scanner can detect
-    fn detectable_categories(&self) -> Vec<crate::analysis::detectors::security::owasp::types::OwaspCategory>;
+    fn detectable_categories(
+        &self,
+    ) -> Vec<crate::analysis::detectors::security::owasp::types::OwaspCategory>;
 }
 
 /// Scanner orchestrator for coordinating multiple scanners
@@ -53,7 +55,10 @@ impl ScannerOrchestrator {
         })
     }
 
-    pub async fn scan_all(&self, file: &ParsedFile) -> Result<Vec<UnifiedScanResult>, AnalysisError> {
+    pub async fn scan_all(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<UnifiedScanResult>, AnalysisError> {
         let mut results = Vec::new();
         for scanner in &self.scanners {
             if scanner.supported_languages().contains(&file.language) {

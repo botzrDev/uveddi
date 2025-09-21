@@ -4,9 +4,7 @@
 //! flows through the application and identifies potential security issues.
 
 use super::{Scanner, UnifiedScanResult};
-use crate::analysis::detectors::security::owasp::types::{
-    OwaspCategory, OwaspVulnerability,
-};
+use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
 use crate::analysis::detectors::security::types::{
     SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
 };
@@ -48,11 +46,11 @@ pub enum FlowNodeType {
 /// Types of data taint
 #[derive(Debug, Clone)]
 pub enum TaintType {
-    UserInput,     // From user input (forms, params, etc.)
-    FileSystem,    // From file operations
-    Network,       // From network requests
-    Database,      // From database queries
-    Environment,   // From environment variables
+    UserInput,   // From user input (forms, params, etc.)
+    FileSystem,  // From file operations
+    Network,     // From network requests
+    Database,    // From database queries
+    Environment, // From environment variables
 }
 
 /// Result from data flow analysis
@@ -153,20 +151,23 @@ impl DataFlowScanner {
             },
         ];
 
-        for language in [SourceLanguage::Python, SourceLanguage::JavaScript, SourceLanguage::TypeScript] {
+        for language in [
+            SourceLanguage::Python,
+            SourceLanguage::JavaScript,
+            SourceLanguage::TypeScript,
+        ] {
             self.source_patterns.insert(language, sources.clone());
         }
 
         // Rust-specific sources
-        let rust_sources = vec![
-            SourcePattern {
-                pattern: r"std::env::args|std::io::stdin".to_string(),
-                taint_type: TaintType::UserInput,
-                confidence: 0.9,
-                description: "Command line or stdin input".to_string(),
-            },
-        ];
-        self.source_patterns.insert(SourceLanguage::Rust, rust_sources);
+        let rust_sources = vec![SourcePattern {
+            pattern: r"std::env::args|std::io::stdin".to_string(),
+            taint_type: TaintType::UserInput,
+            confidence: 0.9,
+            description: "Command line or stdin input".to_string(),
+        }];
+        self.source_patterns
+            .insert(SourceLanguage::Rust, rust_sources);
     }
 
     fn initialize_sink_patterns(&mut self) {
@@ -209,7 +210,11 @@ impl DataFlowScanner {
             },
         ];
 
-        for language in [SourceLanguage::Python, SourceLanguage::JavaScript, SourceLanguage::TypeScript] {
+        for language in [
+            SourceLanguage::Python,
+            SourceLanguage::JavaScript,
+            SourceLanguage::TypeScript,
+        ] {
             self.sink_patterns.insert(language, sinks.clone());
         }
     }
@@ -230,7 +235,11 @@ impl DataFlowScanner {
             },
         ];
 
-        for language in [SourceLanguage::Python, SourceLanguage::JavaScript, SourceLanguage::TypeScript] {
+        for language in [
+            SourceLanguage::Python,
+            SourceLanguage::JavaScript,
+            SourceLanguage::TypeScript,
+        ] {
             self.sanitizer_patterns.insert(language, sanitizers.clone());
         }
     }
@@ -306,8 +315,8 @@ impl DataFlowScanner {
                 paths_analyzed += 1;
 
                 // Check if there's a sanitizer between source and sink
-                let has_sanitizer = (*source_line..*sink_line)
-                    .any(|line_num| sanitizers.contains(&line_num));
+                let has_sanitizer =
+                    (*source_line..*sink_line).any(|line_num| sanitizers.contains(&line_num));
 
                 if !has_sanitizer && sink_line > source_line {
                     // Create a simple flow path
@@ -392,7 +401,10 @@ impl DataFlowScanner {
 impl Scanner for DataFlowScanner {
     async fn scan(&self, file: &ParsedFile) -> Result<UnifiedScanResult, AnalysisError> {
         let start_time = Instant::now();
-        info!("Starting data flow analysis for: {}", file.file_path.display());
+        info!(
+            "Starting data flow analysis for: {}",
+            file.file_path.display()
+        );
 
         let flow_result = self.analyze_data_flow(file)?;
         let vulnerabilities = self.convert_to_owasp_vulnerabilities(flow_result.vulnerabilities);
@@ -400,11 +412,26 @@ impl Scanner for DataFlowScanner {
         let scan_duration = start_time.elapsed().as_millis() as u64;
 
         let mut metadata = HashMap::new();
-        metadata.insert("scanner_type".to_string(), serde_json::Value::String("flow".to_string()));
-        metadata.insert("sources_found".to_string(), serde_json::Value::Number(flow_result.sources_found.into()));
-        metadata.insert("sinks_found".to_string(), serde_json::Value::Number(flow_result.sinks_found.into()));
-        metadata.insert("paths_analyzed".to_string(), serde_json::Value::Number(flow_result.paths_analyzed.into()));
-        metadata.insert("language".to_string(), serde_json::Value::String(file.language.to_string()));
+        metadata.insert(
+            "scanner_type".to_string(),
+            serde_json::Value::String("flow".to_string()),
+        );
+        metadata.insert(
+            "sources_found".to_string(),
+            serde_json::Value::Number(flow_result.sources_found.into()),
+        );
+        metadata.insert(
+            "sinks_found".to_string(),
+            serde_json::Value::Number(flow_result.sinks_found.into()),
+        );
+        metadata.insert(
+            "paths_analyzed".to_string(),
+            serde_json::Value::Number(flow_result.paths_analyzed.into()),
+        );
+        metadata.insert(
+            "language".to_string(),
+            serde_json::Value::String(file.language.to_string()),
+        );
 
         info!(
             "Data flow analysis completed: {} vulnerabilities found from {} sources and {} sinks in {}ms",

@@ -283,10 +283,12 @@ impl AiAnalysisSettings {
 
     /// Merge with another analysis settings configuration
     pub fn merge_with(mut self, other: AiAnalysisSettings) -> Self {
-        if other.max_issues_to_analyze != 10 { // 10 is default
+        if other.max_issues_to_analyze != 10 {
+            // 10 is default
             self.max_issues_to_analyze = other.max_issues_to_analyze;
         }
-        if (other.confidence_threshold - 0.75).abs() > f64::EPSILON { // 0.75 is default
+        if (other.confidence_threshold - 0.75).abs() > f64::EPSILON {
+            // 0.75 is default
             self.confidence_threshold = other.confidence_threshold;
         }
         if other.enable_detailed_analysis {
@@ -295,13 +297,16 @@ impl AiAnalysisSettings {
         if other.analyze_code_snippets {
             self.analyze_code_snippets = other.analyze_code_snippets;
         }
-        if other.max_context_lines != 100 { // 100 is default
+        if other.max_context_lines != 100 {
+            // 100 is default
             self.max_context_lines = other.max_context_lines;
         }
-        if other.api_timeout_seconds != 30 { // 30 is default
+        if other.api_timeout_seconds != 30 {
+            // 30 is default
             self.api_timeout_seconds = other.api_timeout_seconds;
         }
-        if other.max_retries != 3 { // 3 is default
+        if other.max_retries != 3 {
+            // 3 is default
             self.max_retries = other.max_retries;
         }
         self

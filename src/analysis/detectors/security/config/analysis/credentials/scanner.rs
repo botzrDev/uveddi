@@ -1,8 +1,8 @@
 //! Credential scanning utilities for structured data
 
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::validator;
 use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 
 /// Analyze structured credentials in YAML/JSON content
 pub fn analyze_structured_credentials(content: &str) -> Result<Vec<ConfigIssue>, AnalysisError> {
@@ -28,14 +28,19 @@ fn analyze_yaml_credentials(value: &serde_yaml::Value) -> Result<Vec<ConfigIssue
                     if is_credential_key(key_str) {
                         if let Some(val_str) = val.as_str() {
                             if validator::looks_like_credential(val_str) {
-                                issues.push(ConfigIssue::new(
-                                    ConfigSeverity::High,
-                                    0.8,
-                                    "Structured Credential Found",
-                                    format!("Found credential in structured configuration: {}", key_str),
-                                )
-                                .with_tag("structured-credential")
-                                .with_cwe(798));
+                                issues.push(
+                                    ConfigIssue::new(
+                                        ConfigSeverity::High,
+                                        0.8,
+                                        "Structured Credential Found",
+                                        format!(
+                                            "Found credential in structured configuration: {}",
+                                            key_str
+                                        ),
+                                    )
+                                    .with_tag("structured-credential")
+                                    .with_cwe(798),
+                                );
                             }
                         }
                     }
@@ -58,12 +63,24 @@ fn analyze_yaml_credentials(value: &serde_yaml::Value) -> Result<Vec<ConfigIssue
 
 fn is_credential_key(key: &str) -> bool {
     let credential_keys = [
-        "password", "passwd", "pwd", "secret", "key", "token", "auth",
-        "credential", "private_key", "api_key", "access_key", "secret_key"
+        "password",
+        "passwd",
+        "pwd",
+        "secret",
+        "key",
+        "token",
+        "auth",
+        "credential",
+        "private_key",
+        "api_key",
+        "access_key",
+        "secret_key",
     ];
 
     let key_lower = key.to_lowercase();
-    credential_keys.iter().any(|&cred_key| key_lower.contains(cred_key))
+    credential_keys
+        .iter()
+        .any(|&cred_key| key_lower.contains(cred_key))
 }
 
 #[cfg(test)]
@@ -90,6 +107,8 @@ database:
 
         let issues = analyze_structured_credentials(content).unwrap();
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| i.title.contains("Structured Credential")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Structured Credential")));
     }
 }

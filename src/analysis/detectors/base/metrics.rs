@@ -128,11 +128,13 @@ impl BaseMetrics {
         // Average cache hit ratios (weighted by files analyzed)
         let total_files = self.detection.files_analyzed;
         if total_files > 0 {
-            let self_weight = (self.detection.files_analyzed - other.detection.files_analyzed) as f64 / total_files as f64;
+            let self_weight = (self.detection.files_analyzed - other.detection.files_analyzed)
+                as f64
+                / total_files as f64;
             let other_weight = other.detection.files_analyzed as f64 / total_files as f64;
-            self.processing_stats.cache_hit_ratio =
-                self.processing_stats.cache_hit_ratio * self_weight +
-                other.processing_stats.cache_hit_ratio * other_weight;
+            self.processing_stats.cache_hit_ratio = self.processing_stats.cache_hit_ratio
+                * self_weight
+                + other.processing_stats.cache_hit_ratio * other_weight;
         }
 
         // Take maximum peak memory

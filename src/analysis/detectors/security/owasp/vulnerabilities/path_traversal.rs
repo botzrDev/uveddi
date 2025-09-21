@@ -44,7 +44,9 @@ impl PathTraversalType {
             PathTraversalType::ZipSlip => "Zip slip vulnerability",
             PathTraversalType::SymlinkTraversal => "Symbolic link traversal vulnerability",
             PathTraversalType::UrlTraversal => "URL path traversal vulnerability",
-            PathTraversalType::RelativePathManipulation => "Relative path manipulation vulnerability",
+            PathTraversalType::RelativePathManipulation => {
+                "Relative path manipulation vulnerability"
+            }
         }
     }
 }
@@ -223,7 +225,12 @@ impl PathTraversalDetector {
         ]
     }
 
-    fn analyze_line(&self, line: &str, line_number: usize, patterns: &[PathTraversalPattern]) -> Vec<OwaspVulnerability> {
+    fn analyze_line(
+        &self,
+        line: &str,
+        line_number: usize,
+        patterns: &[PathTraversalPattern],
+    ) -> Vec<OwaspVulnerability> {
         let mut vulnerabilities = Vec::new();
 
         for pattern in patterns {
@@ -236,17 +243,24 @@ impl PathTraversalDetector {
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();
-                    metadata.add_metadata("traversal_type".to_string(), pattern.traversal_type.description().to_string());
+                    metadata.add_metadata(
+                        "traversal_type".to_string(),
+                        pattern.traversal_type.description().to_string(),
+                    );
                     metadata.add_metadata("context".to_string(), pattern.context.clone());
                     metadata.add_metadata("pattern_matched".to_string(), pattern.pattern.clone());
                     metadata.add_metadata("line_content".to_string(), line.trim().to_string());
 
                     // Add additional analysis for path traversal indicators
                     if line.contains("../") || line.contains("..\\") {
-                        metadata.add_metadata("contains_traversal_sequence".to_string(), "true".to_string());
+                        metadata.add_metadata(
+                            "contains_traversal_sequence".to_string(),
+                            "true".to_string(),
+                        );
                     }
 
-                    let remediation = Self::generate_remediation(&pattern.traversal_type, &pattern.context);
+                    let remediation =
+                        Self::generate_remediation(&pattern.traversal_type, &pattern.context);
 
                     let vulnerability = OwaspVulnerability::new(
                         OwaspCategory::BrokenAccessControl, // Path traversal is often categorized under access control
@@ -291,14 +305,21 @@ impl PathTraversalDetector {
         };
 
         let context_advice = match context {
-            c if c.contains("concatenation") => " Avoid string concatenation for path construction.",
-            c if c.contains("template") || c.contains("f-string") => " Use safe path joining methods instead of string interpolation.",
+            c if c.contains("concatenation") => {
+                " Avoid string concatenation for path construction."
+            }
+            c if c.contains("template") || c.contains("f-string") => {
+                " Use safe path joining methods instead of string interpolation."
+            }
             c if c.contains("join") => " Validate path components before joining.",
             c if c.contains("static") => " Configure static file serving with proper restrictions.",
             _ => "",
         };
 
-        format!("{}{} Consider using a security library for path validation and canonicalization.", base_advice, context_advice)
+        format!(
+            "{}{} Consider using a security library for path validation and canonicalization.",
+            base_advice, context_advice
+        )
     }
 }
 
@@ -356,7 +377,9 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 3);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("File::open")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("File::open")));
     }
 
     #[tokio::test]
@@ -378,7 +401,11 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 2);
-        assert!(vulnerabilities.iter().any(|v| v.metadata.get_metadata("traversal_type").unwrap().contains("Zip slip")));
+        assert!(vulnerabilities.iter().any(|v| v
+            .metadata
+            .get_metadata("traversal_type")
+            .unwrap()
+            .contains("Zip slip")));
     }
 
     #[tokio::test]
@@ -399,14 +426,16 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 3);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("Express")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("Express")));
     }
 
     #[test]
     fn test_remediation_generation() {
         let remediation = PathTraversalDetector::generate_remediation(
             &PathTraversalType::ZipSlip,
-            "zipfile.extractall"
+            "zipfile.extractall",
         );
         assert!(remediation.contains("extraction paths"));
         assert!(remediation.contains("intended directory"));

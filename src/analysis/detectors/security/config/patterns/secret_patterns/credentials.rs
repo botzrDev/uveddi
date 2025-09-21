@@ -1,8 +1,8 @@
 //! Password and username pattern detection
 
-use super::SecretPattern;
 use super::super::super::types::ConfigSeverity;
 use super::super::utils;
+use super::SecretPattern;
 use crate::analysis::AnalysisError;
 use std::collections::HashMap;
 
@@ -11,16 +11,26 @@ pub fn build_credential_patterns() -> Result<HashMap<String, SecretPattern>, Ana
     let mut patterns = HashMap::new();
 
     // Database Passwords
-    patterns.insert("database_password".to_string(), SecretPattern {
-        name: "Database Password".to_string(),
-        regex: utils::compile_pattern(r#"(?i)(password|passwd|pwd)[\s]*[:=][\s]*['"]?([^'\s\n]{6,})['"]?"#)?,
-        severity: ConfigSeverity::High,
-        confidence: 0.80,
-        description: "Database password detected in configuration".to_string(),
-        remediation: "Use environment variables or database credential management systems".to_string(),
-        cwe_id: Some(798),
-        tags: vec!["database".to_string(), "password".to_string(), "credential".to_string()],
-    });
+    patterns.insert(
+        "database_password".to_string(),
+        SecretPattern {
+            name: "Database Password".to_string(),
+            regex: utils::compile_pattern(
+                r#"(?i)(password|passwd|pwd)[\s]*[:=][\s]*['"]?([^'\s\n]{6,})['"]?"#,
+            )?,
+            severity: ConfigSeverity::High,
+            confidence: 0.80,
+            description: "Database password detected in configuration".to_string(),
+            remediation: "Use environment variables or database credential management systems"
+                .to_string(),
+            cwe_id: Some(798),
+            tags: vec![
+                "database".to_string(),
+                "password".to_string(),
+                "credential".to_string(),
+            ],
+        },
+    );
 
     // JWT Secrets
     patterns.insert("jwt_secret".to_string(), SecretPattern {

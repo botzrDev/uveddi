@@ -3,9 +3,9 @@ use std::collections::HashMap;
 
 use super::super::types::{CouplingMetrics, Dependency};
 use super::{
-    matrix_builder::{MatrixBuilder, CouplingMatrix},
-    heatmap_generator::{HeatmapGenerator, CouplingHeatmapData},
     coupling_analyzer::{CouplingAnalyzer, ModuleCouplingData},
+    heatmap_generator::{CouplingHeatmapData, HeatmapGenerator},
+    matrix_builder::{CouplingMatrix, MatrixBuilder},
 };
 
 /// Coordinates coupling matrix generation and analysis
@@ -32,7 +32,8 @@ impl CouplingMatrixGenerator {
         metrics: &HashMap<ComponentNode, CouplingMetrics>,
         dependencies: &[Dependency],
     ) -> CouplingMatrix {
-        self.matrix_builder.build_matrix(graph, metrics, dependencies)
+        self.matrix_builder
+            .build_matrix(graph, metrics, dependencies)
     }
 
     /// Generate heatmap data for web visualization
@@ -46,7 +47,8 @@ impl CouplingMatrixGenerator {
         dependencies: &[Dependency],
         graph: &LocalDependencyGraph,
     ) -> Vec<ModuleCouplingData> {
-        self.coupling_analyzer.analyze_module_coupling(dependencies, graph)
+        self.coupling_analyzer
+            .analyze_module_coupling(dependencies, graph)
     }
 
     /// Generate CSV format for the coupling matrix
@@ -65,7 +67,8 @@ impl CouplingMatrixGenerator {
         matrix: &CouplingMatrix,
         threshold: f64,
     ) -> Vec<(String, String, f64)> {
-        self.coupling_analyzer.identify_strong_coupling_pairs(matrix, threshold)
+        self.coupling_analyzer
+            .identify_strong_coupling_pairs(matrix, threshold)
     }
 
     /// Calculate coupling density for the entire system

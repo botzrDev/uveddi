@@ -227,7 +227,12 @@ impl SessionManagementDetector {
         ]
     }
 
-    fn analyze_line(&self, line: &str, line_number: usize, patterns: &[SessionPattern]) -> Vec<OwaspVulnerability> {
+    fn analyze_line(
+        &self,
+        line: &str,
+        line_number: usize,
+        patterns: &[SessionPattern],
+    ) -> Vec<OwaspVulnerability> {
         let mut vulnerabilities = Vec::new();
 
         for pattern in patterns {
@@ -240,17 +245,24 @@ impl SessionManagementDetector {
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();
-                    metadata.add_metadata("session_issue".to_string(), pattern.session_issue.description().to_string());
+                    metadata.add_metadata(
+                        "session_issue".to_string(),
+                        pattern.session_issue.description().to_string(),
+                    );
                     metadata.add_metadata("context".to_string(), pattern.context.clone());
                     metadata.add_metadata("pattern_matched".to_string(), pattern.pattern.clone());
                     metadata.add_metadata("line_content".to_string(), line.trim().to_string());
 
-                    let remediation = Self::generate_remediation(&pattern.session_issue, &pattern.context);
+                    let remediation =
+                        Self::generate_remediation(&pattern.session_issue, &pattern.context);
 
                     let vulnerability = OwaspVulnerability::new(
                         OwaspCategory::AuthenticationFailures,
                         SecurityIssueType::SessionManagement,
-                        format!("Session Management: {}", pattern.session_issue.description()),
+                        format!(
+                            "Session Management: {}",
+                            pattern.session_issue.description()
+                        ),
                         pattern.description.clone(),
                         location,
                     )
@@ -297,13 +309,18 @@ impl SessionManagementDetector {
 
         let context_advice = match context {
             c if c.contains("Django") => " Use Django's built-in session security settings.",
-            c if c.contains("Express") => " Configure express-session middleware with secure options.",
+            c if c.contains("Express") => {
+                " Configure express-session middleware with secure options."
+            }
             c if c.contains("Flask") => " Use Flask-Session with secure configuration.",
             c if c.contains("Cookie") => " Review all cookie security attributes.",
             _ => "",
         };
 
-        format!("{}{} Consider implementing session monitoring and anomaly detection.", base_advice, context_advice)
+        format!(
+            "{}{} Consider implementing session monitoring and anomaly detection.",
+            base_advice, context_advice
+        )
     }
 }
 
@@ -367,7 +384,9 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 4);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("Weak session secret")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("Weak session secret")));
     }
 
     #[tokio::test]
@@ -391,7 +410,9 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 4);
-        assert!(vulnerabilities.iter().any(|v| v.severity == SecuritySeverity::Critical));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.severity == SecuritySeverity::Critical));
     }
 
     #[tokio::test]
@@ -415,14 +436,16 @@ mod tests {
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
         assert!(vulnerabilities.len() >= 3);
-        assert!(vulnerabilities.iter().any(|v| v.description.contains("secure")));
+        assert!(vulnerabilities
+            .iter()
+            .any(|v| v.description.contains("secure")));
     }
 
     #[test]
     fn test_remediation_generation() {
         let remediation = SessionManagementDetector::generate_remediation(
             &SessionIssueType::InsecureSessionConfig,
-            "Express session configuration"
+            "Express session configuration",
         );
         assert!(remediation.contains("secure flag"));
         assert!(remediation.contains("express-session"));

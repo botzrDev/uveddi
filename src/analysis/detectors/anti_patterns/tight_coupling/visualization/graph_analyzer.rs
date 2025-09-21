@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use super::graph_builder::{GraphEdge, GraphNode};
 use super::super::types::CouplingMetrics;
+use super::graph_builder::{GraphEdge, GraphNode};
 use crate::analysis::graph::dependency::ComponentNode;
 
 /// Analyzes graph structure and generates statistics
@@ -40,9 +40,14 @@ impl GraphAnalyzer {
             couplings.iter().sum::<usize>() as f64 / couplings.len() as f64
         };
 
-        let isolated_nodes = nodes.iter().filter(|node| {
-            !edges.iter().any(|edge| edge.from == node.id || edge.to == node.id)
-        }).count();
+        let isolated_nodes = nodes
+            .iter()
+            .filter(|node| {
+                !edges
+                    .iter()
+                    .any(|edge| edge.from == node.id || edge.to == node.id)
+            })
+            .count();
 
         GraphStatistics {
             total_nodes,
@@ -60,10 +65,8 @@ impl GraphAnalyzer {
         nodes: &[GraphNode],
         threshold_percentile: f64,
     ) -> Vec<GraphNode> {
-        let mut nodes_with_metrics: Vec<_> = nodes
-            .iter()
-            .filter(|node| node.metrics.is_some())
-            .collect();
+        let mut nodes_with_metrics: Vec<_> =
+            nodes.iter().filter(|node| node.metrics.is_some()).collect();
 
         nodes_with_metrics.sort_by(|a, b| {
             let a_cbo = a.metrics.as_ref().unwrap().cbo;
@@ -71,7 +74,8 @@ impl GraphAnalyzer {
             b_cbo.cmp(&a_cbo)
         });
 
-        let hotspot_count = ((nodes_with_metrics.len() as f64) * (1.0 - threshold_percentile)).max(1.0) as usize;
+        let hotspot_count =
+            ((nodes_with_metrics.len() as f64) * (1.0 - threshold_percentile)).max(1.0) as usize;
 
         nodes_with_metrics
             .into_iter()
@@ -81,7 +85,11 @@ impl GraphAnalyzer {
     }
 
     /// Analyze node connectivity patterns
-    pub fn analyze_connectivity_patterns(&self, nodes: &[GraphNode], edges: &[GraphEdge]) -> ConnectivityAnalysis {
+    pub fn analyze_connectivity_patterns(
+        &self,
+        nodes: &[GraphNode],
+        edges: &[GraphEdge],
+    ) -> ConnectivityAnalysis {
         let total_nodes = nodes.len();
         let total_edges = edges.len();
 
@@ -119,7 +127,12 @@ impl GraphAnalyzer {
     }
 
     /// Find the most connected nodes (highest degree)
-    pub fn find_most_connected_nodes(&self, nodes: &[GraphNode], edges: &[GraphEdge], top_n: usize) -> Vec<(String, usize)> {
+    pub fn find_most_connected_nodes(
+        &self,
+        nodes: &[GraphNode],
+        edges: &[GraphEdge],
+        top_n: usize,
+    ) -> Vec<(String, usize)> {
         let mut node_degrees: HashMap<String, usize> = HashMap::new();
 
         // Count incoming and outgoing edges for each node

@@ -3,8 +3,8 @@
 use super::TaintSinkDetector;
 use crate::analysis::detectors::security::taint_analysis::types::TaintSink;
 use crate::analysis::detectors::security::types::SecurityIssueType;
-use crate::ast::{ParsedFile, SourceLanguage};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
 
 /// Detector for network operation sinks
@@ -79,7 +79,10 @@ impl NetworkSinkDetector {
 
         self.patterns.insert(
             SourceLanguage::TypeScript,
-            self.patterns.get(&SourceLanguage::JavaScript).unwrap().clone(),
+            self.patterns
+                .get(&SourceLanguage::JavaScript)
+                .unwrap()
+                .clone(),
         );
     }
 
@@ -92,19 +95,22 @@ impl NetworkSinkDetector {
                     "reqwest::get".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "HTTP GET request with user-controlled URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "rust_reqwest_post".to_string(),
                     "reqwest::post".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "HTTP POST request with user-controlled URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "rust_tcp_stream".to_string(),
                     "std::net::TcpStream".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "TCP connection with user-controlled address".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSink::new(
@@ -112,19 +118,22 @@ impl NetworkSinkDetector {
                     "requests.get".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "HTTP GET request with user URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "python_urllib_open".to_string(),
                     "urllib.request.urlopen".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "URL opening with user-controlled URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "python_socket_connect".to_string(),
                     "socket.connect".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "Socket connection with user address".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSink::new(
@@ -132,19 +141,22 @@ impl NetworkSinkDetector {
                     "fetch(".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "Fetch request with user-controlled URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_axios_get".to_string(),
                     "axios.get".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "Axios GET request with user URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_websocket".to_string(),
                     "WebSocket".to_string(),
                     SecurityIssueType::ServerSideRequestForgery,
                     "WebSocket connection with user URL".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 // Placeholder for JS/TS SSRF sinks detection; currently none
@@ -162,13 +174,15 @@ impl NetworkSinkDetector {
                     "actix_web::HttpResponse".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "HTTP response with user-controlled content".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "rust_warp_html".to_string(),
                     "warp::reply::html".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "HTML response with user data".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::Python => vec![
                 TaintSink::new(
@@ -176,19 +190,22 @@ impl NetworkSinkDetector {
                     "flask.render_template_string".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "Template rendering with user-controlled template".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "python_http_response".to_string(),
                     "django.http.HttpResponse".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "HTTP response with user content".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "python_jinja_template".to_string(),
                     "jinja2.Template".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "Jinja2 template with user data".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 TaintSink::new(
@@ -196,25 +213,29 @@ impl NetworkSinkDetector {
                     "innerHTML".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "DOM manipulation with user-controlled HTML".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_outer_html".to_string(),
                     "outerHTML".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "DOM replacement with user HTML".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_document_write".to_string(),
                     "document.write".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "Document write with user content".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_res_send".to_string(),
                     "res.send".to_string(),
                     SecurityIssueType::CrossSiteScripting,
                     "Express response with user data".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
         }
     }
@@ -228,25 +249,29 @@ impl NetworkSinkDetector {
                     "eval(".to_string(),
                     SecurityIssueType::Injection,
                     "JavaScript eval with user input".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_function_constructor".to_string(),
                     "Function(".to_string(),
                     SecurityIssueType::Injection,
                     "Function constructor with user code".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_set_timeout".to_string(),
                     "setTimeout(".to_string(),
                     SecurityIssueType::Injection,
                     "setTimeout with user-controlled code".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
                 TaintSink::new(
                     "js_set_interval".to_string(),
                     "setInterval(".to_string(),
                     SecurityIssueType::Injection,
                     "setInterval with user-controlled code".to_string(),
-                ).with_language(language),
+                )
+                .with_language(language),
             ],
             _ => Vec::new(),
         }
@@ -255,22 +280,20 @@ impl NetworkSinkDetector {
     /// Create taint sinks for WebSocket communications
     fn create_websocket_sinks(&self, language: SourceLanguage) -> Vec<TaintSink> {
         match language {
-            SourceLanguage::Rust => vec![
-                TaintSink::new(
-                    "rust_websocket_connect".to_string(),
-                    "tokio_tungstenite::connect_async".to_string(),
-                    SecurityIssueType::ServerSideRequestForgery,
-                    "WebSocket connection with user URL".to_string(),
-                ).with_language(language),
-            ],
-            SourceLanguage::Python => vec![
-                TaintSink::new(
-                    "python_websocket_send".to_string(),
-                    "websocket.send".to_string(),
-                    SecurityIssueType::CrossSiteScripting,
-                    "WebSocket message with user data".to_string(),
-                ).with_language(language),
-            ],
+            SourceLanguage::Rust => vec![TaintSink::new(
+                "rust_websocket_connect".to_string(),
+                "tokio_tungstenite::connect_async".to_string(),
+                SecurityIssueType::ServerSideRequestForgery,
+                "WebSocket connection with user URL".to_string(),
+            )
+            .with_language(language)],
+            SourceLanguage::Python => vec![TaintSink::new(
+                "python_websocket_send".to_string(),
+                "websocket.send".to_string(),
+                SecurityIssueType::CrossSiteScripting,
+                "WebSocket message with user data".to_string(),
+            )
+            .with_language(language)],
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 // Placeholder for JS/TS websocket sinks detection; currently none
             ],

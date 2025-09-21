@@ -78,20 +78,27 @@ pub fn generate_recommendations(description: &str) -> String {
 
     // Check severity and metrics to provide tailored advice
     if description.contains("Critical") {
-        recommendations.push("🚨 **Immediate Action Required**: This class requires urgent refactoring");
-        recommendations.push("📦 **Extract Multiple Classes**: Break this into 3-5 smaller, focused classes");
+        recommendations
+            .push("🚨 **Immediate Action Required**: This class requires urgent refactoring");
+        recommendations
+            .push("📦 **Extract Multiple Classes**: Break this into 3-5 smaller, focused classes");
         recommendations.push("🎯 **Identify Core Responsibilities**: List all responsibilities and group related ones");
     } else if description.contains("High") {
         recommendations.push("⚠️ **High Priority**: Schedule refactoring in the next sprint");
-        recommendations.push("📦 **Extract Classes**: Identify 2-3 separate concerns that can be extracted");
+        recommendations
+            .push("📦 **Extract Classes**: Identify 2-3 separate concerns that can be extracted");
     } else {
-        recommendations.push("📋 **Monitor**: Consider refactoring when making future changes to this class");
-        recommendations.push("🔍 **Review**: Ensure new methods have a clear reason to belong in this class");
+        recommendations
+            .push("📋 **Monitor**: Consider refactoring when making future changes to this class");
+        recommendations
+            .push("🔍 **Review**: Ensure new methods have a clear reason to belong in this class");
     }
 
     // Add specific recommendations based on metrics
     if description.contains("methods") {
-        recommendations.push("🔧 **Extract Methods**: Move related methods to new utility classes or services");
+        recommendations.push(
+            "🔧 **Extract Methods**: Move related methods to new utility classes or services",
+        );
     }
 
     if description.contains("fields") {
@@ -99,16 +106,22 @@ pub fn generate_recommendations(description: &str) -> String {
     }
 
     if description.contains("LCOM4") {
-        recommendations.push("🔗 **Improve Cohesion**: Methods should work with related fields and call each other");
+        recommendations.push(
+            "🔗 **Improve Cohesion**: Methods should work with related fields and call each other",
+        );
     }
 
     // Add language-specific recommendations
     if description.contains(".rs") || description.contains("struct") {
         recommendations.push("🦀 **Rust-specific**: Consider using composition with traits instead of large impl blocks");
     } else if description.contains(".py") || description.contains("class") {
-        recommendations.push("🐍 **Python-specific**: Use mixins or composition to break down responsibilities");
+        recommendations.push(
+            "🐍 **Python-specific**: Use mixins or composition to break down responsibilities",
+        );
     } else if description.contains(".js") || description.contains(".ts") {
-        recommendations.push("📜 **JS/TS-specific**: Consider using composition, modules, or the strategy pattern");
+        recommendations.push(
+            "📜 **JS/TS-specific**: Consider using composition, modules, or the strategy pattern",
+        );
     }
 
     recommendations.join("\n")

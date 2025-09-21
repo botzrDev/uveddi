@@ -1,7 +1,9 @@
 //! Token-based clone detection using rolling hashes
 
-use super::{CloneDetectionAlgorithm};
-use crate::analysis::detectors::anti_patterns::code_duplication::types::{CodeBlock, ClonePair, CloneType, Fingerprint};
+use super::CloneDetectionAlgorithm;
+use crate::analysis::detectors::anti_patterns::code_duplication::types::{
+    ClonePair, CloneType, CodeBlock, Fingerprint,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use sha2::{Digest, Sha256};
@@ -129,13 +131,62 @@ impl TokenBasedDetector {
     fn is_keyword(&self, token: &str, language: &SourceLanguage) -> bool {
         match language {
             SourceLanguage::Rust => {
-                matches!(token, "fn" | "let" | "mut" | "if" | "else" | "while" | "for" | "match" | "struct" | "enum" | "impl" | "trait" | "pub" | "use" | "mod")
+                matches!(
+                    token,
+                    "fn" | "let"
+                        | "mut"
+                        | "if"
+                        | "else"
+                        | "while"
+                        | "for"
+                        | "match"
+                        | "struct"
+                        | "enum"
+                        | "impl"
+                        | "trait"
+                        | "pub"
+                        | "use"
+                        | "mod"
+                )
             }
             SourceLanguage::Python => {
-                matches!(token, "def" | "class" | "if" | "else" | "elif" | "while" | "for" | "try" | "except" | "finally" | "with" | "import" | "from" | "as")
+                matches!(
+                    token,
+                    "def"
+                        | "class"
+                        | "if"
+                        | "else"
+                        | "elif"
+                        | "while"
+                        | "for"
+                        | "try"
+                        | "except"
+                        | "finally"
+                        | "with"
+                        | "import"
+                        | "from"
+                        | "as"
+                )
             }
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
-                matches!(token, "function" | "var" | "let" | "const" | "if" | "else" | "while" | "for" | "try" | "catch" | "finally" | "class" | "extends" | "import" | "export")
+                matches!(
+                    token,
+                    "function"
+                        | "var"
+                        | "let"
+                        | "const"
+                        | "if"
+                        | "else"
+                        | "while"
+                        | "for"
+                        | "try"
+                        | "catch"
+                        | "finally"
+                        | "class"
+                        | "extends"
+                        | "import"
+                        | "export"
+                )
             }
             _ => false,
         }
@@ -143,17 +194,20 @@ impl TokenBasedDetector {
 
     /// Checks if a token is a literal value
     fn is_literal(&self, token: &str) -> bool {
-        token.parse::<f64>().is_ok() ||
-        token.starts_with('"') ||
-        token.starts_with('\'') ||
-        matches!(token, "true" | "false" | "null" | "undefined" | "None" | "True" | "False")
+        token.parse::<f64>().is_ok()
+            || token.starts_with('"')
+            || token.starts_with('\'')
+            || matches!(
+                token,
+                "true" | "false" | "null" | "undefined" | "None" | "True" | "False"
+            )
     }
 
     /// Checks if a token is an identifier
     fn is_identifier(&self, token: &str) -> bool {
-        !token.is_empty() &&
-        (token.chars().next().unwrap().is_alphabetic() || token.starts_with('_')) &&
-        token.chars().all(|c| c.is_alphanumeric() || c == '_')
+        !token.is_empty()
+            && (token.chars().next().unwrap().is_alphabetic() || token.starts_with('_'))
+            && token.chars().all(|c| c.is_alphanumeric() || c == '_')
     }
 
     /// Generates rolling hash fingerprints for a token sequence
@@ -222,10 +276,15 @@ impl CloneDetectionAlgorithm for TokenBasedDetector {
         "Token-based (Karp-Rabin)"
     }
 
-    fn detect_clones(&self, block1: &CodeBlock, block2: &CodeBlock) -> Result<Option<ClonePair>, crate::analysis::AnalysisError> {
+    fn detect_clones(
+        &self,
+        block1: &CodeBlock,
+        block2: &CodeBlock,
+    ) -> Result<Option<ClonePair>, crate::analysis::AnalysisError> {
         // Skip if same file and overlapping regions
-        if block1.file_path == block2.file_path &&
-           !(block1.end_line < block2.start_line || block2.end_line < block1.start_line) {
+        if block1.file_path == block2.file_path
+            && !(block1.end_line < block2.start_line || block2.end_line < block1.start_line)
+        {
             return Ok(None);
         }
 

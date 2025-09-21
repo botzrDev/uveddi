@@ -8,7 +8,7 @@ use crate::application::configuration::OutputConfig;
 use crate::application::orchestrator::AnalysisResult;
 use crate::core::logging::{debug, error, info, warn};
 use crate::core::mocks::ai_mocks::AiInsight;
-use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::report::{markdown_generator::MarkdownReportGenerator, ReportGenerator};
 use std::collections::HashMap;
@@ -145,9 +145,11 @@ impl ReportWorkflow {
             )
             .map_err(|e| {
                 error!("JSON report generation failed: {}", e);
-                UveddiError::from(crate::report::errors::ReportGenerationError::DataExtractionError(
-                    e.to_string(),
-                ))
+                UveddiError::from(
+                    crate::report::errors::ReportGenerationError::DataExtractionError(
+                        e.to_string(),
+                    ),
+                )
             })?;
 
         Ok(report.to_string())
@@ -162,14 +164,14 @@ impl ReportWorkflow {
 
         // Initialize markdown generator if not already done
         if self.markdown_generator.is_none() {
-            self.markdown_generator = Some(
-                MarkdownReportGenerator::new().map_err(|e| {
-                    error!("Failed to initialize Markdown generator: {}", e);
-                    UveddiError::from(crate::report::errors::ReportGenerationError::DataExtractionError(
+            self.markdown_generator = Some(MarkdownReportGenerator::new().map_err(|e| {
+                error!("Failed to initialize Markdown generator: {}", e);
+                UveddiError::from(
+                    crate::report::errors::ReportGenerationError::DataExtractionError(
                         e.to_string(),
-                    ))
-                })?,
-            );
+                    ),
+                )
+            })?);
         }
 
         let markdown_generator = self.markdown_generator.as_mut().unwrap();
@@ -185,9 +187,11 @@ impl ReportWorkflow {
             .await
             .map_err(|e| {
                 error!("Markdown report generation failed: {}", e);
-                UveddiError::from(crate::report::errors::ReportGenerationError::DataExtractionError(
-                    e.to_string(),
-                ))
+                UveddiError::from(
+                    crate::report::errors::ReportGenerationError::DataExtractionError(
+                        e.to_string(),
+                    ),
+                )
             })?;
 
         Ok(report)
@@ -212,9 +216,11 @@ impl ReportWorkflow {
             .await
             .map_err(|e| {
                 error!("HTML report generation failed: {}", e);
-                UveddiError::from(crate::report::errors::ReportGenerationError::DataExtractionError(
-                    e.to_string(),
-                ))
+                UveddiError::from(
+                    crate::report::errors::ReportGenerationError::DataExtractionError(
+                        e.to_string(),
+                    ),
+                )
             })?;
 
         Ok(report)
@@ -325,7 +331,10 @@ impl ReportWorkflow {
         }
 
         if !warnings.is_empty() {
-            warn!("Report validation completed with {} warnings", warnings.len());
+            warn!(
+                "Report validation completed with {} warnings",
+                warnings.len()
+            );
             for warning in &warnings {
                 warn!("Report validation warning: {}", warning);
             }
@@ -351,11 +360,7 @@ impl ReportWorkflow {
     }
 
     /// Create report metadata
-    fn create_metadata(
-        &self,
-        format: &str,
-        input: &ReportWorkflowInput,
-    ) -> ReportMetadata {
+    fn create_metadata(&self, format: &str, input: &ReportWorkflowInput) -> ReportMetadata {
         ReportMetadata {
             format: format.to_string(),
             generated_at: chrono::Utc::now(),
@@ -368,9 +373,15 @@ impl ReportWorkflow {
 }
 
 impl Workflow<ReportWorkflowInput, ReportWorkflowOutput> for ReportWorkflow {
-    async fn execute(&mut self, input: ReportWorkflowInput) -> Result<ReportWorkflowOutput, UveddiError> {
+    async fn execute(
+        &mut self,
+        input: ReportWorkflowInput,
+    ) -> Result<ReportWorkflowOutput, UveddiError> {
         let start_time = Instant::now();
-        info!("Starting report generation workflow for format: {}", input.output_config.format);
+        info!(
+            "Starting report generation workflow for format: {}",
+            input.output_config.format
+        );
 
         self.status = WorkflowStatus::Running;
 
@@ -419,7 +430,10 @@ impl Workflow<ReportWorkflowInput, ReportWorkflowOutput> for ReportWorkflow {
         );
 
         if !validation_warnings.is_empty() {
-            warn!("Report generated with {} warnings", validation_warnings.len());
+            warn!(
+                "Report generated with {} warnings",
+                validation_warnings.len()
+            );
         }
 
         Ok(ReportWorkflowOutput {
@@ -436,7 +450,10 @@ impl Workflow<ReportWorkflowInput, ReportWorkflowOutput> for ReportWorkflow {
 
     fn can_handle(&self, input: &ReportWorkflowInput) -> bool {
         !input.analysis_result.issues.is_empty()
-            && matches!(input.output_config.format.as_str(), "json" | "markdown" | "html")
+            && matches!(
+                input.output_config.format.as_str(),
+                "json" | "markdown" | "html"
+            )
     }
 
     fn status(&self) -> WorkflowStatus {

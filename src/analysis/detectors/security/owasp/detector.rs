@@ -4,8 +4,8 @@
 //! vulnerability detection, integrating all detection modules and analysis
 //! capabilities.
 
-use super::config::OwaspConfig;
 use super::categories::CategoryRegistry;
+use super::config::OwaspConfig;
 use super::types::{OwaspCategory, OwaspCategoryDetector, OwaspVulnerability};
 use crate::analysis::AnalysisError;
 use crate::ast::ParsedFile;
@@ -32,15 +32,18 @@ impl OwaspDetector {
             .into_iter()
             .collect::<HashMap<_, _>>();
 
-        Ok(Self {
-            config,
-            detectors,
-        })
+        Ok(Self { config, detectors })
     }
 
     /// Analyze a single file for OWASP Top 10 vulnerabilities
-    pub async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
-        info!("Running OWASP Top 10 analysis on: {}", file.file_path.display());
+    pub async fn analyze_file(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
+        info!(
+            "Running OWASP Top 10 analysis on: {}",
+            file.file_path.display()
+        );
 
         let mut all_vulnerabilities = Vec::new();
 
@@ -56,7 +59,8 @@ impl OwaspDetector {
             match detector.detect(file).await {
                 Ok(mut vulnerabilities) => {
                     // Filter by confidence threshold
-                    vulnerabilities.retain(|v| v.confidence_score >= self.config.confidence_threshold);
+                    vulnerabilities
+                        .retain(|v| v.confidence_score >= self.config.confidence_threshold);
 
                     info!(
                         "Found {} vulnerabilities in category {} (after filtering)",

@@ -1,9 +1,9 @@
 //! Comprehensive test suite for God Object Anti-Pattern Detector
 
-mod unit_tests;
-mod language_tests;
 mod edge_case_tests;
 mod integration_tests;
+mod language_tests;
+mod unit_tests;
 
 // Re-export test utilities for other modules
 pub use unit_tests::create_parsed_file;

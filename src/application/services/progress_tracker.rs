@@ -4,14 +4,14 @@
 //! for long-running analysis operations, with support for nested
 //! operations and real-time progress reporting.
 
-use crate::error::UveddiError;
 use crate::core::logging::{debug, info};
+use crate::error::UveddiError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, RwLock};
 
-use super::traits::{Service, HealthCheck, ServiceHealth};
+use super::traits::{HealthCheck, Service, ServiceHealth};
 
 /// Progress tracking service for monitoring analysis operations
 pub struct ProgressTracker {
@@ -167,14 +167,17 @@ impl ProgressTracker {
         state.current_stage = stage_name.clone();
 
         if self.config.enable_stage_tracking {
-            state.stage_progress.insert(stage_name.clone(), StageProgress {
-                progress: 0.0,
-                current_item: None,
-                total_items: None,
-                completed_items: 0,
-                start_time: Instant::now(),
-                estimated_remaining: None,
-            });
+            state.stage_progress.insert(
+                stage_name.clone(),
+                StageProgress {
+                    progress: 0.0,
+                    current_item: None,
+                    total_items: None,
+                    completed_items: 0,
+                    start_time: Instant::now(),
+                    estimated_remaining: None,
+                },
+            );
         }
 
         info!("Stage started: {}", stage_name);
@@ -214,23 +217,24 @@ impl ProgressTracker {
                 if rate > 0.0 {
                     let remaining_items = total.saturating_sub(update.current);
                     let estimated_seconds = remaining_items as f64 / rate;
-                    stage_progress.estimated_remaining = Some(Duration::from_secs_f64(estimated_seconds));
+                    stage_progress.estimated_remaining =
+                        Some(Duration::from_secs_f64(estimated_seconds));
                 }
             }
         }
 
         // Update overall progress
         if !state.stage_progress.is_empty() {
-            let total_progress: f64 = state.stage_progress.values()
-                .map(|sp| sp.progress)
-                .sum();
+            let total_progress: f64 = state.stage_progress.values().map(|sp| sp.progress).sum();
             state.overall_progress = total_progress / state.stage_progress.len() as f64;
         }
 
         // Update metrics if enabled
         if self.config.enable_metrics {
             let elapsed = state.start_time.elapsed();
-            let total_items: usize = state.stage_progress.values()
+            let total_items: usize = state
+                .stage_progress
+                .values()
                 .map(|sp| sp.completed_items)
                 .sum();
 
@@ -254,7 +258,10 @@ impl ProgressTracker {
             let duration = stage_progress.start_time.elapsed();
 
             if self.config.enable_metrics {
-                state.metrics.stage_durations.insert(stage_name.to_string(), duration);
+                state
+                    .metrics
+                    .stage_durations
+                    .insert(stage_name.to_string(), duration);
             }
 
             info!("Stage completed: {} (duration: {:?})", stage_name, duration);
@@ -275,8 +282,10 @@ impl ProgressTracker {
             state.metrics.total_duration = state.start_time.elapsed();
         }
 
-        info!("Operation completed: {} (total duration: {:?})",
-              state.current_operation, state.metrics.total_duration);
+        info!(
+            "Operation completed: {} (total duration: {:?})",
+            state.current_operation, state.metrics.total_duration
+        );
         Ok(())
     }
 
@@ -351,7 +360,10 @@ impl ProgressState {
         } else if self.current_stage.is_empty() {
             format!("{}% - {}", percentage, self.current_operation)
         } else {
-            format!("{}% - {} - {}", percentage, self.current_stage, self.current_operation)
+            format!(
+                "{}% - {} - {}",
+                percentage, self.current_stage, self.current_operation
+            )
         }
     }
 

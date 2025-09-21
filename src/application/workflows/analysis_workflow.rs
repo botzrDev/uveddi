@@ -11,7 +11,7 @@ use crate::error::UveddiError;
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::traits::{Workflow, WorkflowStatus, Cancellable};
+use super::traits::{Cancellable, Workflow, WorkflowStatus};
 
 /// Core analysis workflow coordinator
 pub struct AnalysisWorkflow {
@@ -145,7 +145,9 @@ impl AnalysisWorkflow {
             .await?;
 
         let phase_duration = phase_start.elapsed();
-        metrics.phase_durations.insert("file_discovery".to_string(), phase_duration);
+        metrics
+            .phase_durations
+            .insert("file_discovery".to_string(), phase_duration);
 
         debug!("File discovery phase completed in {:?}", phase_duration);
         Ok(())
@@ -185,11 +187,14 @@ impl AnalysisWorkflow {
             .await?;
 
         let phase_duration = phase_start.elapsed();
-        metrics.phase_durations.insert("core_analysis".to_string(), phase_duration);
+        metrics
+            .phase_durations
+            .insert("core_analysis".to_string(), phase_duration);
 
         // Calculate processing rate
         if phase_duration.as_secs() > 0 {
-            metrics.processing_rate = result.metadata.files_analyzed as f64 / phase_duration.as_secs_f64();
+            metrics.processing_rate =
+                result.metadata.files_analyzed as f64 / phase_duration.as_secs_f64();
         }
 
         debug!("Core analysis phase completed in {:?}", phase_duration);
@@ -213,31 +218,39 @@ impl AnalysisWorkflow {
 
         // Validate analysis results
         if result.issues.is_empty() {
-            warnings.push("No issues detected - this might indicate configuration problems".to_string());
+            warnings.push(
+                "No issues detected - this might indicate configuration problems".to_string(),
+            );
         }
 
         if result.metadata.files_analyzed == 0 {
-            warnings.push("No files were analyzed - check target path and file filters".to_string());
+            warnings
+                .push("No files were analyzed - check target path and file filters".to_string());
         }
 
         // Check for suspicious patterns in results
-        let critical_issues = result.issues.iter()
-            .filter(|issue| issue.message.contains("critical") || issue.message.contains("Critical"))
+        let critical_issues = result
+            .issues
+            .iter()
+            .filter(|issue| {
+                issue.message.contains("critical") || issue.message.contains("Critical")
+            })
             .count();
 
         if critical_issues > result.issues.len() / 2 {
             warnings.push(format!(
                 "High proportion of critical issues ({}/{}) - verify detector sensitivity",
-                critical_issues, result.issues.len()
+                critical_issues,
+                result.issues.len()
             ));
         }
 
-        self.progress_tracker
-            .complete_stage("validation")
-            .await?;
+        self.progress_tracker.complete_stage("validation").await?;
 
         let phase_duration = phase_start.elapsed();
-        metrics.phase_durations.insert("validation".to_string(), phase_duration);
+        metrics
+            .phase_durations
+            .insert("validation".to_string(), phase_duration);
 
         if !warnings.is_empty() {
             warn!("Validation completed with {} warnings", warnings.len());
@@ -245,7 +258,10 @@ impl AnalysisWorkflow {
                 warn!("Validation warning: {}", warning);
             }
         } else {
-            debug!("Validation phase completed successfully in {:?}", phase_duration);
+            debug!(
+                "Validation phase completed successfully in {:?}",
+                phase_duration
+            );
         }
 
         Ok(warnings)
@@ -292,9 +308,15 @@ impl AnalysisWorkflow {
 }
 
 impl Workflow<AnalysisWorkflowInput, AnalysisWorkflowOutput> for AnalysisWorkflow {
-    async fn execute(&mut self, input: AnalysisWorkflowInput) -> Result<AnalysisWorkflowOutput, UveddiError> {
+    async fn execute(
+        &mut self,
+        input: AnalysisWorkflowInput,
+    ) -> Result<AnalysisWorkflowOutput, UveddiError> {
         let start_time = Instant::now();
-        info!("Starting analysis workflow for: {}", input.config.target_path.display());
+        info!(
+            "Starting analysis workflow for: {}",
+            input.config.target_path.display()
+        );
 
         self.status = WorkflowStatus::Running;
         self.is_cancelled = false;

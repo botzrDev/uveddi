@@ -33,9 +33,7 @@ impl RustExtractor {
                     path: file_path.to_string_lossy().to_string(),
                 };
 
-                let to_component = ComponentNode::Module {
-                    path: node_text,
-                };
+                let to_component = ComponentNode::Module { path: node_text };
 
                 dependencies.push(Dependency {
                     from_component,
@@ -177,7 +175,11 @@ impl RustExtractor {
 
             for m in matches {
                 for capture in m.captures {
-                    if capture.index == query.capture_index_for_name("module_name").unwrap_or(u32::MAX) {
+                    if capture.index
+                        == query
+                            .capture_index_for_name("module_name")
+                            .unwrap_or(u32::MAX)
+                    {
                         let module_name = RustQueries::get_node_text(&capture.node, source)
                             .unwrap_or_else(|_| "unknown_module".to_string());
 
@@ -185,9 +187,7 @@ impl RustExtractor {
                             from_component: ComponentNode::Module {
                                 path: file_path.to_string_lossy().to_string(),
                             },
-                            to_component: ComponentNode::Module {
-                                path: module_name,
-                            },
+                            to_component: ComponentNode::Module { path: module_name },
                             dependency_type: LocalDependencyType::Import,
                             line_number: Some(RustQueries::get_line_number(&capture.node)),
                             strength: DependencyStrength::Medium,

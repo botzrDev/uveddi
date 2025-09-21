@@ -1,12 +1,12 @@
 //! Method implementation analysis for leaks.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, TypeLeakage, ImplementationVisibilityIssue, LeakType
+    AnalysisContext, ImplementationVisibilityIssue, LeakType, TypeLeakage,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -30,9 +30,10 @@ impl MethodAnalyzer {
         let mut visibility_issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -67,9 +68,9 @@ impl MethodAnalyzer {
                     "return_type" => {
                         if let Ok(return_type_text) = node.utf8_text(source_bytes) {
                             if self.is_infrastructure_error_type(return_type_text) {
-                                if let Some(fn_vis_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "fn_vis"
-                                ) {
+                                if let Some(fn_vis_node) =
+                                    self.find_sibling_capture(&match_.captures, &query, "fn_vis")
+                                {
                                     if let Ok(vis_text) = fn_vis_node.utf8_text(source_bytes) {
                                         if vis_text == "pub" {
                                             type_leakages.push(TypeLeakage {
@@ -91,10 +92,16 @@ impl MethodAnalyzer {
                         if let Ok(vis_text) = node.utf8_text(source_bytes) {
                             if vis_text == "pub" {
                                 if let Some(method_name_node) = self.find_sibling_capture(
-                                    &match_.captures, &query, "method_name"
+                                    &match_.captures,
+                                    &query,
+                                    "method_name",
                                 ) {
-                                    if let Ok(method_name) = method_name_node.utf8_text(source_bytes) {
-                                        if method_name.contains("internal") || method_name.contains("impl") {
+                                    if let Ok(method_name) =
+                                        method_name_node.utf8_text(source_bytes)
+                                    {
+                                        if method_name.contains("internal")
+                                            || method_name.contains("impl")
+                                        {
                                             visibility_issues.push(ImplementationVisibilityIssue {
                                                 description: format!(
                                                     "Internal method '{}' exposed as public",
@@ -129,9 +136,10 @@ impl MethodAnalyzer {
         let mut visibility_issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -187,9 +195,10 @@ impl MethodAnalyzer {
         let mut visibility_issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -237,15 +246,21 @@ impl MethodAnalyzer {
     /// Checks if a type name represents an infrastructure error type.
     fn is_infrastructure_error_type(&self, type_text: &str) -> bool {
         let infrastructure_error_patterns = [
-            "DieselError", "SqlxError", "SeaOrmError",
-            "tokio::Error", "std::io::Error", "reqwest::Error",
-            "serde_json::Error", "toml::de::Error",
-            "rusqlite::Error", "postgres::Error",
+            "DieselError",
+            "SqlxError",
+            "SeaOrmError",
+            "tokio::Error",
+            "std::io::Error",
+            "reqwest::Error",
+            "serde_json::Error",
+            "toml::de::Error",
+            "rusqlite::Error",
+            "postgres::Error",
         ];
 
         infrastructure_error_patterns.iter().any(|pattern| {
-            type_text.contains(pattern) ||
-            (type_text.contains("Result<") && type_text.contains(pattern))
+            type_text.contains(pattern)
+                || (type_text.contains("Result<") && type_text.contains(pattern))
         })
     }
 
@@ -261,9 +276,10 @@ impl MethodAnalyzer {
         query: &Query,
         capture_name: &str,
     ) -> Option<Node<'a>> {
-        captures.iter().find(|capture| {
-            query.capture_names()[capture.index as usize] == capture_name
-        }).map(|capture| capture.node)
+        captures
+            .iter()
+            .find(|capture| query.capture_names()[capture.index as usize] == capture_name)
+            .map(|capture| capture.node)
     }
 }
 

@@ -1,6 +1,6 @@
 //! Extended types for taint analysis (data flow graph and related structures)
 
-use super::core_types::{TaintLevel, SourceLocation};
+use super::core_types::{SourceLocation, TaintLevel};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -181,7 +181,8 @@ impl ConfidenceMetrics {
     }
 
     pub fn calculate_overall(&mut self) {
-        self.overall_confidence = (self.path_confidence + self.taint_confidence + self.sanitization_confidence) / 3.0;
+        self.overall_confidence =
+            (self.path_confidence + self.taint_confidence + self.sanitization_confidence) / 3.0;
     }
 }
 
@@ -203,14 +204,14 @@ pub struct TaintPropagationRule {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PropagationType {
-    Direct,           // Direct data flow
-    Assignment,       // Variable assignment
-    FunctionCall,     // Function parameter passing
-    FunctionReturn,   // Function return value
-    FieldAccess,      // Object field access
-    ArrayAccess,      // Array element access
-    StringFormat,     // String formatting
-    Concatenation,    // String concatenation
+    Direct,         // Direct data flow
+    Assignment,     // Variable assignment
+    FunctionCall,   // Function parameter passing
+    FunctionReturn, // Function return value
+    FieldAccess,    // Object field access
+    ArrayAccess,    // Array element access
+    StringFormat,   // String formatting
+    Concatenation,  // String concatenation
 }
 
 /// Sanitization effectiveness rating

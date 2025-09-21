@@ -1,6 +1,8 @@
 //! Rust-specific knowledge graph support
 
-use crate::analysis::detectors::security::knowledge_graph::types::{CodeEntity, EntityType, CodeLocation};
+use crate::analysis::detectors::security::knowledge_graph::types::{
+    CodeEntity, CodeLocation, EntityType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use std::collections::HashMap;
@@ -15,7 +17,11 @@ impl RustEntityProcessor {
     }
 
     /// Process Rust-specific entities
-    pub async fn process_rust_entities(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    pub async fn process_rust_entities(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut entities = Vec::new();
 
         // Extract functions
@@ -33,7 +39,11 @@ impl RustEntityProcessor {
         Ok(entities)
     }
 
-    fn extract_functions(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_functions(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut functions = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -48,7 +58,11 @@ impl RustEntityProcessor {
         Ok(functions)
     }
 
-    fn extract_structs(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_structs(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut structs = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -63,7 +77,11 @@ impl RustEntityProcessor {
         Ok(structs)
     }
 
-    fn extract_enums(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_enums(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut enums = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -78,7 +96,11 @@ impl RustEntityProcessor {
         Ok(enums)
     }
 
-    fn extract_traits(&self, file_path: &PathBuf, content: &str) -> Result<Vec<CodeEntity>, AnalysisError> {
+    fn extract_traits(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> Result<Vec<CodeEntity>, AnalysisError> {
         let mut traits = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -93,7 +115,12 @@ impl RustEntityProcessor {
         Ok(traits)
     }
 
-    fn parse_function_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_function_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(fn_part) = trimmed.strip_prefix("fn ") {
             if let Some(name_end) = fn_part.find('(') {
@@ -129,7 +156,12 @@ impl RustEntityProcessor {
         Ok(None)
     }
 
-    fn parse_struct_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_struct_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(struct_part) = trimmed.strip_prefix("struct ") {
             let name = struct_part.split_whitespace().next().unwrap_or("unknown");
@@ -157,7 +189,12 @@ impl RustEntityProcessor {
         Ok(None)
     }
 
-    fn parse_enum_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_enum_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(enum_part) = trimmed.strip_prefix("enum ") {
             let name = enum_part.split_whitespace().next().unwrap_or("unknown");
@@ -185,7 +222,12 @@ impl RustEntityProcessor {
         Ok(None)
     }
 
-    fn parse_trait_entity(&self, file_path: &PathBuf, line: &str, line_num: usize) -> Result<Option<CodeEntity>, AnalysisError> {
+    fn parse_trait_entity(
+        &self,
+        file_path: &PathBuf,
+        line: &str,
+        line_num: usize,
+    ) -> Result<Option<CodeEntity>, AnalysisError> {
         let trimmed = line.trim();
         if let Some(trait_part) = trimmed.strip_prefix("trait ") {
             let name = trait_part.split_whitespace().next().unwrap_or("unknown");

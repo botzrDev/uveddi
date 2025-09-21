@@ -6,7 +6,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -182,11 +184,21 @@ impl InjectionDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "prepared", "parameterized", "bind", "placeholder", "escape",
-            "sanitize", "validate", "?", "$1", "$2",
+            "prepared",
+            "parameterized",
+            "bind",
+            "placeholder",
+            "escape",
+            "sanitize",
+            "validate",
+            "?",
+            "$1",
+            "$2",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
     }
 }
 
@@ -236,7 +248,11 @@ mod tests {
             tree: None,
         };
 
-        std::fs::write("test.py", "cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")").unwrap();
+        std::fs::write(
+            "test.py",
+            "cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")",
+        )
+        .unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();
         std::fs::remove_file("test.py").unwrap();
 

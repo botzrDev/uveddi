@@ -120,7 +120,10 @@ impl DatabaseSecurityAnalyzer {
 
         for (pattern_name, pattern) in &self.db_patterns {
             for detection_pattern in &pattern.detection_patterns {
-                if content.to_lowercase().contains(&detection_pattern.to_lowercase()) {
+                if content
+                    .to_lowercase()
+                    .contains(&detection_pattern.to_lowercase())
+                {
                     detected_patterns.push(pattern_name.clone());
                     break;
                 }
@@ -149,7 +152,8 @@ impl DatabaseSecurityAnalyzer {
             issues.push(DatabaseSecurityIssue {
                 issue_type: "Hardcoded Credentials".to_string(),
                 description: "Database credentials appear to be hardcoded".to_string(),
-                remediation: "Store credentials in environment variables or secure configuration".to_string(),
+                remediation: "Store credentials in environment variables or secure configuration"
+                    .to_string(),
                 severity: "High".to_string(),
             });
         }
@@ -183,7 +187,9 @@ impl DatabaseSecurityAnalyzer {
             "+ \"DELETE",
         ];
 
-        injection_patterns.iter().any(|pattern| content.contains(pattern))
+        injection_patterns
+            .iter()
+            .any(|pattern| content.contains(pattern))
     }
 
     fn contains_hardcoded_credentials(&self, content: &str) -> bool {
@@ -254,7 +260,8 @@ mod tests {
         assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.issue_type == "SQL Injection"));
 
-        let safe_content = "query = \"SELECT * FROM users WHERE id = ?\"; execute(query, [user_id])";
+        let safe_content =
+            "query = \"SELECT * FROM users WHERE id = ?\"; execute(query, [user_id])";
         let issues = analyzer.analyze_database_security(safe_content);
         assert!(issues.iter().all(|i| i.issue_type != "SQL Injection"));
     }
@@ -265,10 +272,14 @@ mod tests {
 
         let vulnerable_content = r#"CONNECTION_STRING="mysql://user:password@localhost/db""#;
         let issues = analyzer.analyze_database_security(vulnerable_content);
-        assert!(issues.iter().any(|i| i.issue_type == "Hardcoded Credentials"));
+        assert!(issues
+            .iter()
+            .any(|i| i.issue_type == "Hardcoded Credentials"));
 
         let safe_content = r#"connection_string = env::var("DATABASE_URL").unwrap()"#;
         let issues = analyzer.analyze_database_security(safe_content);
-        assert!(issues.iter().all(|i| i.issue_type != "Hardcoded Credentials"));
+        assert!(issues
+            .iter()
+            .all(|i| i.issue_type != "Hardcoded Credentials"));
     }
 }

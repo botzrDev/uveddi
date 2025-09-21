@@ -1,10 +1,13 @@
 //! Core policy validation engine
 
-use super::{enforcer::PolicyEnforcer, rules::{SecurityPolicy, build_default_policies}};
-use crate::analysis::AnalysisError;
-use crate::analysis::detectors::security::types::SecurityIssue;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use super::{
+    enforcer::PolicyEnforcer,
+    rules::{build_default_policies, SecurityPolicy},
+};
+use crate::analysis::detectors::security::types::SecurityIssue;
+use crate::analysis::AnalysisError;
 use std::collections::HashMap;
 
 /// Policy validator for configuration security issues
@@ -61,7 +64,10 @@ impl PolicyValidator {
                 continue;
             }
 
-            if PolicyEnforcer::is_suppressed_by_line(line_content, &policy.line_suppression_patterns) {
+            if PolicyEnforcer::is_suppressed_by_line(
+                line_content,
+                &policy.line_suppression_patterns,
+            ) {
                 return true;
             }
         }
@@ -98,11 +104,24 @@ impl PolicyValidator {
     pub fn get_policy_stats(&self) -> HashMap<String, usize> {
         let mut stats = HashMap::new();
         stats.insert("total_policies".to_string(), self.policies.len());
-        stats.insert("enabled_policies".to_string(), self.policies.iter().filter(|p| p.enabled).count());
-        stats.insert("policies_with_tag_filters".to_string(),
-                     self.policies.iter().filter(|p| p.allowed_tags.is_some() || p.blocked_tags.is_some()).count());
-        stats.insert("policies_with_cwe_filters".to_string(),
-                     self.policies.iter().filter(|p| p.allowed_cwe_ids.is_some() || p.blocked_cwe_ids.is_some()).count());
+        stats.insert(
+            "enabled_policies".to_string(),
+            self.policies.iter().filter(|p| p.enabled).count(),
+        );
+        stats.insert(
+            "policies_with_tag_filters".to_string(),
+            self.policies
+                .iter()
+                .filter(|p| p.allowed_tags.is_some() || p.blocked_tags.is_some())
+                .count(),
+        );
+        stats.insert(
+            "policies_with_cwe_filters".to_string(),
+            self.policies
+                .iter()
+                .filter(|p| p.allowed_cwe_ids.is_some() || p.blocked_cwe_ids.is_some())
+                .count(),
+        );
         stats
     }
 
@@ -153,7 +172,8 @@ mod tests {
             0.8,
             "Test Credential",
             "Test description",
-        ).with_tag("test-credential");
+        )
+        .with_tag("test-credential");
 
         // Should still pass high severity policy but might fail credential policy
         let result = validator.validate_issue(&test_issue).unwrap();

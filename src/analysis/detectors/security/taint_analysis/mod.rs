@@ -44,32 +44,34 @@
 //! let issues = engine.analyze_file(&parsed_file).await?;
 //! ```
 
-pub mod types;
 pub mod config;
-pub mod sources;
-pub mod sinks;
-pub mod propagation;
-pub mod language_support;
 pub mod detector;
+pub mod language_support;
+pub mod propagation;
+pub mod sinks;
+pub mod sources;
+pub mod types;
 
 // Re-export main types and detector for convenient access
 pub use detector::{TaintAnalysisEngine, TaintAnalysisStats};
 pub use types::{
-    TaintSource, TaintSink, SanitizationPoint, TaintLevel, TaintFlow,
-    DataFlowGraph, DataFlowNode, DataFlowNodeType, SourceLocation,
+    DataFlowGraph, DataFlowNode, DataFlowNodeType, SanitizationPoint, SourceLocation, TaintFlow,
+    TaintLevel, TaintSink, TaintSource,
 };
 
 // Re-export commonly used detector components
-pub use sources::{UnifiedSourceDetector, InputSourceDetector, ExternalSourceDetector, UserSourceDetector};
-pub use sinks::{UnifiedSinkDetector, FileSinkDetector, NetworkSinkDetector, CommandSinkDetector};
-pub use propagation::{PropagationAnalyzer, FlowAnalyzer, PathTracker, SanitizerDetector};
 pub use language_support::{LanguageAnalyzerFactory, LanguageTaintAnalyzer};
+pub use propagation::{FlowAnalyzer, PathTracker, PropagationAnalyzer, SanitizerDetector};
+pub use sinks::{CommandSinkDetector, FileSinkDetector, NetworkSinkDetector, UnifiedSinkDetector};
+pub use sources::{
+    ExternalSourceDetector, InputSourceDetector, UnifiedSourceDetector, UserSourceDetector,
+};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::SourceLanguage;
     use crate::analysis::detectors::security::config::TaintAnalysisConfig;
+    use crate::ast::SourceLanguage;
     use std::path::PathBuf;
 
     #[test]
@@ -103,7 +105,10 @@ mod tests {
         assert_eq!(source.id, "test_source");
         assert_eq!(source.pattern, "input()");
         assert_eq!(source.language, Some(SourceLanguage::Python));
-        assert_eq!(source.default_severity, crate::analysis::detectors::security::types::SecuritySeverity::High);
+        assert_eq!(
+            source.default_severity,
+            crate::analysis::detectors::security::types::SecuritySeverity::High
+        );
     }
 
     #[test]
@@ -117,7 +122,10 @@ mod tests {
         .with_language(SourceLanguage::Python);
 
         assert_eq!(sink.id, "test_sink");
-        assert_eq!(sink.vulnerability_type, crate::analysis::detectors::security::types::SecurityIssueType::Injection);
+        assert_eq!(
+            sink.vulnerability_type,
+            crate::analysis::detectors::security::types::SecurityIssueType::Injection
+        );
         assert_eq!(sink.language, Some(SourceLanguage::Python));
     }
 

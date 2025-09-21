@@ -3,8 +3,11 @@
 //! This module implements the main PythonAgentAnalyzer struct and coordinates
 //! Python-specific security analysis using pattern detection.
 
-use super::patterns::{get_python_patterns, analyze_dangerous_imports, analyze_code_execution_patterns, analyze_obfuscation_patterns, analyze_persistence_patterns};
 use super::super::{LanguageAgentAnalyzer, LanguagePatterns};
+use super::patterns::{
+    analyze_code_execution_patterns, analyze_dangerous_imports, analyze_obfuscation_patterns,
+    analyze_persistence_patterns, get_python_patterns,
+};
 use crate::analysis::detectors::security::core::SecurityContext;
 use crate::analysis::detectors::security::types::SecurityIssue;
 use crate::analysis::AnalysisError;
@@ -23,7 +26,10 @@ impl PythonAgentAnalyzer {
     }
 
     /// Analyze Python-specific agent patterns
-    async fn analyze_python_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_python_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Check for Python-specific dangerous patterns

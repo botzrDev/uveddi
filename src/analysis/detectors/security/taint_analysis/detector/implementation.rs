@@ -2,8 +2,10 @@
 
 use crate::analysis::detectors::security::taint_analysis::{
     config::TaintAnalysisConfig,
-    types::{TaintSource, TaintSink, SanitizationPoint, DataFlowGraph, TaintFlow, LanguageTaintPatterns},
     language_support::{LanguageAnalyzerFactory, LanguageTaintAnalyzer},
+    types::{
+        DataFlowGraph, LanguageTaintPatterns, SanitizationPoint, TaintFlow, TaintSink, TaintSource,
+    },
 };
 use crate::analysis::detectors::security::types::{
     SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
@@ -118,7 +120,10 @@ impl TaintAnalysisEngine {
     }
 
     /// Analyze taint flows in the data flow graph
-    pub(super) fn analyze_taint_flows(&self, graph: &DataFlowGraph) -> Result<Vec<TaintFlow>, AnalysisError> {
+    pub(super) fn analyze_taint_flows(
+        &self,
+        graph: &DataFlowGraph,
+    ) -> Result<Vec<TaintFlow>, AnalysisError> {
         self.propagation_analyzer.analyze_taint_flows(graph)
     }
 
@@ -183,15 +188,14 @@ impl TaintAnalysisEngine {
             .with_detector("TaintAnalysisEngine".to_string());
 
             // Add flow-specific metadata
-            let mut metadata = VulnerabilityMetadata::new()
-                .with_tags(vec![
-                    "taint-analysis".to_string(),
-                    "data-flow".to_string(),
-                    format!("source:{}", source.pattern),
-                    format!("sink:{}", sink.pattern),
-                    format!("flow-length:{}", flow.path.len()),
-                    format!("taint-level:{:?}", flow.taint_level),
-                ]);
+            let mut metadata = VulnerabilityMetadata::new().with_tags(vec![
+                "taint-analysis".to_string(),
+                "data-flow".to_string(),
+                format!("source:{}", source.pattern),
+                format!("sink:{}", sink.pattern),
+                format!("flow-length:{}", flow.path.len()),
+                format!("taint-level:{:?}", flow.taint_level),
+            ]);
 
             if !flow.sanitizers_passed.is_empty() {
                 let mut new_tags = metadata.tags.clone();
@@ -217,7 +221,8 @@ impl TaintAnalysisEngine {
         let mut security_issues = Vec::new();
 
         for lang_issue in language_issues {
-            let location = lang_issue.location
+            let location = lang_issue
+                .location
                 .map(|loc| SecurityLocation::new(loc.file_path, loc.line as i32, loc.column as i32))
                 .unwrap_or_else(|| SecurityLocation::new(file.file_path.as_ref().clone(), 1, 1));
 
@@ -239,10 +244,10 @@ impl TaintAnalysisEngine {
             .with_severity(severity)
             .with_confidence(lang_issue.severity)
             .with_detector("TaintAnalysisEngine".to_string())
-            .with_metadata(
-                VulnerabilityMetadata::new()
-                    .with_tags(vec!["language-specific".to_string(), format!("{:?}", lang_issue.language).to_lowercase()]),
-            );
+            .with_metadata(VulnerabilityMetadata::new().with_tags(vec![
+                "language-specific".to_string(),
+                format!("{:?}", lang_issue.language).to_lowercase(),
+            ]));
 
             security_issues.push(issue);
         }

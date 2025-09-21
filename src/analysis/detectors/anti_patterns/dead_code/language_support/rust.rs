@@ -35,9 +35,10 @@ impl LanguageAnalyzer for RustAnalyzer {
     fn extract_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("AST tree missing".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
 
         // Extract functions
@@ -83,9 +84,10 @@ impl LanguageAnalyzer for RustAnalyzer {
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("AST tree missing".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
 
         let call_query = Query::new(&language, RUST_CALL_QUERY)
@@ -168,9 +170,10 @@ impl RustAnalyzer {
         symbols: &mut Vec<Symbol>,
     ) -> Result<(), AnalysisError> {
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("AST tree missing".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
 
         // Extract structs

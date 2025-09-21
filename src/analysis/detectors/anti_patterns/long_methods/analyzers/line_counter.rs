@@ -71,22 +71,22 @@ impl LineCounter {
         matches!(
             node_kind,
             "let_declaration"
-            | "assignment_expression"
-            | "expression_statement"
-            | "return_expression"
-            | "break_expression"
-            | "continue_expression"
-            | "for_expression"
-            | "while_expression"
-            | "loop_expression"
-            | "if_expression"
-            | "match_expression"
-            | "call_expression"
-            | "macro_invocation"
-            | "await_expression"
-            | "yield_expression"
-            | "throw_statement"
-            | "try_statement"
+                | "assignment_expression"
+                | "expression_statement"
+                | "return_expression"
+                | "break_expression"
+                | "continue_expression"
+                | "for_expression"
+                | "while_expression"
+                | "loop_expression"
+                | "if_expression"
+                | "match_expression"
+                | "call_expression"
+                | "macro_invocation"
+                | "await_expression"
+                | "yield_expression"
+                | "throw_statement"
+                | "try_statement"
         )
     }
 
@@ -95,9 +95,10 @@ impl LineCounter {
         let trimmed = line.trim();
 
         // Single-line comments
-        if trimmed.starts_with("//") ||
-           trimmed.starts_with("#") ||
-           trimmed.starts_with("/*") && trimmed.ends_with("*/") {
+        if trimmed.starts_with("//")
+            || trimmed.starts_with("#")
+            || trimmed.starts_with("/*") && trimmed.ends_with("*/")
+        {
             return true;
         }
 

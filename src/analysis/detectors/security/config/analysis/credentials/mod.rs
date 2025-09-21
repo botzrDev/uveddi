@@ -11,9 +11,9 @@ pub mod validator;
 // Re-export main types
 pub use detector::CredentialAnalyzer;
 
-use crate::analysis::AnalysisError;
 use super::super::config::ConfigSecurityConfig;
 use super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use regex::Regex;
 use std::collections::HashMap;
 

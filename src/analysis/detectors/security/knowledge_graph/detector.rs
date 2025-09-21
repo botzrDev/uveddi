@@ -1,14 +1,17 @@
 //! Main security knowledge graph detector implementation (Simplified)
 
+use crate::analysis::detectors::base::{
+    AnalysisContext, Detector, DetectorCategory, DetectorConfig, DetectorOutput, Issue, Severity,
+};
 use crate::analysis::detectors::security::knowledge_graph::{
     config::KnowledgeGraphConfig,
-    types::{SecurityQuery, SecurityKnowledgeResult, FileAnalysis, ArchitecturalCorrelation, StructuralQueryResult, SemanticQueryResult, RAGQueryResult},
+    types::{
+        ArchitecturalCorrelation, FileAnalysis, RAGQueryResult, SecurityKnowledgeResult,
+        SecurityQuery, SemanticQueryResult, StructuralQueryResult,
+    },
 };
 use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType, SecuritySeverity, SecurityLocation, VulnerabilityType
-};
-use crate::analysis::detectors::base::{
-    Detector, DetectorConfig, DetectorOutput, AnalysisContext, DetectorCategory, Severity, Issue
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityType,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::SourceLanguage;
@@ -24,11 +27,17 @@ pub struct KnowledgeGraphDetector {
 
 impl KnowledgeGraphDetector {
     pub fn new(config: KnowledgeGraphConfig) -> Self {
-        Self { config, language: None }
+        Self {
+            config,
+            language: None,
+        }
     }
 
     /// Analyze files using knowledge graph approach (simplified)
-    pub async fn analyze_files(&mut self, file_paths: &[PathBuf]) -> Result<SecurityKnowledgeResult, AnalysisError> {
+    pub async fn analyze_files(
+        &mut self,
+        file_paths: &[PathBuf],
+    ) -> Result<SecurityKnowledgeResult, AnalysisError> {
         // Simplified implementation
         Ok(SecurityKnowledgeResult {
             structural_facts: StructuralQueryResult::default(),
@@ -60,7 +69,12 @@ impl KnowledgeGraphDetector {
     }
 
     /// Create security issue from pattern
-    fn create_security_issue(&self, id: String, title: String, description: String) -> SecurityIssue {
+    fn create_security_issue(
+        &self,
+        id: String,
+        title: String,
+        description: String,
+    ) -> SecurityIssue {
         SecurityIssue {
             id: Some(id),
             issue_type: SecurityIssueType::Custom("KnowledgeGraphPattern".to_string()),
@@ -71,7 +85,9 @@ impl KnowledgeGraphDetector {
             description,
             location: SecurityLocation::new(PathBuf::from("unknown"), 0, 0),
             language: self.language.clone(),
-            remediation: Some("Review architectural patterns and security implications".to_string()),
+            remediation: Some(
+                "Review architectural patterns and security implications".to_string(),
+            ),
             context: HashMap::new(),
             metadata: Default::default(),
             detected_by: vec!["KnowledgeGraphDetector".to_string()],

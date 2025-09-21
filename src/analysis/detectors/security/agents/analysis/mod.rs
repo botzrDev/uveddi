@@ -20,7 +20,8 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait AnalysisModule: Send + Sync {
     /// Analyze security context for agent patterns
-    async fn analyze(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError>;
+    async fn analyze(&self, context: &SecurityContext)
+        -> Result<Vec<SecurityIssue>, AnalysisError>;
 
     /// Get the name of this analysis module
     fn module_name(&self) -> &'static str;

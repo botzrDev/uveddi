@@ -1,7 +1,7 @@
 //! Graph analysis algorithms for knowledge graph (Simplified)
 
 use crate::analysis::detectors::security::knowledge_graph::types::{
-    StructuralSemanticGraph, AntiPatternInfo,
+    AntiPatternInfo, StructuralSemanticGraph,
 };
 use crate::analysis::AnalysisError;
 use std::collections::HashMap;
@@ -17,7 +17,9 @@ impl<'a> GraphAnalyzer<'a> {
     }
 
     /// Analyze security patterns in the graph (simplified)
-    pub async fn analyze_security_patterns(&mut self) -> Result<Vec<AntiPatternInfo>, AnalysisError> {
+    pub async fn analyze_security_patterns(
+        &mut self,
+    ) -> Result<Vec<AntiPatternInfo>, AnalysisError> {
         Ok(Vec::new())
     }
 
@@ -48,7 +50,8 @@ impl<'a> GraphAnalyzer<'a> {
     /// Find strongly connected components (simplified)
     pub fn find_strongly_connected_components(&self) -> Vec<Vec<String>> {
         // Simplified: return each node as its own component
-        self.graph.nodes
+        self.graph
+            .nodes
             .iter()
             .map(|(node_id, node)| vec![node_id.clone()])
             .collect()
@@ -56,7 +59,8 @@ impl<'a> GraphAnalyzer<'a> {
 
     /// Calculate node degree
     fn calculate_node_degree(&self, node_id: &str) -> usize {
-        self.graph.edges
+        self.graph
+            .edges
             .iter()
             .filter(|edge| edge.from == node_id || edge.to == node_id)
             .count()
@@ -95,6 +99,11 @@ impl<'a> GraphAnalyzer<'a> {
     /// Analyze community structure (simplified)
     pub fn analyze_communities(&self) -> Vec<Vec<String>> {
         // Simplified: return single community with all nodes
-        vec![self.graph.nodes.iter().map(|(node_id, _)| node_id.clone()).collect()]
+        vec![self
+            .graph
+            .nodes
+            .iter()
+            .map(|(node_id, _)| node_id.clone())
+            .collect()]
     }
 }

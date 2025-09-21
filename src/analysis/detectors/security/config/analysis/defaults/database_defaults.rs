@@ -3,9 +3,9 @@
 //! This module detects default database credentials, connection strings,
 //! and other database-related default configurations.
 
-use crate::analysis::AnalysisError;
-use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use super::super::super::config::ConfigSecurityConfig;
+use super::super::super::types::{ConfigIssue, ConfigSeverity};
+use crate::analysis::AnalysisError;
 use std::collections::HashSet;
 
 /// Pattern for detecting database default values
@@ -75,48 +75,59 @@ impl DatabaseDefaultChecker {
                 description: "Default database username or password detected".to_string(),
                 severity: ConfigSeverity::High,
                 values: [
-                    "sa",           // SQL Server default
-                    "postgres",     // PostgreSQL default
-                    "mysql",        // MySQL common default
-                    "oracle",       // Oracle default
-                    "admin",        // Common admin user
-                    "dba",          // Database admin
-                    "scott",        // Oracle example user
-                    "hr",           // Oracle example user
-                    "root",         // MySQL root user
-                    "user",         // Generic user
-                    "guest",        // Guest user
-                    "test",         // Test user
-                    "demo",         // Demo user
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Create unique database usernames and strong passwords for each environment.".to_string(),
+                    "sa",       // SQL Server default
+                    "postgres", // PostgreSQL default
+                    "mysql",    // MySQL common default
+                    "oracle",   // Oracle default
+                    "admin",    // Common admin user
+                    "dba",      // Database admin
+                    "scott",    // Oracle example user
+                    "hr",       // Oracle example user
+                    "root",     // MySQL root user
+                    "user",     // Generic user
+                    "guest",    // Guest user
+                    "test",     // Test user
+                    "demo",     // Demo user
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation:
+                    "Create unique database usernames and strong passwords for each environment."
+                        .to_string(),
                 cwe_id: Some(798),
-                owasp_category: Some("A07:2021 - Identification and Authentication Failures".to_string()),
+                owasp_category: Some(
+                    "A07:2021 - Identification and Authentication Failures".to_string(),
+                ),
             },
-
             DatabaseDefaultPattern {
                 name: "Default Database Name".to_string(),
                 description: "Default or example database name detected".to_string(),
                 severity: ConfigSeverity::Medium,
                 values: [
-                    "northwind",    // Example database
-                    "sakila",       // MySQL example database
-                    "chinook",      // SQLite example database
+                    "northwind",      // Example database
+                    "sakila",         // MySQL example database
+                    "chinook",        // SQLite example database
                     "adventureworks", // SQL Server example
-                    "dvdrental",    // PostgreSQL example
-                    "employees",    // Common example
-                    "test",         // Test database
-                    "demo",         // Demo database
-                    "sample",       // Sample database
-                    "example",      // Example database
-                    "tutorial",     // Tutorial database
-                    "training",     // Training database
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Use application-specific database names instead of examples.".to_string(),
+                    "dvdrental",      // PostgreSQL example
+                    "employees",      // Common example
+                    "test",           // Test database
+                    "demo",           // Demo database
+                    "sample",         // Sample database
+                    "example",        // Example database
+                    "tutorial",       // Tutorial database
+                    "training",       // Training database
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation: "Use application-specific database names instead of examples."
+                    .to_string(),
                 cwe_id: Some(200),
-                owasp_category: Some("A09:2021 - Security Logging and Monitoring Failures".to_string()),
+                owasp_category: Some(
+                    "A09:2021 - Security Logging and Monitoring Failures".to_string(),
+                ),
             },
-
             DatabaseDefaultPattern {
                 name: "Default Connection String".to_string(),
                 description: "Default or example connection string detected".to_string(),
@@ -132,47 +143,55 @@ impl DatabaseDefaultChecker {
                     "data.db",
                     "app.db",
                     "main.db",
-                ].iter().map(|s| s.to_string()).collect(),
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 remediation: "Use environment-specific database connection details.".to_string(),
                 cwe_id: Some(200),
                 owasp_category: Some("A05:2021 - Security Misconfiguration".to_string()),
             },
-
             DatabaseDefaultPattern {
                 name: "Default Database Port".to_string(),
                 description: "Database using well-known default port".to_string(),
                 severity: ConfigSeverity::Low,
                 values: [
-                    "3306",     // MySQL
-                    "5432",     // PostgreSQL
-                    "1433",     // SQL Server
-                    "1521",     // Oracle
-                    "27017",    // MongoDB
-                    "6379",     // Redis
-                    "5984",     // CouchDB
-                    "9042",     // Cassandra
-                ].iter().map(|s| s.to_string()).collect(),
-                remediation: "Consider using non-default ports to reduce attack surface.".to_string(),
+                    "3306",  // MySQL
+                    "5432",  // PostgreSQL
+                    "1433",  // SQL Server
+                    "1521",  // Oracle
+                    "27017", // MongoDB
+                    "6379",  // Redis
+                    "5984",  // CouchDB
+                    "9042",  // Cassandra
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+                remediation: "Consider using non-default ports to reduce attack surface."
+                    .to_string(),
                 cwe_id: Some(1188),
                 owasp_category: Some("A05:2021 - Security Misconfiguration".to_string()),
             },
-
             DatabaseDefaultPattern {
                 name: "Default Schema/Table Names".to_string(),
                 description: "Default or example schema/table names detected".to_string(),
                 severity: ConfigSeverity::Low,
                 values: [
-                    "public",       // Default PostgreSQL schema
-                    "dbo",          // Default SQL Server schema
-                    "sys",          // System schema
+                    "public",             // Default PostgreSQL schema
+                    "dbo",                // Default SQL Server schema
+                    "sys",                // System schema
                     "information_schema", // Standard schema
-                    "users",        // Common table name
-                    "customers",    // Example table
-                    "orders",       // Example table
-                    "products",     // Example table
-                    "test_table",   // Test table
-                    "sample_table", // Sample table
-                ].iter().map(|s| s.to_string()).collect(),
+                    "users",              // Common table name
+                    "customers",          // Example table
+                    "orders",             // Example table
+                    "products",           // Example table
+                    "test_table",         // Test table
+                    "sample_table",       // Sample table
+                ]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
                 remediation: "Use application-specific schema and table names.".to_string(),
                 cwe_id: Some(200),
                 owasp_category: Some("A05:2021 - Security Misconfiguration".to_string()),
@@ -183,9 +202,25 @@ impl DatabaseDefaultChecker {
     fn contains_database_key(line: &str) -> bool {
         let line_lower = line.to_lowercase();
         let database_keys = [
-            "database", "db", "sql", "mysql", "postgres", "oracle", "mongo",
-            "redis", "cassandra", "couchdb", "user", "username", "password",
-            "host", "port", "connection", "server", "schema", "table"
+            "database",
+            "db",
+            "sql",
+            "mysql",
+            "postgres",
+            "oracle",
+            "mongo",
+            "redis",
+            "cassandra",
+            "couchdb",
+            "user",
+            "username",
+            "password",
+            "host",
+            "port",
+            "connection",
+            "server",
+            "schema",
+            "table",
         ];
 
         database_keys.iter().any(|&key| line_lower.contains(key))
@@ -197,14 +232,14 @@ impl DatabaseDefaultChecker {
 
         // Check for exact matches with common delimiters
         let patterns = [
-            format!("\"{}\"", value_lower),  // "value"
-            format!("'{}'", value_lower),    // 'value'
-            format!(": {}", value_lower),    // : value
-            format!("= {}", value_lower),    // = value
-            format!(":{}", value_lower),     // :value
-            format!("={}", value_lower),     // =value
-            format!("//{}", value_lower),    // //value (in URLs)
-            format!("@{}", value_lower),     // @value (in connection strings)
+            format!("\"{}\"", value_lower), // "value"
+            format!("'{}'", value_lower),   // 'value'
+            format!(": {}", value_lower),   // : value
+            format!("= {}", value_lower),   // = value
+            format!(":{}", value_lower),    // :value
+            format!("={}", value_lower),    // =value
+            format!("//{}", value_lower),   // //value (in URLs)
+            format!("@{}", value_lower),    // @value (in connection strings)
         ];
 
         patterns.iter().any(|pattern| line_lower.contains(pattern))
@@ -222,7 +257,9 @@ mod tests {
 
         let line = "db_username: sa";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Database Credentials")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Database Credentials")));
     }
 
     #[test]
@@ -232,7 +269,9 @@ mod tests {
 
         let line = "database_name: \"northwind\"";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Database Name")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Database Name")));
     }
 
     #[test]
@@ -242,7 +281,9 @@ mod tests {
 
         let line = "db_host: localhost";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Connection String")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Connection String")));
     }
 
     #[test]
@@ -252,7 +293,9 @@ mod tests {
 
         let line = "mysql_port: 3306";
         let issues = checker.check_line(line, 1);
-        assert!(issues.iter().any(|i| i.title.contains("Default Database Port")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Default Database Port")));
     }
 
     #[test]

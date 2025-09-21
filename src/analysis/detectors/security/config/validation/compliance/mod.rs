@@ -3,15 +3,15 @@
 //! This module validates configuration security findings against
 //! industry compliance standards like OWASP, CIS, NIST, etc.
 
+pub mod coverage;
+pub mod standards;
 pub mod types;
 pub mod validator;
-pub mod standards;
-pub mod coverage;
 
 // Re-export main types and validator
-pub use types::{ComplianceStandard, ComplianceRequirement};
-pub use validator::ComplianceValidator;
 pub use coverage::ComplianceCoverage;
+pub use types::{ComplianceRequirement, ComplianceStandard};
+pub use validator::ComplianceValidator;
 
 #[cfg(test)]
 mod tests {

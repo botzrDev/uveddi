@@ -3,13 +3,13 @@
 //! This module contains the split pattern detection logic organized by
 //! pattern type: detection coordination, threat patterns, and behavioral patterns.
 
+pub mod behavioral_patterns;
 pub mod detection_patterns;
 pub mod threat_patterns;
-pub mod behavioral_patterns;
 
 pub use detection_patterns::{
-    SecurityPatternDetector, SecurityPatternResult, SecurityPattern,
-    DetectionConfig, PatternApplicationResult, PatternMatch,
+    DetectionConfig, PatternApplicationResult, PatternMatch, SecurityPattern,
+    SecurityPatternDetector, SecurityPatternResult,
 };
 
 use crate::analysis::detectors::security::knowledge_graph::types::{

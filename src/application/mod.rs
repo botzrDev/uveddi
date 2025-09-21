@@ -14,7 +14,7 @@ pub mod services;
 pub mod workflows;
 
 // Primary public API exports
-pub use configuration::{AnalysisConfig, AiConfig, ApplicationConfig, OutputConfig};
+pub use configuration::{AiConfig, AnalysisConfig, ApplicationConfig, OutputConfig};
 pub use orchestrator::{AnalysisMetadata, AnalysisOrchestrator, AnalysisResult};
 
 // Legacy compatibility imports
@@ -52,7 +52,10 @@ impl AnalysisOrchestrator {
     /// Legacy method for executing analysis
     ///
     /// **DEPRECATED**: Use the new modular workflow approach instead.
-    #[deprecated(since = "0.9.0", note = "Use execute_core_analysis with new configuration modules")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use execute_core_analysis with new configuration modules"
+    )]
     #[allow(deprecated)]
     pub async fn execute_analysis(
         &mut self,

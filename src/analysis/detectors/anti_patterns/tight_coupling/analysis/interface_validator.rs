@@ -51,7 +51,10 @@ impl InterfaceValidator {
               name: (type_identifier) @trait_name) @trait_def
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(), trait_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(),
+            trait_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -94,7 +97,10 @@ impl InterfaceValidator {
                 (identifier) @parent_class)) @class_def
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), protocol_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            protocol_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -141,7 +147,10 @@ impl InterfaceValidator {
               name: (type_identifier) @interface_name) @interface_def
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), interface_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            interface_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 

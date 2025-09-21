@@ -3,7 +3,9 @@
 //! This module provides Rust-specific security analysis for OWASP Top 10 vulnerabilities.
 
 use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -36,7 +38,8 @@ impl RustOwaspAnalyzer {
                 pattern: "unsafe {".to_string(),
                 category: OwaspCategory::InsecureDesign,
                 severity: SecuritySeverity::Medium,
-                description: "Use of unsafe block may bypass Rust's memory safety guarantees".to_string(),
+                description: "Use of unsafe block may bypass Rust's memory safety guarantees"
+                    .to_string(),
             },
             RustSecurityPattern {
                 name: "Raw Pointer Dereference".to_string(),
@@ -50,7 +53,8 @@ impl RustOwaspAnalyzer {
                 pattern: "format!(\"SELECT".to_string(),
                 category: OwaspCategory::Injection,
                 severity: SecuritySeverity::Critical,
-                description: "SQL query construction with format! is vulnerable to injection".to_string(),
+                description: "SQL query construction with format! is vulnerable to injection"
+                    .to_string(),
             },
             RustSecurityPattern {
                 name: "Command Execution".to_string(),
@@ -97,7 +101,10 @@ impl RustOwaspAnalyzer {
         ]
     }
 
-    pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
+    pub async fn analyze(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
         if file.language != SourceLanguage::Rust {
             return Ok(vec![]);
         }
@@ -181,7 +188,11 @@ impl RustOwaspAnalyzer {
     pub fn check_vulnerable_crates(crate_name: &str, version: &str) -> Option<String> {
         let vulnerable_crates = vec![
             ("rand", "0.3", "Use rand 0.8+ for cryptographic randomness"),
-            ("openssl", "0.9", "Update to openssl 0.10+ for security fixes"),
+            (
+                "openssl",
+                "0.9",
+                "Update to openssl 0.10+ for security fixes",
+            ),
             ("time", "0.1", "time 0.1 has segfault issues, use 0.3+"),
         ];
 

@@ -7,9 +7,9 @@ pub mod extraction;
 pub mod inference;
 pub mod validation;
 
-pub use extraction::{KnowledgeExtractor, EntityKnowledge, BatchKnowledgeResult};
+pub use extraction::{BatchKnowledgeResult, EntityKnowledge, KnowledgeExtractor};
 pub use inference::{InferenceEngine, InferenceResult, InferredFact, SecurityInsight};
-pub use validation::{KnowledgeValidator, ValidationResult, InferenceValidation};
+pub use validation::{InferenceValidation, KnowledgeValidator, ValidationResult};
 
 use crate::analysis::detectors::security::knowledge_graph::types::{
     CodeEntity, CodeRelationship, SecurityQuery,
@@ -40,23 +40,29 @@ impl KnowledgeManager {
         &mut self,
         entities: &[CodeEntity],
     ) -> Result<ProcessedKnowledge, AnalysisError> {
-        info!("Processing {} entities for knowledge extraction", entities.len());
+        info!(
+            "Processing {} entities for knowledge extraction",
+            entities.len()
+        );
 
         // Extract base knowledge
         let extracted_knowledge = self.extractor.extract_batch_knowledge(entities).await?;
 
         // Validate extracted knowledge
-        let extraction_validation = self.validator
+        let extraction_validation = self
+            .validator
             .validate_extracted_knowledge(&extracted_knowledge)
             .await?;
 
         // Perform inference on validated knowledge
-        let inferred_knowledge = self.inference_engine
+        let inferred_knowledge = self
+            .inference_engine
             .infer_knowledge(entities, &extracted_knowledge.relationships)
             .await?;
 
         // Validate inferred knowledge
-        let inference_validation = self.validator
+        let inference_validation = self
+            .validator
             .validate_inferred_knowledge(&inferred_knowledge, &extracted_knowledge)
             .await?;
 
@@ -77,7 +83,8 @@ impl KnowledgeManager {
         info!("Querying knowledge: {:?}", query);
 
         // Query inference engine
-        let inference_result = self.inference_engine
+        let inference_result = self
+            .inference_engine
             .query_inferred_knowledge(query)
             .await?;
 
@@ -114,32 +121,50 @@ impl KnowledgeManager {
         match query {
             SecurityQuery::ArchitecturalCorrelation { location, .. } => {
                 // Find entities in the same file
-                extracted_knowledge.entity_knowledge.iter()
+                extracted_knowledge
+                    .entity_knowledge
+                    .iter()
                     .filter(|knowledge| {
                         // This would need to be implemented based on entity location data
-                        knowledge.entity_id.contains(&location.file_path.display().to_string())
+                        knowledge
+                            .entity_id
+                            .contains(&location.file_path.display().to_string())
                     })
                     .cloned()
                     .collect()
             }
             SecurityQuery::DependencyAnalysis { entity_id } => {
                 // Find the specific entity and its dependencies
-                extracted_knowledge.entity_knowledge.iter()
+                extracted_knowledge
+                    .entity_knowledge
+                    .iter()
                     .filter(|knowledge| {
-                        knowledge.entity_id == *entity_id ||
-                        self.is_dependency_related(entity_id, &knowledge.entity_id, &extracted_knowledge.relationships)
+                        knowledge.entity_id == *entity_id
+                            || self.is_dependency_related(
+                                entity_id,
+                                &knowledge.entity_id,
+                                &extracted_knowledge.relationships,
+                            )
                     })
                     .cloned()
                     .collect()
             }
             SecurityQuery::PatternSearch { pattern_type } => {
                 // Find entities matching the pattern
-                extracted_knowledge.entity_knowledge.iter()
+                extracted_knowledge
+                    .entity_knowledge
+                    .iter()
                     .filter(|knowledge| {
-                        knowledge.structural.patterns.iter()
-                            .any(|pattern| pattern.contains(pattern_type)) ||
-                        knowledge.semantic.concepts.iter()
-                            .any(|concept| concept.contains(pattern_type))
+                        knowledge
+                            .structural
+                            .patterns
+                            .iter()
+                            .any(|pattern| pattern.contains(pattern_type))
+                            || knowledge
+                                .semantic
+                                .concepts
+                                .iter()
+                                .any(|concept| concept.contains(pattern_type))
                     })
                     .cloned()
                     .collect()
@@ -155,8 +180,8 @@ impl KnowledgeManager {
         relationships: &[CodeRelationship],
     ) -> bool {
         relationships.iter().any(|rel| {
-            (rel.from_entity == entity1 && rel.to_entity == entity2) ||
-            (rel.from_entity == entity2 && rel.to_entity == entity1)
+            (rel.from_entity == entity1 && rel.to_entity == entity2)
+                || (rel.from_entity == entity2 && rel.to_entity == entity1)
         })
     }
 }
@@ -176,7 +201,8 @@ pub struct KnowledgeQueryResult {
     pub relevant_entities: Vec<EntityKnowledge>,
     pub inferred_facts: Vec<InferredFact>,
     pub inferred_relationships: Vec<CodeRelationship>,
-    pub correlations: Vec<crate::analysis::detectors::security::knowledge_graph::types::ArchitecturalCorrelation>,
+    pub correlations:
+        Vec<crate::analysis::detectors::security::knowledge_graph::types::ArchitecturalCorrelation>,
     pub confidence_score: f64,
 }
 
@@ -194,11 +220,9 @@ pub struct KnowledgeStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::detectors::security::knowledge_graph::types::{
-        EntityType, CodeLocation,
-    };
-    use std::path::PathBuf;
+    use crate::analysis::detectors::security::knowledge_graph::types::{CodeLocation, EntityType};
     use std::collections::HashMap;
+    use std::path::PathBuf;
 
     #[tokio::test]
     async fn test_knowledge_manager_creation() {

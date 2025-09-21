@@ -18,9 +18,10 @@ impl EnvParser {
             let value = line[equals_pos + 1..].trim();
 
             // Handle quoted values
-            let value = if (value.starts_with('"') && value.ends_with('"')) ||
-                          (value.starts_with('\'') && value.ends_with('\'')) {
-                value[1..value.len()-1].to_string()
+            let value = if (value.starts_with('"') && value.ends_with('"'))
+                || (value.starts_with('\'') && value.ends_with('\''))
+            {
+                value[1..value.len() - 1].to_string()
             } else {
                 value.to_string()
             };
@@ -40,17 +41,21 @@ impl EnvParser {
             }
 
             if !line.contains('=') {
-                return Err(AnalysisError::ParseError(
-                    format!("Invalid environment variable syntax at line {}: {}", line_num + 1, line)
-                ));
+                return Err(AnalysisError::ParseError(format!(
+                    "Invalid environment variable syntax at line {}: {}",
+                    line_num + 1,
+                    line
+                )));
             }
 
             // Validate key format (should be valid identifier)
             if let Some((key, _)) = Self::parse_env_line(line) {
                 if !Self::is_valid_env_key(&key) {
-                    return Err(AnalysisError::ParseError(
-                        format!("Invalid environment variable name at line {}: {}", line_num + 1, key)
-                    ));
+                    return Err(AnalysisError::ParseError(format!(
+                        "Invalid environment variable name at line {}: {}",
+                        line_num + 1,
+                        key
+                    )));
                 }
             }
         }
@@ -92,7 +97,8 @@ impl EnvParser {
 
     /// Check for duplicate variable definitions
     pub fn find_duplicates(content: &str) -> Vec<(String, Vec<usize>)> {
-        let mut var_lines: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
+        let mut var_lines: std::collections::HashMap<String, Vec<usize>> =
+            std::collections::HashMap::new();
 
         for (line_num, line) in content.lines().enumerate() {
             let line = line.trim();
@@ -101,11 +107,15 @@ impl EnvParser {
             }
 
             if let Some((key, _)) = Self::parse_env_line(line) {
-                var_lines.entry(key).or_insert_with(Vec::new).push(line_num + 1);
+                var_lines
+                    .entry(key)
+                    .or_insert_with(Vec::new)
+                    .push(line_num + 1);
             }
         }
 
-        var_lines.into_iter()
+        var_lines
+            .into_iter()
             .filter(|(_, lines)| lines.len() > 1)
             .collect()
     }
@@ -217,6 +227,9 @@ KEY1=duplicate
         assert_eq!(EnvParser::normalize_value("simple"), "simple");
         assert_eq!(EnvParser::normalize_value("\"quoted\""), "quoted");
         assert_eq!(EnvParser::normalize_value("'single'"), "single");
-        assert_eq!(EnvParser::normalize_value("\"with\\nescapes\""), "with\nescapes");
+        assert_eq!(
+            EnvParser::normalize_value("\"with\\nescapes\""),
+            "with\nescapes"
+        );
     }
 }

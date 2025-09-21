@@ -1,12 +1,12 @@
 //! TypeScript interface and type parsing for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl InterfaceParser {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -56,7 +57,10 @@ impl InterfaceParser {
         "#;
 
         let query = Query::new(&language, query_source).map_err(|e| {
-            AnalysisError::DetectionError(format!("Failed to create TypeScript interface query: {}", e))
+            AnalysisError::DetectionError(format!(
+                "Failed to create TypeScript interface query: {}",
+                e
+            ))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -73,7 +77,10 @@ impl InterfaceParser {
                             if self.is_infrastructure_type(prop_type) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Interface property exposes infrastructure type '{}'", prop_type),
+                                    &format!(
+                                        "Interface property exposes infrastructure type '{}'",
+                                        prop_type
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::ImplementationExposure,
                                     "high",
@@ -86,7 +93,10 @@ impl InterfaceParser {
                             if self.is_framework_type(prop_type) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Class property exposes framework type '{}'", prop_type),
+                                    &format!(
+                                        "Class property exposes framework type '{}'",
+                                        prop_type
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "medium",
@@ -111,9 +121,10 @@ impl InterfaceParser {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -151,7 +162,10 @@ impl InterfaceParser {
                             if self.is_infrastructure_type(type_value) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Type alias exposes infrastructure type '{}'", type_value),
+                                    &format!(
+                                        "Type alias exposes infrastructure type '{}'",
+                                        type_value
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::ImplementationExposure,
                                     "high",
@@ -164,7 +178,10 @@ impl InterfaceParser {
                             if self.is_dom_type(return_type) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Function returns DOM type '{}' in business logic", return_type),
+                                    &format!(
+                                        "Function returns DOM type '{}' in business logic",
+                                        return_type
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "high",
@@ -183,31 +200,54 @@ impl InterfaceParser {
     /// Checks if a type represents an infrastructure type.
     fn is_infrastructure_type(&self, type_name: &str) -> bool {
         let infrastructure_types = [
-            "Express.Request", "Express.Response", "Koa.Context",
-            "Mongoose.Document", "Sequelize.Model", "TypeORM.Entity",
-            "Socket.IO.Socket", "Redis.Client", "AWS.S3",
+            "Express.Request",
+            "Express.Response",
+            "Koa.Context",
+            "Mongoose.Document",
+            "Sequelize.Model",
+            "TypeORM.Entity",
+            "Socket.IO.Socket",
+            "Redis.Client",
+            "AWS.S3",
         ];
 
-        infrastructure_types.iter().any(|pattern| type_name.contains(pattern))
+        infrastructure_types
+            .iter()
+            .any(|pattern| type_name.contains(pattern))
     }
 
     /// Checks if a type represents a framework type.
     fn is_framework_type(&self, type_name: &str) -> bool {
         let framework_types = [
-            "React.Component", "React.FC", "Vue.Component",
-            "Angular.Component", "Component", "Props", "State",
-            "NextApiRequest", "NextApiResponse",
+            "React.Component",
+            "React.FC",
+            "Vue.Component",
+            "Angular.Component",
+            "Component",
+            "Props",
+            "State",
+            "NextApiRequest",
+            "NextApiResponse",
         ];
 
-        framework_types.iter().any(|pattern| type_name.contains(pattern))
+        framework_types
+            .iter()
+            .any(|pattern| type_name.contains(pattern))
     }
 
     /// Checks if a type represents a DOM type.
     fn is_dom_type(&self, type_name: &str) -> bool {
         let dom_types = [
-            "HTMLElement", "Element", "Node", "Document",
-            "HTMLInputElement", "HTMLButtonElement", "HTMLDivElement",
-            "Event", "MouseEvent", "KeyboardEvent",
+            "HTMLElement",
+            "Element",
+            "Node",
+            "Document",
+            "HTMLInputElement",
+            "HTMLButtonElement",
+            "HTMLDivElement",
+            "Event",
+            "MouseEvent",
+            "KeyboardEvent",
         ];
 
         dom_types.iter().any(|pattern| type_name.contains(pattern))
@@ -215,9 +255,9 @@ impl InterfaceParser {
 
     /// Checks if a generic type parameter indicates a leak.
     pub fn is_leaky_generic(&self, generic_def: &str) -> bool {
-        generic_def.contains("<any>") ||
-        generic_def.contains("<unknown>") ||
-        generic_def.contains("<object>")
+        generic_def.contains("<any>")
+            || generic_def.contains("<unknown>")
+            || generic_def.contains("<object>")
     }
 
     /// Analyzes method signatures for potential type leaks.

@@ -1,11 +1,11 @@
 //! Detection of exposed internal implementation details.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
-};
 
 /// Detects patterns where internal implementation details are inappropriately exposed.
 pub struct ExposedInternalsPattern;
@@ -89,27 +89,27 @@ impl ExposedInternalsPattern {
 
     /// Checks if a given identifier represents an internal element.
     pub fn is_internal_identifier(&self, identifier: &str) -> bool {
-        identifier.starts_with('_') ||
-        identifier.contains("internal") ||
-        identifier.contains("impl") ||
-        identifier.contains("private")
+        identifier.starts_with('_')
+            || identifier.contains("internal")
+            || identifier.contains("impl")
+            || identifier.contains("private")
     }
 
     /// Checks if a field should be considered internal based on naming.
     pub fn is_internal_field(&self, field_name: &str) -> bool {
         self.is_internal_identifier(field_name) ||
         field_name.starts_with("m_") || // C++ style member prefix
-        field_name.ends_with("_")       // Trailing underscore convention
+        field_name.ends_with("_") // Trailing underscore convention
     }
 
     /// Checks if a module path indicates internal implementation.
     pub fn is_internal_module_path(&self, path: &str) -> bool {
-        path.contains("/internal/") ||
-        path.contains("\\internal\\") ||
-        path.contains("/impl/") ||
-        path.contains("\\impl\\") ||
-        path.contains("/private/") ||
-        path.contains("\\private\\")
+        path.contains("/internal/")
+            || path.contains("\\internal\\")
+            || path.contains("/impl/")
+            || path.contains("\\impl\\")
+            || path.contains("/private/")
+            || path.contains("\\private\\")
     }
 
     /// Helper function to create an architectural issue.

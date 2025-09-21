@@ -1,9 +1,9 @@
 //! Configuration management for leaky abstraction detection.
 
-use std::collections::{HashMap, HashSet};
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    ArchitecturalConfig, ArchitecturalLayer
+    ArchitecturalConfig, ArchitecturalLayer,
 };
+use std::collections::{HashMap, HashSet};
 
 /// Configuration builder for architectural analysis.
 pub struct ConfigBuilder {
@@ -178,7 +178,10 @@ pub mod utils {
     }
 
     /// Merges two configurations, with the second taking precedence.
-    pub fn merge_configs(base: ArchitecturalConfig, override_config: ArchitecturalConfig) -> ArchitecturalConfig {
+    pub fn merge_configs(
+        base: ArchitecturalConfig,
+        override_config: ArchitecturalConfig,
+    ) -> ArchitecturalConfig {
         let mut merged_layer_mappings = base.layer_mappings;
         for (pattern, layer) in override_config.layer_mappings {
             merged_layer_mappings.insert(pattern, layer);

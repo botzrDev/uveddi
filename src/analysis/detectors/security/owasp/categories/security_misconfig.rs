@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -108,7 +110,8 @@ impl SecurityMisconfigDetector {
             MisconfigPattern {
                 pattern: "console.error".to_string(),
                 vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
-                description: "Verbose error logging that may expose sensitive information".to_string(),
+                description: "Verbose error logging that may expose sensitive information"
+                    .to_string(),
                 confidence: 0.4,
                 severity: SecuritySeverity::Low,
                 misconfig_type: MisconfigurationType::VerboseErrorMessages,
@@ -165,11 +168,18 @@ impl SecurityMisconfigDetector {
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "production", "secure", "hardened", "encrypted",
-            "if not debug", "unless debug", "disable_debug",
+            "production",
+            "secure",
+            "hardened",
+            "encrypted",
+            "if not debug",
+            "unless debug",
+            "disable_debug",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
     }
 }
 
@@ -201,7 +211,6 @@ impl OwaspCategoryDetector for SecurityMisconfigDetector {
 
         Ok(vulnerabilities)
     }
-
 }
 
 #[cfg(test)]
@@ -225,6 +234,9 @@ mod tests {
         std::fs::remove_file("test.py").unwrap();
 
         assert!(!vulnerabilities.is_empty());
-        assert_eq!(vulnerabilities[0].category, OwaspCategory::SecurityMisconfiguration);
+        assert_eq!(
+            vulnerabilities[0].category,
+            OwaspCategory::SecurityMisconfiguration
+        );
     }
 }

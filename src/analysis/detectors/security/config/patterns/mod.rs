@@ -10,9 +10,9 @@ pub mod vulnerability_patterns;
 pub use secret_patterns::SecretPatternMatcher;
 pub use vulnerability_patterns::VulnerabilityPatternMatcher;
 
-use crate::analysis::AnalysisError;
 use super::config::ConfigSecurityConfig;
 use super::types::{ConfigIssue, PatternMatch};
+use crate::analysis::AnalysisError;
 
 /// Basic pattern matcher interface used by the configuration security detector.
 pub trait PatternMatcher: Send + Sync {
@@ -34,7 +34,10 @@ pub trait ConfigPatternMatcher: PatternMatcher {
     fn find_matches(&self, content: &str) -> Result<Vec<PatternMatch>, AnalysisError>;
 
     /// Convert pattern matches to configuration issues
-    fn matches_to_issues(&self, matches: Vec<PatternMatch>) -> Result<Vec<ConfigIssue>, AnalysisError>;
+    fn matches_to_issues(
+        &self,
+        matches: Vec<PatternMatch>,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError>;
 }
 
 /// Combined pattern matcher that uses multiple pattern matchers
@@ -70,13 +73,14 @@ impl CombinedPatternMatcher {
 
 /// Common pattern utilities
 pub mod utils {
-    use regex::Regex;
     use crate::analysis::AnalysisError;
+    use regex::Regex;
 
     /// Compile a regex pattern safely
     pub fn compile_pattern(pattern: &str) -> Result<Regex, AnalysisError> {
-        Regex::new(pattern)
-            .map_err(|e| AnalysisError::PatternError(format!("Invalid regex pattern '{}': {}", pattern, e)))
+        Regex::new(pattern).map_err(|e| {
+            AnalysisError::PatternError(format!("Invalid regex pattern '{}': {}", pattern, e))
+        })
     }
 
     /// Extract context around a match
@@ -105,7 +109,9 @@ pub mod utils {
     /// Check if a line contains a suppression comment
     pub fn has_suppression_comment(line: &str, suppression_patterns: &[String]) -> bool {
         let line_upper = line.to_uppercase();
-        suppression_patterns.iter().any(|pattern| line_upper.contains(&pattern.to_uppercase()))
+        suppression_patterns
+            .iter()
+            .any(|pattern| line_upper.contains(&pattern.to_uppercase()))
     }
 
     /// Calculate line and column from byte offset
@@ -132,8 +138,8 @@ pub mod utils {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::utils::*;
+    use super::*;
 
     #[test]
     fn test_combined_pattern_matcher() {

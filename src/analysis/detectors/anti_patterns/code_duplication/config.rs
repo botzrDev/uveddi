@@ -1,6 +1,6 @@
 //! Configuration for code duplication detection
 
-use crate::analysis::detectors::base::{DetectorConfig, BaseConfig};
+use crate::analysis::detectors::base::{BaseConfig, DetectorConfig};
 use crate::analysis::AnalysisError;
 use serde::{Deserialize, Serialize};
 
@@ -271,7 +271,8 @@ impl DetectorConfig for DuplicationConfig {
 
         // Take more conservative analysis settings
         self.enable_cfg_analysis = self.enable_cfg_analysis || other.enable_cfg_analysis;
-        self.enable_semantic_features = self.enable_semantic_features || other.enable_semantic_features;
+        self.enable_semantic_features =
+            self.enable_semantic_features || other.enable_semantic_features;
     }
 
     fn default() -> Self {

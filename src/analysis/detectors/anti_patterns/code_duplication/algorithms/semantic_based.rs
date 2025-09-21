@@ -1,7 +1,9 @@
 //! Semantic-based clone detection using control flow analysis
 
 use super::CloneDetectionAlgorithm;
-use crate::analysis::detectors::anti_patterns::code_duplication::types::{CodeBlock, ClonePair, CloneType};
+use crate::analysis::detectors::anti_patterns::code_duplication::types::{
+    ClonePair, CloneType, CodeBlock,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use std::collections::{HashMap, HashSet};
@@ -45,7 +47,11 @@ impl SemanticDetector {
     }
 
     /// Extracts control flow graph from source code
-    pub fn extract_cfg(&self, source: &str, _language: &SourceLanguage) -> Result<ControlFlowGraph, AnalysisError> {
+    pub fn extract_cfg(
+        &self,
+        source: &str,
+        _language: &SourceLanguage,
+    ) -> Result<ControlFlowGraph, AnalysisError> {
         // Simplified CFG extraction - real implementation would use proper parsing
         let statements = self.extract_statements(source);
         let mut cfg = ControlFlowGraph::new();
@@ -110,7 +116,11 @@ impl SemanticDetector {
     }
 
     /// Computes semantic similarity between two CFGs
-    pub fn compute_semantic_similarity(&self, cfg1: &ControlFlowGraph, cfg2: &ControlFlowGraph) -> f64 {
+    pub fn compute_semantic_similarity(
+        &self,
+        cfg1: &ControlFlowGraph,
+        cfg2: &ControlFlowGraph,
+    ) -> f64 {
         if cfg1.nodes.len() > self.max_nodes || cfg2.nodes.len() > self.max_nodes {
             return 0.5; // Default similarity for large graphs
         }
@@ -129,7 +139,11 @@ impl SemanticDetector {
     }
 
     /// Computes structural similarity between CFGs
-    fn compute_structural_similarity(&self, cfg1: &ControlFlowGraph, cfg2: &ControlFlowGraph) -> f64 {
+    fn compute_structural_similarity(
+        &self,
+        cfg1: &ControlFlowGraph,
+        cfg2: &ControlFlowGraph,
+    ) -> f64 {
         let size_diff = (cfg1.nodes.len() as f64 - cfg2.nodes.len() as f64).abs();
         let max_size = cfg1.nodes.len().max(cfg2.nodes.len()) as f64;
 
@@ -149,7 +163,11 @@ impl SemanticDetector {
     }
 
     /// Computes node type distribution similarity
-    fn compute_node_type_similarity(&self, cfg1: &ControlFlowGraph, cfg2: &ControlFlowGraph) -> f64 {
+    fn compute_node_type_similarity(
+        &self,
+        cfg1: &ControlFlowGraph,
+        cfg2: &ControlFlowGraph,
+    ) -> f64 {
         let types1 = self.get_type_distribution(cfg1);
         let types2 = self.get_type_distribution(cfg2);
 
@@ -186,7 +204,11 @@ impl SemanticDetector {
     }
 
     /// Compares two pattern sets
-    fn compare_pattern_sets(&self, patterns1: &HashSet<FlowPattern>, patterns2: &HashSet<FlowPattern>) -> f64 {
+    fn compare_pattern_sets(
+        &self,
+        patterns1: &HashSet<FlowPattern>,
+        patterns2: &HashSet<FlowPattern>,
+    ) -> f64 {
         if patterns1.is_empty() && patterns2.is_empty() {
             return 1.0;
         }
@@ -202,7 +224,11 @@ impl SemanticDetector {
     }
 
     /// Compares two distributions
-    fn compare_distributions(&self, dist1: &HashMap<StatementType, usize>, dist2: &HashMap<StatementType, usize>) -> f64 {
+    fn compare_distributions(
+        &self,
+        dist1: &HashMap<StatementType, usize>,
+        dist2: &HashMap<StatementType, usize>,
+    ) -> f64 {
         let all_types: HashSet<_> = dist1.keys().chain(dist2.keys()).collect();
 
         if all_types.is_empty() {
@@ -233,10 +259,15 @@ impl CloneDetectionAlgorithm for SemanticDetector {
         "Semantic CFG-based"
     }
 
-    fn detect_clones(&self, block1: &CodeBlock, block2: &CodeBlock) -> Result<Option<ClonePair>, AnalysisError> {
+    fn detect_clones(
+        &self,
+        block1: &CodeBlock,
+        block2: &CodeBlock,
+    ) -> Result<Option<ClonePair>, AnalysisError> {
         // Skip if same file and overlapping regions
-        if block1.file_path == block2.file_path &&
-           !(block1.end_line < block2.start_line || block2.end_line < block1.start_line) {
+        if block1.file_path == block2.file_path
+            && !(block1.end_line < block2.start_line || block2.end_line < block1.start_line)
+        {
             return Ok(None);
         }
 
@@ -267,7 +298,10 @@ impl CloneDetectionAlgorithm for SemanticDetector {
         // Semantic analysis requires language-specific knowledge
         matches!(
             language,
-            SourceLanguage::Rust | SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript
+            SourceLanguage::Rust
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 

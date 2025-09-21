@@ -47,7 +47,10 @@ impl AstNode {
     }
 
     /// Visits all nodes in the tree
-    pub fn visit<F>(&self, visitor: &mut F) where F: FnMut(&AstNode) {
+    pub fn visit<F>(&self, visitor: &mut F)
+    where
+        F: FnMut(&AstNode),
+    {
         visitor(self);
         for child in &self.children {
             child.visit(visitor);

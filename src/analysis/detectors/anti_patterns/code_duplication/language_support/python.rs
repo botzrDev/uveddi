@@ -1,6 +1,6 @@
 //! Python-specific language support for code duplication detection
 
-use super::{LanguageSupport, FunctionSignature, CommentSyntax};
+use super::{CommentSyntax, FunctionSignature, LanguageSupport};
 use crate::analysis::detectors::anti_patterns::code_duplication::types::CodeBlock;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
@@ -14,14 +14,14 @@ impl PythonLanguageSupport {
     }
 
     const KEYWORDS: &'static [&'static str] = &[
-        "def", "class", "if", "elif", "else", "while", "for", "try", "except", "finally",
-        "with", "as", "import", "from", "return", "yield", "break", "continue", "pass",
-        "lambda", "and", "or", "not", "in", "is", "None", "True", "False", "async", "await",
+        "def", "class", "if", "elif", "else", "while", "for", "try", "except", "finally", "with",
+        "as", "import", "from", "return", "yield", "break", "continue", "pass", "lambda", "and",
+        "or", "not", "in", "is", "None", "True", "False", "async", "await",
     ];
 
     const BUILTIN_TYPES: &'static [&'static str] = &[
-        "int", "float", "str", "list", "dict", "tuple", "set", "bool", "bytes", "object",
-        "type", "callable", "any", "union", "optional", "List", "Dict", "Tuple", "Set",
+        "int", "float", "str", "list", "dict", "tuple", "set", "bool", "bytes", "object", "type",
+        "callable", "any", "union", "optional", "List", "Dict", "Tuple", "Set",
     ];
 }
 
@@ -92,12 +92,18 @@ impl LanguageSupport for PythonLanguageSupport {
                     token.clone()
                 } else if token.chars().all(|c| c.is_numeric() || c == '.') {
                     "NUMBER".to_string()
-                } else if (token.starts_with('"') && token.ends_with('"')) ||
-                          (token.starts_with('\'') && token.ends_with('\'')) ||
-                          token.starts_with("f\"") || token.starts_with("r\"") {
+                } else if (token.starts_with('"') && token.ends_with('"'))
+                    || (token.starts_with('\'') && token.ends_with('\''))
+                    || token.starts_with("f\"")
+                    || token.starts_with("r\"")
+                {
                     "STRING".to_string()
-                } else if token.chars().next().map_or(false, |c| c.is_alphabetic() || c == '_') &&
-                         token.chars().all(|c| c.is_alphanumeric() || c == '_') {
+                } else if token
+                    .chars()
+                    .next()
+                    .map_or(false, |c| c.is_alphabetic() || c == '_')
+                    && token.chars().all(|c| c.is_alphanumeric() || c == '_')
+                {
                     "IDENTIFIER".to_string()
                 } else {
                     token.clone()
@@ -175,7 +181,7 @@ impl PythonLanguageSupport {
             return_type: None,           // Would need to parse type hints
             visibility: None,            // Python doesn't have explicit visibility
             is_method,
-            generics: Vec::new(),        // Python doesn't have generics in the same way
+            generics: Vec::new(), // Python doesn't have generics in the same way
         })
     }
 }

@@ -5,7 +5,9 @@
 use crate::analysis::detectors::security::owasp::types::{
     OwaspCategory, OwaspCategoryDetector, OwaspVulnerability,
 };
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -158,18 +160,26 @@ impl BrokenAccessDetector {
                 "Implement server-side access controls that cannot be bypassed".to_string()
             }
             AccessControlIssue::ElevatedPermissions => {
-                "Use least privilege principle and avoid unnecessary elevated permissions".to_string()
+                "Use least privilege principle and avoid unnecessary elevated permissions"
+                    .to_string()
             }
         }
     }
 
     fn is_likely_safe(&self, line: &str) -> bool {
         let safe_indicators = [
-            "authorize", "permission", "access_control", "rbac",
-            "validate_user", "check_permission", "can_access",
+            "authorize",
+            "permission",
+            "access_control",
+            "rbac",
+            "validate_user",
+            "check_permission",
+            "can_access",
         ];
 
-        safe_indicators.iter().any(|&indicator| line.to_lowercase().contains(indicator))
+        safe_indicators
+            .iter()
+            .any(|&indicator| line.to_lowercase().contains(indicator))
     }
 }
 
@@ -201,7 +211,6 @@ impl OwaspCategoryDetector for BrokenAccessDetector {
 
         Ok(vulnerabilities)
     }
-
 }
 
 #[cfg(test)]
@@ -225,6 +234,9 @@ mod tests {
         std::fs::remove_file("test.js").unwrap();
 
         assert!(!vulnerabilities.is_empty());
-        assert_eq!(vulnerabilities[0].category, OwaspCategory::BrokenAccessControl);
+        assert_eq!(
+            vulnerabilities[0].category,
+            OwaspCategory::BrokenAccessControl
+        );
     }
 }

@@ -13,7 +13,7 @@ use crate::error::UveddiError;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use super::traits::{Workflow, WorkflowStatus, Cancellable};
+use super::traits::{Cancellable, Workflow, WorkflowStatus};
 
 /// AI analysis workflow coordinator
 pub struct AiWorkflow {
@@ -158,13 +158,22 @@ trait AiClient: Send + Sync {
     async fn analyze_issue(&self, issue: &ArchitecturalIssue) -> Result<AiInsight, UveddiError>;
 
     /// Analyze multiple issues in batch
-    async fn analyze_batch(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, UveddiError>;
+    async fn analyze_batch(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, UveddiError>;
 
     /// Prioritize issues
-    async fn prioritize_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<PrioritizedIssue>, UveddiError>;
+    async fn prioritize_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<PrioritizedIssue>, UveddiError>;
 
     /// Generate analysis summary
-    async fn generate_summary(&self, insights: &[AiInsight]) -> Result<AiAnalysisSummary, UveddiError>;
+    async fn generate_summary(
+        &self,
+        insights: &[AiInsight],
+    ) -> Result<AiAnalysisSummary, UveddiError>;
 }
 
 /// Mock AI client for testing and fallback
@@ -203,13 +212,18 @@ impl AiWorkflow {
         prioritized_issues.sort_by(|a, b| {
             let a_priority = self.calculate_issue_priority(&a.message);
             let b_priority = self.calculate_issue_priority(&b.message);
-            b_priority.partial_cmp(&a_priority).unwrap_or(std::cmp::Ordering::Equal)
+            b_priority
+                .partial_cmp(&a_priority)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         // Take only the top N issues
         prioritized_issues.truncate(self.config.max_issues_to_analyze);
 
-        info!("Selected {} issues for AI analysis", prioritized_issues.len());
+        info!(
+            "Selected {} issues for AI analysis",
+            prioritized_issues.len()
+        );
         prioritized_issues
     }
 
@@ -303,32 +317,40 @@ impl AiWorkflow {
             metrics.average_confidence = total_confidence / insights.len() as f64;
         }
 
-        info!("AI analysis completed: {} insights generated", insights.len());
+        info!(
+            "AI analysis completed: {} insights generated",
+            insights.len()
+        );
         Ok(insights)
     }
 
     /// Generate mock AI insights for fallback
     fn generate_mock_insights(&self, issues: &[ArchitecturalIssue]) -> Vec<AiInsight> {
-        issues.iter().enumerate().map(|(index, issue)| {
-            let confidence = (0.85 - index as f64 * 0.02).max(0.60);
-            let suggestion = self.generate_mock_suggestion(issue);
+        issues
+            .iter()
+            .enumerate()
+            .map(|(index, issue)| {
+                let confidence = (0.85 - index as f64 * 0.02).max(0.60);
+                let suggestion = self.generate_mock_suggestion(issue);
 
-            AiInsight {
-                issue_id: issue.issue_id
-                    .map(|id| id.to_string())
-                    .unwrap_or_else(|| format!("issue_{}", index)),
-                confidence,
-                suggestion,
-                metadata: serde_json::json!({
-                    "message": issue.message,
-                    "file_path": issue.file_path,
-                    "line_number": issue.line_number,
-                    "issue_type": self.classify_issue_type(&issue.message),
-                    "severity": self.classify_issue_severity(&issue.message),
-                    "mock_analysis": true
-                }),
-            }
-        }).collect()
+                AiInsight {
+                    issue_id: issue
+                        .issue_id
+                        .map(|id| id.to_string())
+                        .unwrap_or_else(|| format!("issue_{}", index)),
+                    confidence,
+                    suggestion,
+                    metadata: serde_json::json!({
+                        "message": issue.message,
+                        "file_path": issue.file_path,
+                        "line_number": issue.line_number,
+                        "issue_type": self.classify_issue_type(&issue.message),
+                        "severity": self.classify_issue_severity(&issue.message),
+                        "mock_analysis": true
+                    }),
+                }
+            })
+            .collect()
     }
 
     /// Generate mock suggestion for an issue
@@ -340,7 +362,8 @@ impl AiWorkflow {
         } else if issue.message.contains("Code duplication") {
             "Extract common functionality into shared utilities or base classes to eliminate duplication.".to_string()
         } else if issue.message.contains("dead code") {
-            "Remove this unused code to improve maintainability and reduce codebase complexity.".to_string()
+            "Remove this unused code to improve maintainability and reduce codebase complexity."
+                .to_string()
         } else {
             "Review this code for potential improvements in design, performance, or maintainability.".to_string()
         }
@@ -358,7 +381,8 @@ impl AiWorkflow {
             "Maintainability"
         } else {
             "General"
-        }.to_string()
+        }
+        .to_string()
     }
 
     /// Classify issue severity from message
@@ -371,7 +395,8 @@ impl AiWorkflow {
             "Medium"
         } else {
             "Low"
-        }.to_string()
+        }
+        .to_string()
     }
 
     /// Check for workflow cancellation
@@ -389,7 +414,10 @@ impl AiWorkflow {
 impl Workflow<AiWorkflowInput, AiWorkflowOutput> for AiWorkflow {
     async fn execute(&mut self, input: AiWorkflowInput) -> Result<AiWorkflowOutput, UveddiError> {
         let start_time = Instant::now();
-        info!("Starting AI analysis workflow for {} issues", input.issues.len());
+        info!(
+            "Starting AI analysis workflow for {} issues",
+            input.issues.len()
+        );
 
         self.status = WorkflowStatus::Running;
         self.is_cancelled = false;
@@ -401,31 +429,44 @@ impl Workflow<AiWorkflowInput, AiWorkflowOutput> for AiWorkflow {
         self.check_cancellation()?;
 
         // Execute AI analysis
-        let insights = self.execute_ai_analysis(&filtered_issues, &mut metrics).await?;
+        let insights = self
+            .execute_ai_analysis(&filtered_issues, &mut metrics)
+            .await?;
         self.check_cancellation()?;
 
         // Generate prioritized issues (mock implementation)
-        let prioritized_issues = filtered_issues.into_iter().enumerate().map(|(index, issue)| {
-            let priority_score = self.calculate_issue_priority(&issue.message);
-            let priority_category = match priority_score {
-                p if p > 0.8 => PriorityCategory::Critical,
-                p if p > 0.6 => PriorityCategory::High,
-                p if p > 0.4 => PriorityCategory::Medium,
-                p if p > 0.2 => PriorityCategory::Low,
-                _ => PriorityCategory::Informational,
-            };
+        let prioritized_issues = filtered_issues
+            .into_iter()
+            .enumerate()
+            .map(|(index, issue)| {
+                let priority_score = self.calculate_issue_priority(&issue.message);
+                let priority_category = match priority_score {
+                    p if p > 0.8 => PriorityCategory::Critical,
+                    p if p > 0.6 => PriorityCategory::High,
+                    p if p > 0.4 => PriorityCategory::Medium,
+                    p if p > 0.2 => PriorityCategory::Low,
+                    _ => PriorityCategory::Informational,
+                };
 
-            PrioritizedIssue {
-                issue,
-                priority_score,
-                priority_category: priority_category.clone(),
-                priority_reasoning: format!("AI-calculated priority based on issue characteristics: {:?}", priority_category),
-            }
-        }).collect();
+                PrioritizedIssue {
+                    issue,
+                    priority_score,
+                    priority_category: priority_category.clone(),
+                    priority_reasoning: format!(
+                        "AI-calculated priority based on issue characteristics: {:?}",
+                        priority_category
+                    ),
+                }
+            })
+            .collect();
 
         // Generate analysis summary
         let summary = AiAnalysisSummary {
-            quality_assessment: format!("Analyzed {} issues with {} AI insights generated", input.issues.len(), insights.len()),
+            quality_assessment: format!(
+                "Analyzed {} issues with {} AI insights generated",
+                input.issues.len(),
+                insights.len()
+            ),
             top_recommendations: vec![
                 "Focus on high-priority architectural issues".to_string(),
                 "Address code duplication to improve maintainability".to_string(),
@@ -492,7 +533,8 @@ impl AiClient for MockAiClient {
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
         Ok(AiInsight {
-            issue_id: issue.issue_id
+            issue_id: issue
+                .issue_id
                 .map(|id| id.to_string())
                 .unwrap_or_else(|| "unknown".to_string()),
             confidence: 0.85,
@@ -504,7 +546,10 @@ impl AiClient for MockAiClient {
         })
     }
 
-    async fn analyze_batch(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, UveddiError> {
+    async fn analyze_batch(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, UveddiError> {
         let mut results = Vec::new();
         for issue in issues {
             results.push(self.analyze_issue(issue).await?);
@@ -512,19 +557,27 @@ impl AiClient for MockAiClient {
         Ok(results)
     }
 
-    async fn prioritize_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<PrioritizedIssue>, UveddiError> {
-        let prioritized = issues.iter().enumerate().map(|(index, issue)| {
-            PrioritizedIssue {
+    async fn prioritize_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<PrioritizedIssue>, UveddiError> {
+        let prioritized = issues
+            .iter()
+            .enumerate()
+            .map(|(index, issue)| PrioritizedIssue {
                 issue: issue.clone(),
                 priority_score: 0.8 - (index as f64 * 0.1),
                 priority_category: PriorityCategory::Medium,
                 priority_reasoning: "Mock prioritization".to_string(),
-            }
-        }).collect();
+            })
+            .collect();
         Ok(prioritized)
     }
 
-    async fn generate_summary(&self, _insights: &[AiInsight]) -> Result<AiAnalysisSummary, UveddiError> {
+    async fn generate_summary(
+        &self,
+        _insights: &[AiInsight],
+    ) -> Result<AiAnalysisSummary, UveddiError> {
         Ok(AiAnalysisSummary {
             quality_assessment: "Mock assessment".to_string(),
             top_recommendations: vec!["Mock recommendation".to_string()],

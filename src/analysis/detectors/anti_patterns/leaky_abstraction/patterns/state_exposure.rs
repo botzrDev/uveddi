@@ -1,11 +1,11 @@
 //! Detection of inappropriate state exposure patterns.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
-};
 
 /// Detects patterns where internal state is inappropriately exposed.
 pub struct StateExposurePattern;
@@ -89,29 +89,27 @@ impl StateExposurePattern {
 
     /// Checks if a field represents exposed state.
     pub fn is_exposed_state_field(&self, field_name: &str, visibility: &str) -> bool {
-        visibility == "pub" && (
-            field_name.contains("state") ||
-            field_name.contains("data") ||
-            field_name.contains("internal") ||
-            field_name.starts_with('_')
-        )
+        visibility == "pub"
+            && (field_name.contains("state")
+                || field_name.contains("data")
+                || field_name.contains("internal")
+                || field_name.starts_with('_'))
     }
 
     /// Checks if a getter method exposes internal state.
     pub fn is_state_exposing_getter(&self, method_name: &str, return_type: &str) -> bool {
-        method_name.starts_with("get_") && (
-            return_type.contains("&mut") ||
-            return_type.contains("*mut") ||
-            self.is_mutable_reference_type(return_type)
-        )
+        method_name.starts_with("get_")
+            && (return_type.contains("&mut")
+                || return_type.contains("*mut")
+                || self.is_mutable_reference_type(return_type))
     }
 
     /// Checks if a return type represents a mutable reference to internal state.
     fn is_mutable_reference_type(&self, type_str: &str) -> bool {
-        type_str.contains("&mut") ||
-        type_str.contains("*mut") ||
-        type_str.contains("RefMut<") ||
-        type_str.contains("MutexGuard<")
+        type_str.contains("&mut")
+            || type_str.contains("*mut")
+            || type_str.contains("RefMut<")
+            || type_str.contains("MutexGuard<")
     }
 
     /// Analyzes method for state exposure risks.
@@ -132,7 +130,10 @@ impl StateExposurePattern {
     /// Analyzes property access for state exposure.
     pub fn analyze_property_access(&self, property_access: &str) -> Option<String> {
         if property_access.contains(".state") || property_access.contains("._") {
-            Some(format!("Direct access to internal state: {}", property_access))
+            Some(format!(
+                "Direct access to internal state: {}",
+                property_access
+            ))
         } else {
             None
         }
@@ -140,9 +141,9 @@ impl StateExposurePattern {
 
     /// Checks if a variable assignment exposes state.
     pub fn is_state_exposing_assignment(&self, assignment: &str) -> bool {
-        assignment.contains("= &mut") ||
-        assignment.contains("= self.") ||
-        assignment.contains("= this.")
+        assignment.contains("= &mut")
+            || assignment.contains("= self.")
+            || assignment.contains("= this.")
     }
 
     /// Helper function to create an architectural issue.

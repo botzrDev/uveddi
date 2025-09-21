@@ -1,12 +1,12 @@
 //! TypeScript class structure analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::database::models::ArchitecturalIssue;
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, LeakType
+    AnalysisContext, LeakType,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -29,9 +29,10 @@ impl ClassAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -75,7 +76,10 @@ impl ClassAnalyzer {
                             if self.is_dom_object(dom_object) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("DOM manipulation with '{}' in business logic", dom_object),
+                                    &format!(
+                                        "DOM manipulation with '{}' in business logic",
+                                        dom_object
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "high",
@@ -113,9 +117,10 @@ impl ClassAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -166,7 +171,10 @@ impl ClassAnalyzer {
                             if self.is_framework_lifecycle_method(method_name) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Framework lifecycle method '{}' in business logic", method_name),
+                                    &format!(
+                                        "Framework lifecycle method '{}' in business logic",
+                                        method_name
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::FrameworkCoupling,
                                     "medium",
@@ -191,9 +199,10 @@ impl ClassAnalyzer {
         let mut issues = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -216,7 +225,10 @@ impl ClassAnalyzer {
         "#;
 
         let query = Query::new(&language, query_source).map_err(|e| {
-            AnalysisError::DetectionError(format!("Failed to create TypeScript property query: {}", e))
+            AnalysisError::DetectionError(format!(
+                "Failed to create TypeScript property query: {}",
+                e
+            ))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -233,7 +245,10 @@ impl ClassAnalyzer {
                             if self.is_infrastructure_type(prop_type) {
                                 issues.push(self.create_issue(
                                     context,
-                                    &format!("Class property uses infrastructure type '{}'", prop_type),
+                                    &format!(
+                                        "Class property uses infrastructure type '{}'",
+                                        prop_type
+                                    ),
                                     node.start_position().row as u32 + 1,
                                     LeakType::ImplementationExposure,
                                     "medium",
@@ -265,8 +280,13 @@ impl ClassAnalyzer {
     /// Checks if an object represents a DOM object.
     fn is_dom_object(&self, obj_name: &str) -> bool {
         let dom_objects = [
-            "document", "window", "navigator", "location",
-            "console", "localStorage", "sessionStorage",
+            "document",
+            "window",
+            "navigator",
+            "location",
+            "console",
+            "localStorage",
+            "sessionStorage",
         ];
 
         dom_objects.iter().any(|pattern| obj_name == *pattern)
@@ -275,9 +295,16 @@ impl ClassAnalyzer {
     /// Checks if a type represents a DOM type.
     fn is_dom_type(&self, type_name: &str) -> bool {
         let dom_types = [
-            "HTMLElement", "Element", "Node", "Document",
-            "HTMLInputElement", "HTMLButtonElement", "HTMLDivElement",
-            "Event", "MouseEvent", "KeyboardEvent",
+            "HTMLElement",
+            "Element",
+            "Node",
+            "Document",
+            "HTMLInputElement",
+            "HTMLButtonElement",
+            "HTMLDivElement",
+            "Event",
+            "MouseEvent",
+            "KeyboardEvent",
         ];
 
         dom_types.iter().any(|pattern| type_name.contains(pattern))
@@ -286,35 +313,66 @@ impl ClassAnalyzer {
     /// Checks if a class represents a framework class.
     fn is_framework_class(&self, class_name: &str) -> bool {
         let framework_classes = [
-            "Component", "Controller", "Service", "Repository",
-            "Model", "Entity", "Document", "Schema",
-            "Middleware", "Guard", "Interceptor", "Pipe",
-            "React.Component", "Vue.Component", "Angular.Component",
+            "Component",
+            "Controller",
+            "Service",
+            "Repository",
+            "Model",
+            "Entity",
+            "Document",
+            "Schema",
+            "Middleware",
+            "Guard",
+            "Interceptor",
+            "Pipe",
+            "React.Component",
+            "Vue.Component",
+            "Angular.Component",
         ];
 
-        framework_classes.iter().any(|pattern| class_name.contains(pattern))
+        framework_classes
+            .iter()
+            .any(|pattern| class_name.contains(pattern))
     }
 
     /// Checks if a method represents a framework lifecycle method.
     fn is_framework_lifecycle_method(&self, method_name: &str) -> bool {
         let lifecycle_methods = [
-            "componentDidMount", "componentWillUnmount", "componentDidUpdate",
-            "render", "ngOnInit", "ngOnDestroy", "ngOnChanges",
-            "created", "mounted", "beforeDestroy", "destroyed",
+            "componentDidMount",
+            "componentWillUnmount",
+            "componentDidUpdate",
+            "render",
+            "ngOnInit",
+            "ngOnDestroy",
+            "ngOnChanges",
+            "created",
+            "mounted",
+            "beforeDestroy",
+            "destroyed",
         ];
 
-        lifecycle_methods.iter().any(|pattern| method_name == *pattern)
+        lifecycle_methods
+            .iter()
+            .any(|pattern| method_name == *pattern)
     }
 
     /// Checks if a type represents an infrastructure type.
     fn is_infrastructure_type(&self, type_name: &str) -> bool {
         let infrastructure_types = [
-            "Express.Request", "Express.Response", "Koa.Context",
-            "Mongoose.Document", "Sequelize.Model", "TypeORM.Entity",
-            "Socket.IO.Socket", "Redis.Client", "AWS.S3",
+            "Express.Request",
+            "Express.Response",
+            "Koa.Context",
+            "Mongoose.Document",
+            "Sequelize.Model",
+            "TypeORM.Entity",
+            "Socket.IO.Socket",
+            "Redis.Client",
+            "AWS.S3",
         ];
 
-        infrastructure_types.iter().any(|pattern| type_name.contains(pattern))
+        infrastructure_types
+            .iter()
+            .any(|pattern| type_name.contains(pattern))
     }
 
     /// Checks if a property name indicates private use but may be exposed.

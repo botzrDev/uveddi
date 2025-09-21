@@ -3,7 +3,9 @@
 //! This module provides Python-specific security analysis for OWASP Top 10 vulnerabilities.
 
 use crate::analysis::detectors::security::owasp::types::{OwaspCategory, OwaspVulnerability};
-use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashMap;
@@ -104,7 +106,10 @@ impl PythonOwaspAnalyzer {
         ]
     }
 
-    pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
+    pub async fn analyze(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
         if file.language != SourceLanguage::Python {
             return Ok(vec![]);
         }
@@ -196,10 +201,22 @@ impl PythonOwaspAnalyzer {
     /// Check if a Python package is known to be vulnerable
     pub fn check_vulnerable_packages(package: &str, version: &str) -> Option<String> {
         let vulnerable_packages = vec![
-            ("django", "2.2", "Django < 2.2.28 has security vulnerabilities"),
+            (
+                "django",
+                "2.2",
+                "Django < 2.2.28 has security vulnerabilities",
+            ),
             ("flask", "1.0", "Flask < 1.0.4 has security issues"),
-            ("requests", "2.5", "Requests < 2.5.2 has SSL verification issues"),
-            ("pyyaml", "5.0", "PyYAML < 5.1 has unsafe load vulnerability"),
+            (
+                "requests",
+                "2.5",
+                "Requests < 2.5.2 has SSL verification issues",
+            ),
+            (
+                "pyyaml",
+                "5.0",
+                "PyYAML < 5.1 has unsafe load vulnerability",
+            ),
         ];
 
         for (name, vuln_version, message) in vulnerable_packages {

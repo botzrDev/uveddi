@@ -25,7 +25,7 @@ pub struct StabilityAnalysis {
     pub stable_components: Vec<(ComponentNode, StabilityMetrics)>,
     pub unstable_components: Vec<(ComponentNode, StabilityMetrics)>,
     pub balanced_components: Vec<(ComponentNode, StabilityMetrics)>,
-    pub zone_of_pain: Vec<(ComponentNode, StabilityMetrics)>,     // Stable + Concrete
+    pub zone_of_pain: Vec<(ComponentNode, StabilityMetrics)>, // Stable + Concrete
     pub zone_of_uselessness: Vec<(ComponentNode, StabilityMetrics)>, // Unstable + Abstract
 }
 
@@ -45,8 +45,12 @@ impl InstabilityCalculator {
         graph: &LocalDependencyGraph,
         component: &ComponentNode,
     ) -> f64 {
-        let ca = self.afferent_calculator.calculate_for_component(graph, component) as f64;
-        let ce = self.efferent_calculator.calculate_for_component(graph, component) as f64;
+        let ca = self
+            .afferent_calculator
+            .calculate_for_component(graph, component) as f64;
+        let ce = self
+            .efferent_calculator
+            .calculate_for_component(graph, component) as f64;
 
         if ca + ce == 0.0 {
             0.0 // Isolated component is considered stable
@@ -84,7 +88,10 @@ impl InstabilityCalculator {
             instabilities.insert(component.clone(), instability);
         }
 
-        debug!("Calculated instability for {} components", instabilities.len());
+        debug!(
+            "Calculated instability for {} components",
+            instabilities.len()
+        );
         instabilities
     }
 
@@ -117,7 +124,8 @@ impl InstabilityCalculator {
                 }
             }
             ComponentNode::Module { path } => {
-                if path.contains("trait") || path.contains("interface") || path.contains("abstract") {
+                if path.contains("trait") || path.contains("interface") || path.contains("abstract")
+                {
                     0.8
                 } else if path.contains("impl") || path.contains("concrete") {
                     0.2
@@ -155,11 +163,16 @@ impl InstabilityCalculator {
         graph: &LocalDependencyGraph,
         component: &ComponentNode,
     ) -> StabilityMetrics {
-        let afferent_coupling = self.afferent_calculator.calculate_for_component(graph, component);
-        let efferent_coupling = self.efferent_calculator.calculate_for_component(graph, component);
+        let afferent_coupling = self
+            .afferent_calculator
+            .calculate_for_component(graph, component);
+        let efferent_coupling = self
+            .efferent_calculator
+            .calculate_for_component(graph, component);
         let instability = self.calculate_instability(graph, component);
         let abstractness = self.calculate_abstractness(component);
-        let distance_from_main_sequence = self.calculate_distance_from_main_sequence(graph, component);
+        let distance_from_main_sequence =
+            self.calculate_distance_from_main_sequence(graph, component);
 
         StabilityMetrics {
             afferent_coupling,
@@ -171,10 +184,7 @@ impl InstabilityCalculator {
     }
 
     /// Perform comprehensive stability analysis of the system
-    pub fn analyze_system_stability(
-        &self,
-        graph: &LocalDependencyGraph,
-    ) -> StabilityAnalysis {
+    pub fn analyze_system_stability(&self, graph: &LocalDependencyGraph) -> StabilityAnalysis {
         let petgraph = graph.get_petgraph();
         let mut stable_components = Vec::new();
         let mut unstable_components = Vec::new();
@@ -182,7 +192,10 @@ impl InstabilityCalculator {
         let mut zone_of_pain = Vec::new();
         let mut zone_of_uselessness = Vec::new();
 
-        debug!("Analyzing stability for {} components", petgraph.node_count());
+        debug!(
+            "Analyzing stability for {} components",
+            petgraph.node_count()
+        );
 
         for node_index in petgraph.node_indices() {
             if let Some(component) = graph.get_node_from_index(node_index) {
@@ -209,9 +222,12 @@ impl InstabilityCalculator {
         }
 
         // Sort by distance from main sequence (higher distance = more problematic)
-        let sort_by_distance = |a: &(ComponentNode, StabilityMetrics), b: &(ComponentNode, StabilityMetrics)| {
-            b.1.distance_from_main_sequence.partial_cmp(&a.1.distance_from_main_sequence).unwrap_or(std::cmp::Ordering::Equal)
-        };
+        let sort_by_distance =
+            |a: &(ComponentNode, StabilityMetrics), b: &(ComponentNode, StabilityMetrics)| {
+                b.1.distance_from_main_sequence
+                    .partial_cmp(&a.1.distance_from_main_sequence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            };
 
         stable_components.sort_by(sort_by_distance);
         unstable_components.sort_by(sort_by_distance);
@@ -258,7 +274,9 @@ impl InstabilityCalculator {
 
         // Sort by distance from main sequence (descending)
         violations.sort_by(|a, b| {
-            b.1.distance_from_main_sequence.partial_cmp(&a.1.distance_from_main_sequence).unwrap_or(std::cmp::Ordering::Equal)
+            b.1.distance_from_main_sequence
+                .partial_cmp(&a.1.distance_from_main_sequence)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         debug!(

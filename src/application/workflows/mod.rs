@@ -4,12 +4,12 @@
 //! of complex, multi-step analysis operations including core analysis,
 //! report generation, and AI integration.
 
-pub mod analysis_workflow;
 pub mod ai_workflow;
+pub mod analysis_workflow;
 pub mod report_workflow;
 
-pub use analysis_workflow::{AnalysisWorkflow, AnalysisWorkflowConfig};
 pub use ai_workflow::{AiWorkflow, AiWorkflowConfig};
+pub use analysis_workflow::{AnalysisWorkflow, AnalysisWorkflowConfig};
 pub use report_workflow::{ReportWorkflow, ReportWorkflowConfig};
 
 use crate::error::UveddiError;

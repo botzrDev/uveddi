@@ -52,8 +52,11 @@ impl RustQueries {
 
     /// Create a query from query string and handle errors
     pub fn create_query(query_str: &str) -> Result<Query, AnalysisError> {
-        Query::new(&crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(), query_str)
-            .map_err(|e| AnalysisError::QueryError(format!("Failed to create query: {}", e)))
+        Query::new(
+            &crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(),
+            query_str,
+        )
+        .map_err(|e| AnalysisError::QueryError(format!("Failed to create query: {}", e)))
     }
 
     /// Execute a query and collect all matches

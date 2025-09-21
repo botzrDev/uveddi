@@ -43,7 +43,10 @@ impl ImportDetector {
     ) -> Result<Vec<String>, AnalysisError> {
         // This would require cross-referencing imports with usage
         // For now, return empty list - would need symbol table analysis
-        debug!("Unused import detection not yet implemented for {}", file_path.display());
+        debug!(
+            "Unused import detection not yet implemented for {}",
+            file_path.display()
+        );
         Ok(Vec::new())
     }
 
@@ -69,7 +72,10 @@ impl ImportDetector {
                 name: (identifier) @item)) @use_decl
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(), use_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_rust::LANGUAGE.into(),
+            use_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -123,7 +129,10 @@ impl ImportDetector {
                 (dotted_name) @item)) @from_import_list
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(), import_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_python::LANGUAGE.into(),
+            import_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -179,7 +188,10 @@ impl ImportDetector {
                   arguments: (arguments (string) @module)))) @require_call
         "#;
 
-        if let Ok(query) = Query::new(&crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(), import_query) {
+        if let Ok(query) = Query::new(
+            &crate::ast::tree_sitter::tree_sitter_javascript::LANGUAGE.into(),
+            import_query,
+        ) {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 

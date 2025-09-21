@@ -3,15 +3,15 @@
 //! This module coordinates all other analyzers to provide comprehensive
 //! leak detection across multiple dimensions of architectural analysis.
 
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::analyzers::{
+    AbstractionValidator, ImplementationAnalyzer, InterfaceAnalyzer,
+};
+use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
+    AnalysisContext, ArchitecturalConfig, LeakType,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, ArchitecturalConfig, LeakType
-};
-use crate::analysis::detectors::anti_patterns::leaky_abstraction::analyzers::{
-    InterfaceAnalyzer, ImplementationAnalyzer, AbstractionValidator
-};
 
 /// Main coordinator for leak detection analysis.
 pub struct LeakDetector {
@@ -39,19 +39,32 @@ impl LeakDetector {
         let mut all_issues = Vec::new();
 
         // Run interface analysis
-        if let Ok(interface_results) = self.interface_analyzer.analyze_interface(parsed_file, context) {
-            let interface_issues = self.interface_analyzer.convert_to_issues(&interface_results, context);
+        if let Ok(interface_results) = self
+            .interface_analyzer
+            .analyze_interface(parsed_file, context)
+        {
+            let interface_issues = self
+                .interface_analyzer
+                .convert_to_issues(&interface_results, context);
             all_issues.extend(interface_issues);
         }
 
         // Run implementation analysis
-        if let Ok(implementation_results) = self.implementation_analyzer.analyze_implementation(parsed_file, context) {
-            let implementation_issues = self.implementation_analyzer.convert_to_issues(&implementation_results, context);
+        if let Ok(implementation_results) = self
+            .implementation_analyzer
+            .analyze_implementation(parsed_file, context)
+        {
+            let implementation_issues = self
+                .implementation_analyzer
+                .convert_to_issues(&implementation_results, context);
             all_issues.extend(implementation_issues);
         }
 
         // Run abstraction validation
-        if let Ok(validation_issues) = self.abstraction_validator.validate_abstractions(parsed_file, context) {
+        if let Ok(validation_issues) = self
+            .abstraction_validator
+            .validate_abstractions(parsed_file, context)
+        {
             all_issues.extend(validation_issues);
         }
 
@@ -229,7 +242,10 @@ impl LeakDetector {
     }
 
     /// Prioritizes issues based on severity and impact.
-    pub fn prioritize_issues(&self, mut issues: Vec<ArchitecturalIssue>) -> Vec<ArchitecturalIssue> {
+    pub fn prioritize_issues(
+        &self,
+        mut issues: Vec<ArchitecturalIssue>,
+    ) -> Vec<ArchitecturalIssue> {
         issues.sort_by(|a, b| {
             // Sort by severity (high > medium > low)
             let severity_order = |s: &str| match s {

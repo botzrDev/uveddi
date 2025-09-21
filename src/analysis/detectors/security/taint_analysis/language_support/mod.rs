@@ -1,18 +1,18 @@
 //! Language-specific taint analysis support
 
-pub mod rust;
 pub mod python;
+pub mod rust;
 pub mod typescript;
 
-pub use rust::RustTaintAnalyzer;
 pub use python::PythonTaintAnalyzer;
+pub use rust::RustTaintAnalyzer;
 pub use typescript::TypeScriptTaintAnalyzer;
 
 use crate::analysis::detectors::security::taint_analysis::types::{
-    TaintSource, TaintSink, SanitizationPoint, LanguageTaintPatterns
+    LanguageTaintPatterns, SanitizationPoint, TaintSink, TaintSource,
 };
-use crate::ast::{ParsedFile, SourceLanguage};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// Trait for language-specific taint analysis
 pub trait LanguageTaintAnalyzer {
@@ -29,7 +29,10 @@ pub trait LanguageTaintAnalyzer {
     fn get_taint_patterns(&self) -> LanguageTaintPatterns;
 
     /// Analyze language-specific constructs for taint
-    fn analyze_language_constructs(&self, file: &ParsedFile) -> Result<LanguageAnalysisResult, AnalysisError>;
+    fn analyze_language_constructs(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<LanguageAnalysisResult, AnalysisError>;
 }
 
 /// Result of language-specific taint analysis
@@ -47,7 +50,8 @@ pub struct LanguageSpecificIssue {
     pub issue_type: String,
     pub description: String,
     pub severity: f64,
-    pub location: Option<crate::analysis::detectors::security::taint_analysis::types::SourceLocation>,
+    pub location:
+        Option<crate::analysis::detectors::security::taint_analysis::types::SourceLocation>,
     pub language: SourceLanguage,
 }
 
@@ -103,7 +107,10 @@ impl LanguageTaintAnalyzer for GenericTaintAnalyzer {
         LanguageTaintPatterns::new()
     }
 
-    fn analyze_language_constructs(&self, _file: &ParsedFile) -> Result<LanguageAnalysisResult, AnalysisError> {
+    fn analyze_language_constructs(
+        &self,
+        _file: &ParsedFile,
+    ) -> Result<LanguageAnalysisResult, AnalysisError> {
         Ok(LanguageAnalysisResult {
             sources_found: Vec::new(),
             sinks_found: Vec::new(),

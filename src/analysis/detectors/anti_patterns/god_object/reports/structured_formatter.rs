@@ -1,8 +1,11 @@
 //! Structured data formatting for God Object reports
 
+use super::utils::{
+    calculate_severity_distribution, extract_class_name, extract_metrics_from_description,
+    generate_recommendations,
+};
 use crate::database::models::ArchitecturalIssue;
 use serde_json::{json, Value};
-use super::utils::{calculate_severity_distribution, extract_class_name, extract_metrics_from_description, generate_recommendations};
 
 /// Structured data formatter for external consumption
 pub struct StructuredFormatter;
@@ -61,7 +64,10 @@ impl StructuredFormatter {
     }
 
     /// Calculate overall risk score based on severity distribution
-    fn calculate_risk_score(distribution: &std::collections::HashMap<String, usize>, total: usize) -> f64 {
+    fn calculate_risk_score(
+        distribution: &std::collections::HashMap<String, usize>,
+        total: usize,
+    ) -> f64 {
         if total == 0 {
             return 0.0;
         }
@@ -83,7 +89,7 @@ impl StructuredFormatter {
             score if score >= 70.0 => "urgent_refactoring_required",
             score if score >= 40.0 => "schedule_refactoring_soon",
             score if score >= 20.0 => "consider_gradual_improvement",
-            _ => "monitor_and_maintain"
+            _ => "monitor_and_maintain",
         }
     }
 
@@ -103,7 +109,10 @@ impl StructuredFormatter {
 
             let severity = &issue.severity;
             let severities = entry["severities"].as_object_mut().unwrap();
-            let count = severities.get(severity).and_then(|v| v.as_u64()).unwrap_or(0);
+            let count = severities
+                .get(severity)
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0);
             severities.insert(severity.clone(), json!(count + 1));
         }
 

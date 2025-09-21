@@ -1,16 +1,16 @@
 //! Taint source detection modules
 
-pub mod input_sources;
 pub mod external_sources;
+pub mod input_sources;
 pub mod user_sources;
 
-pub use input_sources::InputSourceDetector;
 pub use external_sources::ExternalSourceDetector;
+pub use input_sources::InputSourceDetector;
 pub use user_sources::UserSourceDetector;
 
-use crate::analysis::detectors::security::taint_analysis::types::{TaintSource, SourceLocation};
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::analysis::detectors::security::taint_analysis::types::{SourceLocation, TaintSource};
 use crate::analysis::AnalysisError;
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// Trait for taint source detection
 pub trait TaintSourceDetector {

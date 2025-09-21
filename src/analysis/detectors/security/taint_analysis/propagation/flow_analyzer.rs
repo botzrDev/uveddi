@@ -1,9 +1,11 @@
 //! Core taint flow analysis logic
 
-use crate::analysis::detectors::security::taint_analysis::types::{
-    DataFlowGraph, TaintFlow, TaintLevel, DataFlowNodeType
+use crate::analysis::detectors::security::taint_analysis::propagation::{
+    PathTracker, SanitizerDetector,
 };
-use crate::analysis::detectors::security::taint_analysis::propagation::{PathTracker, SanitizerDetector};
+use crate::analysis::detectors::security::taint_analysis::types::{
+    DataFlowGraph, DataFlowNodeType, TaintFlow, TaintLevel,
+};
 use crate::analysis::AnalysisError;
 use std::collections::{HashSet, VecDeque};
 use tracing::debug;
@@ -101,7 +103,11 @@ impl FlowAnalyzer {
             }
         }
 
-        debug!("Found {} taint flows from source {}", flows.len(), source_id);
+        debug!(
+            "Found {} taint flows from source {}",
+            flows.len(),
+            source_id
+        );
         Ok(flows)
     }
 
@@ -160,7 +166,12 @@ impl FlowAnalyzer {
     }
 
     /// Check if a path contains effective sanitization
-    pub fn has_effective_sanitization(&self, graph: &DataFlowGraph, path: &[String], vulnerability_type: &str) -> bool {
+    pub fn has_effective_sanitization(
+        &self,
+        graph: &DataFlowGraph,
+        path: &[String],
+        vulnerability_type: &str,
+    ) -> bool {
         for node_id in path {
             if let Some(node) = graph.nodes.get(node_id) {
                 if let DataFlowNodeType::Sanitizer(_) = &node.node_type {

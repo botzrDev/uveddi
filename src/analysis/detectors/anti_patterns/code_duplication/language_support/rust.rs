@@ -1,6 +1,6 @@
 //! Rust-specific language support for code duplication detection
 
-use super::{LanguageSupport, FunctionSignature, CommentSyntax};
+use super::{CommentSyntax, FunctionSignature, LanguageSupport};
 use crate::analysis::detectors::anti_patterns::code_duplication::types::CodeBlock;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
@@ -67,8 +67,7 @@ impl LanguageSupport for RustLanguageSupport {
 
                 if brace_count == 0 && line.contains('}') {
                     // End of function
-                    let function_content: String = lines[current_function_start - 1..=i]
-                        .join("\n");
+                    let function_content: String = lines[current_function_start - 1..=i].join("\n");
 
                     if function_content.lines().count() >= 5 {
                         // Only include substantial functions
@@ -100,11 +99,16 @@ impl LanguageSupport for RustLanguageSupport {
                     token.clone() // Keep keywords and types as-is
                 } else if token.chars().all(|c| c.is_numeric() || c == '.') {
                     "NUMBER".to_string() // Normalize numbers
-                } else if (token.starts_with('"') && token.ends_with('"')) ||
-                          (token.starts_with('\'') && token.ends_with('\'')) {
+                } else if (token.starts_with('"') && token.ends_with('"'))
+                    || (token.starts_with('\'') && token.ends_with('\''))
+                {
                     "STRING".to_string() // Normalize string literals
-                } else if token.chars().next().map_or(false, |c| c.is_alphabetic() || c == '_') &&
-                         token.chars().all(|c| c.is_alphanumeric() || c == '_') {
+                } else if token
+                    .chars()
+                    .next()
+                    .map_or(false, |c| c.is_alphabetic() || c == '_')
+                    && token.chars().all(|c| c.is_alphanumeric() || c == '_')
+                {
                     "IDENTIFIER".to_string() // Normalize identifiers
                 } else {
                     token.clone() // Keep operators and punctuation
@@ -187,8 +191,12 @@ impl RustLanguageSupport {
             name: clean_name,
             parameter_types: Vec::new(), // Would need more parsing for full parameter analysis
             return_type: None,           // Would need more parsing for return type
-            visibility: if is_public { Some("pub".to_string()) } else { None },
-            is_method: false,            // Would need context to determine
+            visibility: if is_public {
+                Some("pub".to_string())
+            } else {
+                None
+            },
+            is_method: false, // Would need context to determine
             generics,
         })
     }

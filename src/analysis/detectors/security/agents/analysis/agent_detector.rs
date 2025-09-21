@@ -22,7 +22,10 @@ impl AgentDetector {
     }
 
     /// Detect agent patterns in the given context
-    pub async fn detect_agents(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn detect_agents(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Analyze for autonomous behavior patterns
@@ -40,7 +43,10 @@ impl AgentDetector {
         Ok(issues)
     }
 
-    async fn analyze_autonomous_behavior(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_autonomous_behavior(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -62,7 +68,8 @@ impl AgentDetector {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -86,7 +93,10 @@ impl AgentDetector {
         Ok(issues)
     }
 
-    async fn analyze_communication_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_communication_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -108,7 +118,8 @@ impl AgentDetector {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -132,7 +143,10 @@ impl AgentDetector {
         Ok(issues)
     }
 
-    async fn analyze_decision_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_decision_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -154,7 +168,8 @@ impl AgentDetector {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -178,7 +193,10 @@ impl AgentDetector {
         Ok(issues)
     }
 
-    async fn analyze_coordination_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_coordination_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let content = &context.content;
 
@@ -200,7 +218,8 @@ impl AgentDetector {
                         context.file_path.clone(),
                         (line_num + 1) as i32,
                         (line_num + 1) as i32,
-                    ).with_columns(0, line.len() as i32);
+                    )
+                    .with_columns(0, line.len() as i32);
 
                     let issue = SecurityIssue::new(
                         SecurityIssueType::PotentialMaliciousAgent,
@@ -227,8 +246,14 @@ impl AgentDetector {
 
 #[async_trait]
 impl AnalysisModule for AgentDetector {
-    async fn analyze(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Starting agent detection analysis for {:?}", context.file_path);
+    async fn analyze(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
+        debug!(
+            "Starting agent detection analysis for {:?}",
+            context.file_path
+        );
         self.detect_agents(context).await
     }
 
@@ -239,7 +264,10 @@ impl AnalysisModule for AgentDetector {
     fn can_analyze(&self, context: &SecurityContext) -> bool {
         matches!(
             context.language,
-            SourceLanguage::Rust | SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript
+            SourceLanguage::Rust
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 }

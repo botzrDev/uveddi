@@ -3,13 +3,13 @@
 //! This module provides language-specific analysis capabilities for detecting
 //! agent patterns in different programming languages.
 
-pub mod rust;
-pub mod python;
 pub mod javascript;
+pub mod python;
+pub mod rust;
 
-pub use rust::RustAgentAnalyzer;
-pub use python::PythonAgentAnalyzer;
 pub use javascript::JavaScriptAgentAnalyzer;
+pub use python::PythonAgentAnalyzer;
+pub use rust::RustAgentAnalyzer;
 
 use crate::analysis::detectors::security::core::SecurityContext;
 use crate::analysis::detectors::security::types::SecurityIssue;
@@ -44,11 +44,16 @@ pub enum LanguageAnalyzer {
 
 impl LanguageAnalyzer {
     /// Analyze patterns for the specific language
-    pub async fn analyze(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn analyze(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         match self {
             LanguageAnalyzer::Rust(analyzer) => analyzer.analyze_language_specific(context).await,
             LanguageAnalyzer::Python(analyzer) => analyzer.analyze_language_specific(context).await,
-            LanguageAnalyzer::JavaScript(analyzer) => analyzer.analyze_language_specific(context).await,
+            LanguageAnalyzer::JavaScript(analyzer) => {
+                analyzer.analyze_language_specific(context).await
+            }
         }
     }
 }

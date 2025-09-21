@@ -155,7 +155,10 @@ impl AgentPatternDatabase {
     }
 
     /// Match agent patterns in context
-    pub async fn match_agent_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn match_agent_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         for pattern in &self.patterns {
@@ -252,14 +255,19 @@ impl AgentPatternDatabase {
     pub fn get_patterns_by_type(&self, pattern_type: &AgentPatternType) -> Vec<&AgentPattern> {
         self.patterns
             .iter()
-            .filter(|p| std::mem::discriminant(&p.pattern_type) == std::mem::discriminant(pattern_type))
+            .filter(|p| {
+                std::mem::discriminant(&p.pattern_type) == std::mem::discriminant(pattern_type)
+            })
             .collect()
     }
 }
 
 #[async_trait]
 impl PatternMatcher for AgentPatternDatabase {
-    async fn match_patterns(&self, context: &SecurityContext) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn match_patterns(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         self.match_agent_patterns(context).await
     }
 

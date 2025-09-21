@@ -50,7 +50,10 @@ impl AfferentCouplingCalculator {
         let mut afferent_couplings = HashMap::new();
         let petgraph = graph.get_petgraph();
 
-        debug!("Calculating afferent coupling for {} nodes", petgraph.node_count());
+        debug!(
+            "Calculating afferent coupling for {} nodes",
+            petgraph.node_count()
+        );
 
         for node_index in petgraph.node_indices() {
             if let Some(component) = graph.get_node_from_index(node_index) {
@@ -62,7 +65,10 @@ impl AfferentCouplingCalculator {
             }
         }
 
-        debug!("Calculated afferent coupling for {} components", afferent_couplings.len());
+        debug!(
+            "Calculated afferent coupling for {} components",
+            afferent_couplings.len()
+        );
         afferent_couplings
     }
 
@@ -121,10 +127,7 @@ impl AfferentCouplingCalculator {
     }
 
     /// Calculate statistics for afferent coupling distribution
-    pub fn calculate_statistics(
-        &self,
-        graph: &LocalDependencyGraph,
-    ) -> AfferentCouplingStatistics {
+    pub fn calculate_statistics(&self, graph: &LocalDependencyGraph) -> AfferentCouplingStatistics {
         let afferent_couplings = self.calculate_for_all_components(graph);
         let values: Vec<usize> = afferent_couplings.values().cloned().collect();
 
@@ -151,7 +154,8 @@ impl AfferentCouplingCalculator {
                 let diff = x as f64 - mean;
                 diff * diff
             })
-            .sum::<f64>() / count as f64;
+            .sum::<f64>()
+            / count as f64;
 
         let std_dev = variance.sqrt();
 
@@ -177,7 +181,8 @@ impl AfferentCouplingCalculator {
 
         sorted_components.sort_by(|a, b| b.1.cmp(&a.1));
 
-        let cutoff_index = ((sorted_components.len() as f64) * (1.0 - percentile)).max(1.0) as usize;
+        let cutoff_index =
+            ((sorted_components.len() as f64) * (1.0 - percentile)).max(1.0) as usize;
 
         sorted_components.into_iter().take(cutoff_index).collect()
     }

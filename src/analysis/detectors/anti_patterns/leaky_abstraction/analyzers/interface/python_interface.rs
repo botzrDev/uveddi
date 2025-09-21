@@ -1,11 +1,11 @@
 //! Python interface analysis for leaky abstraction detection.
 
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
-use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
-    AnalysisContext, InterfaceAnalysisResult, ApiElement, VisibilityViolation
+    AnalysisContext, ApiElement, InterfaceAnalysisResult, VisibilityViolation,
 };
+use crate::analysis::AnalysisError;
+use crate::ast::tree_sitter::{Query, QueryCursor};
+use crate::ast::tree_sitter_impl::ParsedFile;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -30,9 +30,10 @@ impl PythonInterfaceAnalyzer {
         let contract_violations = Vec::new();
 
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::DetectionError("No AST available".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"

@@ -3,13 +3,13 @@
 //! This module coordinates all misconfiguration detection including rule-based
 //! pattern matching and specialized configuration checks.
 
-use crate::analysis::AnalysisError;
-use crate::analysis::detectors::security::config::language_support::utils;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::ConfigIssue;
-use super::rules::{MisconfigurationRule, MisconfigurationPattern};
+use super::checks::{DatabaseChecker, DebugChecker, SessionChecker};
 use super::patterns::PatternBuilder;
-use super::checks::{DebugChecker, SessionChecker, DatabaseChecker};
+use super::rules::{MisconfigurationPattern, MisconfigurationRule};
+use crate::analysis::detectors::security::config::language_support::utils;
+use crate::analysis::AnalysisError;
 use serde_yaml::Value as YamlValue;
 
 /// Analyzes configuration files for security misconfigurations
@@ -43,7 +43,9 @@ impl MisconfigurationAnalyzer {
         // Text-based pattern matching
         for (line_num, line) in content.lines().enumerate() {
             for rule in &self.rules {
-                if let Some(issue) = PatternBuilder::check_line_against_rule(line, line_num + 1, rule)? {
+                if let Some(issue) =
+                    PatternBuilder::check_line_against_rule(line, line_num + 1, rule)?
+                {
                     issues.push(issue);
                 }
             }
@@ -58,7 +60,10 @@ impl MisconfigurationAnalyzer {
     }
 
     /// Analyze structured configuration data
-    fn analyze_structured_config(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn analyze_structured_config(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         // Run specialized checks
@@ -67,7 +72,10 @@ impl MisconfigurationAnalyzer {
 
         issues.extend(self.session_checker.check_weak_session_config(value)?);
 
-        issues.extend(self.database_checker.check_insecure_database_config(value)?);
+        issues.extend(
+            self.database_checker
+                .check_insecure_database_config(value)?,
+        );
         issues.extend(self.database_checker.check_connection_pooling(value));
 
         // Check for structured patterns
@@ -77,7 +85,10 @@ impl MisconfigurationAnalyzer {
     }
 
     /// Check structured patterns against the YAML value
-    fn check_structured_patterns(&self, value: &YamlValue) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    fn check_structured_patterns(
+        &self,
+        value: &YamlValue,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
         for rule in &self.rules {
@@ -115,19 +126,30 @@ impl MisconfigurationAnalyzer {
     }
 
     /// Check for specific OWASP categories
-    pub fn check_owasp_category(&self, content: &str, category: &str) -> Result<Vec<ConfigIssue>, AnalysisError> {
+    pub fn check_owasp_category(
+        &self,
+        content: &str,
+        category: &str,
+    ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let all_issues = self.analyze(content)?;
-        Ok(all_issues.into_iter()
+        Ok(all_issues
+            .into_iter()
             .filter(|issue| {
                 // Filter by OWASP category if we had access to it in ConfigIssue
                 // For now, filter by tags or title content
-                issue.tags.iter().any(|tag| tag.contains(&category.to_lowercase()))
+                issue
+                    .tags
+                    .iter()
+                    .any(|tag| tag.contains(&category.to_lowercase()))
             })
             .collect())
     }
 
     /// Get statistics about detected misconfigurations
-    pub fn get_analysis_stats(&self, content: &str) -> Result<MisconfigurationStats, AnalysisError> {
+    pub fn get_analysis_stats(
+        &self,
+        content: &str,
+    ) -> Result<MisconfigurationStats, AnalysisError> {
         let issues = self.analyze(content)?;
 
         let mut stats = MisconfigurationStats::default();
@@ -161,11 +183,11 @@ pub struct MisconfigurationStats {
 impl MisconfigurationStats {
     /// Calculate risk score based on issue severity distribution
     pub fn risk_score(&self) -> f64 {
-        let weighted_score = (self.critical_count as f64 * 10.0) +
-                           (self.high_count as f64 * 7.0) +
-                           (self.medium_count as f64 * 4.0) +
-                           (self.low_count as f64 * 2.0) +
-                           (self.info_count as f64 * 1.0);
+        let weighted_score = (self.critical_count as f64 * 10.0)
+            + (self.high_count as f64 * 7.0)
+            + (self.medium_count as f64 * 4.0)
+            + (self.low_count as f64 * 2.0)
+            + (self.info_count as f64 * 1.0);
 
         // Normalize to 0-100 scale
         (weighted_score / (self.total_issues as f64).max(1.0) * 10.0).min(100.0)

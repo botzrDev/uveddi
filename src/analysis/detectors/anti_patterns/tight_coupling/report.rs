@@ -49,16 +49,24 @@ impl ReportGenerator {
 
         let metrics = self.coupling_calculator.calculate_metrics(graph);
         let stability_analysis = self.instability_calculator.analyze_system_stability(graph);
-        let hotspots = self.coupling_calculator.identify_coupling_hotspots(&metrics, 0.9);
+        let hotspots = self
+            .coupling_calculator
+            .identify_coupling_hotspots(&metrics, 0.9);
 
         let visualization_data = if config.visualization_enabled {
-            Some(self.graph_visualizer.generate_graph_data(graph, &metrics, dependencies))
+            Some(
+                self.graph_visualizer
+                    .generate_graph_data(graph, &metrics, dependencies),
+            )
         } else {
             None
         };
 
         let coupling_matrix = if config.generate_coupling_matrix {
-            Some(self.matrix_generator.generate_matrix(graph, &metrics, dependencies))
+            Some(
+                self.matrix_generator
+                    .generate_matrix(graph, &metrics, dependencies),
+            )
         } else {
             None
         };

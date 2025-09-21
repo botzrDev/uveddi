@@ -1,7 +1,7 @@
 //! Dead code pattern matching
 
-use crate::analysis::AnalysisError;
 use crate::analysis::detectors::anti_patterns::dead_code::types::Symbol;
+use crate::analysis::AnalysisError;
 
 use super::{DeadCodePattern, PatternType};
 
@@ -35,7 +35,10 @@ impl CodePatternMatcher {
                     pattern_type: PatternType::UnusedPrivate,
                     symbols: vec![symbol.clone()],
                     confidence: 0.9,
-                    description: format!("Private {} '{}' is never used", symbol.symbol_type, symbol.name),
+                    description: format!(
+                        "Private {} '{}' is never used",
+                        symbol.symbol_type, symbol.name
+                    ),
                 });
             }
         }
@@ -53,7 +56,10 @@ impl CodePatternMatcher {
                     pattern_type: PatternType::OrphanedHelper,
                     symbols: vec![symbol.clone()],
                     confidence: 0.8,
-                    description: format!("Helper {} '{}' appears to be orphaned", symbol.symbol_type, symbol.name),
+                    description: format!(
+                        "Helper {} '{}' appears to be orphaned",
+                        symbol.symbol_type, symbol.name
+                    ),
                 });
             }
         }
@@ -104,7 +110,8 @@ impl CodePatternMatcher {
             return Some(AstPattern::TodoCode);
         }
 
-        if symbol.code_snippet.contains("#[cfg(never)]") || symbol.code_snippet.contains("if false") {
+        if symbol.code_snippet.contains("#[cfg(never)]") || symbol.code_snippet.contains("if false")
+        {
             return Some(AstPattern::ConditionallyDead);
         }
 

@@ -3,9 +3,9 @@
 //! This module coordinates the SecurityOrchestrator and individual agent implementations
 //! for comprehensive security analysis through a multi-agent architecture.
 
-pub mod orchestrator;
 pub mod agents;
+pub mod orchestrator;
 
 // Re-export main types for convenience
+pub use agents::{ConfigAnalysisAgent, DependencyAgent, TaintAnalysisAgent, ValidationAgent};
 pub use orchestrator::SecurityOrchestrator;
-pub use agents::{TaintAnalysisAgent, ConfigAnalysisAgent, DependencyAgent, ValidationAgent};
