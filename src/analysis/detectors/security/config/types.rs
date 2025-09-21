@@ -17,7 +17,7 @@ pub enum ConfigType {
 }
 
 /// Severity levels for configuration security issues
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ConfigSeverity {
     /// Critical security vulnerabilities
     Critical,

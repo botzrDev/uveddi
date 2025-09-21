@@ -76,9 +76,11 @@ impl DetectorConfig for BaseConfig {
     fn validate(&self) -> Result<(), AnalysisError> {
         if let Some(max_issues) = self.max_issues {
             if max_issues == 0 {
-                return Err(AnalysisError::ConfigError(
-                    "max_issues must be greater than 0".to_string(),
-                ));
+                return Err(AnalysisError::ConfigurationError {
+                    field: "max_issues".to_string(),
+                    value: max_issues.to_string(),
+                    reason: "max_issues must be greater than 0".to_string(),
+                });
             }
         }
         Ok(())
@@ -113,6 +115,6 @@ impl DetectorConfig for BaseConfig {
     }
 
     fn default() -> Self {
-        Self::default()
+        Self::new()
     }
 }

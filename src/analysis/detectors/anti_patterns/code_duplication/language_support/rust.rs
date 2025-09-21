@@ -35,8 +35,9 @@ impl LanguageSupport for RustLanguageSupport {
     }
 
     fn extract_code_blocks(&self, file: &ParsedFile) -> Result<Vec<CodeBlock>, AnalysisError> {
-        let content = std::fs::read_to_string(&file.path)
-            .map_err(|e| AnalysisError::IoError(format!("Failed to read file: {}", e)))?;
+        let content = std::fs::read_to_string(file.path()).map_err(|e| {
+            AnalysisError::file_system_error(file.path().display().to_string(), e)
+        })?;
 
         let mut blocks = Vec::new();
         let lines: Vec<_> = content.lines().collect();
@@ -72,7 +73,7 @@ impl LanguageSupport for RustLanguageSupport {
                     if function_content.lines().count() >= 5 {
                         // Only include substantial functions
                         blocks.push(CodeBlock::new(
-                            file.path.to_string_lossy().to_string(),
+                            file.path().to_string_lossy().to_string(),
                             current_function_start as u32,
                             (i + 1) as u32,
                             0,

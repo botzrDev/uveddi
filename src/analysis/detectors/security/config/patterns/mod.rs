@@ -78,8 +78,8 @@ pub mod utils {
 
     /// Compile a regex pattern safely
     pub fn compile_pattern(pattern: &str) -> Result<Regex, AnalysisError> {
-        Regex::new(pattern).map_err(|e| {
-            AnalysisError::PatternError(format!("Invalid regex pattern '{}': {}", pattern, e))
+        Regex::new(pattern).map_err(|e| AnalysisError::RegexError {
+            error: format!("Invalid regex pattern '{}': {}", pattern, e),
         })
     }
 

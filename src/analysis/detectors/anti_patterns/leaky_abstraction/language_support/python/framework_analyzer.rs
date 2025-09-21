@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes Python framework coupling patterns and decorator usage for abstraction leaks.
+#[derive(Clone)]
 pub struct FrameworkAnalyzer;
 
 impl FrameworkAnalyzer {

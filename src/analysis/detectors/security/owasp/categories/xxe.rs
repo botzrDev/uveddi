@@ -58,7 +58,7 @@ impl XXEDetector {
         vec![
             XXEPattern {
                 pattern: "quick_xml::Reader".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "XML parser without XXE protection".to_string(),
                 confidence: 0.6,
                 severity: SecuritySeverity::Medium,
@@ -66,7 +66,7 @@ impl XXEDetector {
             },
             XXEPattern {
                 pattern: "<!ENTITY".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "XML entity declaration detected".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -79,7 +79,7 @@ impl XXEDetector {
         vec![
             XXEPattern {
                 pattern: "xml.etree.ElementTree.parse".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "Unsafe XML parsing with ElementTree".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -87,7 +87,7 @@ impl XXEDetector {
             },
             XXEPattern {
                 pattern: "xml.dom.minidom.parse".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "Unsafe XML parsing with minidom".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -95,7 +95,7 @@ impl XXEDetector {
             },
             XXEPattern {
                 pattern: "<!DOCTYPE".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "DOCTYPE declaration may enable XXE".to_string(),
                 confidence: 0.7,
                 severity: SecuritySeverity::Medium,
@@ -108,7 +108,7 @@ impl XXEDetector {
         vec![
             XXEPattern {
                 pattern: "DOMParser()".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "DOMParser may be vulnerable to XXE".to_string(),
                 confidence: 0.6,
                 severity: SecuritySeverity::Medium,
@@ -116,7 +116,7 @@ impl XXEDetector {
             },
             XXEPattern {
                 pattern: "parseFromString".to_string(),
-                vulnerability_type: SecurityIssueType::XmlExternalEntities,
+                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
                 description: "XML parsing without XXE protection".to_string(),
                 confidence: 0.5,
                 severity: SecuritySeverity::Medium,

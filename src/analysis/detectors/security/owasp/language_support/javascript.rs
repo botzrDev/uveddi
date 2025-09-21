@@ -100,7 +100,7 @@ impl JavaScriptOwaspAnalyzer {
             JSSecurityPattern {
                 name: "Console Log".to_string(),
                 pattern: "console.log(".to_string(),
-                category: OwaspCategory::SecurityLoggingMonitoringFailures,
+                category: OwaspCategory::LoggingFailures,
                 severity: SecuritySeverity::Low,
                 description: "Console logs may expose sensitive information".to_string(),
             },

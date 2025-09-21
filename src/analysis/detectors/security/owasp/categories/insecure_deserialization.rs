@@ -59,7 +59,7 @@ impl InsecureDeserializationDetector {
         vec![
             DeserializationPattern {
                 pattern: "serde::from_str".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Unsafe deserialization without validation".to_string(),
                 confidence: 0.5,
                 severity: SecuritySeverity::Medium,
@@ -67,7 +67,7 @@ impl InsecureDeserializationDetector {
             },
             DeserializationPattern {
                 pattern: "bincode::deserialize".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Binary deserialization that may be unsafe".to_string(),
                 confidence: 0.7,
                 severity: SecuritySeverity::High,
@@ -80,7 +80,7 @@ impl InsecureDeserializationDetector {
         vec![
             DeserializationPattern {
                 pattern: "pickle.loads(".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Unsafe pickle deserialization allowing code execution".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Critical,
@@ -88,7 +88,7 @@ impl InsecureDeserializationDetector {
             },
             DeserializationPattern {
                 pattern: "yaml.load(".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Unsafe YAML loading allowing code execution".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::Critical,
@@ -96,7 +96,7 @@ impl InsecureDeserializationDetector {
             },
             DeserializationPattern {
                 pattern: "marshal.loads(".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Unsafe marshal deserialization".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -109,7 +109,7 @@ impl InsecureDeserializationDetector {
         vec![
             DeserializationPattern {
                 pattern: "JSON.parse(".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "JSON parsing without validation".to_string(),
                 confidence: 0.4,
                 severity: SecuritySeverity::Low,
@@ -117,7 +117,7 @@ impl InsecureDeserializationDetector {
             },
             DeserializationPattern {
                 pattern: "eval(".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Dangerous eval() usage for deserialization".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Critical,
@@ -125,7 +125,7 @@ impl InsecureDeserializationDetector {
             },
             DeserializationPattern {
                 pattern: "Function(".to_string(),
-                vulnerability_type: SecurityIssueType::InsecureDeserialization,
+                vulnerability_type: SecurityIssueType::DeserializationVulnerabilities,
                 description: "Dynamic function creation from untrusted data".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,

@@ -11,6 +11,7 @@ use crate::ast::tree_sitter_impl::ParsedFile;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes Rust public interfaces for potential abstraction leaks.
+#[derive(Clone)]
 pub struct RustInterfaceAnalyzer;
 
 impl RustInterfaceAnalyzer {

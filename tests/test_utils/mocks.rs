@@ -106,8 +106,11 @@ impl MockAstParser {
     pub fn create_failing() -> Self {
         let mut mock = MockAstParser::new();
         
-        mock.expect_parse_file()
-            .returning(|_| Err(AnalysisError::ParseError("Mock parse failure".to_string())));
+        mock.expect_parse_file().returning(|_| {
+            Err(AnalysisError::ParseError {
+                message: "Mock parse failure".to_string(),
+            })
+        });
             
         mock.expect_is_initialized()
             .returning(|| false);

@@ -5,6 +5,7 @@ use super::graph_builder::{GraphEdge, GraphNode};
 use crate::analysis::graph::dependency::ComponentNode;
 
 /// Analyzes graph structure and generates statistics
+#[derive(Debug, Clone)]
 pub struct GraphAnalyzer;
 
 #[derive(Debug, Clone, Default)]

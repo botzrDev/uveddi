@@ -59,7 +59,7 @@ impl BrokenAuthDetector {
         vec![
             AuthPattern {
                 pattern: "password = \"".to_string(),
-                vulnerability_type: SecurityIssueType::WeakAuthentication,
+                vulnerability_type: SecurityIssueType::AuthenticationFailures,
                 description: "Hardcoded password detected".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Critical,
@@ -67,7 +67,7 @@ impl BrokenAuthDetector {
             },
             AuthPattern {
                 pattern: "session_id = user_id".to_string(),
-                vulnerability_type: SecurityIssueType::WeakAuthentication,
+                vulnerability_type: SecurityIssueType::AuthenticationFailures,
                 description: "Predictable session ID generation".to_string(),
                 confidence: 0.7,
                 severity: SecuritySeverity::High,
@@ -80,7 +80,7 @@ impl BrokenAuthDetector {
         vec![
             AuthPattern {
                 pattern: "PASSWORD = \"".to_string(),
-                vulnerability_type: SecurityIssueType::WeakAuthentication,
+                vulnerability_type: SecurityIssueType::AuthenticationFailures,
                 description: "Hardcoded password in configuration".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Critical,
@@ -88,7 +88,7 @@ impl BrokenAuthDetector {
             },
             AuthPattern {
                 pattern: "session['user_id']".to_string(),
-                vulnerability_type: SecurityIssueType::WeakAuthentication,
+                vulnerability_type: SecurityIssueType::AuthenticationFailures,
                 description: "Insecure session management".to_string(),
                 confidence: 0.6,
                 severity: SecuritySeverity::Medium,
@@ -101,7 +101,7 @@ impl BrokenAuthDetector {
         vec![
             AuthPattern {
                 pattern: "password: \"".to_string(),
-                vulnerability_type: SecurityIssueType::WeakAuthentication,
+                vulnerability_type: SecurityIssueType::AuthenticationFailures,
                 description: "Hardcoded password in JavaScript".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -109,7 +109,7 @@ impl BrokenAuthDetector {
             },
             AuthPattern {
                 pattern: "Math.random()".to_string(),
-                vulnerability_type: SecurityIssueType::WeakAuthentication,
+                vulnerability_type: SecurityIssueType::AuthenticationFailures,
                 description: "Weak random number generation for authentication".to_string(),
                 confidence: 0.5,
                 severity: SecuritySeverity::Medium,

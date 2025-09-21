@@ -135,6 +135,9 @@ pub enum AnalysisError {
     LineNumberOverflow { value: u64 },
     #[error("Mutex lock failed: {message}")]
     LockError { message: String },
+
+    #[error("Regex compilation failed: {error}")]
+    RegexError { error: String },
 }
 
 impl AnalysisError {
@@ -320,6 +323,14 @@ impl AnalysisError {
                 "configuration"
             }
             _ => "general",
+        }
+    }
+}
+
+impl From<regex::Error> for AnalysisError {
+    fn from(err: regex::Error) -> Self {
+        AnalysisError::RegexError {
+            error: err.to_string(),
         }
     }
 }

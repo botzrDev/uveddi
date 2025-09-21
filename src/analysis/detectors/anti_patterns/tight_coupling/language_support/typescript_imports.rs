@@ -7,6 +7,7 @@ use streaming_iterator::StreamingIterator;
 use super::super::types::{Dependency, DependencyStrength};
 
 /// Handles TypeScript/JavaScript import analysis
+#[derive(Debug, Clone)]
 pub struct TypeScriptImportAnalyzer;
 
 impl TypeScriptImportAnalyzer {

@@ -64,14 +64,14 @@ impl PythonOwaspAnalyzer {
             PythonSecurityPattern {
                 name: "Pickle Load".to_string(),
                 pattern: "pickle.load".to_string(),
-                category: OwaspCategory::SoftwareDataIntegrityFailures,
+                category: OwaspCategory::DataIntegrityFailures,
                 severity: SecuritySeverity::Critical,
                 description: "Pickle can execute arbitrary code during deserialization".to_string(),
             },
             PythonSecurityPattern {
                 name: "YAML Load".to_string(),
                 pattern: "yaml.load(".to_string(),
-                category: OwaspCategory::SoftwareDataIntegrityFailures,
+                category: OwaspCategory::DataIntegrityFailures,
                 severity: SecuritySeverity::High,
                 description: "yaml.load() is unsafe, use yaml.safe_load()".to_string(),
             },
@@ -178,7 +178,7 @@ impl PythonOwaspAnalyzer {
         );
 
         recommendations.insert(
-            OwaspCategory::SoftwareDataIntegrityFailures,
+            OwaspCategory::DataIntegrityFailures,
             vec![
                 "Use JSON instead of pickle when possible".to_string(),
                 "Always use yaml.safe_load() instead of yaml.load()".to_string(),

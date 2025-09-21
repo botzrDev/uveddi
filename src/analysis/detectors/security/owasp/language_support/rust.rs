@@ -94,7 +94,7 @@ impl RustOwaspAnalyzer {
             RustSecurityPattern {
                 name: "Debug Print".to_string(),
                 pattern: "dbg!(".to_string(),
-                category: OwaspCategory::SecurityLoggingMonitoringFailures,
+                category: OwaspCategory::LoggingFailures,
                 severity: SecuritySeverity::Low,
                 description: "Debug macros should not be in production code".to_string(),
             },

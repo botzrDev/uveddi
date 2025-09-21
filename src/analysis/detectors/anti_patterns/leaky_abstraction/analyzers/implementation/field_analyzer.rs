@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes field and property implementations for leaks.
+#[derive(Clone)]
 pub struct FieldAnalyzer;
 
 impl FieldAnalyzer {

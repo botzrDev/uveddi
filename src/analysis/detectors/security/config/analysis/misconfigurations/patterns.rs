@@ -81,7 +81,7 @@ impl PatternBuilder {
     }
 
     fn calculate_confidence(rule: &MisconfigurationRule, line: &str) -> f64 {
-        let mut confidence = 0.7; // Base confidence
+        let mut confidence: f64 = 0.7; // Base confidence
 
         // Increase confidence for exact matches
         match &rule.pattern {

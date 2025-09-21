@@ -59,7 +59,7 @@ impl VulnerableComponentsDetector {
         vec![
             ComponentPattern {
                 pattern: "openssl = \"0.10\"".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Potentially outdated OpenSSL version".to_string(),
                 confidence: 0.7,
                 severity: SecuritySeverity::High,
@@ -67,7 +67,7 @@ impl VulnerableComponentsDetector {
             },
             ComponentPattern {
                 pattern: "serde = \"1.0.0\"".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Potentially outdated serde version".to_string(),
                 confidence: 0.5,
                 severity: SecuritySeverity::Medium,
@@ -80,7 +80,7 @@ impl VulnerableComponentsDetector {
         vec![
             ComponentPattern {
                 pattern: "django==1.".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Potentially vulnerable Django 1.x version".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::Critical,
@@ -88,7 +88,7 @@ impl VulnerableComponentsDetector {
             },
             ComponentPattern {
                 pattern: "requests==2.6".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Known vulnerable requests library version".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,
@@ -96,7 +96,7 @@ impl VulnerableComponentsDetector {
             },
             ComponentPattern {
                 pattern: "pyyaml==3.".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Vulnerable PyYAML version with known issues".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -109,7 +109,7 @@ impl VulnerableComponentsDetector {
         vec![
             ComponentPattern {
                 pattern: "\"lodash\": \"4.17.0\"".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Known vulnerable lodash version".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,
@@ -117,7 +117,7 @@ impl VulnerableComponentsDetector {
             },
             ComponentPattern {
                 pattern: "\"express\": \"4.0".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Potentially vulnerable Express.js version".to_string(),
                 confidence: 0.7,
                 severity: SecuritySeverity::Medium,
@@ -125,7 +125,7 @@ impl VulnerableComponentsDetector {
             },
             ComponentPattern {
                 pattern: "\"jquery\": \"1.".to_string(),
-                vulnerability_type: SecurityIssueType::VulnerableComponent,
+                vulnerability_type: SecurityIssueType::VulnerableComponents,
                 description: "Outdated jQuery version with known vulnerabilities".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,

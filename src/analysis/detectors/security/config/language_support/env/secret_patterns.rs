@@ -163,7 +163,7 @@ impl EnvSecretPatternChecker {
     }
 
     fn calculate_confidence(&self, key: &str, value: &str) -> f64 {
-        let mut confidence = 0.8;
+        let mut confidence: f64 = 0.8;
 
         // Higher confidence for keys that clearly indicate secrets
         let secret_indicators = ["secret", "key", "token", "password", "pwd", "pass"];

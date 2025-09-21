@@ -234,6 +234,20 @@ impl ExternalSourceDetector {
                 )
                 .with_language(language),
             ],
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
+                TaintSource::new(
+                    "js_mongoose_query".to_string(),
+                    "mongoose.find".to_string(),
+                    "Mongoose query result".to_string(),
+                )
+                .with_language(language),
+                TaintSource::new(
+                    "js_pg_query".to_string(),
+                    "pool.query".to_string(),
+                    "PostgreSQL query result".to_string(),
+                )
+                .with_language(language),
+            ],
         }
     }
 }

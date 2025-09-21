@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes Rust trait exposure patterns and implementation details for abstraction leaks.
+#[derive(Clone)]
 pub struct TraitAnalyzer;
 
 impl TraitAnalyzer {

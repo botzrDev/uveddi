@@ -3,18 +3,33 @@
 //! This module provides the main ConfigSecurityDetector that orchestrates
 //! configuration file security analysis across multiple formats and languages.
 
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType};
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
+    VulnerabilityType,
+};
 use crate::analysis::AnalysisError;
+use serde_json::json;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use super::analysis::{
     CredentialAnalyzer, DefaultsAnalyzer, MisconfigurationAnalyzer, PermissionAnalyzer,
 };
 use super::config::ConfigSecurityConfig;
-use super::language_support::{EnvAnalyzer, TomlAnalyzer, YamlAnalyzer};
-use super::patterns::{PatternMatcher, SecretPatternMatcher, VulnerabilityPatternMatcher};
-use super::types::{ConfigIssue, ConfigType};
+use super::language_support::{EnvAnalyzer, LanguageAnalyzer, TomlAnalyzer, YamlAnalyzer};
+use super::patterns::{ConfigPatternMatcher, PatternMatcher, SecretPatternMatcher, VulnerabilityPatternMatcher};
+use super::types::{ConfigIssue, ConfigSeverity, ConfigType};
 use super::validation::{ComplianceValidator, PolicyValidator};
+
+fn map_config_severity(severity: ConfigSeverity) -> SecuritySeverity {
+    match severity {
+        ConfigSeverity::Critical => SecuritySeverity::Critical,
+        ConfigSeverity::High => SecuritySeverity::High,
+        ConfigSeverity::Medium => SecuritySeverity::Medium,
+        ConfigSeverity::Low => SecuritySeverity::Low,
+        ConfigSeverity::Info => SecuritySeverity::Info,
+    }
+}
 
 /// Main configuration security detector
 pub struct ConfigSecurityDetector {
@@ -106,10 +121,18 @@ impl ConfigSecurityDetector {
                 "json" => Ok(ConfigType::Json),
                 "toml" => Ok(ConfigType::Toml),
                 "env" => Ok(ConfigType::Environment),
-                _ => Err(AnalysisError::UnsupportedFileType(extension.to_string())),
+                _ => Err(AnalysisError::ConfigurationError {
+                    field: "file_extension".to_string(),
+                    value: extension.to_string(),
+                    reason: "Unsupported configuration file type".to_string(),
+                }),
             }
         } else {
-            Err(AnalysisError::InvalidFilePath(file_path.clone()))
+            Err(AnalysisError::ConfigurationError {
+                field: "file_path".to_string(),
+                value: file_path.display().to_string(),
+                reason: "Unable to determine file extension".to_string(),
+            })
         }
     }
 
@@ -118,22 +141,64 @@ impl ConfigSecurityDetector {
         config_issue: ConfigIssue,
         file_path: &PathBuf,
     ) -> Result<SecurityIssue, AnalysisError> {
-        Ok(SecurityIssue {
-            issue_type: SecurityIssueType::ConfigurationVulnerability,
-            severity: config_issue.severity,
-            confidence_score: config_issue.confidence,
-            title: config_issue.title,
-            description: config_issue.description,
-            file_path: file_path.clone(),
-            line_number: config_issue.line_number,
-            column_number: config_issue.column_number,
-            snippet: config_issue.code_snippet,
-            remediation: config_issue.remediation,
-            references: config_issue.references,
-            owasp_category: config_issue.owasp_category,
-            cwe_id: config_issue.cwe_id,
-            tags: config_issue.tags,
-        })
+        let start_line = config_issue.line_number.unwrap_or(1) as i32;
+        let mut location = SecurityLocation::new(file_path.clone(), start_line, start_line);
+        if let Some(column) = config_issue.column_number {
+            let col = column as i32;
+            location = location.with_columns(col, col);
+        }
+
+        let metadata = {
+            let mut metadata = VulnerabilityMetadata::new();
+            if let Some(cwe_id) = config_issue.cwe_id {
+                metadata = metadata.with_cwe(format!("CWE-{}", cwe_id));
+            }
+            if !config_issue.references.is_empty() {
+                metadata = metadata.with_references(config_issue.references.clone());
+            }
+            metadata = metadata.with_tags(config_issue.tags.clone());
+            metadata
+        };
+
+        let mut context = HashMap::new();
+        if let Some(line) = config_issue.line_number {
+            context.insert("line".to_string(), json!(line));
+        }
+        if let Some(column) = config_issue.column_number {
+            context.insert("column".to_string(), json!(column));
+        }
+        if let Some(snippet) = &config_issue.code_snippet {
+            context.insert("snippet".to_string(), json!(snippet));
+        }
+        if let Some(ref owasp) = config_issue.owasp_category {
+            context.insert("owasp_category".to_string(), json!(owasp));
+        }
+        if !config_issue.references.is_empty() {
+            context.insert("references".to_string(), json!(config_issue.references.clone()));
+        }
+        if !config_issue.tags.is_empty() {
+            context.insert("tags".to_string(), json!(config_issue.tags.clone()));
+        }
+
+        let mut issue = SecurityIssue::new(
+            SecurityIssueType::SecurityMisconfiguration,
+            VulnerabilityType::Configuration,
+            config_issue.title.clone(),
+            config_issue.description.clone(),
+            location,
+        )
+        .with_severity(map_config_severity(config_issue.severity))
+        .with_confidence(config_issue.confidence);
+
+        if let Some(remediation) = &config_issue.remediation {
+            issue = issue.with_remediation(remediation.clone());
+        }
+
+        issue.context = context;
+        issue.metadata = metadata;
+        issue.detected_by = vec!["ConfigSecurityDetector".to_string()];
+
+        Ok(issue)
     }
 
     fn validate_config_issues(

@@ -20,10 +20,9 @@ impl YamlParser {
                 // If YAML parsing fails, try JSON
                 match serde_json::from_str::<JsonValue>(content) {
                     Ok(json_value) => Self::json_to_yaml(json_value),
-                    Err(_json_err) => Err(AnalysisError::ParseError(format!(
-                        "Invalid YAML/JSON: {}",
-                        yaml_err
-                    ))),
+                    Err(_json_err) => Err(AnalysisError::ParseError {
+                        message: format!("Invalid YAML/JSON: {}", yaml_err),
+                    }),
                 }
             }
         }
@@ -36,9 +35,9 @@ impl YamlParser {
         } else if serde_json::from_str::<JsonValue>(content).is_ok() {
             Ok(())
         } else {
-            Err(AnalysisError::ParseError(
-                "Invalid YAML/JSON syntax".to_string(),
-            ))
+            Err(AnalysisError::ParseError {
+                message: "Invalid YAML/JSON syntax".to_string(),
+            })
         }
     }
 
@@ -55,9 +54,9 @@ impl YamlParser {
                 } else if let Some(f) = n.as_f64() {
                     Ok(YamlValue::Number(serde_yaml::Number::from(f)))
                 } else {
-                    Err(AnalysisError::ParseError(
-                        "Invalid number format".to_string(),
-                    ))
+                    Err(AnalysisError::ParseError {
+                        message: "Invalid number format".to_string(),
+                    })
                 }
             }
             JsonValue::String(s) => Ok(YamlValue::String(s)),

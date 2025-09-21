@@ -106,7 +106,9 @@ where
 
 /// Creates a mock error for testing error handling
 pub fn create_mock_error(message: &str) -> AnalysisError {
-    AnalysisError::ParseError(message.to_string())
+    AnalysisError::ParseError {
+        message: message.to_string(),
+    }
 }
 
 /// Test result type for convenience

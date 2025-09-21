@@ -41,21 +41,25 @@ impl EnvParser {
             }
 
             if !line.contains('=') {
-                return Err(AnalysisError::ParseError(format!(
-                    "Invalid environment variable syntax at line {}: {}",
-                    line_num + 1,
-                    line
-                )));
+                return Err(AnalysisError::ParseError {
+                    message: format!(
+                        "Invalid environment variable syntax at line {}: {}",
+                        line_num + 1,
+                        line
+                    ),
+                });
             }
 
             // Validate key format (should be valid identifier)
             if let Some((key, _)) = Self::parse_env_line(line) {
                 if !Self::is_valid_env_key(&key) {
-                    return Err(AnalysisError::ParseError(format!(
-                        "Invalid environment variable name at line {}: {}",
-                        line_num + 1,
-                        key
-                    )));
+                    return Err(AnalysisError::ParseError {
+                        message: format!(
+                            "Invalid environment variable name at line {}: {}",
+                            line_num + 1,
+                            key
+                        ),
+                    });
                 }
             }
         }

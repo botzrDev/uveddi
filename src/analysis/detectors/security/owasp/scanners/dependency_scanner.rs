@@ -20,7 +20,7 @@ pub struct VulnerableDependency {
     pub description: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyScanResult {
     pub vulnerable_dependencies: Vec<VulnerableDependency>,
     pub total_dependencies: usize,
@@ -183,7 +183,7 @@ impl DependencyScanner {
     ) -> OwaspVulnerability {
         OwaspVulnerability::new(
             OwaspCategory::VulnerableComponents,
-            SecurityIssueType::VulnerableComponent,
+            SecurityIssueType::VulnerableComponents,
             format!("Vulnerable dependency: {}", vuln.package_name),
             vuln.description.clone(),
             location,

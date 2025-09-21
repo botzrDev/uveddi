@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes method implementations for leaks.
+#[derive(Clone)]
 pub struct MethodAnalyzer;
 
 impl MethodAnalyzer {

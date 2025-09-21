@@ -51,11 +51,20 @@ impl CredentialAnalyzer {
     }
 
     fn build_credential_patterns() -> Result<Vec<CredentialPattern>, AnalysisError> {
+        let compile = |pattern: &str| -> Result<Regex, AnalysisError> {
+            Regex::new(pattern).map_err(|e| {
+                AnalysisError::DetectionError(format!(
+                    "Invalid credential detection regex '{}': {}",
+                    pattern, e
+                ))
+            })
+        };
+
         let patterns = vec![
             // API Keys
             CredentialPattern {
                 name: "AWS Access Key".to_string(),
-                regex: Regex::new(r"(?i)(aws_access_key_id|AKIA[0-9A-Z]{16})")?,
+                regex: compile(r"(?i)(aws_access_key_id|AKIA[0-9A-Z]{16})")?,
                 severity: ConfigSeverity::Critical,
                 confidence_base: 0.95,
                 cwe_id: Some(798),
@@ -63,7 +72,7 @@ impl CredentialAnalyzer {
             },
             CredentialPattern {
                 name: "AWS Secret Key".to_string(),
-                regex: Regex::new(r"(?i)(aws_secret_access_key|[A-Za-z0-9/+=]{40})")?,
+                regex: compile(r"(?i)(aws_secret_access_key|[A-Za-z0-9/+=]{40})")?,
                 severity: ConfigSeverity::Critical,
                 confidence_base: 0.9,
                 cwe_id: Some(798),
@@ -71,7 +80,7 @@ impl CredentialAnalyzer {
             },
             CredentialPattern {
                 name: "Generic API Key".to_string(),
-                regex: Regex::new(
+                regex: compile(
                     r#"(?i)(api[_-]?key|secret[_-]?key)[\s]*[:=][\s]*['"]?([a-zA-Z0-9_-]{20,})['"]?"#,
                 )?,
                 severity: ConfigSeverity::High,
@@ -82,7 +91,7 @@ impl CredentialAnalyzer {
             // Database Credentials
             CredentialPattern {
                 name: "Database Password".to_string(),
-                regex: Regex::new(
+                regex: compile(
                     r#"(?i)(password|passwd|pwd)[\s]*[:=][\s]*['"]?([^'\s\n]{6,})['"]?"#,
                 )?,
                 severity: ConfigSeverity::High,
@@ -94,7 +103,7 @@ impl CredentialAnalyzer {
             },
             CredentialPattern {
                 name: "Database Connection String".to_string(),
-                regex: Regex::new(r"(?i)(mongodb|mysql|postgresql|postgres)://[^/]*:[^@]*@")?,
+                regex: compile(r"(?i)(mongodb|mysql|postgresql|postgres)://[^/]*:[^@]*@")?,
                 severity: ConfigSeverity::Critical,
                 confidence_base: 0.95,
                 cwe_id: Some(798),
@@ -103,7 +112,7 @@ impl CredentialAnalyzer {
             // Private Keys
             CredentialPattern {
                 name: "Private Key".to_string(),
-                regex: Regex::new(r"-----BEGIN[A-Z\s]*PRIVATE KEY-----")?,
+                regex: compile(r"-----BEGIN[A-Z\s]*PRIVATE KEY-----")?,
                 severity: ConfigSeverity::Critical,
                 confidence_base: 0.99,
                 cwe_id: Some(798),
@@ -112,7 +121,7 @@ impl CredentialAnalyzer {
             // JWT Tokens
             CredentialPattern {
                 name: "JWT Token".to_string(),
-                regex: Regex::new(r"eyJ[A-Za-z0-9_/+-]*\.[A-Za-z0-9_/+-]*\.[A-Za-z0-9_/+-]*")?,
+                regex: compile(r"eyJ[A-Za-z0-9_/+-]*\.[A-Za-z0-9_/+-]*\.[A-Za-z0-9_/+-]*")?,
                 severity: ConfigSeverity::High,
                 confidence_base: 0.9,
                 cwe_id: Some(798),

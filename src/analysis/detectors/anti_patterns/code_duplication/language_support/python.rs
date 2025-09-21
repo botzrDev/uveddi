@@ -31,8 +31,9 @@ impl LanguageSupport for PythonLanguageSupport {
     }
 
     fn extract_code_blocks(&self, file: &ParsedFile) -> Result<Vec<CodeBlock>, AnalysisError> {
-        let content = std::fs::read_to_string(&file.path)
-            .map_err(|e| AnalysisError::IoError(format!("Failed to read file: {}", e)))?;
+        let content = std::fs::read_to_string(file.path()).map_err(|e| {
+            AnalysisError::file_system_error(file.path().display().to_string(), e)
+        })?;
 
         let mut blocks = Vec::new();
         let lines: Vec<_> = content.lines().collect();
@@ -65,7 +66,7 @@ impl LanguageSupport for PythonLanguageSupport {
                     // Only include substantial blocks
                     let block_content: String = lines[i..end_line].join("\n");
                     blocks.push(CodeBlock::new(
-                        file.path.to_string_lossy().to_string(),
+                        file.path().to_string_lossy().to_string(),
                         start_line as u32,
                         end_line as u32,
                         0,

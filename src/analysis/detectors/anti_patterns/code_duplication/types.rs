@@ -28,8 +28,10 @@ pub struct CodeBlock {
     /// The programming language of the source code
     pub language: SourceLanguage,
     /// Control Flow Graph representation (if enabled)
+    #[serde(skip_serializing, skip_deserializing)]
     pub cfg: Option<crate::analysis::cfg::ControlFlowGraph>,
     /// Extracted semantic features for advanced analysis
+    #[serde(skip_serializing, skip_deserializing)]
     pub semantic_features: Option<crate::analysis::semantic::SemanticFeatures>,
     /// Hash of the CFG structure for quick comparison
     pub cfg_hash: Option<String>,
@@ -144,7 +146,7 @@ impl ClonePair {
 }
 
 /// Types of code clones based on structural and syntactic similarity
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CloneType {
     /// Type-1 (Exact Clone): Identical except whitespace and comments
     Type1,

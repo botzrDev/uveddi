@@ -60,7 +60,7 @@ impl SensitiveDataDetector {
         vec![
             DataPattern {
                 pattern: "api_key = \"".to_string(),
-                vulnerability_type: SecurityIssueType::SensitiveDataExposure,
+                vulnerability_type: SecurityIssueType::CryptographicFailures,
                 description: "API key hardcoded in source code".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Critical,
@@ -68,7 +68,7 @@ impl SensitiveDataDetector {
             },
             DataPattern {
                 pattern: "MD5".to_string(),
-                vulnerability_type: SecurityIssueType::WeakCryptography,
+                vulnerability_type: SecurityIssueType::CryptographicFailures,
                 description: "Use of weak MD5 hash algorithm".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -81,7 +81,7 @@ impl SensitiveDataDetector {
         vec![
             DataPattern {
                 pattern: "SSN".to_string(),
-                vulnerability_type: SecurityIssueType::SensitiveDataExposure,
+                vulnerability_type: SecurityIssueType::CryptographicFailures,
                 description: "Potential social security number exposure".to_string(),
                 confidence: 0.6,
                 severity: SecuritySeverity::High,
@@ -89,7 +89,7 @@ impl SensitiveDataDetector {
             },
             DataPattern {
                 pattern: "credit_card".to_string(),
-                vulnerability_type: SecurityIssueType::SensitiveDataExposure,
+                vulnerability_type: SecurityIssueType::CryptographicFailures,
                 description: "Credit card information handling detected".to_string(),
                 confidence: 0.7,
                 severity: SecuritySeverity::Critical,
@@ -102,7 +102,7 @@ impl SensitiveDataDetector {
         vec![
             DataPattern {
                 pattern: "localStorage.setItem".to_string(),
-                vulnerability_type: SecurityIssueType::SensitiveDataExposure,
+                vulnerability_type: SecurityIssueType::CryptographicFailures,
                 description: "Sensitive data stored in localStorage".to_string(),
                 confidence: 0.5,
                 severity: SecuritySeverity::Medium,
@@ -110,7 +110,7 @@ impl SensitiveDataDetector {
             },
             DataPattern {
                 pattern: "console.log".to_string(),
-                vulnerability_type: SecurityIssueType::SensitiveDataExposure,
+                vulnerability_type: SecurityIssueType::CryptographicFailures,
                 description: "Potential sensitive data logging".to_string(),
                 confidence: 0.3,
                 severity: SecuritySeverity::Low,

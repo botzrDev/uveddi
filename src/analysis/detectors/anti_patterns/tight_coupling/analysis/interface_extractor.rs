@@ -8,6 +8,7 @@ use streaming_iterator::StreamingIterator;
 use super::super::types::{Dependency, DependencyStrength};
 
 /// Extracts interface and trait dependencies from code
+#[derive(Debug, Clone)]
 pub struct InterfaceExtractor;
 
 impl InterfaceExtractor {

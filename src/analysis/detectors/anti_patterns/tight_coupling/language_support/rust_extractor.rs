@@ -7,6 +7,7 @@ use super::super::types::{Dependency, DependencyStrength};
 use super::rust_queries::RustQueries;
 
 /// Rust-specific dependency extraction methods
+#[derive(Debug, Clone)]
 pub struct RustExtractor;
 
 impl RustExtractor {

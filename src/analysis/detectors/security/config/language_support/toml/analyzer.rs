@@ -54,7 +54,9 @@ impl LanguageAnalyzer for TomlAnalyzer {
                 issues.extend(self.check_database_configuration(&toml_value)?);
             }
             Err(e) => {
-                return Err(AnalysisError::ParseError(format!("Invalid TOML: {}", e)));
+                return Err(AnalysisError::ParseError {
+                    message: format!("Invalid TOML: {}", e),
+                });
             }
         }
 
@@ -66,9 +68,9 @@ impl LanguageAnalyzer for TomlAnalyzer {
     }
 
     fn validate_syntax(&self, content: &str) -> Result<(), AnalysisError> {
-        content
-            .parse::<TomlValue>()
-            .map_err(|e| AnalysisError::ParseError(format!("Invalid TOML syntax: {}", e)))?;
+        content.parse::<TomlValue>().map_err(|e| AnalysisError::ParseError {
+            message: format!("Invalid TOML syntax: {}", e),
+        })?;
         Ok(())
     }
 }

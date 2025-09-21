@@ -268,6 +268,7 @@ pub struct VulnerabilityMetadata {
     pub last_updated: Option<chrono::DateTime<chrono::Utc>>,
     pub false_positive_indicators: Vec<String>,
     pub architectural_context: Option<String>,
+    pub extra: HashMap<String, String>,
 }
 
 impl VulnerabilityMetadata {
@@ -281,6 +282,7 @@ impl VulnerabilityMetadata {
             last_updated: Some(chrono::Utc::now()),
             false_positive_indicators: Vec::new(),
             architectural_context: None,
+            extra: HashMap::new(),
         }
     }
 
@@ -302,6 +304,10 @@ impl VulnerabilityMetadata {
     pub fn with_tags(mut self, tags: Vec<String>) -> Self {
         self.tags = tags;
         self
+    }
+
+    pub fn add_metadata(&mut self, key: String, value: String) {
+        self.extra.insert(key, value);
     }
 }
 

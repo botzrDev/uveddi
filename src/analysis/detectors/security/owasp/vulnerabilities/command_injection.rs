@@ -146,10 +146,11 @@ impl CommandInjectionDetector {
         for pattern in patterns {
             if let Ok(regex) = regex::Regex::new(&pattern.pattern) {
                 if regex.is_match(line) {
+                    let line_i32 = line_number as i32;
                     let location = SecurityLocation::new(
                         PathBuf::from("unknown"), // Will be updated by caller
-                        line_number,
-                        0,
+                        line_i32,
+                        line_i32,
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();
@@ -232,7 +233,7 @@ impl OwaspCategoryDetector for CommandInjectionDetector {
 
         let mut vulnerabilities = Vec::new();
 
-        for (line_number, line) in file.content.lines().enumerate() {
+        for (line_number, line) in file.source().lines().enumerate() {
             let mut line_vulnerabilities = self.analyze_line(line, line_number + 1, patterns);
 
             // Update file path in location

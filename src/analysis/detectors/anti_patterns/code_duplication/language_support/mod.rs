@@ -114,8 +114,9 @@ impl LanguageSupport for GenericLanguageSupport {
 
     fn extract_code_blocks(&self, file: &ParsedFile) -> Result<Vec<CodeBlock>, AnalysisError> {
         // Generic extraction - treat entire file as one block
-        let content = std::fs::read_to_string(&file.path)
-            .map_err(|e| AnalysisError::IoError(format!("Failed to read file: {}", e)))?;
+        let content = std::fs::read_to_string(file.path()).map_err(|e| {
+            AnalysisError::file_system_error(file.path().display().to_string(), e)
+        })?;
 
         let lines: Vec<_> = content.lines().collect();
         let mut blocks = Vec::new();
@@ -127,7 +128,7 @@ impl LanguageSupport for GenericLanguageSupport {
         for (i, line) in lines.iter().enumerate() {
             if line.trim().is_empty() && !current_content.trim().is_empty() {
                 blocks.push(CodeBlock::new(
-                    file.path.to_string_lossy().to_string(),
+                    file.path().to_string_lossy().to_string(),
                     current_start,
                     i as u32,
                     0,
@@ -146,7 +147,7 @@ impl LanguageSupport for GenericLanguageSupport {
         // Add final block if any
         if !current_content.trim().is_empty() {
             blocks.push(CodeBlock::new(
-                file.path.to_string_lossy().to_string(),
+                file.path().to_string_lossy().to_string(),
                 current_start,
                 lines.len() as u32,
                 0,

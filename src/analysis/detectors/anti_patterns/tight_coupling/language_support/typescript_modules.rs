@@ -7,6 +7,7 @@ use streaming_iterator::StreamingIterator;
 use super::super::types::{Dependency, DependencyStrength};
 
 /// Handles TypeScript/JavaScript module and class analysis
+#[derive(Debug, Clone)]
 pub struct TypeScriptModuleAnalyzer;
 
 impl TypeScriptModuleAnalyzer {

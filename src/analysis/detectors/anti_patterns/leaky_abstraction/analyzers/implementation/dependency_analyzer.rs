@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes dependency coupling for implementation leaks.
+#[derive(Clone)]
 pub struct DependencyAnalyzer;
 
 impl DependencyAnalyzer {

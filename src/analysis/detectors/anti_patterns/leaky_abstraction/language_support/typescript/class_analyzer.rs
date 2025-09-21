@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes TypeScript class structures for abstraction leaks.
+#[derive(Clone)]
 pub struct ClassAnalyzer;
 
 impl ClassAnalyzer {

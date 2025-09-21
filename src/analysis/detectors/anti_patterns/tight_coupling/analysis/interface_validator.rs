@@ -13,6 +13,7 @@ pub struct InterfaceUsage {
 }
 
 /// Validates interface usage patterns and identifies anti-patterns
+#[derive(Debug, Clone)]
 pub struct InterfaceValidator;
 
 impl InterfaceValidator {

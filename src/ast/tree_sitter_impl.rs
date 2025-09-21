@@ -1038,6 +1038,18 @@ pub enum SourceLanguage {
     TypeScript, // Added for Phase 1 multi-language support UV-XXX
 }
 
+impl std::fmt::Display for SourceLanguage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            SourceLanguage::Rust => "rust",
+            SourceLanguage::Python => "python",
+            SourceLanguage::JavaScript => "javascript",
+            SourceLanguage::TypeScript => "typescript",
+        };
+        write!(f, "{}", name)
+    }
+}
+
 impl SourceLanguage {
     /// Detects source language from file path, returning UveddiError on unsupported extension
     pub fn detect_from_path(path: &Path) -> Result<Self, crate::error::UveddiError> {

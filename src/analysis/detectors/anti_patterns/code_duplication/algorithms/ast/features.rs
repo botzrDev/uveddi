@@ -87,8 +87,8 @@ impl StructuralFeatures {
         let mut similarity = 0.0;
         let all_keys_len = all_keys.len();
         for key in &all_keys {
-            let freq1 = *dist1.get(key).unwrap_or(&0) as f64 / total1.max(1) as f64;
-            let freq2 = *dist2.get(key).unwrap_or(&0) as f64 / total2.max(1) as f64;
+            let freq1 = *dist1.get(*key).unwrap_or(&0) as f64 / total1.max(1) as f64;
+            let freq2 = *dist2.get(*key).unwrap_or(&0) as f64 / total2.max(1) as f64;
             similarity += 1.0 - (freq1 - freq2).abs();
         }
 

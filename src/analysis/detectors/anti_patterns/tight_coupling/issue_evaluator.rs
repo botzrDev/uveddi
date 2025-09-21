@@ -7,6 +7,7 @@ use tracing::debug;
 use super::types::{CouplingMetrics, CouplingThresholds};
 
 /// Evaluates coupling metrics and creates architectural issues
+#[derive(Debug, Clone)]
 pub struct IssueEvaluator;
 
 impl IssueEvaluator {

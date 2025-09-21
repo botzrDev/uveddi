@@ -357,7 +357,9 @@ impl<'a> AstParser<'a> {
 
     fn parse_expression(&mut self) -> Result<AstNode, AnalysisError> {
         if self.position >= self.tokens.len() {
-            return Err(AnalysisError::ParseError("Unexpected end of input".to_string()));
+            return Err(AnalysisError::ParseError {
+                message: "Unexpected end of input".to_string(),
+            });
         }
 
         let token = &self.tokens[self.position];

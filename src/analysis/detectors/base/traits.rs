@@ -58,7 +58,11 @@ pub trait DetectorConfig: Clone + Send + Sync {
     where
         Self: serde::Serialize,
     {
-        serde_json::to_string_pretty(self).map_err(|e| AnalysisError::ConfigError(e.to_string()))
+        serde_json::to_string_pretty(self).map_err(|e| AnalysisError::ConfigurationError {
+            field: "detector_config_serialization".to_string(),
+            value: "n/a".to_string(),
+            reason: e.to_string(),
+        })
     }
 
     /// Deserializes configuration from JSON
@@ -66,7 +70,11 @@ pub trait DetectorConfig: Clone + Send + Sync {
     where
         Self: serde::de::DeserializeOwned,
     {
-        serde_json::from_str(json).map_err(|e| AnalysisError::ConfigError(e.to_string()))
+        serde_json::from_str(json).map_err(|e| AnalysisError::ConfigurationError {
+            field: "detector_config_deserialization".to_string(),
+            value: json.to_string(),
+            reason: e.to_string(),
+        })
     }
 }
 

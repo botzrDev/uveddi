@@ -12,8 +12,9 @@ use crate::analysis::detectors::base::{
     AnalysisContext, DetectionMetrics, Detector, DetectorCategory, DetectorConfig, DetectorOutput,
     Issue, Severity,
 };
-use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::SourceLanguage;
+use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use rayon::prelude::*;
 use std::any::Any;
@@ -122,7 +123,7 @@ impl CodeDuplicationDetector {
         file: &crate::ast::tree_sitter_impl::ParsedFile,
     ) -> Result<Vec<CodeBlock>, AnalysisError> {
         // Check cache first
-        let file_path = file.path.to_string_lossy().to_string();
+        let file_path = file.path().to_string_lossy().to_string();
         if let Ok(cache) = self.block_cache.lock() {
             if let Some(cached_blocks) = cache.get(&file_path) {
                 return Ok(cached_blocks.clone());
@@ -420,6 +421,30 @@ impl DetectorOutput for DuplicationResults {
         self.metrics.nodes_processed += other.metrics.nodes_processed;
 
         self
+    }
+}
+
+#[async_trait]
+impl AnalysisDetector for CodeDuplicationDetector {
+    async fn detect_issues(
+        &self,
+        _parsed_file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        // TODO: Integrate duplication analysis results into architectural issues (UV-412)
+        Ok(Vec::new())
+    }
+
+    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
+        vec![AntiPatternType {
+            anti_pattern_type_id: Some(7),
+            name: "Code Duplication".to_string(),
+            description: "Identifies duplicated code blocks that should be refactored".to_string(),
+            category: "structural".to_string(),
+        }]
+    }
+
+    fn get_detector_name(&self) -> &'static str {
+        "CodeDuplicationDetector"
     }
 }
 

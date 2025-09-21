@@ -223,10 +223,11 @@ impl CsrfDetector {
         for pattern in patterns {
             if let Ok(regex) = regex::Regex::new(&pattern.pattern) {
                 if regex.is_match(line) {
+                    let line_i32 = line_number as i32;
                     let location = SecurityLocation::new(
                         PathBuf::from("unknown"), // Will be updated by caller
-                        line_number,
-                        0,
+                        line_i32,
+                        line_i32,
                     );
 
                     let mut metadata = VulnerabilityMetadata::new();

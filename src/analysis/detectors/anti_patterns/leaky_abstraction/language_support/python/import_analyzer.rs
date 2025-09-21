@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Analyzes Python import patterns and module boundaries for abstraction leaks.
+#[derive(Clone)]
 pub struct ImportAnalyzer;
 
 impl ImportAnalyzer {

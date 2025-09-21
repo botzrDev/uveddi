@@ -3,12 +3,14 @@
 use super::{PatternConfig, PatternMatch, PatternMatcher};
 use crate::analysis::detectors::security::core::SecurityContext;
 use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity,
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
+    VulnerabilityType,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::HashMap;
 
 /// Agent pattern definition
@@ -216,8 +218,20 @@ impl AgentPatternDatabase {
         pattern_match: &PatternMatch,
         context: &SecurityContext,
     ) -> SecurityIssue {
+        let mut context_data = HashMap::new();
+        context_data.insert(
+            "pattern_name".to_string(),
+            serde_json::Value::String(pattern_match.pattern_name.clone()),
+        );
+        context_data.insert(
+            "matched_text".to_string(),
+            serde_json::Value::String(pattern_match.matched_text.clone()),
+        );
+
         SecurityIssue {
+            id: None,
             issue_type: SecurityIssueType::PotentialMaliciousAgent,
+            vulnerability_type: VulnerabilityType::Static,
             title: format!("Agent Pattern Detected: {}", pattern.name),
             description: format!(
                 "{} (Pattern: {})",
@@ -235,11 +249,14 @@ impl AgentPatternDatabase {
                 class_name: None,
                 module_name: None,
             },
+            language: Some(context.language),
             remediation: Some(format!(
                 "Review {} behavior for legitimate use case",
                 pattern.pattern_type.to_string().to_lowercase()
             )),
-            metadata: HashMap::new(),
+            context: context_data,
+            metadata: VulnerabilityMetadata::new(),
+            detected_by: vec!["AgentPatternAnalyzer".to_string()],
             correlation_id: None,
         }
     }

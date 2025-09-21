@@ -203,49 +203,71 @@ impl Default for DuplicationConfig {
 
 impl DetectorConfig for DuplicationConfig {
     fn validate(&self) -> Result<(), AnalysisError> {
+        fn config_error(field: &str, value: impl Into<String>, reason: impl Into<String>) -> AnalysisError {
+            AnalysisError::ConfigurationError {
+                field: field.to_string(),
+                value: value.into(),
+                reason: reason.into(),
+            }
+        }
+
         // Validate base configuration
         self.base.validate()?;
 
         // Validate specific parameters
         if self.min_tokens == 0 {
-            return Err(AnalysisError::ConfigError(
-                "min_tokens must be greater than 0".to_string(),
+            return Err(config_error(
+                "min_tokens",
+                self.min_tokens.to_string(),
+                "min_tokens must be greater than 0",
             ));
         }
 
         if self.min_lines == 0 {
-            return Err(AnalysisError::ConfigError(
-                "min_lines must be greater than 0".to_string(),
+            return Err(config_error(
+                "min_lines",
+                self.min_lines.to_string(),
+                "min_lines must be greater than 0",
             ));
         }
 
         if !(0.0..=1.0).contains(&self.similarity_threshold) {
-            return Err(AnalysisError::ConfigError(
-                "similarity_threshold must be between 0.0 and 1.0".to_string(),
+            return Err(config_error(
+                "similarity_threshold",
+                self.similarity_threshold.to_string(),
+                "similarity_threshold must be between 0.0 and 1.0",
             ));
         }
 
         if !(0.0..=1.0).contains(&self.semantic_similarity_threshold) {
-            return Err(AnalysisError::ConfigError(
-                "semantic_similarity_threshold must be between 0.0 and 1.0".to_string(),
+            return Err(config_error(
+                "semantic_similarity_threshold",
+                self.semantic_similarity_threshold.to_string(),
+                "semantic_similarity_threshold must be between 0.0 and 1.0",
             ));
         }
 
         if !(0.0..=1.0).contains(&self.cfg_similarity_weight) {
-            return Err(AnalysisError::ConfigError(
-                "cfg_similarity_weight must be between 0.0 and 1.0".to_string(),
+            return Err(config_error(
+                "cfg_similarity_weight",
+                self.cfg_similarity_weight.to_string(),
+                "cfg_similarity_weight must be between 0.0 and 1.0",
             ));
         }
 
         if self.fingerprint_length == 0 {
-            return Err(AnalysisError::ConfigError(
-                "fingerprint_length must be greater than 0".to_string(),
+            return Err(config_error(
+                "fingerprint_length",
+                self.fingerprint_length.to_string(),
+                "fingerprint_length must be greater than 0",
             ));
         }
 
         if self.max_memory_mb == 0 {
-            return Err(AnalysisError::ConfigError(
-                "max_memory_mb must be greater than 0".to_string(),
+            return Err(config_error(
+                "max_memory_mb",
+                self.max_memory_mb.to_string(),
+                "max_memory_mb must be greater than 0",
             ));
         }
 
@@ -276,7 +298,7 @@ impl DetectorConfig for DuplicationConfig {
     }
 
     fn default() -> Self {
-        Self::default()
+        Self::new()
     }
 }
 

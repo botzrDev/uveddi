@@ -12,6 +12,7 @@ use crate::database::models::ArchitecturalIssue;
 use tree_sitter::StreamingIterator;
 
 /// Parses TypeScript interfaces and types for abstraction leaks.
+#[derive(Clone)]
 pub struct InterfaceParser;
 
 impl InterfaceParser {

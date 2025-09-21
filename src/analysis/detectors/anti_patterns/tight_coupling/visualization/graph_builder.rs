@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use super::super::types::{CouplingMetrics, Dependency, DependencyStrength};
 
 /// Builds graph nodes and edges for visualization
+#[derive(Debug, Clone)]
 pub struct GraphBuilder;
 
 #[derive(Debug, Clone)]
