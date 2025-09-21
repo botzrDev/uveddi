@@ -81,7 +81,7 @@ pub use detector::SecurityDetector;
 pub use knowledge_graph::{
     KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph,
 };
-pub use owasp::{OwaspCategory, OwaspTop10Detector, OwaspVulnerability};
+pub use owasp::{OwaspCategory, OwaspDetector, OwaspVulnerability, OwaspConfig, OwaspAnalysisReport};
 pub use strategies::{
     ConfigFileAnalyzer, DeterministicPatternMatcher, SoftwareCompositionAnalyzer,
     VulnerabilityCorrelationEngine,
