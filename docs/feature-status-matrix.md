@@ -133,7 +133,7 @@ This is alpha software under active development. Features marked as "Working" ha
 |------------|------------|----------|-------------|
 | `dev-minimal` | ~16s | Quick iteration | No AST parsing, basic features only |
 | `dev-core` | ~13s | Development | No tree-sitter, no anti-patterns |
-| `dev-rust-only` | ~10s | Rust projects | Single language support |
+| `dev-full` | ~90s | Multi-language parsing | All languages enabled |
 | `production` | ~20s | Full features | All features enabled |
 
 ### Feature Flags Reference

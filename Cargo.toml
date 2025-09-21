@@ -50,19 +50,20 @@ levenshtein = "1.0"
 # Feature flags for modular compilation - Optimized for build performance
 [features]
 # ==================== CORE FEATURE SETS ====================
-# Lightweight default for fast development builds
-default = ["dev-core"]
+# Default profile for most users
+default = ["standard"]
 
-# Ultra-minimal build (absolute minimum for fastest compilation)
+# ==================== LEGACY PROFILES (DEPRECATED) ====================
+# DEPRECATED: Use 'minimal' instead
 dev-ultra-minimal = ["dep:rusqlite", "dep:bincode"]
 
-# Minimal development build (essential deps only)
+# DEPRECATED: Use 'minimal' instead
 dev-minimal = ["dev-ultra-minimal", "dep:rayon"]
 
-# Core development features (recommended for daily development)
+# DEPRECATED: Use 'standard' instead
 dev-core = ["dev-minimal", "dep:tokio-stream", "dep:async-stream", "prometheus"]
 
-# Full development build (includes parsing capabilities)
+# DEPRECATED: Use 'standard' instead
 dev-full = ["dev-core", "tree-sitter"]
 
 # ==================== LANGUAGE PARSING ====================
@@ -72,11 +73,7 @@ python-lang = ["dep:tree-sitter-python"]
 javascript-lang = ["dep:tree-sitter-javascript"]
 typescript-lang = ["dep:tree-sitter-typescript"]
 
-# Language combinations for targeted development
-dev-rust-only = ["dev-minimal", "rust-lang", "dep:tree-sitter"]
-dev-python-only = ["dev-minimal", "python-lang", "dep:tree-sitter"]
-dev-js-only = ["dev-minimal", "javascript-lang", "dep:tree-sitter"]
-dev-ts-only = ["dev-minimal", "typescript-lang", "dep:tree-sitter"]
+# Language combinations for targeted development (removed redundant dev-*-only variants)
 
 # Full tree-sitter support (all languages)
 tree-sitter = [
@@ -87,8 +84,8 @@ tree-sitter = [
     "typescript-lang"
 ]
 
-# ==================== PRODUCTION BUILDS ====================
-# Production-ready features (full functionality)
+# ==================== PRODUCTION BUILDS (LEGACY - DEPRECATED) ====================
+# DEPRECATED: Use 'full' instead
 production = [
     "tree-sitter",
     "security",
@@ -104,7 +101,7 @@ production = [
     "dep:bincode"
 ]
 
-# Production-secure features (without RSA vulnerability dependencies)
+# DEPRECATED: Use 'full' (configure security posture at runtime)
 production-secure = [
     "tree-sitter",
     "memory-optimization",
@@ -119,6 +116,16 @@ production-secure = [
     "dep:bincode"
 ]
 
+# ==================== NEW SIMPLIFIED PROFILES ====================
+# Essential functionality - fastest builds, minimal dependencies
+minimal = ["dep:rusqlite", "dep:bincode", "dep:rayon"]
+
+# Recommended for development - includes parsing and monitoring
+standard = ["minimal", "tree-sitter", "prometheus"]
+
+# Production-ready - all capabilities enabled
+full = ["standard", "security", "memory-optimization", "web", "tui", "wasm-plugins"]
+
 # ==================== SPECIALIZED FEATURES ====================
 # Metrics and monitoring
 prometheus = ["dep:prometheus"]
@@ -132,6 +139,8 @@ security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidco
 web-client = []
 web-server = []
 web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
+# New alias for simplified profiles
+web = ["web-full"]
 
 # User interfaces
 tui = ["dep:ratatui", "dep:crossterm", "dep:tui-input"]
@@ -154,23 +163,10 @@ regression-detection = ["dep:changepoint", "dep:linfa", "dep:influxdb2"]
 sla-monitoring = ["dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
 
 # ==================== CONVENIENCE COMBINATIONS ====================
-# Zero-cost option (no external services required)
-zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
-
-# Full-featured option (includes image rendering)
-full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
-
-# Enterprise option (all features)
-enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
-
-# Legacy compatibility (for backward compatibility)
-alpha = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
+# (Removed legacy/convenience aggregations: zero-cost, full-featured, enterprise, alpha)
 
 # ==================== INTERNAL FLAGS (for dependencies) ====================
-# Cleanup unused flags
-streaming-iterator = []
-tower = []
-tower-http = []
+# Keep only flags used for cfg(feature) in code
 mimalloc = []
 graphql-api = []
 yaml = []

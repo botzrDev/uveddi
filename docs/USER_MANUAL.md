@@ -301,8 +301,8 @@ cargo build
 cargo build --release --features=production
 
 # Single-language builds (intended, not currently working):
-# cargo build --features=dev-rust-only
-# cargo build --features=dev-python-only
+# cargo build --features=dev-core
+# cargo build --features=dev-full
 ```
 
 #### Build Troubleshooting

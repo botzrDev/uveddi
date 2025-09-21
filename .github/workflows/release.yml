@@ -61,9 +61,9 @@ jobs:
       - name: Build binary
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
-            cross build --release --target ${{ matrix.target }} --features alpha
+            cross build --release --target ${{ matrix.target }} --features production
           else
-            cargo build --release --target ${{ matrix.target }} --features alpha
+            cargo build --release --target ${{ matrix.target }} --features production
           fi
         shell: bash
 

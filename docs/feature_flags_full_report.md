@@ -19,7 +19,7 @@ Key recommendations:
 - Use language packs: languages-core, languages-web, languages-all
 - Collapse web-client/server/full into a single web gate
 - Keep essential toggles: security, memory-optimization, wasm-plugins, ai/local-ai, image-rendering, tui, prometheus, rust-lang, python-lang, javascript-lang, typescript-lang
-- Remove legacy/convenience and empty internal flags (alpha, zero-cost, full-featured, enterprise, dev-*-only variants, streaming-iterator, tower, tower-http, graphql-api, yaml, reqwest)
+- Remove legacy/convenience and empty internal flags (alpha, zero-cost, full-featured, enterprise, dev-*-only variants, streaming-iterator, tower, tower-http)
 
 ---
 
@@ -97,7 +97,7 @@ Key recommendations:
 - Elimination:
   - alpha, zero-cost, full-featured, enterprise
   - dev-rust-only, dev-python-only, dev-js-only, dev-ts-only
-  - streaming-iterator, tower, tower-http, graphql-api, yaml, reqwest (internal/unused)
+  - streaming-iterator, tower, tower-http
 - Simplification:
   - Replace dev-*, production* with minimal, standard, full profiles
   - Encode security posture via security toggle, not separate production profiles
@@ -182,4 +182,3 @@ cargo check --no-default-features
 - Consolidation opportunities: dev-*-only, convenience profiles, web-* split, internal empty flags
 - Proposed feature reduction: 42 → ~22
 - Migration complexity (1–10): 6
-

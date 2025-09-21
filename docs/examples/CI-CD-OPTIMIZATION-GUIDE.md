@@ -16,10 +16,10 @@ This guide provides CI/CD pipeline optimizations for Uveddi based on memory opti
 - Generate complete reports for audit trails
 - Longer retention for production artifacts
 
-### 3. Language-Specific Pipelines (70-85% Faster)
-- Split multi-language projects by language
-- Use single-language features for massive speedups
-- Parallel execution across languages
+### 3. Core vs. Full Parsing Pipelines
+- For fastest checks, use `dev-minimal`/`dev-core`
+- For parsing checks, use `dev-full`
+- Run language jobs in parallel if needed
 
 ## GitHub Actions Optimizations
 
@@ -40,13 +40,15 @@ jobs:
       - cargo build --release --features=production
       - cargo run --release --features=production -- analyze .
       
-  # Tier 3: Language-specific (70-85% faster than multi-language)
+  # Tier 3: Core vs. Full parsing
   language-matrix:
     strategy:
       matrix:
         language: [rust, python, javascript, typescript]
     steps:
-      - cargo run --features=dev-${{ matrix.language }}-only --profile=dev-fast -- analyze .
+      - cargo run --features=dev-core --profile=dev-fast -- analyze .
+      # Or enable full parsing across all languages:
+      # - cargo run --features=dev-full --profile=dev-fast -- analyze .
 ```
 
 ### Caching Strategy
@@ -89,18 +91,18 @@ quick-check:
       - target/
       - .cargo/
 
-# Language-specific analysis (70-85% faster)
+# Language-focused analysis
 rust-check:
   stage: language-specific
   script:
-    - cargo run --features=dev-rust-only --profile=dev-fast -- analyze .
+    - cargo run --features=dev-core --profile=dev-fast -- analyze .
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 python-check:
   stage: language-specific
   script:
-    - cargo run --features=dev-python-only --profile=dev-fast -- analyze .
+    - cargo run --features=dev-core --profile=dev-fast -- analyze .
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
@@ -137,29 +139,19 @@ pipeline {
             }
         }
         
-        stage('Language-Specific Analysis') {
+        stage('Core vs Full Parsing') {
             when {
                 changeRequest()
             }
             parallel {
-                stage('Rust') {
+                stage('Core Checks') {
                     steps {
-                        sh 'cargo run --features=dev-rust-only --profile=dev-fast -- analyze .'
+                        sh 'cargo run --features=dev-core --profile=dev-fast -- analyze .'
                     }
                 }
-                stage('Python') {
+                stage('Full Parsing') {
                     steps {
-                        sh 'cargo run --features=dev-python-only --profile=dev-fast -- analyze .'
-                    }
-                }
-                stage('JavaScript') {
-                    steps {
-                        sh 'cargo run --features=dev-js-only --profile=dev-fast -- analyze .'
-                    }
-                }
-                stage('TypeScript') {
-                    steps {
-                        sh 'cargo run --features=dev-ts-only --profile=dev-fast -- analyze .'
+                        sh 'cargo run --features=dev-full --profile=dev-fast -- analyze .'
                     }
                 }
             }
@@ -235,13 +227,11 @@ stages:
           language: typescript
     steps:
     - script: |
-        case "$(language)" in
-          rust) cargo run --features=dev-rust-only --profile=dev-fast -- analyze . ;;
-          python) cargo run --features=dev-python-only --profile=dev-fast -- analyze . ;;
-          javascript) cargo run --features=dev-js-only --profile=dev-fast -- analyze . ;;
-          typescript) cargo run --features=dev-ts-only --profile=dev-fast -- analyze . ;;
-        esac
-      displayName: 'Language-Specific Analysis (70-85% faster)'
+        # Fastest (no parsers):
+        cargo run --features=dev-core --profile=dev-fast -- analyze .
+        # Full parsing (all languages):
+        # cargo run --features=dev-full --profile=dev-fast -- analyze .
+      displayName: 'Core or Full Parsing Analysis'
 
 - stage: ProductionValidation
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
@@ -277,7 +267,6 @@ stages:
 |-------------|-----------|--------------|------------|
 | `dev-minimal` | 50% less | 70% less | 60% smaller |
 | `dev-core` | 40% less | 50% less | 40% smaller |
-| `dev-rust-only` | 60% less | 65% less | 70% smaller |
 | `production` | Same | Same | Same |
 
 ## Cost Optimization
@@ -320,14 +309,10 @@ cargo run --release --features=production -- ci check . \
 ### Language-Specific Gates
 ```bash
 # Language-specific quality thresholds
-case "$LANGUAGE" in
-  rust)
-    cargo run --features=dev-rust-only --profile=dev-fast -- ci check . --rust-specific-rules
-    ;;
-  python)
-    cargo run --features=dev-python-only --profile=dev-fast -- ci check . --python-specific-rules
-    ;;
-esac
+# Prefer core checks for speed; enable full parsing when needed
+cargo run --features=dev-core --profile=dev-fast -- ci check .
+# Or:
+# cargo run --features=dev-full --profile=dev-fast -- ci check .
 ```
 
 ## Monitoring and Metrics
@@ -355,7 +340,7 @@ esac
 # Use appropriate feature set for each stage
 stages:
   - quick-feedback: dev-minimal    # 60-80% faster
-  - language-check: dev-X-only     # 70-85% faster  
+  - language-check: dev-core       # Fast core checks
   - full-analysis: production      # Complete features
 ```
 

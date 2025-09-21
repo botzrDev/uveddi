@@ -37,7 +37,7 @@ jobs:
         # sudo mv uveddi /usr/local/bin/
         
         # Option 2: Build from source (for development/testing)
-        cargo build --release --features alpha
+        cargo build --release --features dev-core
         sudo cp target/release/uveddi /usr/local/bin/
 
     - name: Run Uveddi CI Check
@@ -85,7 +85,7 @@ jobs:
 
     - name: Install Uveddi
       run: |
-        cargo build --release --features alpha
+        cargo build --release --features dev-core
         sudo cp target/release/uveddi /usr/local/bin/
 
     - name: Lenient CI Check for PRs

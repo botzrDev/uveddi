@@ -136,8 +136,8 @@ cargo build --features=dev-minimal
 cargo build --features=dev-core
 
 # Single-language builds (reduced compilation time)
-cargo build --features=dev-rust-only
-cargo build --features=dev-python-only
+cargo build --features=dev-core
+cargo build --features=dev-full
 
 # Use standard dev profile or specific feature sets for development builds
 ```
@@ -182,10 +182,8 @@ The project uses extensive feature flags for modular compilation, optimized for 
 - **`default`**: Lightweight core features for fast development builds (`dev-core`)
 - **`dev-minimal`**: Ultra-minimal build (essential dependencies only, 60-80% faster)
 - **`dev-core`**: Core analysis features without heavy parsing (recommended for development)
-- **`dev-rust-only`**: Rust-only analysis (70-85% faster than multi-language)
-- **`dev-python-only`**: Python-only analysis
-- **`dev-js-only`**: JavaScript-only analysis  
-- **`dev-ts-only`**: TypeScript-only analysis
+- Use `dev-core` for fastest core builds
+- Use `dev-full` for full parsing across languages
 
 #### Production Feature Sets
 - **`production`**: Full feature set for deployment (tree-sitter, security, memory-optimization, web-full)
@@ -281,7 +279,7 @@ target/release/uveddi analyze ./test_analysis --output-format json
 cargo run --features=dev-core -- analyze ./src --output-format html --output reports/analysis.html
 
 # Single-language analysis (reduced dependencies)
-cargo run --features=dev-rust-only -- analyze ./src
+cargo run --features=dev-core -- analyze ./src
 
 # Minimal build for quick iteration (~16s build time)
 cargo run --features=dev-minimal -- analyze ./src --output-format json

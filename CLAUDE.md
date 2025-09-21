@@ -10,14 +10,18 @@ Uveddi is a comprehensive architectural analysis tool that combines static code 
 
 ### Building
 ```bash
-# Development build (fast compilation)
-cargo build --features dev-core
+# Essential build (fastest compilation)
+cargo build --features minimal
 
-# Production build with all features
-cargo build --release --features production
+# Development build (recommended)
+cargo build --features standard
 
-# Minimal build for quick iterations
-cargo build --features dev-minimal
+# Production build (all features)
+cargo build --release --features full
+
+# Legacy builds (deprecated but supported)
+cargo build --features dev-core    # Use 'standard' instead
+cargo build --features production  # Use 'full' instead
 ```
 
 ### Testing

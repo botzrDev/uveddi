@@ -101,7 +101,7 @@ jobs:
         path: reports/
         retention-days: 30
 
-  # Language-specific checks (70-85% faster than multi-language)
+  # Core vs. Full parsing checks
   language-specific:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -122,12 +122,11 @@ jobs:
         path: target/
         key: ${{ runner.os }}-${{ matrix.language }}-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Language-Specific Analysis (70-85% faster)
+    - name: Core or Full Parsing Analysis
       run: |
-        # Single-language analysis for massive speed improvement
-        case "${{ matrix.language }}" in
-          rust)      cargo run --features=dev-rust-only --profile=dev-fast -- analyze . ;;
-          python)    cargo run --features=dev-python-only --profile=dev-fast -- analyze . ;;
-          javascript) cargo run --features=dev-js-only --profile=dev-fast -- analyze . ;;
-          typescript) cargo run --features=dev-ts-only --profile=dev-fast -- analyze . ;;
-        esac
+        # Use core for fastest turnaround, or full for parsing
+        if [ "${{ matrix.language }}" = "rust" ] || [ "${{ matrix.language }}" = "python" ] || [ "${{ matrix.language }}" = "javascript" ] || [ "${{ matrix.language }}" = "typescript" ]; then
+          cargo run --features=dev-core --profile=dev-fast -- analyze .
+          # For full parsing across all languages:
+          # cargo run --features=dev-full --profile=dev-fast -- analyze .
+        fi

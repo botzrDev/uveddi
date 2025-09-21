@@ -8,9 +8,9 @@ Uveddi uses an advanced feature flag system optimized for build performance. Bas
 
 ### Development Feature Sets (Optimized for Speed)
 
-#### `default` (New: Lightweight)
-- **Includes**: `["dev-core"]`
-- **Purpose**: Fast development builds (60-80% faster than previous default)
+#### `default` (Recommended)
+- **Includes**: `["standard"]`
+- **Purpose**: Recommended development profile with parsing and monitoring
 - **Binary Size**: ~3MB  
 - **Build Time**: ~30 seconds
 - **Recommended for**: Daily development, quick iteration
@@ -20,8 +20,8 @@ Uveddi uses an advanced feature flag system optimized for build performance. Bas
 cargo build --features=default --profile=dev-fast
 ```
 
-#### `dev-minimal`
-- **Includes**: Essential dependencies only (`clap`, `serde`, `tokio`, `anyhow`, `tracing`)
+#### `minimal`
+- **Includes**: Core storage and parallelism (`rusqlite`, `bincode`, `rayon`)
 - **Purpose**: Ultra-fast builds for rapid prototyping
 - **Binary Size**: ~2MB
 - **Build Time**: ~15 seconds
@@ -32,9 +32,9 @@ cargo build --features=default --profile=dev-fast
 cargo build --features=dev-minimal --profile=dev-fast
 ```
 
-#### `dev-core`
-- **Includes**: `dev-minimal` + core analysis (`petgraph`, `walkdir`, `ignore`, `rusqlite`)
-- **Purpose**: Balanced development with essential analysis features
+#### `standard`
+- **Includes**: `minimal` + parsing + monitoring (`tree-sitter`, `prometheus`)
+- **Purpose**: Balanced development with parsing and metrics
 - **Binary Size**: ~4MB
 - **Build Time**: ~45 seconds
 - **Recommended for**: Most development work
@@ -44,37 +44,12 @@ cargo build --features=dev-minimal --profile=dev-fast
 cargo build --features=dev-core --profile=dev-fast
 ```
 
-### Single-Language Builds (70-85% Faster)
+#### `full`
+- **Includes**: `standard` + capabilities (`security`, `memory-optimization`, `web`, `tui`, `wasm-plugins`)
+- **Purpose**: Full feature set for deployment
 
-#### `dev-rust-only`
-- **Includes**: `dev-minimal` + Rust AST parsing
-- **Purpose**: Rust-only analysis (massive speed improvement)
-- **Binary Size**: ~3MB
-- **Build Time**: ~25 seconds
-
-#### `dev-python-only`
-- **Includes**: `dev-minimal` + Python AST parsing  
-- **Purpose**: Python-only analysis
-- **Binary Size**: ~3MB
-- **Build Time**: ~25 seconds
-
-#### `dev-js-only`
-- **Includes**: `dev-minimal` + JavaScript AST parsing
-- **Purpose**: JavaScript-only analysis
-- **Binary Size**: ~3MB
-- **Build Time**: ~25 seconds
-
-#### `dev-ts-only`
-- **Includes**: `dev-minimal` + TypeScript AST parsing
-- **Purpose**: TypeScript-only analysis
-- **Binary Size**: ~3MB
-- **Build Time**: ~25 seconds
-
-```bash
-# Language-specific builds (70-85% faster than multi-language)
-cargo build --features=dev-rust-only --profile=dev-fast
-cargo build --features=dev-python-only --profile=dev-fast
-```
+### Language Parsing
+- Use `standard` or `full` for parsing-enabled builds.
 
 ## Production Feature Sets
 
@@ -137,11 +112,9 @@ cargo build --features=community
 
 | Feature Set | Build Time | Memory Usage | Binary Size | Use Case |
 |-------------|------------|--------------|-------------|----------|
-| `dev-minimal` | 15s | 200MB | 2MB | Rapid prototyping |
-| `dev-core` | 45s | 400MB | 4MB | **Daily development** |
-| `dev-rust-only` | 25s | 300MB | 3MB | Rust-only projects |
-| `community` | 2.5m | 1.2GB | 15MB | End-user builds |
-| `production` | 3m | 1.5GB | 18MB | Production deployment |
+| `minimal` | 15s | 200MB | 2MB | Rapid prototyping |
+| `standard` | 45s | 400MB | 4MB | **Daily development** |
+| `full` | 3m | 1.5GB | 18MB | Production deployment |
 
 ## Memory Optimization Principles Applied
 
@@ -178,8 +151,8 @@ cargo run --features=dev-core --profile=dev-fast -- analyze ./src
 cargo build --features=dev-minimal --profile=dev-fast
 cargo test --features=dev-core --profile=dev-fast
 
-# Language-specific work
-cargo build --features=dev-rust-only --profile=dev-fast
+# Full parsing during focused language work
+cargo build --features=dev-full --profile=dev-fast
 ```
 
 ### Production Workflow  
@@ -269,8 +242,8 @@ cargo build --features=dev-core --profile=dev-fast
 #### Need Faster Iteration
 ```bash
 # Problem: Need even faster builds
-# Solution: Single-language builds (70-85% faster)
-cargo build --features=dev-rust-only --profile=dev-fast
+# Solution: Use dev-core for fastest turnaround or dev-full for parsing
+cargo build --features=dev-core --profile=dev-fast
 ```
 
 #### CI/CD Taking Too Long
@@ -309,7 +282,7 @@ cargo build --features=dev-minimal
 
 # Add features incrementally  
 cargo build --features=dev-core
-cargo build --features=dev-rust-only
+cargo build --features=dev-full
 ```
 
 ### 2. Use Appropriate Profiles
@@ -326,11 +299,22 @@ cargo build --release
 
 ### 3. Language-Specific Optimization
 ```bash
-# If you only work with Rust
-cargo build --features=dev-rust-only --profile=dev-fast
+# Fast core build
+cargo build --features=minimal --profile=dev-fast
 
-# Multi-language projects
-cargo build --features=dev-core --profile=dev-fast
+# Full parsing across languages
+cargo build --features=standard --profile=dev-fast
+
+# All capabilities for production
+cargo build --release --features=full
+
+### Legacy Profiles (Deprecated)
+- dev-ultra-minimal → use `minimal`
+- dev-minimal → use `minimal`
+- dev-core → use `standard`
+- dev-full → use `standard`
+- production → use `full`
+- production-secure → use `full` (configure security at runtime)
 ```
 
 ### 4. CI/CD Pipeline Optimization

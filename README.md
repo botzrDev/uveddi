@@ -22,8 +22,8 @@ A comprehensive architectural analysis tool that combines static code analysis w
 git clone https://github.com/botzrDev/uveddi.git
 cd uveddi
 
-# Fast development build (recommended for first try)
-cargo build --features dev-core
+# Fast development build (recommended)
+cargo build --features standard
 
 # Basic analysis
 cargo run -- analyze ./src
@@ -46,7 +46,7 @@ cargo run -- serve --port 8888
 ### Development Builds (Faster)
 ```bash
 # Quick development build
-cargo build --features dev-core
+cargo build --features standard
 
 # Run directly
 cargo run --features dev-core -- analyze ./src
@@ -55,7 +55,7 @@ cargo run --features dev-core -- analyze ./src
 ### Production Builds (Full Features)
 ```bash
 # Full feature build (slower but complete)
-cargo build --release --features production
+cargo build --release --features full
 
 # Install globally
 cargo install --path . --features production
@@ -67,8 +67,9 @@ cargo install --path . --features production
 - Optional: Node.js 18+ for web dashboard development
 
 ### Feature Flags
-- `dev-core`: Fast development builds with core functionality (~14s build time)
-- `production`: Full feature set for production use
+- `minimal`: Essential functionality, fastest builds
+- `standard`: Recommended development profile (parsing + monitoring)
+- `full`: Production-ready (all capabilities)
 - `security`: Advanced security features and authentication
 - `wasm-plugins`: WebAssembly plugin system support
 
