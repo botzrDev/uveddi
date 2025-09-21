@@ -3,11 +3,17 @@
 //! This module provides specialized security analysis for different programming
 //! languages and frameworks.
 
+pub mod rust;
+pub mod python;
+pub mod javascript;
 pub mod web_frameworks;
 pub mod api_security;
 pub mod database_security;
 
 // Re-exports
+pub use rust::RustOwaspAnalyzer;
+pub use python::PythonOwaspAnalyzer;
+pub use javascript::JavaScriptOwaspAnalyzer;
 pub use web_frameworks::WebFrameworkAnalyzer;
 pub use api_security::ApiSecurityAnalyzer;
 pub use database_security::DatabaseSecurityAnalyzer;

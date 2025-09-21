@@ -87,6 +87,7 @@ pub enum SecurityIssueType {
     PathTraversal,
     CrossSiteScripting,
     CrossSiteRequestForgery,
+    SessionManagement,
     BusinessLogicErrors,
     InsufficientInputValidation,
     ImproperErrorHandling,
@@ -135,6 +136,8 @@ impl SecurityIssueType {
             SecurityIssueType::BufferOverflow => SecuritySeverity::Critical,
             SecurityIssueType::UseAfterFree => SecuritySeverity::Critical,
             SecurityIssueType::CrossSiteScripting => SecuritySeverity::High,
+            SecurityIssueType::CrossSiteRequestForgery => SecuritySeverity::High,
+            SecurityIssueType::SessionManagement => SecuritySeverity::Medium,
             SecurityIssueType::PathTraversal => SecuritySeverity::High,
             SecurityIssueType::SecurityMisconfiguration => SecuritySeverity::Medium,
             SecurityIssueType::InsecureRandomness => SecuritySeverity::Medium,
@@ -169,6 +172,7 @@ impl ToString for SecurityIssueType {
             SecurityIssueType::CrossSiteRequestForgery => {
                 "Cross-Site Request Forgery (CSRF)".to_string()
             }
+            SecurityIssueType::SessionManagement => "Session Management".to_string(),
             SecurityIssueType::BusinessLogicErrors => "Business Logic Errors".to_string(),
             SecurityIssueType::InsufficientInputValidation => {
                 "Insufficient Input Validation".to_string()
