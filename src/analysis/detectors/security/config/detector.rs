@@ -58,20 +58,19 @@ impl ConfigSecurityDetector {
         content: &str,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let config_type = self.detect_config_type(file_path)?;
-        let mut issues = Vec::new();
-
         // Detect configuration-specific security issues
         let config_issues = self.detect_security_issues(config_type, content)?;
 
-        // Convert ConfigIssue to SecurityIssue
-        for config_issue in config_issues {
+        // Apply policy and compliance validation at the ConfigIssue level
+        let validated_config_issues = self.validate_config_issues(config_issues)?;
+
+        // Convert to SecurityIssue
+        let mut issues = Vec::new();
+        for config_issue in validated_config_issues {
             issues.push(self.convert_to_security_issue(config_issue, file_path)?);
         }
 
-        // Apply validation and compliance checks
-        let validated_issues = self.validate_issues(issues).await?;
-
-        Ok(validated_issues)
+        Ok(issues)
     }
 
     /// Detect security issues in configuration content
@@ -135,22 +134,19 @@ impl ConfigSecurityDetector {
         })
     }
 
-    async fn validate_issues(
-        &self,
-        issues: Vec<SecurityIssue>,
-    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        let mut validated_issues = Vec::new();
+    fn validate_config_issues(&self, issues: Vec<ConfigIssue>) -> Result<Vec<ConfigIssue>, AnalysisError> {
+        let mut validated = Vec::new();
 
         for issue in issues {
             // Apply policy validation
             if self.policy_validator.validate_issue(&issue)? {
                 // Apply compliance validation
                 let compliant_issue = self.compliance_validator.enhance_issue(issue)?;
-                validated_issues.push(compliant_issue);
+                validated.push(compliant_issue);
             }
         }
 
-        Ok(validated_issues)
+        Ok(validated)
     }
 }
 

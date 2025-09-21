@@ -136,7 +136,7 @@ impl ProgressTracker {
     }
 
     /// Start a new operation tracking
-    pub async fn start_operation(&mut self, operation_name: String) -> Result<(), UveddiError> {
+    pub async fn start_operation(&self, operation_name: String) -> Result<(), UveddiError> {
         if !self.is_running {
             return Err(UveddiError::config_error(
                 "Progress tracker is not running",
@@ -160,7 +160,7 @@ impl ProgressTracker {
     }
 
     /// Start tracking a new stage
-    pub async fn start_stage(&mut self, stage_name: String) -> Result<(), UveddiError> {
+    pub async fn start_stage(&self, stage_name: String) -> Result<(), UveddiError> {
         debug!("Starting stage: {}", stage_name);
 
         let mut state = self.state.write().await;
@@ -244,7 +244,7 @@ impl ProgressTracker {
     }
 
     /// Complete the current stage
-    pub async fn complete_stage(&mut self, stage_name: &str) -> Result<(), UveddiError> {
+    pub async fn complete_stage(&self, stage_name: &str) -> Result<(), UveddiError> {
         debug!("Completing stage: {}", stage_name);
 
         let mut state = self.state.write().await;
@@ -264,7 +264,7 @@ impl ProgressTracker {
     }
 
     /// Complete the entire operation
-    pub async fn complete_operation(&mut self) -> Result<(), UveddiError> {
+    pub async fn complete_operation(&self) -> Result<(), UveddiError> {
         debug!("Completing operation");
 
         let mut state = self.state.write().await;
@@ -311,7 +311,7 @@ impl ProgressTracker {
     }
 
     /// Register a progress callback
-    pub async fn register_callback<C>(&mut self, _callback: C) -> Result<(), UveddiError>
+    pub async fn register_callback<C>(&self, _callback: C) -> Result<(), UveddiError>
     where
         C: ProgressCallback + 'static,
     {
@@ -321,7 +321,7 @@ impl ProgressTracker {
     }
 
     /// Reset the progress tracker state
-    pub async fn reset(&mut self) {
+    pub async fn reset(&self) {
         let mut state = self.state.write().await;
         *state = ProgressState::new();
         debug!("Progress tracker state reset");

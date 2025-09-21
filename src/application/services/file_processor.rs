@@ -256,7 +256,7 @@ impl FileProcessor {
         self.stats = ProcessingStats::default();
     }
 
-    /// Recursive file discovery implementation
+    /// File discovery implementation (iterative to avoid async recursion)
     async fn discover_files_recursive(
         path: &Path,
         config: &FileProcessorConfig,
@@ -278,41 +278,53 @@ impl FileProcessor {
             });
         }
 
-        let read_dir = std::fs::read_dir(path).map_err(|e| UveddiError::PathError {
-            path: path.display().to_string(),
-            reason: format!("Failed to read directory: {}", e),
-            suggestion: "Check directory permissions".to_string(),
-        })?;
+        // Use a stack to avoid recursive async calls
+        let mut stack: Vec<PathBuf> = vec![path.to_path_buf()];
 
-        for entry in read_dir {
-            let entry = entry.map_err(|e| UveddiError::PathError {
-                path: path.display().to_string(),
-                reason: format!("Failed to read directory entry: {}", e),
-                suggestion: "Check file system integrity".to_string(),
-            })?;
+        while let Some(dir_path) = stack.pop() {
+            let read_dir = match std::fs::read_dir(&dir_path) {
+                Ok(rd) => rd,
+                Err(e) => {
+                    return Err(UveddiError::PathError {
+                        path: dir_path.display().to_string(),
+                        reason: format!("Failed to read directory: {}", e),
+                        suggestion: "Check directory permissions".to_string(),
+                    });
+                }
+            };
 
-            let entry_path = entry.path();
+            for entry in read_dir {
+                let entry = entry.map_err(|e| UveddiError::PathError {
+                    path: dir_path.display().to_string(),
+                    reason: format!("Failed to read directory entry: {}", e),
+                    suggestion: "Check file system integrity".to_string(),
+                })?;
 
-            // Skip symbolic links if not following them
-            if entry_path.is_symlink() && !config.follow_symlinks {
-                continue;
-            }
+                let entry_path = entry.path();
 
-            if entry_path.is_dir() && config.recursive {
-                // Recursively process subdirectory
-                let mut subdir_files = Self::discover_files_recursive(&entry_path, config, progress_tx.clone()).await?;
-                files.append(&mut subdir_files);
-            } else if entry_path.is_file() {
-                let file_info = Self::create_file_info(&entry_path, config)?;
-                files.push(file_info);
+                // Skip symbolic links if not following them
+                if entry_path.is_symlink() && !config.follow_symlinks {
+                    continue;
+                }
 
-                // Send progress update
-                let _ = progress_tx.send(ProgressUpdate {
-                    current: files.len(),
-                    total: None,
-                    message: format!("Discovered: {}", entry_path.display()),
-                    stage: "file_discovery".to_string(),
-                }).await;
+                if entry_path.is_dir() {
+                    if config.recursive {
+                        stack.push(entry_path);
+                    }
+                } else if entry_path.is_file() {
+                    let file_info = Self::create_file_info(&entry_path, config)?;
+                    files.push(file_info);
+
+                    // Send progress update
+                    let _ = progress_tx
+                        .send(ProgressUpdate {
+                            current: files.len(),
+                            total: None,
+                            message: format!("Discovered: {}", entry_path.display()),
+                            stage: "file_discovery".to_string(),
+                        })
+                        .await;
+                }
             }
         }
 

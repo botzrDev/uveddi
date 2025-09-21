@@ -21,9 +21,9 @@ use std::time::Instant;
 #[derive(Debug, Clone)]
 pub struct UnifiedScanResult {
     pub vulnerabilities: Vec<OwaspVulnerability>,
-    pub metadata: Value,
+    /// Arbitrary metadata from the scanner (JSON object)
+    pub scanner_metadata: Value,
     pub scan_duration_ms: u64,
-    pub files_processed: usize,
 }
 
 /// Common scanner trait
@@ -32,6 +32,8 @@ pub trait Scanner: Send + Sync {
     async fn scan(&self, file: &ParsedFile) -> Result<UnifiedScanResult, AnalysisError>;
     fn name(&self) -> &'static str;
     fn supported_languages(&self) -> Vec<SourceLanguage>;
+    /// The OWASP categories this scanner can detect
+    fn detectable_categories(&self) -> Vec<crate::analysis::detectors::security::owasp::types::OwaspCategory>;
 }
 
 /// Scanner orchestrator for coordinating multiple scanners

@@ -215,9 +215,8 @@ impl Scanner for DependencyScanner {
 
         Ok(UnifiedScanResult {
             vulnerabilities,
-            metadata: serde_json::to_value(&result).unwrap_or_default(),
+            scanner_metadata: serde_json::to_value(&result).unwrap_or_default(),
             scan_duration_ms: result.scan_duration_ms,
-            files_processed: 1,
         })
     }
 
@@ -227,6 +226,10 @@ impl Scanner for DependencyScanner {
 
     fn supported_languages(&self) -> Vec<SourceLanguage> {
         vec![SourceLanguage::Rust, SourceLanguage::Python, SourceLanguage::JavaScript, SourceLanguage::TypeScript]
+    }
+
+    fn detectable_categories(&self) -> Vec<OwaspCategory> {
+        vec![OwaspCategory::VulnerableComponents]
     }
 }
 

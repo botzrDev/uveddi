@@ -4,6 +4,7 @@
 //! pattern matching and specialized configuration checks.
 
 use crate::analysis::AnalysisError;
+use crate::analysis::detectors::security::config::language_support::utils;
 use super::super::super::config::ConfigSecurityConfig;
 use super::super::super::types::ConfigIssue;
 use super::rules::{MisconfigurationRule, MisconfigurationPattern};
@@ -82,7 +83,7 @@ impl MisconfigurationAnalyzer {
         for rule in &self.rules {
             if let MisconfigurationPattern::Structured(check_fn) = &rule.pattern {
                 if check_fn(value) {
-                    let mut issue = super::super::super::utils::create_config_issue(
+                    let mut issue = utils::create_config_issue(
                         rule.severity.clone(),
                         rule.name.clone(),
                         rule.description.clone(),

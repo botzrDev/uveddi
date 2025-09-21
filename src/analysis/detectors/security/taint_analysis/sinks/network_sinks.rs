@@ -146,6 +146,10 @@ impl NetworkSinkDetector {
                     "WebSocket connection with user URL".to_string(),
                 ).with_language(language),
             ],
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
+                // Placeholder for JS/TS SSRF sinks detection; currently none
+            ],
+            _ => Vec::new(),
         }
     }
 
@@ -244,6 +248,7 @@ impl NetworkSinkDetector {
                     "setInterval with user-controlled code".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 
@@ -266,6 +271,10 @@ impl NetworkSinkDetector {
                     "WebSocket message with user data".to_string(),
                 ).with_language(language),
             ],
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
+                // Placeholder for JS/TS websocket sinks detection; currently none
+            ],
+            _ => Vec::new(),
         }
     }
 }

@@ -158,6 +158,7 @@ impl FileSinkDetector {
                     "Write stream creation with user path".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 
@@ -224,6 +225,7 @@ impl FileSinkDetector {
                     "File deletion with user-controlled path".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 
@@ -244,6 +246,7 @@ impl FileSinkDetector {
                     "Path resolution with user input".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 }

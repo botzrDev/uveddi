@@ -333,7 +333,7 @@ impl Scanner for PatternScanner {
 
         Ok(UnifiedScanResult {
             vulnerabilities,
-            scanner_metadata: metadata,
+            scanner_metadata: serde_json::to_value(&metadata).unwrap_or_default(),
             scan_duration_ms: scan_duration,
         })
     }

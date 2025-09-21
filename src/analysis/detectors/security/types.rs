@@ -193,6 +193,24 @@ impl ToString for SecurityIssueType {
     }
 }
 
+impl From<crate::analysis::detectors::security::owasp::types::OwaspCategory> for SecurityIssueType {
+    fn from(cat: crate::analysis::detectors::security::owasp::types::OwaspCategory) -> Self {
+        use crate::analysis::detectors::security::owasp::types::OwaspCategory as OC;
+        match cat {
+            OC::BrokenAccessControl => SecurityIssueType::BrokenAccessControl,
+            OC::CryptographicFailures => SecurityIssueType::CryptographicFailures,
+            OC::Injection => SecurityIssueType::Injection,
+            OC::InsecureDesign => SecurityIssueType::InsecureDesign,
+            OC::SecurityMisconfiguration => SecurityIssueType::SecurityMisconfiguration,
+            OC::VulnerableComponents => SecurityIssueType::VulnerableComponents,
+            OC::AuthenticationFailures => SecurityIssueType::AuthenticationFailures,
+            OC::DataIntegrityFailures => SecurityIssueType::SoftwareDataIntegrityFailures,
+            OC::LoggingFailures => SecurityIssueType::SecurityLoggingFailures,
+            OC::ServerSideRequestForgery => SecurityIssueType::ServerSideRequestForgery,
+        }
+    }
+}
+
 /// Location information for a security issue in source code
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SecurityLocation {

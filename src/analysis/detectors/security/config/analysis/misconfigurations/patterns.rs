@@ -5,6 +5,7 @@
 use crate::analysis::AnalysisError;
 use super::super::super::types::{ConfigIssue, ConfigSeverity};
 use crate::analysis::detectors::security::config::patterns::utils;
+use crate::analysis::detectors::security::config::language_support::utils as lang_utils;
 use super::rules::{MisconfigurationRule, MisconfigurationPattern};
 use regex::Regex;
 
@@ -29,7 +30,7 @@ impl PatternBuilder {
         if matches {
             let confidence = Self::calculate_confidence(rule, line);
 
-            let mut issue = utils::create_config_issue(
+            let mut issue = lang_utils::create_config_issue(
                 rule.severity.clone(),
                 rule.name.clone(),
                 rule.description.clone(),

@@ -152,6 +152,7 @@ pub struct AiMetrics {
 }
 
 /// Trait for AI client implementations
+#[async_trait::async_trait]
 trait AiClient: Send + Sync {
     /// Analyze a single issue
     async fn analyze_issue(&self, issue: &ArchitecturalIssue) -> Result<AiInsight, UveddiError>;
@@ -484,6 +485,7 @@ impl Cancellable for AiWorkflow {
 }
 
 // Mock AI client implementation
+#[async_trait::async_trait]
 impl AiClient for MockAiClient {
     async fn analyze_issue(&self, issue: &ArchitecturalIssue) -> Result<AiInsight, UveddiError> {
         // Simulate AI processing delay

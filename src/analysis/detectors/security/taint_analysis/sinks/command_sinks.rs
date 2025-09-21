@@ -169,6 +169,7 @@ impl CommandSinkDetector {
                     "Child process execFile with user input".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 
@@ -227,6 +228,7 @@ impl CommandSinkDetector {
                     "VM new context execution with user code".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 
@@ -261,6 +263,7 @@ impl CommandSinkDetector {
                     "Child process fork with user module".to_string(),
                 ).with_language(language),
             ],
+            _ => Vec::new(),
         }
     }
 }

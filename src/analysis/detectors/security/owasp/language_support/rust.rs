@@ -117,8 +117,8 @@ impl RustOwaspAnalyzer {
                     );
 
                     let vulnerability = OwaspVulnerability::new(
-                        pattern.category,
-                        SecurityIssueType::from(pattern.category),
+                        pattern.category.clone(),
+                        SecurityIssueType::from(pattern.category.clone()),
                         pattern.name.clone(),
                         pattern.description.clone(),
                         location,
