@@ -73,15 +73,20 @@ python-lang = ["dep:tree-sitter-python"]
 javascript-lang = ["dep:tree-sitter-javascript"]
 typescript-lang = ["dep:tree-sitter-typescript"]
 
-# Language combinations for targeted development (removed redundant dev-*-only variants)
+# ==================== LANGUAGE PACKS ====================
+# Backend languages (Rust, Python)
+languages-core = ["rust-lang", "python-lang"]
+
+# Frontend languages (JavaScript, TypeScript)
+languages-web = ["javascript-lang", "typescript-lang"]
+
+# All supported languages
+languages-all = ["languages-core", "languages-web"]
 
 # Full tree-sitter support (all languages)
 tree-sitter = [
     "dep:tree-sitter",
-    "rust-lang",
-    "python-lang",
-    "javascript-lang",
-    "typescript-lang"
+    "languages-all"
 ]
 
 # ==================== PRODUCTION BUILDS (LEGACY - DEPRECATED) ====================
@@ -118,7 +123,7 @@ production-secure = [
 
 # ==================== NEW SIMPLIFIED PROFILES ====================
 # Essential functionality - fastest builds, minimal dependencies
-minimal = ["dep:rusqlite", "dep:bincode", "dep:rayon"]
+minimal = ["dep:rusqlite", "dep:bincode", "dep:rayon", "dep:tokio-stream", "dep:async-stream"]
 
 # Recommended for development - includes parsing and monitoring
 standard = ["minimal", "tree-sitter", "prometheus"]
@@ -133,14 +138,15 @@ prometheus = ["dep:prometheus"]
 # Cryptography and security
 crypto-minimal = []
 crypto-full = ["dep:rustls", "dep:ring", "dep:argon2", "dep:subtle"]
-security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs", "dep:config"]
+security = ["crypto-full", "web", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs", "dep:config"]
 
 # Web infrastructure
-web-client = []
-web-server = []
-web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
-# New alias for simplified profiles
-web = ["web-full"]
+web = ["dep:tower_governor", "dep:tokio-tungstenite"]
+
+# Legacy web features (deprecated)
+web-client = ["web"]  # DEPRECATED: Use 'web' instead
+web-server = ["web"]  # DEPRECATED: Use 'web' instead
+web-full = ["web"]    # DEPRECATED: Use 'web' instead
 
 # User interfaces
 tui = ["dep:ratatui", "dep:crossterm", "dep:tui-input"]

@@ -21,7 +21,7 @@ cargo build --features=default --profile=dev-fast
 ```
 
 #### `minimal`
-- **Includes**: Core storage and parallelism (`rusqlite`, `bincode`, `rayon`)
+- **Includes**: Core storage and parallelism (`rusqlite`, `bincode`, `rayon`, `tokio-stream`, `async-stream`)
 - **Purpose**: Ultra-fast builds for rapid prototyping
 - **Binary Size**: ~2MB
 - **Build Time**: ~15 seconds
@@ -29,7 +29,7 @@ cargo build --features=default --profile=dev-fast
 
 ```bash
 # Ultra-minimal build (fastest iteration)
-cargo build --features=dev-minimal --profile=dev-fast
+cargo build --features=minimal --profile=dev-fast
 ```
 
 #### `standard`
@@ -41,7 +41,7 @@ cargo build --features=dev-minimal --profile=dev-fast
 
 ```bash
 # Recommended development build
-cargo build --features=dev-core --profile=dev-fast
+cargo build --features=standard --profile=dev-fast
 ```
 
 #### `full`
@@ -51,10 +51,38 @@ cargo build --features=dev-core --profile=dev-fast
 ### Language Parsing
 - Use `standard` or `full` for parsing-enabled builds.
 
+## Language Support
+
+### Language Packs (Recommended)
+- `languages-core` - Backend languages (Rust, Python)
+- `languages-web` - Frontend languages (JavaScript, TypeScript)
+- `languages-all` - All supported languages
+
+### Individual Languages
+- `rust-lang` - Rust parser only
+- `python-lang` - Python parser only
+- `javascript-lang` - JavaScript parser only
+- `typescript-lang` - TypeScript parser only
+
+### Common Combinations
+```bash
+# Backend project
+cargo build --features "minimal,dep:tree-sitter,languages-core"
+
+# Frontend project
+cargo build --features "minimal,dep:tree-sitter,languages-web"
+
+# Full stack project
+cargo build --features "standard"  # includes tree-sitter with all languages
+
+# Custom language mix
+cargo build --features "minimal,dep:tree-sitter,rust-lang,typescript-lang"
+```
+
 ## Production Feature Sets
 
 #### `production` (Equivalent to Old Default)
-- **Includes**: `["tree-sitter", "security", "memory-optimization", "web-full"]`
+- **Includes**: `["tree-sitter", "security", "memory-optimization", "web"]`
 - **Purpose**: Full feature set for deployment
 - **Binary Size**: ~18MB
 - **Build Time**: ~3 minutes
@@ -89,9 +117,10 @@ cargo build --features=community
 - **`crypto-full`**: Complete crypto stack (`rustls`, `ring`, `blake3`, `sha2`, `argon2`, `subtle`)
 
 ### Consolidated Web Features
-- **`web-client`**: HTTP client (`reqwest`)
-- **`web-server`**: Web framework (`axum`, `tower`, `tower-http`) 
-- **`web-full`**: Complete web stack with rate limiting
+- **`web`**: Complete web stack with rate limiting (`tower_governor`, `tokio-tungstenite`)
+- **`web-client`**: DEPRECATED - Use `web` instead
+- **`web-server`**: DEPRECATED - Use `web` instead
+- **`web-full`**: DEPRECATED - Use `web` instead
 
 ### Individual Language Features
 - **`rust-lang`**: Rust AST parsing
@@ -334,7 +363,7 @@ cargo build --features="dev-minimal,rust-lang"
 cargo build --features="dev-core,crypto-minimal"
 
 # Web server without full security
-cargo build --features="dev-core,web-server"
+cargo build --features="standard,web"
 ```
 
 ### Environment-Specific Builds

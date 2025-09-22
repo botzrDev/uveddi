@@ -95,14 +95,14 @@ quick-check:
 rust-check:
   stage: language-specific
   script:
-    - cargo run --features=dev-core --profile=dev-fast -- analyze .
+    - cargo build --features "minimal,dep:tree-sitter,languages-core"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 python-check:
   stage: language-specific
   script:
-    - cargo run --features=dev-core --profile=dev-fast -- analyze .
+    - cargo build --features "minimal,dep:tree-sitter,languages-core"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 

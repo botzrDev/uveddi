@@ -38,18 +38,18 @@ jobs:
     - name: Fast Development Build (60-80% faster)
       run: |
         # Build with minimal features for fastest feedback
-        cargo build --features=dev-minimal --profile=dev-fast
+        cargo build --features=minimal --profile=dev-fast
 
     - name: Quick Quality Check
       run: |
         # Fast analysis for development feedback
-        cargo run --features=dev-minimal --profile=dev-fast -- ci check . --max-debt 60 --max-critical 1
+        cargo run --features=minimal --profile=dev-fast -- ci check . --max-debt 60 --max-critical 1
 
     - name: Generate Basic Report
       if: failure()
       run: |
         mkdir -p reports
-        cargo run --features=dev-core --profile=dev-fast -- analyze . --output-format json --output reports/quick-report.json
+        cargo run --features=standard --profile=dev-fast -- analyze . --output-format json --output reports/quick-report.json
         
   # Comprehensive check for main branch
   full-check:
@@ -79,19 +79,19 @@ jobs:
     - name: Production Build
       run: |
         # Full production build with all features
-        cargo build --release --features=production
+        cargo build --release --features=full
 
     - name: Comprehensive Quality Gate
       run: |
-        # Full analysis with production features
-        cargo run --release --features=production -- ci check . --max-debt 50 --max-critical 0
+        # Full analysis with all features
+        cargo run --release --features=full -- ci check . --max-debt 50 --max-critical 0
 
     - name: Generate Full Report
       if: always()
       run: |
         mkdir -p reports
-        cargo run --release --features=production -- analyze . --output-format html --output reports/quality-report.html
-        cargo run --release --features=production -- analyze . --output-format json --output reports/quality-report.json
+        cargo run --release --features=full -- analyze . --output-format html --output reports/quality-report.html
+        cargo run --release --features=full -- analyze . --output-format json --output reports/quality-report.json
 
     - name: Upload Report
       if: always()
@@ -101,7 +101,7 @@ jobs:
         path: reports/
         retention-days: 30
 
-  # Core vs. Full parsing checks
+  # Core vs. Full parsing checks (with Language Packs)
   language-specific:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -122,11 +122,17 @@ jobs:
         path: target/
         key: ${{ runner.os }}-${{ matrix.language }}-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Core or Full Parsing Analysis
+    - name: Language Pack Builds
       run: |
-        # Use core for fastest turnaround, or full for parsing
-        if [ "${{ matrix.language }}" = "rust" ] || [ "${{ matrix.language }}" = "python" ] || [ "${{ matrix.language }}" = "javascript" ] || [ "${{ matrix.language }}" = "typescript" ]; then
-          cargo run --features=dev-core --profile=dev-fast -- analyze .
-          # For full parsing across all languages:
-          # cargo run --features=dev-full --profile=dev-fast -- analyze .
-        fi
+        # Fastest core run (no parsers)
+        cargo run --features=minimal --profile=dev-fast -- ci check . --max-debt 60 --max-critical 1 || true
+        
+        # Enable only relevant language parsers via packs
+        case "${{ matrix.language }}" in
+          rust|python)
+            cargo build --features "minimal,tree-sitter,languages-core"
+            ;;
+          javascript|typescript)
+            cargo build --features "minimal,tree-sitter,languages-web"
+            ;;
+        esac

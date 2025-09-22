@@ -19,6 +19,16 @@ cargo build --features standard
 # Production build (all features)
 cargo build --release --features full
 
+# Language-specific builds (packs)
+# Backend languages only (Rust, Python) - Note: currently pulls all languages via tree-sitter
+cargo build --features "minimal,languages-core"
+
+# Frontend languages only (JavaScript, TypeScript) - Note: currently pulls all languages via tree-sitter
+cargo build --features "minimal,languages-web"
+
+# Full language support (recommended)
+cargo build --features "standard"  # includes tree-sitter with all languages
+
 # Legacy builds (deprecated but supported)
 cargo build --features dev-core    # Use 'standard' instead
 cargo build --features production  # Use 'full' instead
