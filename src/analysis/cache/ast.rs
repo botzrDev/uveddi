@@ -26,7 +26,6 @@ use crate::ast::tree_sitter::ParsedFile;
 use crate::analysis::errors::AnalysisError;
 
 #[cfg(feature = "tree-sitter")]
-#[cfg(feature = "tree-sitter")]
 use tree_sitter::Tree;
 
 /// Configuration for the AST cache system

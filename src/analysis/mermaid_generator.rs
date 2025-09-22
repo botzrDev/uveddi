@@ -112,7 +112,7 @@ impl MermaidGenerator {
                     let mermaid_src = String::from_utf8_lossy(&cached_content).to_string();
                     return Ok(crate::models::visualization::DiagramResult {
                         diagram_type: diagram_type.clone(),
-                        mermaid_src: mermaid_src,
+                        mermaid_src,
                         components: components.iter().map(|c| c.component_id).collect(),
                         image_path: None,
                         generated_at: chrono::Utc::now(),
