@@ -49,7 +49,7 @@ cargo run -- serve --port 8888
 cargo build --features standard
 
 # Run directly
-cargo run --features dev-core -- analyze ./src
+cargo run --features standard -- analyze ./src
 ```
 
 ### Production Builds (Full Features)
@@ -58,7 +58,7 @@ cargo run --features dev-core -- analyze ./src
 cargo build --release --features full
 
 # Install globally
-cargo install --path . --features production
+cargo install --path . --features full
 ```
 
 ### Prerequisites
@@ -67,11 +67,25 @@ cargo install --path . --features production
 - Optional: Node.js 18+ for web dashboard development
 
 ### Feature Flags
+
+**New Simplified System (v0.9.0+):**
 - `minimal`: Essential functionality, fastest builds
 - `standard`: Recommended development profile (parsing + monitoring)
 - `full`: Production-ready (all capabilities)
+
+**Capability Features:**
 - `security`: Advanced security features and authentication
 - `wasm-plugins`: WebAssembly plugin system support
+- `memory-optimization`: Performance optimizations
+- `tui`: Terminal user interface
+- `web`: Web dashboard and API
+
+**Language Packs:**
+- `languages-core`: Rust + Python parsing
+- `languages-web`: JavaScript + TypeScript parsing
+- `languages-all`: All supported languages
+
+> **Migration Notice:** If upgrading from v0.8.x, see [Feature Migration Guide](docs/migrations/feature-migration-guide.md) for updating deprecated features.
 
 ## Documentation
 
