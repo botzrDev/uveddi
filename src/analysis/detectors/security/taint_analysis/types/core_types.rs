@@ -188,7 +188,9 @@ impl TaintLevel {
             TaintLevel::High | TaintLevel::Tainted => true,
             TaintLevel::Medium => true,
             TaintLevel::Partial(level) => *level > 0.5,
-            TaintLevel::Untainted | TaintLevel::Clean | TaintLevel::Low | TaintLevel::Sanitized => false,
+            TaintLevel::Untainted | TaintLevel::Clean | TaintLevel::Low | TaintLevel::Sanitized => {
+                false
+            }
         }
     }
 
@@ -208,8 +210,11 @@ impl TaintLevel {
         match (self, other) {
             (TaintLevel::Untainted | TaintLevel::Clean, other) => other.clone(),
             (other, TaintLevel::Untainted | TaintLevel::Clean) => other.clone(),
-            (TaintLevel::High | TaintLevel::Tainted, _) | (_, TaintLevel::High | TaintLevel::Tainted) => TaintLevel::High,
-            (TaintLevel::Medium, TaintLevel::Low) | (TaintLevel::Low, TaintLevel::Medium) => TaintLevel::Medium,
+            (TaintLevel::High | TaintLevel::Tainted, _)
+            | (_, TaintLevel::High | TaintLevel::Tainted) => TaintLevel::High,
+            (TaintLevel::Medium, TaintLevel::Low) | (TaintLevel::Low, TaintLevel::Medium) => {
+                TaintLevel::Medium
+            }
             (TaintLevel::Medium, _) | (_, TaintLevel::Medium) => TaintLevel::Medium,
             (TaintLevel::Low, TaintLevel::Low) => TaintLevel::Low,
             (TaintLevel::Partial(a), TaintLevel::Partial(b)) => {
@@ -221,20 +226,28 @@ impl TaintLevel {
             }
             (TaintLevel::Sanitized, TaintLevel::Sanitized) => TaintLevel::Sanitized,
             // Handle combinations with discrete levels
-            (TaintLevel::Low, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::Low) => TaintLevel::Low,
-            (TaintLevel::Medium, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::Medium) => TaintLevel::Medium,
-            (TaintLevel::High, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::High) => TaintLevel::High,
+            (TaintLevel::Low, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::Low) => {
+                TaintLevel::Low
+            }
+            (TaintLevel::Medium, TaintLevel::Sanitized)
+            | (TaintLevel::Sanitized, TaintLevel::Medium) => TaintLevel::Medium,
+            (TaintLevel::High, TaintLevel::Sanitized)
+            | (TaintLevel::Sanitized, TaintLevel::High) => TaintLevel::High,
             // Handle remaining combinations with Partial
-            (TaintLevel::Low, TaintLevel::Partial(level)) | (TaintLevel::Partial(level), TaintLevel::Low) => {
+            (TaintLevel::Low, TaintLevel::Partial(level))
+            | (TaintLevel::Partial(level), TaintLevel::Low) => {
                 TaintLevel::Partial((*level + 0.3).min(1.0))
             }
-            (TaintLevel::Medium, TaintLevel::Partial(level)) | (TaintLevel::Partial(level), TaintLevel::Medium) => {
+            (TaintLevel::Medium, TaintLevel::Partial(level))
+            | (TaintLevel::Partial(level), TaintLevel::Medium) => {
                 TaintLevel::Partial((*level + 0.6).min(1.0))
             }
-            (TaintLevel::High, TaintLevel::Partial(level)) | (TaintLevel::Partial(level), TaintLevel::High) => {
+            (TaintLevel::High, TaintLevel::Partial(level))
+            | (TaintLevel::Partial(level), TaintLevel::High) => {
                 TaintLevel::Partial((*level + 0.9).min(1.0))
             }
-            (TaintLevel::Tainted, TaintLevel::Partial(_)) | (TaintLevel::Partial(_), TaintLevel::Tainted) => TaintLevel::Tainted,
+            (TaintLevel::Tainted, TaintLevel::Partial(_))
+            | (TaintLevel::Partial(_), TaintLevel::Tainted) => TaintLevel::Tainted,
         }
     }
 }

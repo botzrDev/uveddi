@@ -203,7 +203,11 @@ impl Default for DuplicationConfig {
 
 impl DetectorConfig for DuplicationConfig {
     fn validate(&self) -> Result<(), AnalysisError> {
-        fn config_error(field: &str, value: impl Into<String>, reason: impl Into<String>) -> AnalysisError {
+        fn config_error(
+            field: &str,
+            value: impl Into<String>,
+            reason: impl Into<String>,
+        ) -> AnalysisError {
             AnalysisError::ConfigurationError {
                 field: field.to_string(),
                 value: value.into(),

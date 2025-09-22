@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{ScanPriority, VulnerabilityScanOutput, VulnerabilityScanner};
 use crate::analysis::detectors::dependency::config::VulnerabilityConfig;
-use super::{VulnerabilityScanner, VulnerabilityScanOutput, ScanPriority};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct AdvisoryScanner {
@@ -62,28 +62,37 @@ impl AdvisoryScanner {
         let mut advisory_sources = HashMap::new();
 
         // GitHub Security Advisories
-        advisory_sources.insert("github".to_string(), AdvisorySource {
-            name: "GitHub Security Advisories".to_string(),
-            base_url: "https://api.github.com/advisories".to_string(),
-            advisories: Self::load_github_advisories(),
-            is_available: true,
-        });
+        advisory_sources.insert(
+            "github".to_string(),
+            AdvisorySource {
+                name: "GitHub Security Advisories".to_string(),
+                base_url: "https://api.github.com/advisories".to_string(),
+                advisories: Self::load_github_advisories(),
+                is_available: true,
+            },
+        );
 
         // RustSec Advisory Database
-        advisory_sources.insert("rustsec".to_string(), AdvisorySource {
-            name: "RustSec Advisory Database".to_string(),
-            base_url: "https://rustsec.org/advisories".to_string(),
-            advisories: Self::load_rustsec_advisories(),
-            is_available: true,
-        });
+        advisory_sources.insert(
+            "rustsec".to_string(),
+            AdvisorySource {
+                name: "RustSec Advisory Database".to_string(),
+                base_url: "https://rustsec.org/advisories".to_string(),
+                advisories: Self::load_rustsec_advisories(),
+                is_available: true,
+            },
+        );
 
         // NPM Security Advisories
-        advisory_sources.insert("npm".to_string(), AdvisorySource {
-            name: "NPM Security Advisories".to_string(),
-            base_url: "https://www.npmjs.com/advisories".to_string(),
-            advisories: Self::load_npm_advisories(),
-            is_available: true,
-        });
+        advisory_sources.insert(
+            "npm".to_string(),
+            AdvisorySource {
+                name: "NPM Security Advisories".to_string(),
+                base_url: "https://www.npmjs.com/advisories".to_string(),
+                advisories: Self::load_npm_advisories(),
+                is_available: true,
+            },
+        );
 
         Self { advisory_sources }
     }
@@ -91,8 +100,9 @@ impl AdvisoryScanner {
     fn load_github_advisories() -> HashMap<String, Vec<Advisory>> {
         let mut advisories = HashMap::new();
 
-        advisories.insert("axios".to_string(), vec![
-            Advisory {
+        advisories.insert(
+            "axios".to_string(),
+            vec![Advisory {
                 id: "GHSA-42xw-2xvc-qx8m".to_string(),
                 title: "Axios SSRF Vulnerability".to_string(),
                 description: "Axios contains an SSRF vulnerability in version 0.21.0".to_string(),
@@ -100,11 +110,14 @@ impl AdvisoryScanner {
                 affected_versions: vec![">=0.8.1 <0.21.1".to_string()],
                 patched_versions: vec!["0.21.1".to_string()],
                 cwe_ids: vec!["CWE-918".to_string()],
-                references: vec!["https://github.com/axios/axios/security/advisories/GHSA-42xw-2xvc-qx8m".to_string()],
+                references: vec![
+                    "https://github.com/axios/axios/security/advisories/GHSA-42xw-2xvc-qx8m"
+                        .to_string(),
+                ],
                 published_date: "2021-01-06".to_string(),
                 updated_date: "2021-01-06".to_string(),
-            }
-        ]);
+            }],
+        );
 
         advisories
     }
@@ -112,8 +125,9 @@ impl AdvisoryScanner {
     fn load_rustsec_advisories() -> HashMap<String, Vec<Advisory>> {
         let mut advisories = HashMap::new();
 
-        advisories.insert("tokio".to_string(), vec![
-            Advisory {
+        advisories.insert(
+            "tokio".to_string(),
+            vec![Advisory {
                 id: "RUSTSEC-2023-0001".to_string(),
                 title: "tokio configuration corruption".to_string(),
                 description: "Windows named pipe server configuration issue".to_string(),
@@ -121,11 +135,13 @@ impl AdvisoryScanner {
                 affected_versions: vec![">=1.7.0 <1.18.4".to_string()],
                 patched_versions: vec!["1.18.4".to_string()],
                 cwe_ids: vec!["CWE-670".to_string()],
-                references: vec!["https://rustsec.org/advisories/RUSTSEC-2023-0001.html".to_string()],
+                references: vec![
+                    "https://rustsec.org/advisories/RUSTSEC-2023-0001.html".to_string()
+                ],
                 published_date: "2023-01-04".to_string(),
                 updated_date: "2023-01-04".to_string(),
-            }
-        ]);
+            }],
+        );
 
         advisories
     }
@@ -133,8 +149,9 @@ impl AdvisoryScanner {
     fn load_npm_advisories() -> HashMap<String, Vec<Advisory>> {
         let mut advisories = HashMap::new();
 
-        advisories.insert("minimist".to_string(), vec![
-            Advisory {
+        advisories.insert(
+            "minimist".to_string(),
+            vec![Advisory {
                 id: "1179".to_string(),
                 title: "minimist Prototype Pollution".to_string(),
                 description: "minimist vulnerable to prototype pollution".to_string(),
@@ -145,8 +162,8 @@ impl AdvisoryScanner {
                 references: vec!["https://www.npmjs.com/advisories/1179".to_string()],
                 published_date: "2020-03-11".to_string(),
                 updated_date: "2020-03-11".to_string(),
-            }
-        ]);
+            }],
+        );
 
         advisories
     }
@@ -196,7 +213,11 @@ impl AdvisoryScanner {
     fn is_version_affected(&self, version: &str, affected_ranges: &[String]) -> bool {
         // Simplified version range checking
         for range in affected_ranges {
-            if range.contains("<=") || range.contains(">=") || range.contains("<") || range.contains(">") {
+            if range.contains("<=")
+                || range.contains(">=")
+                || range.contains("<")
+                || range.contains(">")
+            {
                 // Simulate semantic version range checking
                 if self.version_satisfies_range(version, range) {
                     return true;

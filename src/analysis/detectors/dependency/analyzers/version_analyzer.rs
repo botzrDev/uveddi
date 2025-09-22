@@ -1,10 +1,10 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 // Note: semver dependency would be needed for production use
 // use semver::{Version, VersionReq};
-use crate::analysis::detectors::dependency::types::*;
+use super::{AnalysisOutput, DependencyAnalyzer};
 use crate::analysis::detectors::dependency::config::*;
-use super::{DependencyAnalyzer, AnalysisOutput};
+use crate::analysis::detectors::dependency::types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionAnalysis {
@@ -31,7 +31,7 @@ pub struct VersionRange {
     pub is_compatible: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]  
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResolutionSuggestion {
     pub package: String,
     pub current_version: String,
@@ -79,7 +79,7 @@ impl VersionAnalyzer {
 
     fn analyze_versions(&mut self, dependencies: &[DependencyInfo]) -> VersionAnalysis {
         self.build_version_map(dependencies);
-        
+
         let conflicts = self.detect_conflicts();
         let ranges = self.analyze_ranges(dependencies);
         let suggestions = self.generate_suggestions(&conflicts);
@@ -95,8 +95,13 @@ impl VersionAnalyzer {
 
     fn build_version_map(&mut self, dependencies: &[DependencyInfo]) {
         for dep in dependencies {
-            let version = dep.version.as_ref().unwrap_or(&"unknown".to_string()).clone();
-            self.version_map.entry(dep.name.clone())
+            let version = dep
+                .version
+                .as_ref()
+                .unwrap_or(&"unknown".to_string())
+                .clone();
+            self.version_map
+                .entry(dep.name.clone())
                 .or_insert_with(Vec::new)
                 .push(version);
         }
@@ -107,7 +112,8 @@ impl VersionAnalyzer {
 
         for (package, versions) in &self.version_map {
             if versions.len() > 1 {
-                let unique_versions: Vec<_> = versions.iter()
+                let unique_versions: Vec<_> = versions
+                    .iter()
                     .collect::<std::collections::HashSet<_>>()
                     .into_iter()
                     .cloned()
@@ -171,12 +177,15 @@ impl VersionAnalyzer {
                 let max = versions.iter().max().unwrap();
                 let current = versions.last().unwrap();
 
-                ranges.insert(package.clone(), VersionRange {
-                    min: min.clone(),
-                    max: max.clone(),
-                    current: current.clone(),
-                    is_compatible: self.check_compatibility(min, max),
-                });
+                ranges.insert(
+                    package.clone(),
+                    VersionRange {
+                        min: min.clone(),
+                        max: max.clone(),
+                        current: current.clone(),
+                        is_compatible: self.check_compatibility(min, max),
+                    },
+                );
             }
         }
 
@@ -195,14 +204,19 @@ impl VersionAnalyzer {
 
         for conflict in conflicts {
             if let Some(resolution) = &conflict.resolution {
-                let current = conflict.conflicting_versions.first()
+                let current = conflict
+                    .conflicting_versions
+                    .first()
                     .unwrap_or(&"unknown".to_string());
 
                 suggestions.push(ResolutionSuggestion {
                     package: conflict.package.clone(),
                     current_version: current.clone(),
                     suggested_version: resolution.clone(),
-                    reason: format!("Resolve version conflict (severity: {:?})", conflict.severity),
+                    reason: format!(
+                        "Resolve version conflict (severity: {:?})",
+                        conflict.severity
+                    ),
                     impact: self.assess_impact(&conflict.severity),
                 });
             }
@@ -232,7 +246,9 @@ impl VersionAnalyzer {
         for dep in dependencies {
             if let Some(version_str) = &dep.version {
                 // Simple semver detection based on pattern matching
-                if version_str.contains('.') && version_str.chars().next().unwrap_or('a').is_ascii_digit() {
+                if version_str.contains('.')
+                    && version_str.chars().next().unwrap_or('a').is_ascii_digit()
+                {
                     stats.with_semver += 1;
                     if let Some(major_str) = version_str.split('.').next() {
                         if let Ok(major) = major_str.parse::<usize>() {
@@ -245,7 +261,10 @@ impl VersionAnalyzer {
                     }
                 }
 
-                if version_str.contains('^') || version_str.contains('~') || version_str.contains('*') {
+                if version_str.contains('^')
+                    || version_str.contains('~')
+                    || version_str.contains('*')
+                {
                     stats.range_versions += 1;
                 } else {
                     stats.exact_versions += 1;

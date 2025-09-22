@@ -97,17 +97,15 @@ pub fn python_query_patterns() -> Vec<SqlInjectionPattern> {
 }
 
 pub fn python_nosql_patterns() -> Vec<SqlInjectionPattern> {
-    vec![
-        SqlInjectionPattern {
-            id: "py_mongo_where",
-            regex: r#"find\(.*\$where.*"#,
-            description: "MongoDB $where clause injection",
-            confidence: 0.75,
-            severity: SecuritySeverity::High,
-            injection_type: SqlInjectionType::NoSqlInjection,
-            context: "NoSQL MongoDB",
-        },
-    ]
+    vec![SqlInjectionPattern {
+        id: "py_mongo_where",
+        regex: r#"find\(.*\$where.*"#,
+        description: "MongoDB $where clause injection",
+        confidence: 0.75,
+        severity: SecuritySeverity::High,
+        injection_type: SqlInjectionType::NoSqlInjection,
+        context: "NoSQL MongoDB",
+    }]
 }
 
 pub fn javascript_query_patterns() -> Vec<SqlInjectionPattern> {

@@ -5,8 +5,8 @@
 //! interact with [`SqlInjectionDetector`] and the associated configuration types.
 
 pub mod config;
-pub mod detector;
 pub mod detection;
+pub mod detector;
 pub mod language_support;
 pub mod patterns;
 pub mod sanitizers;

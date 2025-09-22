@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{AnalysisOutput, DependencyAnalyzer};
 use crate::analysis::detectors::dependency::config::*;
-use super::{DependencyAnalyzer, AnalysisOutput};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CircularDependencyAnalysis {
@@ -38,11 +38,12 @@ impl CircularDependencyDetector {
     fn build_dependency_graph(&mut self, dependencies: &[DependencyInfo]) {
         for dep in dependencies {
             let from = dep.name.clone();
-            
+
             // Simulate dependencies based on naming patterns
             for other in dependencies {
                 if dep.name != other.name && self.has_dependency_pattern(&dep.name, &other.name) {
-                    self.adjacency_list.entry(from.clone())
+                    self.adjacency_list
+                        .entry(from.clone())
                         .or_insert_with(HashSet::new)
                         .insert(other.name.clone());
                 }
@@ -54,19 +55,18 @@ impl CircularDependencyDetector {
         // Simple heuristic: check if package names share common prefixes
         let from_parts: Vec<&str> = from.split(&['-', '_', '.'][..]).collect();
         let to_parts: Vec<&str> = to.split(&['-', '_', '.'][..]).collect();
-        
+
         if from_parts.is_empty() || to_parts.is_empty() {
             return false;
         }
-        
+
         // Check for common patterns that might indicate dependencies
-        from_parts.iter().any(|p| to.contains(p)) || 
-        to_parts.iter().any(|p| from.contains(p))
+        from_parts.iter().any(|p| to.contains(p)) || to_parts.iter().any(|p| from.contains(p))
     }
 
     fn find_all_cycles(&mut self) {
         let nodes: Vec<String> = self.adjacency_list.keys().cloned().collect();
-        
+
         for node in nodes {
             if !self.visited.contains(&node) {
                 let mut path = Vec::new();
@@ -178,7 +178,8 @@ impl CircularDependencyDetector {
 
         // Add general recommendations
         if cycles.len() > 5 {
-            recommendations.push("Consider introducing dependency injection or interfaces".to_string());
+            recommendations
+                .push("Consider introducing dependency injection or interfaces".to_string());
             recommendations.push("Review overall architecture for tight coupling".to_string());
         }
 

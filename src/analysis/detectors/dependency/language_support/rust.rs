@@ -1,9 +1,9 @@
-use crate::analysis::detectors::dependency::types::*;
 use super::LanguageDependencyParser;
+use crate::analysis::detectors::dependency::types::*;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct CargoManifest {
@@ -137,8 +137,11 @@ impl RustDependencyParser {
         } else if version.contains(',') {
             // Multiple constraints
             version.to_string()
-        } else if version.starts_with(">=") || version.starts_with("<=") ||
-                 version.starts_with('>') || version.starts_with('<') {
+        } else if version.starts_with(">=")
+            || version.starts_with("<=")
+            || version.starts_with('>')
+            || version.starts_with('<')
+        {
             version.to_string()
         } else {
             // Exact version or simple version
@@ -154,29 +157,36 @@ impl Default for RustDependencyParser {
 }
 
 impl LanguageDependencyParser for RustDependencyParser {
-    fn parse_manifest(
-        &self,
-        manifest_path: &Path,
-    ) -> Result<Vec<DependencyInfo>, DependencyError> {
-        let content = fs::read_to_string(manifest_path)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to read Cargo.toml: {}", e)))?;
+    fn parse_manifest(&self, manifest_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
+        let content = fs::read_to_string(manifest_path).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to read Cargo.toml: {}", e))
+        })?;
 
-        let manifest: CargoManifest = toml::from_str(&content)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to parse Cargo.toml: {}", e)))?;
+        let manifest: CargoManifest = toml::from_str(&content).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to parse Cargo.toml: {}", e))
+        })?;
 
         let mut dependencies = Vec::new();
 
         // Parse production dependencies
         if let Some(deps) = &manifest.dependencies {
             for (name, dep) in deps {
-                dependencies.push(self.parse_cargo_dependency(name, dep, DependencyScope::Production));
+                dependencies.push(self.parse_cargo_dependency(
+                    name,
+                    dep,
+                    DependencyScope::Production,
+                ));
             }
         }
 
         // Parse development dependencies
         if let Some(dev_deps) = &manifest.dev_dependencies {
             for (name, dep) in dev_deps {
-                dependencies.push(self.parse_cargo_dependency(name, dep, DependencyScope::Development));
+                dependencies.push(self.parse_cargo_dependency(
+                    name,
+                    dep,
+                    DependencyScope::Development,
+                ));
             }
         }
 
@@ -191,7 +201,11 @@ impl LanguageDependencyParser for RustDependencyParser {
         if let Some(workspace) = &manifest.workspace {
             if let Some(workspace_deps) = &workspace.dependencies {
                 for (name, dep) in workspace_deps {
-                    dependencies.push(self.parse_cargo_dependency(name, dep, DependencyScope::Production));
+                    dependencies.push(self.parse_cargo_dependency(
+                        name,
+                        dep,
+                        DependencyScope::Production,
+                    ));
                 }
             }
         }
@@ -199,15 +213,14 @@ impl LanguageDependencyParser for RustDependencyParser {
         Ok(dependencies)
     }
 
-    fn parse_lockfile(
-        &self,
-        lockfile_path: &Path,
-    ) -> Result<Vec<DependencyInfo>, DependencyError> {
-        let content = fs::read_to_string(lockfile_path)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to read Cargo.lock: {}", e)))?;
+    fn parse_lockfile(&self, lockfile_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
+        let content = fs::read_to_string(lockfile_path).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to read Cargo.lock: {}", e))
+        })?;
 
-        let lockfile: CargoLockfile = toml::from_str(&content)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to parse Cargo.lock: {}", e)))?;
+        let lockfile: CargoLockfile = toml::from_str(&content).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to parse Cargo.lock: {}", e))
+        })?;
 
         let mut dependencies = Vec::new();
 

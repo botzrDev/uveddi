@@ -8,7 +8,10 @@ pub mod union_attacks;
 
 use crate::analysis::detectors::security::sql_injection::types::SqlInjectionPattern;
 
-pub fn merge_patterns(mut base: Vec<SqlInjectionPattern>, mut extra: Vec<SqlInjectionPattern>) -> Vec<SqlInjectionPattern> {
+pub fn merge_patterns(
+    mut base: Vec<SqlInjectionPattern>,
+    mut extra: Vec<SqlInjectionPattern>,
+) -> Vec<SqlInjectionPattern> {
     base.append(&mut extra);
     base
 }

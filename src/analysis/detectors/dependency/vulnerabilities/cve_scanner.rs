@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{ScanPriority, VulnerabilityScanOutput, VulnerabilityScanner};
 use crate::analysis::detectors::dependency::config::VulnerabilityConfig;
-use super::{VulnerabilityScanner, VulnerabilityScanOutput, ScanPriority};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct CveScanner {

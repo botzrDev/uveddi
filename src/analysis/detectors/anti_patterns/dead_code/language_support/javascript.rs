@@ -4,8 +4,8 @@ use std::collections::HashSet;
 
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
+use streaming_iterator::StreamingIterator;
 
 use crate::analysis::detectors::anti_patterns::dead_code::types::{Symbol, SymbolType};
 
@@ -61,7 +61,8 @@ impl LanguageAnalyzer for JavaScriptAnalyzer {
                     if let Ok(name) = name_node.utf8_text(source) {
                         let is_exported = self.is_exported(&name_node, source);
                         let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                        let confidence = self.calculate_javascript_confidence(name, parsed_file.path());
+                        let confidence =
+                            self.calculate_javascript_confidence(name, parsed_file.path());
 
                         let symbol_type = if self.is_async_function(&name_node, source) {
                             SymbolType::AsyncFunction
@@ -212,7 +213,8 @@ impl JavaScriptAnalyzer {
                     if let Ok(name) = name_node.utf8_text(source) {
                         let is_exported = self.is_exported(&name_node, source);
                         let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                        let confidence = self.calculate_javascript_confidence(name, parsed_file.path());
+                        let confidence =
+                            self.calculate_javascript_confidence(name, parsed_file.path());
 
                         symbols.push(Symbol {
                             name: name.to_string(),

@@ -5,10 +5,10 @@ use super::super::super::metrics::MetricsCalculator;
 use super::queries::RUST_IMPL_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
-use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::error::ErrorHelpers;
 use std::collections::HashMap;
+use streaming_iterator::StreamingIterator;
 
 /// Rust impl block analyzer
 pub struct RustImplAnalyzer<'a> {

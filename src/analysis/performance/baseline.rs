@@ -630,19 +630,23 @@ graph TD
 
         tokio::fs::write("performance_baseline_report.json", report)
             .await
-            .map_err(|e| AnalysisError::IoError(format!(
-                "Failed to write performance_baseline_report.json: {}",
-                e
-            )))?;
+            .map_err(|e| {
+                AnalysisError::IoError(format!(
+                    "Failed to write performance_baseline_report.json: {}",
+                    e
+                ))
+            })?;
 
         // Generate human-readable summary
         let summary = self.generate_summary_report(baseline);
         tokio::fs::write("performance_baseline_summary.md", summary)
             .await
-            .map_err(|e| AnalysisError::IoError(format!(
-                "Failed to write performance_baseline_summary.md: {}",
-                e
-            )))?;
+            .map_err(|e| {
+                AnalysisError::IoError(format!(
+                    "Failed to write performance_baseline_summary.md: {}",
+                    e
+                ))
+            })?;
 
         info!("📊 Baseline reports generated:");
         println!("  - performance_baseline_report.json");

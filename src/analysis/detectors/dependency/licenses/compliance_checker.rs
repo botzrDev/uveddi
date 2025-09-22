@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{LicenseCheckOutput, LicenseChecker};
 use crate::analysis::detectors::dependency::config::LicenseConfig;
-use super::{LicenseChecker, LicenseCheckOutput};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub struct ComplianceChecker {
@@ -97,17 +97,23 @@ impl ComplianceRuleSet {
         let mut license_rules = HashMap::new();
 
         // Add some default license rules
-        license_rules.insert("MIT".to_string(), LicenseRule {
-            allowed: true,
-            requires_attribution: true,
-            allows_commercial_use: true,
-        });
+        license_rules.insert(
+            "MIT".to_string(),
+            LicenseRule {
+                allowed: true,
+                requires_attribution: true,
+                allows_commercial_use: true,
+            },
+        );
 
-        license_rules.insert("Apache-2.0".to_string(), LicenseRule {
-            allowed: true,
-            requires_attribution: true,
-            allows_commercial_use: true,
-        });
+        license_rules.insert(
+            "Apache-2.0".to_string(),
+            LicenseRule {
+                allowed: true,
+                requires_attribution: true,
+                allows_commercial_use: true,
+            },
+        );
 
         Self {
             license_rules,
@@ -201,7 +207,8 @@ impl ComplianceChecker {
         if violations.is_empty() {
             ComplianceStatus::Compliant
         } else {
-            let critical_violations = violations.iter()
+            let critical_violations = violations
+                .iter()
                 .any(|v| matches!(v.violation_type, ViolationType::DeniedLicense));
 
             if critical_violations {
@@ -212,22 +219,48 @@ impl ComplianceChecker {
         }
     }
 
-    fn extract_license_info(&self, dep: &DependencyInfo) -> Result<Option<LicenseInfo>, DependencyError> {
+    fn extract_license_info(
+        &self,
+        dep: &DependencyInfo,
+    ) -> Result<Option<LicenseInfo>, DependencyError> {
         match dep.name.as_str() {
-            "serde" => Ok(Some(self.create_mock_license("MIT", "MIT License", LicenseCategory::Permissive))),
-            "tokio" => Ok(Some(self.create_mock_license("MIT", "MIT License", LicenseCategory::Permissive))),
-            "gpl-library" => Ok(Some(self.create_mock_license("GPL-3.0", "GNU General Public License v3.0", LicenseCategory::Copyleft))),
+            "serde" => Ok(Some(self.create_mock_license(
+                "MIT",
+                "MIT License",
+                LicenseCategory::Permissive,
+            ))),
+            "tokio" => Ok(Some(self.create_mock_license(
+                "MIT",
+                "MIT License",
+                LicenseCategory::Permissive,
+            ))),
+            "gpl-library" => Ok(Some(self.create_mock_license(
+                "GPL-3.0",
+                "GNU General Public License v3.0",
+                LicenseCategory::Copyleft,
+            ))),
             _ => Ok(None),
         }
     }
 
-    fn create_mock_license(&self, spdx_id: &str, name: &str, category: LicenseCategory) -> LicenseInfo {
+    fn create_mock_license(
+        &self,
+        spdx_id: &str,
+        name: &str,
+        category: LicenseCategory,
+    ) -> LicenseInfo {
         LicenseInfo {
             spdx_id: Some(spdx_id.to_string()),
             name: name.to_string(),
             url: None,
-            is_osi_approved: matches!(category, LicenseCategory::Permissive | LicenseCategory::WeakCopyleft),
-            is_fsf_approved: matches!(category, LicenseCategory::Permissive | LicenseCategory::Copyleft),
+            is_osi_approved: matches!(
+                category,
+                LicenseCategory::Permissive | LicenseCategory::WeakCopyleft
+            ),
+            is_fsf_approved: matches!(
+                category,
+                LicenseCategory::Permissive | LicenseCategory::Copyleft
+            ),
             category,
         }
     }
@@ -238,13 +271,19 @@ impl ComplianceChecker {
         license: &LicenseInfo,
         config: &LicenseConfig,
     ) -> Option<ComplianceViolation> {
-        if config.denied_licenses.contains(&license.spdx_id.as_ref().unwrap_or(&license.name)) {
+        if config
+            .denied_licenses
+            .contains(&license.spdx_id.as_ref().unwrap_or(&license.name))
+        {
             return Some(ComplianceViolation {
                 package_name: dep.name.clone(),
                 license: license.clone(),
                 violation_type: ViolationType::DeniedLicense,
                 severity: ViolationSeverity::Critical,
-                description: format!("Package '{}' uses denied license '{}'", dep.name, license.name),
+                description: format!(
+                    "Package '{}' uses denied license '{}'",
+                    dep.name, license.name
+                ),
                 resolution_steps: vec![
                     "Remove this dependency from the project".to_string(),
                     "Find an alternative with a compatible license".to_string(),
@@ -252,14 +291,20 @@ impl ComplianceChecker {
             });
         }
 
-        if !config.allowed_licenses.is_empty() &&
-           !config.allowed_licenses.contains(&license.spdx_id.as_ref().unwrap_or(&license.name)) {
+        if !config.allowed_licenses.is_empty()
+            && !config
+                .allowed_licenses
+                .contains(&license.spdx_id.as_ref().unwrap_or(&license.name))
+        {
             return Some(ComplianceViolation {
                 package_name: dep.name.clone(),
                 license: license.clone(),
                 violation_type: ViolationType::IncompatibleLicense,
                 severity: ViolationSeverity::High,
-                description: format!("Package '{}' uses non-allowed license '{}'", dep.name, license.name),
+                description: format!(
+                    "Package '{}' uses non-allowed license '{}'",
+                    dep.name, license.name
+                ),
                 resolution_steps: vec![
                     "Add license to allowed list if appropriate".to_string(),
                     "Replace with a dependency using an allowed license".to_string(),
@@ -284,7 +329,11 @@ impl ComplianceChecker {
         None
     }
 
-    fn check_license_warnings(&self, dep: &DependencyInfo, license: &LicenseInfo) -> Option<ComplianceWarning> {
+    fn check_license_warnings(
+        &self,
+        dep: &DependencyInfo,
+        license: &LicenseInfo,
+    ) -> Option<ComplianceWarning> {
         if license.category == LicenseCategory::Unknown {
             return Some(ComplianceWarning {
                 package_name: dep.name.clone(),
@@ -308,15 +357,24 @@ impl ComplianceChecker {
         None
     }
 
-    fn check_attribution_requirements(&self, dep: &DependencyInfo, license: &LicenseInfo) -> Option<AttributionRequirement> {
-        let requires_attribution = matches!(license.category,
-            LicenseCategory::Permissive | LicenseCategory::WeakCopyleft | LicenseCategory::Copyleft);
+    fn check_attribution_requirements(
+        &self,
+        dep: &DependencyInfo,
+        license: &LicenseInfo,
+    ) -> Option<AttributionRequirement> {
+        let requires_attribution = matches!(
+            license.category,
+            LicenseCategory::Permissive | LicenseCategory::WeakCopyleft | LicenseCategory::Copyleft
+        );
 
         if requires_attribution {
             return Some(AttributionRequirement {
                 package_name: dep.name.clone(),
                 license: license.clone(),
-                attribution_text: format!("This software includes components from '{}' licensed under {}", dep.name, license.name),
+                attribution_text: format!(
+                    "This software includes components from '{}' licensed under {}",
+                    dep.name, license.name
+                ),
                 required_notices: vec!["Include this notice in distributed software".to_string()],
             });
         }
@@ -324,16 +382,23 @@ impl ComplianceChecker {
         None
     }
 
-    fn create_compliance_summary(&self, dependencies: &[DependencyInfo], violations: &[ComplianceViolation]) -> ComplianceSummary {
+    fn create_compliance_summary(
+        &self,
+        dependencies: &[DependencyInfo],
+        violations: &[ComplianceViolation],
+    ) -> ComplianceSummary {
         let total_packages = dependencies.len();
-        let violations_by_package: HashSet<&String> = violations.iter().map(|v| &v.package_name).collect();
+        let violations_by_package: HashSet<&String> =
+            violations.iter().map(|v| &v.package_name).collect();
         let non_compliant_packages = violations_by_package.len();
         let compliant_packages = total_packages.saturating_sub(non_compliant_packages);
 
         // Count violations by severity
         let mut violations_by_severity = HashMap::new();
         for violation in violations {
-            *violations_by_severity.entry(violation.severity.clone()).or_insert(0) += 1;
+            *violations_by_severity
+                .entry(violation.severity.clone())
+                .or_insert(0) += 1;
         }
 
         // Calculate compliance score (0.0 to 1.0)
@@ -352,4 +417,3 @@ impl ComplianceChecker {
         }
     }
 }
-

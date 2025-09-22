@@ -1,24 +1,18 @@
-pub mod rust;
-pub mod python;
 pub mod javascript;
+pub mod python;
+pub mod rust;
 
-pub use rust::{RustDependencyParser, CargoManifest};
-pub use python::{PythonDependencyParser, PythonRequirement};
 pub use javascript::{JavaScriptDependencyParser, PackageJson};
+pub use python::{PythonDependencyParser, PythonRequirement};
+pub use rust::{CargoManifest, RustDependencyParser};
 
 use crate::analysis::detectors::dependency::types::*;
 use std::path::Path;
 
 pub trait LanguageDependencyParser: Send + Sync {
-    fn parse_manifest(
-        &self,
-        manifest_path: &Path,
-    ) -> Result<Vec<DependencyInfo>, DependencyError>;
+    fn parse_manifest(&self, manifest_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError>;
 
-    fn parse_lockfile(
-        &self,
-        lockfile_path: &Path,
-    ) -> Result<Vec<DependencyInfo>, DependencyError>;
+    fn parse_lockfile(&self, lockfile_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError>;
 
     fn supported_manifests(&self) -> Vec<&'static str>;
     fn supported_lockfiles(&self) -> Vec<&'static str>;
@@ -44,8 +38,9 @@ impl LanguageParserRegistry {
         let filename = file_path.file_name()?.to_str()?;
 
         for parser in &self.parsers {
-            if parser.supported_manifests().contains(&filename) ||
-               parser.supported_lockfiles().contains(&filename) {
+            if parser.supported_manifests().contains(&filename)
+                || parser.supported_lockfiles().contains(&filename)
+            {
                 return Some(parser.as_ref());
             }
         }

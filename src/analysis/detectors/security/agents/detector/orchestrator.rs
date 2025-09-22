@@ -401,7 +401,8 @@ impl SecurityOrchestrator {
                 AgentResult::TaintAnalysis(issues) => {
                     final_result
                         .vulnerabilities
-                        .extend(issues.into_iter().map(|issue| OwaspVulnerability {
+                        .extend(issues.into_iter().map(|issue| {
+                            OwaspVulnerability {
                         category:
                             crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
                         issue_type: issue.issue_type,
@@ -423,7 +424,8 @@ impl SecurityOrchestrator {
                         metadata: issue.metadata,
                         architectural_correlation:
                             issue.correlation_id.map(|id| vec![id]).unwrap_or_default(),
-                    }));
+                    }
+                        }));
                 }
                 AgentResult::OwaspAnalysis(vulnerabilities) => {
                     final_result.vulnerabilities.extend(vulnerabilities);

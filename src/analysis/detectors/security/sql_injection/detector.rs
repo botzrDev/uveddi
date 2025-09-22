@@ -30,10 +30,7 @@ impl SqlInjectionDetector {
     pub fn with_config(config: SqlInjectionConfig) -> Self {
         let pipeline = DetectionPipeline::new(config.clone());
 
-        Self {
-            config,
-            pipeline,
-        }
+        Self { config, pipeline }
     }
 
     fn build_vulnerability(
@@ -47,7 +44,11 @@ impl SqlInjectionDetector {
             sanitizer,
         } = finding;
 
-        let mut location = SecurityLocation::new(file.file_path.to_path_buf(), metadata.line_number, metadata.column as u32);
+        let mut location = SecurityLocation::new(
+            file.file_path.to_path_buf(),
+            metadata.line_number,
+            metadata.column as u32,
+        );
 
         let mut metadata_map = VulnerabilityMetadata::new();
         metadata_map.add_metadata(
@@ -71,7 +72,10 @@ impl SqlInjectionDetector {
         )
         .with_severity(pattern.severity)
         .with_confidence(pattern.confidence)
-        .with_remediation(generate_remediation(&pattern.injection_type, pattern.context))
+        .with_remediation(generate_remediation(
+            &pattern.injection_type,
+            pattern.context,
+        ))
         .with_metadata(metadata_map)
     }
 }
@@ -96,12 +100,8 @@ fn generate_remediation(injection_type: &SqlInjectionType, context: &str) -> Str
     };
 
     let context_advice = match context {
-        c if c.contains("string") => {
-            " Avoid string concatenation and formatting in SQL queries."
-        }
-        c if c.contains("template") => {
-            " Use parameterized queries instead of template literals."
-        }
+        c if c.contains("string") => " Avoid string concatenation and formatting in SQL queries.",
+        c if c.contains("template") => " Use parameterized queries instead of template literals.",
         c if c.contains("NoSQL") => {
             " Use proper NoSQL query builders and avoid dynamic query construction."
         }
@@ -151,8 +151,8 @@ impl Default for SqlInjectionDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use std::path::PathBuf;
+    use std::sync::Arc;
 
     fn parsed_file(language: crate::ast::SourceLanguage, content: &str) -> ParsedFile {
         ParsedFile {
@@ -211,7 +211,8 @@ mod tests {
 
     #[test]
     fn remediation_includes_parameterized_queries() {
-        let remediation = generate_remediation(&SqlInjectionType::Classical, "String concatenation");
+        let remediation =
+            generate_remediation(&SqlInjectionType::Classical, "String concatenation");
         assert!(remediation.contains("parameterized queries"));
     }
 }

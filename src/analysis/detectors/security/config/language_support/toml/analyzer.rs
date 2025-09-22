@@ -68,9 +68,11 @@ impl LanguageAnalyzer for TomlAnalyzer {
     }
 
     fn validate_syntax(&self, content: &str) -> Result<(), AnalysisError> {
-        content.parse::<TomlValue>().map_err(|e| AnalysisError::ParseError {
-            message: format!("Invalid TOML syntax: {}", e),
-        })?;
+        content
+            .parse::<TomlValue>()
+            .map_err(|e| AnalysisError::ParseError {
+                message: format!("Invalid TOML syntax: {}", e),
+            })?;
         Ok(())
     }
 }

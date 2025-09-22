@@ -1,11 +1,15 @@
 use std::path::Path;
 
+use crate::analysis::detectors::dependency::analyzers::{AnalysisOutput, AnalyzerRegistry};
 use crate::analysis::detectors::dependency::config::DependencyDetectorConfig;
-use crate::analysis::detectors::dependency::types::*;
-use crate::analysis::detectors::dependency::analyzers::{AnalyzerRegistry, AnalysisOutput};
-use crate::analysis::detectors::dependency::vulnerabilities::{VulnerabilityScannerRegistry, VulnerabilityScanOutput};
-use crate::analysis::detectors::dependency::licenses::{LicenseCheckerRegistry, LicenseCheckOutput};
 use crate::analysis::detectors::dependency::language_support::LanguageParserRegistry;
+use crate::analysis::detectors::dependency::licenses::{
+    LicenseCheckOutput, LicenseCheckerRegistry,
+};
+use crate::analysis::detectors::dependency::types::*;
+use crate::analysis::detectors::dependency::vulnerabilities::{
+    VulnerabilityScanOutput, VulnerabilityScannerRegistry,
+};
 
 use crate::ast::tree_sitter_impl::{AstError, AstParser, ParsedFile, SourceLanguage};
 pub use crate::database::models::{Dependency, DependencyType};
@@ -19,7 +23,10 @@ pub enum ExtractionError {
     #[error("Query compilation error: {0}")]
     QueryError(String),
     #[error("Invalid file path: {path} - Reason: {reason}")]
-    InvalidPath { path: std::path::PathBuf, reason: String },
+    InvalidPath {
+        path: std::path::PathBuf,
+        reason: String,
+    },
     #[error("Unsupported language for path: {0}")]
     UnsupportedLanguage(String),
 }
@@ -63,7 +70,10 @@ impl DependencyDetector {
         self
     }
 
-    pub fn analyze_project(&mut self, project_root: &Path) -> Result<DependencyAnalysisResult, ExtractionError> {
+    pub fn analyze_project(
+        &mut self,
+        project_root: &Path,
+    ) -> Result<DependencyAnalysisResult, ExtractionError> {
         let dependencies = self.discover_dependencies(project_root)?;
         self.analyze_dependencies(&dependencies)
     }
@@ -84,12 +94,15 @@ impl DependencyDetector {
         self.extract_from_ast(&parsed_file)
     }
 
-    fn discover_dependencies(&self, project_root: &Path) -> Result<Vec<DependencyInfo>, ExtractionError> {
+    fn discover_dependencies(
+        &self,
+        project_root: &Path,
+    ) -> Result<Vec<DependencyInfo>, ExtractionError> {
         let mut all_dependencies = Vec::new();
 
-        let manifest_deps = self.parser_registry
+        let manifest_deps = self
+            .parser_registry
             .parse_all_manifests(project_root)
-            
             .map_err(ExtractionError::from)?;
 
         all_dependencies.extend(manifest_deps);
@@ -101,7 +114,10 @@ impl DependencyDetector {
         Ok(all_dependencies)
     }
 
-    fn discover_source_dependencies(&mut self, project_root: &Path) -> Result<Vec<DependencyInfo>, ExtractionError> {
+    fn discover_source_dependencies(
+        &mut self,
+        project_root: &Path,
+    ) -> Result<Vec<DependencyInfo>, ExtractionError> {
         let mut dependencies = Vec::new();
 
         if let Ok(entries) = std::fs::read_dir(project_root) {
@@ -142,11 +158,18 @@ impl DependencyDetector {
         });
     }
 
-    fn analyze_dependencies(&self, dependencies: &[DependencyInfo]) -> Result<DependencyAnalysisResult, ExtractionError> {
+    fn analyze_dependencies(
+        &self,
+        dependencies: &[DependencyInfo],
+    ) -> Result<DependencyAnalysisResult, ExtractionError> {
         // Run analysis synchronously
         let analysis_results = self.analyzer_registry.run_all(dependencies, &self.config);
-        let vulnerability_results = self.vulnerability_registry.run_all(dependencies, &self.config.vulnerability_scanning);
-        let license_results = self.license_registry.run_all(dependencies, &self.config.license_checking);
+        let vulnerability_results = self
+            .vulnerability_registry
+            .run_all(dependencies, &self.config.vulnerability_scanning);
+        let license_results = self
+            .license_registry
+            .run_all(dependencies, &self.config.license_checking);
 
         self.consolidate_results(analysis_results, vulnerability_results, license_results)
     }
@@ -194,7 +217,9 @@ impl DependencyDetector {
             outdated_count: outdated_dependencies.len(),
             vulnerable_count: vulnerabilities.len(),
             max_depth: graph.nodes.values().map(|n| n.depth).max().unwrap_or(0),
-            avg_depth: if graph.nodes.is_empty() { 0.0 } else {
+            avg_depth: if graph.nodes.is_empty() {
+                0.0
+            } else {
                 graph.nodes.values().map(|n| n.depth as f64).sum::<f64>() / graph.nodes.len() as f64
             },
             license_types: std::collections::HashMap::new(),
@@ -211,7 +236,10 @@ impl DependencyDetector {
         })
     }
 
-    fn extract_from_ast(&self, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+    fn extract_from_ast(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         #[cfg(feature = "tree-sitter")]
         {
             use crate::ast::tree_sitter::queries::{

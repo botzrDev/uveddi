@@ -1,15 +1,15 @@
-pub mod license_analyzer;
 pub mod compliance_checker;
 pub mod conflict_detector;
+pub mod license_analyzer;
 pub mod policy_enforcer;
 
-pub use license_analyzer::{LicenseAnalyzer, LicenseAnalysisResult};
 pub use compliance_checker::{ComplianceChecker, ComplianceResult};
-pub use conflict_detector::{ConflictDetector, ConflictAnalysis};
+pub use conflict_detector::{ConflictAnalysis, ConflictDetector};
+pub use license_analyzer::{LicenseAnalysisResult, LicenseAnalyzer};
 pub use policy_enforcer::{PolicyEnforcer, PolicyResult};
 
-use crate::analysis::detectors::dependency::types::*;
 use crate::analysis::detectors::dependency::config::*;
+use crate::analysis::detectors::dependency::types::*;
 
 pub trait LicenseChecker: Send + Sync {
     fn check(

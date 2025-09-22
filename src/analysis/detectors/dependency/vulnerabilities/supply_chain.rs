@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{ScanPriority, VulnerabilityScanOutput, VulnerabilityScanner};
 use crate::analysis::detectors::dependency::config::VulnerabilityConfig;
-use super::{VulnerabilityScanner, VulnerabilityScanOutput, ScanPriority};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub struct SupplyChainAnalyzer {
@@ -84,18 +84,24 @@ struct PublisherVerifier {
 impl PublisherVerifier {
     pub fn new() -> Self {
         let mut trusted_publishers = HashMap::new();
-        trusted_publishers.insert("rust-lang".to_string(), PublisherInfo {
-            name: "rust-lang".to_string(),
-            verified: true,
-            reputation_score: 1.0,
-            has_security_policy: true,
-        });
-        trusted_publishers.insert("tokio-rs".to_string(), PublisherInfo {
-            name: "tokio-rs".to_string(),
-            verified: true,
-            reputation_score: 0.95,
-            has_security_policy: true,
-        });
+        trusted_publishers.insert(
+            "rust-lang".to_string(),
+            PublisherInfo {
+                name: "rust-lang".to_string(),
+                verified: true,
+                reputation_score: 1.0,
+                has_security_policy: true,
+            },
+        );
+        trusted_publishers.insert(
+            "tokio-rs".to_string(),
+            PublisherInfo {
+                name: "tokio-rs".to_string(),
+                verified: true,
+                reputation_score: 0.95,
+                has_security_policy: true,
+            },
+        );
 
         Self {
             trusted_publishers,
@@ -151,7 +157,9 @@ impl SupplyChainAnalyzer {
         let mut warnings = Vec::new();
 
         for dependency in dependencies {
-            let similar_packages = self.typosquat_detector.find_similar_packages(&dependency.name);
+            let similar_packages = self
+                .typosquat_detector
+                .find_similar_packages(&dependency.name);
 
             if !similar_packages.is_empty() {
                 let min_edit_distance = similar_packages
@@ -160,7 +168,8 @@ impl SupplyChainAnalyzer {
                     .min()
                     .unwrap_or(999);
 
-                let confidence = self.calculate_typosquat_confidence(&dependency.name, &similar_packages);
+                let confidence =
+                    self.calculate_typosquat_confidence(&dependency.name, &similar_packages);
                 let risk_level = self.assess_typosquat_risk(confidence, min_edit_distance);
 
                 if confidence > 0.3 {
@@ -211,7 +220,11 @@ impl SupplyChainAnalyzer {
         let mut concerns = Vec::new();
 
         for dependency in dependencies {
-            if let Some(metadata) = self.maintenance_tracker.package_metadata.get(&dependency.name) {
+            if let Some(metadata) = self
+                .maintenance_tracker
+                .package_metadata
+                .get(&dependency.name)
+            {
                 if metadata.last_update_days > 365 {
                     concerns.push(MaintenanceConcern {
                         package_name: dependency.name.clone(),
@@ -219,7 +232,10 @@ impl SupplyChainAnalyzer {
                         severity: VulnerabilitySeverity::Medium,
                         last_activity_days: metadata.last_update_days,
                         contributor_count: metadata.contributor_count,
-                        details: format!("Package has not been updated for {} days", metadata.last_update_days),
+                        details: format!(
+                            "Package has not been updated for {} days",
+                            metadata.last_update_days
+                        ),
                     });
                 }
             }
@@ -230,8 +246,7 @@ impl SupplyChainAnalyzer {
 
     fn calculate_edit_distance(&self, s1: &str, s2: &str) -> usize {
         // Simplified edit distance - just count character differences
-        s1.chars().zip(s2.chars()).filter(|(a, b)| a != b).count() +
-        s1.len().abs_diff(s2.len())
+        s1.chars().zip(s2.chars()).filter(|(a, b)| a != b).count() + s1.len().abs_diff(s2.len())
     }
 
     fn calculate_typosquat_confidence(&self, package: &str, similar: &[String]) -> f32 {
@@ -240,7 +255,8 @@ impl SupplyChainAnalyzer {
         for similar_pkg in similar {
             let distance = self.calculate_edit_distance(package, similar_pkg);
             let length_ratio = (package.len() as f32 / similar_pkg.len() as f32).min(1.0);
-            let confidence = (1.0 - distance as f32 / package.len().max(similar_pkg.len()) as f32) * length_ratio;
+            let confidence = (1.0 - distance as f32 / package.len().max(similar_pkg.len()) as f32)
+                * length_ratio;
             max_confidence = max_confidence.max(confidence);
         }
 
@@ -277,7 +293,11 @@ impl VulnerabilityScanner for SupplyChainAnalyzer {
                 package_name: warning.package_name.clone(),
                 risk_level: warning.risk_level,
                 risk_factors: vec![RiskFactor::Typosquatting {
-                    similar_to: warning.similar_packages.first().unwrap_or(&"unknown".to_string()).clone(),
+                    similar_to: warning
+                        .similar_packages
+                        .first()
+                        .unwrap_or(&"unknown".to_string())
+                        .clone(),
                 }],
                 recommendations: warning.recommendations.clone(),
             });
@@ -353,7 +373,11 @@ impl TyposquatDetector {
 
         for i in 1..=a_len {
             for j in 1..=b_len {
-                let cost = if a_chars[i - 1] == b_chars[j - 1] { 0 } else { 1 };
+                let cost = if a_chars[i - 1] == b_chars[j - 1] {
+                    0
+                } else {
+                    1
+                };
                 matrix[i][j] = (matrix[i - 1][j] + 1)
                     .min(matrix[i][j - 1] + 1)
                     .min(matrix[i - 1][j - 1] + cost);

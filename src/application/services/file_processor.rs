@@ -64,11 +64,24 @@ pub struct ProcessingStats {
 impl Clone for ProcessingStats {
     fn clone(&self) -> Self {
         ProcessingStats {
-            files_discovered: AtomicUsize::new(self.files_discovered.load(std::sync::atomic::Ordering::SeqCst)),
-            files_processed: AtomicUsize::new(self.files_processed.load(std::sync::atomic::Ordering::SeqCst)),
-            files_skipped: AtomicUsize::new(self.files_skipped.load(std::sync::atomic::Ordering::SeqCst)),
-            files_failed: AtomicUsize::new(self.files_failed.load(std::sync::atomic::Ordering::SeqCst)),
-            bytes_processed: AtomicUsize::new(self.bytes_processed.load(std::sync::atomic::Ordering::SeqCst)),
+            files_discovered: AtomicUsize::new(
+                self.files_discovered
+                    .load(std::sync::atomic::Ordering::SeqCst),
+            ),
+            files_processed: AtomicUsize::new(
+                self.files_processed
+                    .load(std::sync::atomic::Ordering::SeqCst),
+            ),
+            files_skipped: AtomicUsize::new(
+                self.files_skipped.load(std::sync::atomic::Ordering::SeqCst),
+            ),
+            files_failed: AtomicUsize::new(
+                self.files_failed.load(std::sync::atomic::Ordering::SeqCst),
+            ),
+            bytes_processed: AtomicUsize::new(
+                self.bytes_processed
+                    .load(std::sync::atomic::Ordering::SeqCst),
+            ),
         }
     }
 }

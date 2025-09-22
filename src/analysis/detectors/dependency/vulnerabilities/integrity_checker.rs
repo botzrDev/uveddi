@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
-use crate::analysis::detectors::dependency::types::*;
+use super::{ScanPriority, VulnerabilityScanOutput, VulnerabilityScanner};
 use crate::analysis::detectors::dependency::config::VulnerabilityConfig;
-use super::{VulnerabilityScanner, VulnerabilityScanOutput, ScanPriority};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct IntegrityChecker {
@@ -90,10 +90,15 @@ impl ChecksumDatabase {
         let mut checksums = HashMap::new();
 
         // Add some default checksums for common packages
-        checksums.insert("serde".to_string(), PackageChecksum {
-            sha256: Some("d5e3b5d4b3c2b1a6789c123456789abcdef123456789abcdef123456789abcdef".to_string()),
-            source: ChecksumSource::Registry,
-        });
+        checksums.insert(
+            "serde".to_string(),
+            PackageChecksum {
+                sha256: Some(
+                    "d5e3b5d4b3c2b1a6789c123456789abcdef123456789abcdef123456789abcdef".to_string(),
+                ),
+                source: ChecksumSource::Registry,
+            },
+        );
 
         Self { checksums }
     }
@@ -193,7 +198,11 @@ impl IntegrityChecker {
     }
 
     fn verify_checksum(&self, package: &DependencyInfo, computed_checksum: &str) -> bool {
-        let package_key = format!("{}@{}", package.name, package.version.as_deref().unwrap_or("latest"));
+        let package_key = format!(
+            "{}@{}",
+            package.name,
+            package.version.as_deref().unwrap_or("latest")
+        );
 
         if let Some(expected_checksum) = self.checksum_database.checksums.get(&package_key) {
             if let Some(expected_sha256) = &expected_checksum.sha256 {
@@ -216,7 +225,11 @@ impl IntegrityChecker {
     }
 
     fn get_expected_checksum(&self, package: &DependencyInfo) -> Option<String> {
-        let package_key = format!("{}@{}", package.name, package.version.as_deref().unwrap_or("latest"));
+        let package_key = format!(
+            "{}@{}",
+            package.name,
+            package.version.as_deref().unwrap_or("latest")
+        );
 
         self.checksum_database
             .checksums
@@ -232,8 +245,12 @@ impl IntegrityChecker {
         }
     }
 
-    fn analyze_checksum_failures(&self, integrity_results: &[PackageIntegrityResult]) -> Vec<ChecksumFailure> {
-        integrity_results.iter()
+    fn analyze_checksum_failures(
+        &self,
+        integrity_results: &[PackageIntegrityResult],
+    ) -> Vec<ChecksumFailure> {
+        integrity_results
+            .iter()
             .filter(|r| !r.checksum_verified)
             .filter_map(|result| {
                 if let (Some(expected), Some(actual)) = (
@@ -247,7 +264,10 @@ impl IntegrityChecker {
                         actual_checksum: actual.clone(),
                         algorithm: "SHA256".to_string(),
                         severity: VulnerabilitySeverity::High,
-                        potential_causes: vec!["Package tampered".to_string(), "Network corruption".to_string()],
+                        potential_causes: vec![
+                            "Package tampered".to_string(),
+                            "Network corruption".to_string(),
+                        ],
                     })
                 } else {
                     None
@@ -256,11 +276,16 @@ impl IntegrityChecker {
             .collect()
     }
 
-    fn analyze_signature_failures(&self, integrity_results: &[PackageIntegrityResult]) -> Vec<SignatureFailure> {
-        integrity_results.iter()
+    fn analyze_signature_failures(
+        &self,
+        integrity_results: &[PackageIntegrityResult],
+    ) -> Vec<SignatureFailure> {
+        integrity_results
+            .iter()
             .filter(|r| !r.signature_verified)
             .map(|result| {
-                let (failure_reason, severity) = self.determine_signature_failure_reason(&result.package_name);
+                let (failure_reason, severity) =
+                    self.determine_signature_failure_reason(&result.package_name);
                 SignatureFailure {
                     package_name: result.package_name.clone(),
                     package_version: result.package_version.clone(),
@@ -272,22 +297,44 @@ impl IntegrityChecker {
             .collect()
     }
 
-    fn determine_signature_failure_reason(&self, package_name: &str) -> (SignatureFailureReason, VulnerabilitySeverity) {
+    fn determine_signature_failure_reason(
+        &self,
+        package_name: &str,
+    ) -> (SignatureFailureReason, VulnerabilitySeverity) {
         match package_name {
-            name if name.contains("unsigned") => (SignatureFailureReason::NoSignature, VulnerabilitySeverity::Medium),
-            name if name.contains("invalid-signature") => (SignatureFailureReason::InvalidSignature, VulnerabilitySeverity::High),
-            name if name.contains("expired-cert") => (SignatureFailureReason::ExpiredCertificate, VulnerabilitySeverity::Medium),
-            name if name.contains("untrusted") => (SignatureFailureReason::UntrustedSigner, VulnerabilitySeverity::High),
-            _ => (SignatureFailureReason::NoSignature, VulnerabilitySeverity::Low),
+            name if name.contains("unsigned") => (
+                SignatureFailureReason::NoSignature,
+                VulnerabilitySeverity::Medium,
+            ),
+            name if name.contains("invalid-signature") => (
+                SignatureFailureReason::InvalidSignature,
+                VulnerabilitySeverity::High,
+            ),
+            name if name.contains("expired-cert") => (
+                SignatureFailureReason::ExpiredCertificate,
+                VulnerabilitySeverity::Medium,
+            ),
+            name if name.contains("untrusted") => (
+                SignatureFailureReason::UntrustedSigner,
+                VulnerabilitySeverity::High,
+            ),
+            _ => (
+                SignatureFailureReason::NoSignature,
+                VulnerabilitySeverity::Low,
+            ),
         }
     }
 
     fn get_signature_failure_details(&self, package_name: &str) -> String {
         match package_name {
             name if name.contains("unsigned") => "Package was not signed by publisher".to_string(),
-            name if name.contains("invalid-signature") => "Digital signature verification failed".to_string(),
+            name if name.contains("invalid-signature") => {
+                "Digital signature verification failed".to_string()
+            }
             name if name.contains("expired-cert") => "Signing certificate has expired".to_string(),
-            name if name.contains("untrusted") => "Signer is not in trusted certificate store".to_string(),
+            name if name.contains("untrusted") => {
+                "Signer is not in trusted certificate store".to_string()
+            }
             _ => "Unknown signature verification failure".to_string(),
         }
     }
@@ -313,7 +360,10 @@ impl VulnerabilityScanner for IntegrityChecker {
         let signature_failures = self.analyze_signature_failures(&integrity_results);
 
         let scan_duration = start_time.elapsed();
-        let total_verified = integrity_results.iter().filter(|r| r.checksum_verified && r.signature_verified).count();
+        let total_verified = integrity_results
+            .iter()
+            .filter(|r| r.checksum_verified && r.signature_verified)
+            .count();
         let total_failed = integrity_results.len() - total_verified;
 
         Ok(VulnerabilityScanOutput::Integrity(IntegrityCheckResult {

@@ -1,17 +1,17 @@
-pub mod dependency_graph;
-pub mod version_analyzer;
 pub mod circular_deps;
+pub mod dependency_graph;
 pub mod outdated_deps;
 pub mod transitive_analyzer;
+pub mod version_analyzer;
 
+pub use circular_deps::{CircularDependencyAnalysis, CircularDependencyDetector};
 pub use dependency_graph::{DependencyGraphAnalyzer, GraphAnalysisResult};
-pub use version_analyzer::{VersionAnalyzer, VersionAnalysis};
-pub use circular_deps::{CircularDependencyDetector, CircularDependencyAnalysis};
-pub use outdated_deps::{OutdatedDependencyChecker, OutdatedAnalysis};
-pub use transitive_analyzer::{TransitiveAnalyzer, TransitiveAnalysisResult};
+pub use outdated_deps::{OutdatedAnalysis, OutdatedDependencyChecker};
+pub use transitive_analyzer::{TransitiveAnalysisResult, TransitiveAnalyzer};
+pub use version_analyzer::{VersionAnalysis, VersionAnalyzer};
 
-use crate::analysis::detectors::dependency::types::*;
 use crate::analysis::detectors::dependency::config::*;
+use crate::analysis::detectors::dependency::types::*;
 
 pub trait DependencyAnalyzer: Send + Sync {
     fn analyze(
@@ -49,7 +49,7 @@ impl AnalyzerRegistry {
             ],
         }
     }
-    
+
     pub fn run_all(
         &self,
         dependencies: &[DependencyInfo],

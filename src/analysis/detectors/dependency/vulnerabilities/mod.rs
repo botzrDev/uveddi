@@ -1,17 +1,17 @@
-pub mod cve_scanner;
 pub mod advisory_scanner;
+pub mod cve_scanner;
+pub mod integrity_checker;
 pub mod malware_scanner;
 pub mod supply_chain;
-pub mod integrity_checker;
 
-pub use cve_scanner::{CveScanner, CveScanResult};
-pub use advisory_scanner::{AdvisoryScanner, AdvisoryScanResult};
-pub use malware_scanner::{MalwareScanner, MalwareScanResult};
-pub use supply_chain::{SupplyChainAnalyzer, SupplyChainAnalysis};
-pub use integrity_checker::{IntegrityChecker, IntegrityCheckResult};
+pub use advisory_scanner::{AdvisoryScanResult, AdvisoryScanner};
+pub use cve_scanner::{CveScanResult, CveScanner};
+pub use integrity_checker::{IntegrityCheckResult, IntegrityChecker};
+pub use malware_scanner::{MalwareScanResult, MalwareScanner};
+pub use supply_chain::{SupplyChainAnalysis, SupplyChainAnalyzer};
 
-use crate::analysis::detectors::dependency::types::*;
 use crate::analysis::detectors::dependency::config::*;
+use crate::analysis::detectors::dependency::types::*;
 
 pub trait VulnerabilityScanner: Send + Sync {
     fn scan(

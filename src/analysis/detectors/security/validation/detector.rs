@@ -45,7 +45,10 @@ impl ValidationEngine {
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         info!("Validating {} security issues", issues.len());
         issues = self.false_positive_mitigator.filter_issues(issues).await?;
-        info!("After false positive filtering: {} issues remain", issues.len());
+        info!(
+            "After false positive filtering: {} issues remain",
+            issues.len()
+        );
         for issue in &mut issues {
             let new_confidence = self
                 .confidence_calculator
@@ -57,7 +60,10 @@ impl ValidationEngine {
             issues = optimizer.optimize_results(issues).await?;
         }
         issues.retain(|issue| issue.confidence_score >= self.config.min_confidence_threshold());
-        info!("After validation: {} high-confidence issues remain", issues.len());
+        info!(
+            "After validation: {} high-confidence issues remain",
+            issues.len()
+        );
         Ok(issues)
     }
 
@@ -65,7 +71,10 @@ impl ValidationEngine {
         &self,
         detector_results: HashMap<String, Vec<SecurityIssue>>,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        info!("Cross-validating results from {} detectors", detector_results.len());
+        info!(
+            "Cross-validating results from {} detectors",
+            detector_results.len()
+        );
 
         let mut validated_issues = Vec::new();
         let mut issue_agreements: HashMap<String, Vec<(String, SecurityIssue)>> = HashMap::new();
@@ -83,8 +92,7 @@ impl ValidationEngine {
         for (_issue_key, agreements) in issue_agreements {
             if agreements.len() >= self.config.agreement_threshold() {
                 let mut representative_issue = agreements[0].1.clone();
-                representative_issue.confidence_score = (representative_issue
-                    .confidence_score
+                representative_issue.confidence_score = (representative_issue.confidence_score
                     + (agreements.len() as f64 - 1.0) * 0.1)
                     .min(1.0);
                 for (detector_name, _) in agreements {
@@ -96,7 +104,10 @@ impl ValidationEngine {
                 validated_issues.push(agreements[0].1.clone());
             }
         }
-        info!("Cross-validation completed: {} issues validated", validated_issues.len());
+        info!(
+            "Cross-validation completed: {} issues validated",
+            validated_issues.len()
+        );
         Ok(validated_issues)
     }
 

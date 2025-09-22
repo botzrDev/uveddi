@@ -95,9 +95,8 @@ impl LanguageSupport for TypeScriptLanguageSupport {
     }
 
     fn extract_code_blocks(&self, file: &ParsedFile) -> Result<Vec<CodeBlock>, AnalysisError> {
-        let content = std::fs::read_to_string(file.path()).map_err(|e| {
-            AnalysisError::file_system_error(file.path().display().to_string(), e)
-        })?;
+        let content = std::fs::read_to_string(file.path())
+            .map_err(|e| AnalysisError::file_system_error(file.path().display().to_string(), e))?;
 
         let mut blocks = Vec::new();
         let lines: Vec<_> = content.lines().collect();

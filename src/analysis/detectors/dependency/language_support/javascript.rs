@@ -1,9 +1,9 @@
-use crate::analysis::detectors::dependency::types::*;
 use super::LanguageDependencyParser;
+use crate::analysis::detectors::dependency::types::*;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct PackageJson {
@@ -66,7 +66,10 @@ impl JavaScriptDependencyParser {
     }
 
     fn determine_dependency_source(&self, version_spec: &str) -> DependencySource {
-        if version_spec.starts_with("git+") || version_spec.contains("github.com") || version_spec.contains("gitlab.com") {
+        if version_spec.starts_with("git+")
+            || version_spec.contains("github.com")
+            || version_spec.contains("gitlab.com")
+        {
             let url = if version_spec.starts_with("git+") {
                 version_spec.strip_prefix("git+").unwrap_or(version_spec)
             } else {
@@ -81,7 +84,10 @@ impl JavaScriptDependencyParser {
                 (url.to_string(), None)
             };
 
-            DependencySource::Git { url: clean_url, branch }
+            DependencySource::Git {
+                url: clean_url,
+                branch,
+            }
         } else if version_spec.starts_with("file:") || version_spec.starts_with("link:") {
             let path = version_spec
                 .strip_prefix("file:")
@@ -114,35 +120,53 @@ impl JavaScriptDependencyParser {
     }
 
     fn parse_package_json(&self, path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to read package.json: {}", e)))?;
+        let content = fs::read_to_string(path).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to read package.json: {}", e))
+        })?;
 
-        let package_json: PackageJson = serde_json::from_str(&content)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to parse package.json: {}", e)))?;
+        let package_json: PackageJson = serde_json::from_str(&content).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to parse package.json: {}", e))
+        })?;
 
         let mut dependencies = Vec::new();
 
         if let Some(deps) = &package_json.dependencies {
             for (name, version) in deps {
-                dependencies.push(self.create_dependency_info(name, version, DependencyScope::Production));
+                dependencies.push(self.create_dependency_info(
+                    name,
+                    version,
+                    DependencyScope::Production,
+                ));
             }
         }
 
         if let Some(dev_deps) = &package_json.dev_dependencies {
             for (name, version) in dev_deps {
-                dependencies.push(self.create_dependency_info(name, version, DependencyScope::Development));
+                dependencies.push(self.create_dependency_info(
+                    name,
+                    version,
+                    DependencyScope::Development,
+                ));
             }
         }
 
         if let Some(peer_deps) = &package_json.peer_dependencies {
             for (name, version) in peer_deps {
-                dependencies.push(self.create_dependency_info(name, version, DependencyScope::Production));
+                dependencies.push(self.create_dependency_info(
+                    name,
+                    version,
+                    DependencyScope::Production,
+                ));
             }
         }
 
         if let Some(optional_deps) = &package_json.optional_dependencies {
             for (name, version) in optional_deps {
-                dependencies.push(self.create_dependency_info(name, version, DependencyScope::Optional));
+                dependencies.push(self.create_dependency_info(
+                    name,
+                    version,
+                    DependencyScope::Optional,
+                ));
             }
         }
 
@@ -150,11 +174,13 @@ impl JavaScriptDependencyParser {
     }
 
     fn parse_package_lock_json(&self, path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to read package-lock.json: {}", e)))?;
+        let content = fs::read_to_string(path).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to read package-lock.json: {}", e))
+        })?;
 
-        let lock_file: PackageLockJson = serde_json::from_str(&content)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to parse package-lock.json: {}", e)))?;
+        let lock_file: PackageLockJson = serde_json::from_str(&content).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to parse package-lock.json: {}", e))
+        })?;
 
         let mut dependencies = Vec::new();
 
@@ -170,7 +196,10 @@ impl JavaScriptDependencyParser {
 
                 let source = if let Some(resolved_url) = &dep_info.resolved {
                     if resolved_url.contains("github.com") || resolved_url.contains("gitlab.com") {
-                        DependencySource::Git { url: resolved_url.clone(), branch: None }
+                        DependencySource::Git {
+                            url: resolved_url.clone(),
+                            branch: None,
+                        }
                     } else {
                         DependencySource::Registry(self.default_registry.clone())
                     }
@@ -195,7 +224,9 @@ impl JavaScriptDependencyParser {
                 }
 
                 let name = if package_path.starts_with("node_modules/") {
-                    package_path.strip_prefix("node_modules/").unwrap_or(package_path)
+                    package_path
+                        .strip_prefix("node_modules/")
+                        .unwrap_or(package_path)
                 } else {
                     package_path
                 };
@@ -210,7 +241,10 @@ impl JavaScriptDependencyParser {
 
                 let source = if let Some(resolved_url) = &package_info.resolved {
                     if resolved_url.contains("github.com") || resolved_url.contains("gitlab.com") {
-                        DependencySource::Git { url: resolved_url.clone(), branch: None }
+                        DependencySource::Git {
+                            url: resolved_url.clone(),
+                            branch: None,
+                        }
                     } else {
                         DependencySource::Registry(self.default_registry.clone())
                     }
@@ -252,8 +286,13 @@ impl JavaScriptDependencyParser {
             if line.ends_with(':') && !line.starts_with(' ') {
                 if let (Some(name), Some(version)) = (&current_package, &current_version) {
                     let source = if let Some(resolved_url) = &current_resolved {
-                        if resolved_url.contains("github.com") || resolved_url.contains("gitlab.com") {
-                            DependencySource::Git { url: resolved_url.clone(), branch: None }
+                        if resolved_url.contains("github.com")
+                            || resolved_url.contains("gitlab.com")
+                        {
+                            DependencySource::Git {
+                                url: resolved_url.clone(),
+                                branch: None,
+                            }
                         } else {
                             DependencySource::Registry(self.default_registry.clone())
                         }
@@ -285,9 +324,19 @@ impl JavaScriptDependencyParser {
                 current_version = None;
                 current_resolved = None;
             } else if line.starts_with("version ") {
-                current_version = Some(line.strip_prefix("version ").unwrap_or("").trim_matches('"').to_string());
+                current_version = Some(
+                    line.strip_prefix("version ")
+                        .unwrap_or("")
+                        .trim_matches('"')
+                        .to_string(),
+                );
             } else if line.starts_with("resolved ") {
-                current_resolved = Some(line.strip_prefix("resolved ").unwrap_or("").trim_matches('"').to_string());
+                current_resolved = Some(
+                    line.strip_prefix("resolved ")
+                        .unwrap_or("")
+                        .trim_matches('"')
+                        .to_string(),
+                );
             } else if line.trim().is_empty() && current_package.is_some() {
                 // End of package entry
                 if let (Some(package), version) = (current_package.take(), current_version.take()) {

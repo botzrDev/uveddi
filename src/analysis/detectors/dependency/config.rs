@@ -1,5 +1,5 @@
+use super::types::{RiskLevel, UpdateUrgency, VulnerabilitySeverity};
 use serde::{Deserialize, Serialize};
-use super::types::{RiskLevel, VulnerabilitySeverity, UpdateUrgency};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyDetectorConfig {

@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{LicenseCheckOutput, LicenseChecker};
 use crate::analysis::detectors::dependency::config::LicenseConfig;
-use super::{LicenseChecker, LicenseCheckOutput};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub struct PolicyEnforcer {
@@ -204,7 +204,9 @@ impl PolicyEnforcer {
                         continue;
                     }
 
-                    if let Some(violation) = self.evaluate_rule(dep, &Some(license.clone()), rule, config) {
+                    if let Some(violation) =
+                        self.evaluate_rule(dep, &Some(license.clone()), rule, config)
+                    {
                         if violation.severity >= PolicySeverity::Medium {
                             let actions = self.generate_enforcement_actions(&violation);
                             enforcement_actions.extend(actions);
@@ -218,8 +220,10 @@ impl PolicyEnforcer {
             }
         }
 
-        let compliance_metrics = self.calculate_compliance_metrics(dependencies, &policy_violations);
-        let enforcement_status = self.determine_enforcement_status(&policy_violations, &enforcement_actions);
+        let compliance_metrics =
+            self.calculate_compliance_metrics(dependencies, &policy_violations);
+        let enforcement_status =
+            self.determine_enforcement_status(&policy_violations, &enforcement_actions);
 
         Ok(PolicyResult {
             enforcement_status,
@@ -230,12 +234,31 @@ impl PolicyEnforcer {
         })
     }
 
-    fn extract_license_info(&self, dep: &DependencyInfo) -> Result<Option<LicenseInfo>, DependencyError> {
+    fn extract_license_info(
+        &self,
+        dep: &DependencyInfo,
+    ) -> Result<Option<LicenseInfo>, DependencyError> {
         match dep.name.as_str() {
-            "allowed-package" => Ok(Some(self.create_license("MIT", "MIT License", LicenseCategory::Permissive))),
-            "denied-package" => Ok(Some(self.create_license("GPL-3.0", "GNU General Public License v3.0", LicenseCategory::Copyleft))),
-            "commercial-package" => Ok(Some(self.create_license("Commercial", "Commercial License", LicenseCategory::Proprietary))),
-            _ => Ok(Some(self.create_license("Apache-2.0", "Apache License 2.0", LicenseCategory::Permissive))),
+            "allowed-package" => Ok(Some(self.create_license(
+                "MIT",
+                "MIT License",
+                LicenseCategory::Permissive,
+            ))),
+            "denied-package" => Ok(Some(self.create_license(
+                "GPL-3.0",
+                "GNU General Public License v3.0",
+                LicenseCategory::Copyleft,
+            ))),
+            "commercial-package" => Ok(Some(self.create_license(
+                "Commercial",
+                "Commercial License",
+                LicenseCategory::Proprietary,
+            ))),
+            _ => Ok(Some(self.create_license(
+                "Apache-2.0",
+                "Apache License 2.0",
+                LicenseCategory::Permissive,
+            ))),
         }
     }
 
@@ -245,7 +268,10 @@ impl PolicyEnforcer {
             name: name.to_string(),
             url: None,
             is_osi_approved: !matches!(category, LicenseCategory::Proprietary),
-            is_fsf_approved: matches!(category, LicenseCategory::Permissive | LicenseCategory::Copyleft),
+            is_fsf_approved: matches!(
+                category,
+                LicenseCategory::Permissive | LicenseCategory::Copyleft
+            ),
             category,
         }
     }
@@ -258,10 +284,18 @@ impl PolicyEnforcer {
         config: &LicenseConfig,
     ) -> Option<PolicyViolation> {
         match rule.rule_type {
-            RuleType::LicenseDenylist => self.check_denylist_violation(dep, license_info, rule, config),
-            RuleType::LicenseAllowlist => self.check_allowlist_violation(dep, license_info, rule, config),
-            RuleType::CategoryRestriction => self.check_category_restriction(dep, license_info, rule),
-            RuleType::AttributionRequirement => self.check_attribution_requirement(dep, license_info, rule),
+            RuleType::LicenseDenylist => {
+                self.check_denylist_violation(dep, license_info, rule, config)
+            }
+            RuleType::LicenseAllowlist => {
+                self.check_allowlist_violation(dep, license_info, rule, config)
+            }
+            RuleType::CategoryRestriction => {
+                self.check_category_restriction(dep, license_info, rule)
+            }
+            RuleType::AttributionRequirement => {
+                self.check_attribution_requirement(dep, license_info, rule)
+            }
         }
     }
 
@@ -273,7 +307,10 @@ impl PolicyEnforcer {
         config: &LicenseConfig,
     ) -> Option<PolicyViolation> {
         if let Some(license) = license_info {
-            if config.denied_licenses.contains(&license.spdx_id.as_ref().unwrap_or(&license.name)) {
+            if config
+                .denied_licenses
+                .contains(&license.spdx_id.as_ref().unwrap_or(&license.name))
+            {
                 return Some(PolicyViolation {
                     package_name: dep.name.clone(),
                     license: Some(license.clone()),
@@ -303,7 +340,10 @@ impl PolicyEnforcer {
     ) -> Option<PolicyViolation> {
         if !config.allowed_licenses.is_empty() {
             if let Some(license) = license_info {
-                if !config.allowed_licenses.contains(&license.spdx_id.as_ref().unwrap_or(&license.name)) {
+                if !config
+                    .allowed_licenses
+                    .contains(&license.spdx_id.as_ref().unwrap_or(&license.name))
+                {
                     return Some(PolicyViolation {
                         package_name: dep.name.clone(),
                         license: Some(license.clone()),
@@ -335,28 +375,46 @@ impl PolicyEnforcer {
         }]
     }
 
-    fn create_policy_warning(&self, dep: &DependencyInfo, license_info: &LicenseInfo, rule: &PolicyRule) -> PolicyWarning {
+    fn create_policy_warning(
+        &self,
+        dep: &DependencyInfo,
+        license_info: &LicenseInfo,
+        rule: &PolicyRule,
+    ) -> PolicyWarning {
         PolicyWarning {
             package: dep.name.clone(),
             license: license_info.name.clone(),
             rule_id: rule.id.clone(),
-            message: format!("Package '{}' with license '{}' requires attention under rule '{}'", dep.name, license_info.name, rule.name),
+            message: format!(
+                "Package '{}' with license '{}' requires attention under rule '{}'",
+                dep.name, license_info.name, rule.name
+            ),
             severity: WarningSeverity::Medium,
         }
     }
 
-    fn calculate_compliance_metrics(&self, dependencies: &[DependencyInfo], violations: &[PolicyViolation]) -> ComplianceMetrics {
+    fn calculate_compliance_metrics(
+        &self,
+        dependencies: &[DependencyInfo],
+        violations: &[PolicyViolation],
+    ) -> ComplianceMetrics {
         ComplianceMetrics {
             total_packages: dependencies.len(),
             compliant_packages: dependencies.len() - violations.len(),
             violation_count: violations.len(),
-            compliance_percentage: if dependencies.is_empty() { 100.0 } else {
+            compliance_percentage: if dependencies.is_empty() {
+                100.0
+            } else {
                 ((dependencies.len() - violations.len()) as f64 / dependencies.len() as f64) * 100.0
             },
         }
     }
 
-    fn determine_enforcement_status(&self, violations: &[PolicyViolation], actions: &[EnforcementAction]) -> EnforcementStatus {
+    fn determine_enforcement_status(
+        &self,
+        violations: &[PolicyViolation],
+        actions: &[EnforcementAction],
+    ) -> EnforcementStatus {
         if violations.is_empty() {
             EnforcementStatus::Compliant
         } else if actions.iter().any(|a| a.urgency == ActionUrgency::Critical) {
@@ -368,7 +426,11 @@ impl PolicyEnforcer {
         }
     }
 
-    fn check_category_restriction(&self, license: &LicenseInfo, category: &LicenseCategory) -> bool {
+    fn check_category_restriction(
+        &self,
+        license: &LicenseInfo,
+        category: &LicenseCategory,
+    ) -> bool {
         &license.category == category
     }
 }

@@ -5,11 +5,11 @@ use super::super::detector::{ComplexityMetrics, DetectedPattern};
 use super::super::metrics::MetricsCalculator;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::ErrorHelpers;
 use std::collections::HashSet;
+use streaming_iterator::StreamingIterator;
 use tracing::debug;
 
 // JavaScript-specific Tree-sitter queries

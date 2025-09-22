@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{LicenseCheckOutput, LicenseChecker};
 use crate::analysis::detectors::dependency::config::LicenseConfig;
-use super::{LicenseChecker, LicenseCheckOutput};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct LicenseAnalyzer {
@@ -122,7 +122,10 @@ impl LicenseAnalyzer {
         })
     }
 
-    fn detect_package_license(&self, dep: &DependencyInfo) -> Result<DetectedLicense, DependencyError> {
+    fn detect_package_license(
+        &self,
+        dep: &DependencyInfo,
+    ) -> Result<DetectedLicense, DependencyError> {
         // Try metadata first, then license files
         if let Some(license) = self.detect_from_metadata(dep)? {
             return Ok(license);
@@ -130,10 +133,16 @@ impl LicenseAnalyzer {
         if let Some(license) = self.detect_from_license_files(dep)? {
             return Ok(license);
         }
-        Err(DependencyError::NotFound(format!("No license found for {}", dep.name)))
+        Err(DependencyError::NotFound(format!(
+            "No license found for {}",
+            dep.name
+        )))
     }
 
-    fn detect_from_metadata(&self, dep: &DependencyInfo) -> Result<Option<DetectedLicense>, DependencyError> {
+    fn detect_from_metadata(
+        &self,
+        dep: &DependencyInfo,
+    ) -> Result<Option<DetectedLicense>, DependencyError> {
         let metadata_license = match dep.source {
             DependencySource::Registry(ref registry) => {
                 self.fetch_registry_license_info(registry, &dep.name, dep.version.as_deref())?
@@ -164,7 +173,10 @@ impl LicenseAnalyzer {
         Ok(None)
     }
 
-    fn detect_from_license_files(&self, dep: &DependencyInfo) -> Result<Option<DetectedLicense>, DependencyError> {
+    fn detect_from_license_files(
+        &self,
+        dep: &DependencyInfo,
+    ) -> Result<Option<DetectedLicense>, DependencyError> {
         if let Some(ref path) = dep.resolved_path {
             for file_name in ["LICENSE", "LICENSE.txt", "LICENSE.md"] {
                 let license_path = path.join(file_name);
@@ -187,7 +199,12 @@ impl LicenseAnalyzer {
         Ok(None)
     }
 
-    fn fetch_registry_license_info(&self, registry: &str, _name: &str, _version: Option<&str>) -> Result<Option<String>, DependencyError> {
+    fn fetch_registry_license_info(
+        &self,
+        registry: &str,
+        _name: &str,
+        _version: Option<&str>,
+    ) -> Result<Option<String>, DependencyError> {
         match registry {
             "crates.io" => Ok(Some("MIT".to_string())),
             "npmjs.org" => Ok(Some("Apache-2.0".to_string())),
@@ -229,26 +246,35 @@ impl LicenseAnalyzer {
         None
     }
 
-    fn analyze_transitive_licenses(&self, _dep: &DependencyInfo) -> Result<Vec<LicenseInfo>, DependencyError> {
-        Ok(vec![
-            LicenseInfo {
-                spdx_id: Some("MIT".to_string()),
-                name: "MIT License".to_string(),
-                url: Some("https://opensource.org/licenses/MIT".to_string()),
-                is_osi_approved: true,
-                is_fsf_approved: true,
-                category: LicenseCategory::Permissive,
-            }
-        ])
+    fn analyze_transitive_licenses(
+        &self,
+        _dep: &DependencyInfo,
+    ) -> Result<Vec<LicenseInfo>, DependencyError> {
+        Ok(vec![LicenseInfo {
+            spdx_id: Some("MIT".to_string()),
+            name: "MIT License".to_string(),
+            url: Some("https://opensource.org/licenses/MIT".to_string()),
+            is_osi_approved: true,
+            is_fsf_approved: true,
+            category: LicenseCategory::Permissive,
+        }])
     }
 
-    fn create_license_summary(&self, detected: &[DetectedLicense], total_packages: usize) -> LicenseSummary {
+    fn create_license_summary(
+        &self,
+        detected: &[DetectedLicense],
+        total_packages: usize,
+    ) -> LicenseSummary {
         let mut category_breakdown = HashMap::new();
         let mut license_counts = HashMap::new();
 
         for license in detected {
-            *category_breakdown.entry(license.license_info.category.clone()).or_insert(0) += 1;
-            *license_counts.entry(license.license_info.name.clone()).or_insert(0) += 1;
+            *category_breakdown
+                .entry(license.license_info.category.clone())
+                .or_insert(0) += 1;
+            *license_counts
+                .entry(license.license_info.name.clone())
+                .or_insert(0) += 1;
         }
 
         let mut popular_licenses: Vec<(String, usize)> = license_counts.into_iter().collect();
@@ -269,32 +295,44 @@ impl SpdxDatabase {
     fn new() -> Self {
         let mut licenses = HashMap::new();
 
-        licenses.insert("MIT".to_string(), SpdxLicense {
-            id: "MIT".to_string(),
-            name: "MIT License".to_string(),
-            category: LicenseCategory::Permissive,
-            is_osi_approved: true,
-            is_fsf_approved: true,
-            text_patterns: vec!["Permission is hereby granted".to_string(), "MIT License".to_string()],
-        });
+        licenses.insert(
+            "MIT".to_string(),
+            SpdxLicense {
+                id: "MIT".to_string(),
+                name: "MIT License".to_string(),
+                category: LicenseCategory::Permissive,
+                is_osi_approved: true,
+                is_fsf_approved: true,
+                text_patterns: vec![
+                    "Permission is hereby granted".to_string(),
+                    "MIT License".to_string(),
+                ],
+            },
+        );
 
-        licenses.insert("Apache-2.0".to_string(), SpdxLicense {
-            id: "Apache-2.0".to_string(),
-            name: "Apache License 2.0".to_string(),
-            category: LicenseCategory::Permissive,
-            is_osi_approved: true,
-            is_fsf_approved: true,
-            text_patterns: vec!["Licensed under the Apache License".to_string()],
-        });
+        licenses.insert(
+            "Apache-2.0".to_string(),
+            SpdxLicense {
+                id: "Apache-2.0".to_string(),
+                name: "Apache License 2.0".to_string(),
+                category: LicenseCategory::Permissive,
+                is_osi_approved: true,
+                is_fsf_approved: true,
+                text_patterns: vec!["Licensed under the Apache License".to_string()],
+            },
+        );
 
-        licenses.insert("GPL-3.0".to_string(), SpdxLicense {
-            id: "GPL-3.0".to_string(),
-            name: "GNU General Public License v3.0".to_string(),
-            category: LicenseCategory::Copyleft,
-            is_osi_approved: true,
-            is_fsf_approved: true,
-            text_patterns: vec!["GNU GENERAL PUBLIC LICENSE".to_string()],
-        });
+        licenses.insert(
+            "GPL-3.0".to_string(),
+            SpdxLicense {
+                id: "GPL-3.0".to_string(),
+                name: "GNU General Public License v3.0".to_string(),
+                category: LicenseCategory::Copyleft,
+                is_osi_approved: true,
+                is_fsf_approved: true,
+                text_patterns: vec!["GNU GENERAL PUBLIC LICENSE".to_string()],
+            },
+        );
 
         let mut aliases: HashMap<String, String> = HashMap::new();
         aliases.insert("GPL-3".to_string(), "GPL-3.0".to_string());

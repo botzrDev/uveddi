@@ -1,10 +1,10 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 // Note: semver dependency would be needed for production use
 // use semver::Version;
-use crate::analysis::detectors::dependency::types::*;
+use super::{AnalysisOutput, DependencyAnalyzer};
 use crate::analysis::detectors::dependency::config::*;
-use super::{DependencyAnalyzer, AnalysisOutput};
+use crate::analysis::detectors::dependency::types::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OutdatedAnalysis {
@@ -51,7 +51,7 @@ impl OutdatedDependencyChecker {
 
     fn check_outdated(&mut self, dependencies: &[DependencyInfo]) -> OutdatedAnalysis {
         self.populate_latest_versions(dependencies);
-        
+
         let outdated = self.identify_outdated(dependencies);
         let strategy = self.create_update_strategy(&outdated);
         let risk_assessment = self.assess_update_risks(&outdated);
@@ -81,7 +81,7 @@ impl OutdatedDependencyChecker {
                 if let (Ok(major), Ok(minor), Ok(patch)) = (
                     parts[0].parse::<u32>(),
                     parts[1].parse::<u32>(),
-                    parts[2].parse::<u32>()
+                    parts[2].parse::<u32>(),
                 ) {
                     let new_major = major + if name.len() % 3 == 0 { 1 } else { 0 };
                     let new_minor = minor + if name.len() % 2 == 0 { 2 } else { 1 };
@@ -100,7 +100,8 @@ impl OutdatedDependencyChecker {
             if let Some(current_version) = &dep.version {
                 if let Some(latest_version) = self.version_registry.get(&dep.name) {
                     if current_version != latest_version {
-                        let distance = self.calculate_version_distance(current_version, latest_version);
+                        let distance =
+                            self.calculate_version_distance(current_version, latest_version);
                         let urgency = self.assess_urgency(&distance);
                         let breaking = self.has_breaking_changes(current_version, latest_version);
 
@@ -168,10 +169,9 @@ impl OutdatedDependencyChecker {
             return false;
         }
 
-        if let (Ok(c_major), Ok(l_major)) = (
-            curr_parts[0].parse::<u32>(),
-            lat_parts[0].parse::<u32>(),
-        ) {
+        if let (Ok(c_major), Ok(l_major)) =
+            (curr_parts[0].parse::<u32>(), lat_parts[0].parse::<u32>())
+        {
             c_major != l_major
         } else {
             false
@@ -187,9 +187,13 @@ impl OutdatedDependencyChecker {
         for pkg in outdated {
             match pkg.update_urgency {
                 UpdateUrgency::Critical => immediate.push(pkg.package_name.clone()),
-                UpdateUrgency::High if !pkg.breaking_changes => immediate.push(pkg.package_name.clone()),
+                UpdateUrgency::High if !pkg.breaking_changes => {
+                    immediate.push(pkg.package_name.clone())
+                }
                 UpdateUrgency::High => staged.push(vec![pkg.package_name.clone()]),
-                UpdateUrgency::Medium if !pkg.breaking_changes => staged.push(vec![pkg.package_name.clone()]),
+                UpdateUrgency::Medium if !pkg.breaking_changes => {
+                    staged.push(vec![pkg.package_name.clone()])
+                }
                 UpdateUrgency::Medium => deferred.push(pkg.package_name.clone()),
                 UpdateUrgency::Low if pkg.breaking_changes => skip.push(pkg.package_name.clone()),
                 UpdateUrgency::Low => deferred.push(pkg.package_name.clone()),
@@ -226,8 +230,14 @@ impl OutdatedDependencyChecker {
         let mut groups = Vec::new();
 
         // Group by urgency
-        let urgent: Vec<_> = outdated.iter()
-            .filter(|p| matches!(p.update_urgency, UpdateUrgency::Critical | UpdateUrgency::High))
+        let urgent: Vec<_> = outdated
+            .iter()
+            .filter(|p| {
+                matches!(
+                    p.update_urgency,
+                    UpdateUrgency::Critical | UpdateUrgency::High
+                )
+            })
             .map(|p| p.package_name.clone())
             .collect();
 
@@ -241,7 +251,8 @@ impl OutdatedDependencyChecker {
         }
 
         // Group by breaking changes
-        let breaking: Vec<_> = outdated.iter()
+        let breaking: Vec<_> = outdated
+            .iter()
             .filter(|p| p.breaking_changes)
             .map(|p| p.package_name.clone())
             .collect();
@@ -256,7 +267,8 @@ impl OutdatedDependencyChecker {
         }
 
         // Group patch updates
-        let patches: Vec<_> = outdated.iter()
+        let patches: Vec<_> = outdated
+            .iter()
             .filter(|p| matches!(p.version_behind, VersionDistance::Patch(_)))
             .map(|p| p.package_name.clone())
             .collect();

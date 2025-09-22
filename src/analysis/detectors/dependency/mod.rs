@@ -1,46 +1,35 @@
-pub mod config;
-pub mod types;
-pub mod detector;
 pub mod analyzers;
-pub mod vulnerabilities;
-pub mod licenses;
+pub mod config;
+pub mod detector;
 pub mod language_support;
+pub mod licenses;
+pub mod types;
+pub mod vulnerabilities;
 
 pub use config::*;
-pub use types::*;
 pub use detector::{DependencyDetector, ExtractionError};
+pub use types::*;
 
 pub use analyzers::{
-    AnalyzerRegistry, AnalysisOutput,
-    DependencyGraphAnalyzer, GraphAnalysisResult,
-    VersionAnalyzer, VersionAnalysis,
-    CircularDependencyDetector, CircularDependencyAnalysis,
-    OutdatedDependencyChecker, OutdatedAnalysis,
-    TransitiveAnalyzer, TransitiveAnalysisResult,
+    AnalysisOutput, AnalyzerRegistry, CircularDependencyAnalysis, CircularDependencyDetector,
+    DependencyGraphAnalyzer, GraphAnalysisResult, OutdatedAnalysis, OutdatedDependencyChecker,
+    TransitiveAnalysisResult, TransitiveAnalyzer, VersionAnalysis, VersionAnalyzer,
 };
 
 pub use vulnerabilities::{
-    VulnerabilityScannerRegistry, VulnerabilityScanOutput,
-    CveScanner, CveScanResult,
-    AdvisoryScanner, AdvisoryScanResult,
-    MalwareScanner, MalwareScanResult,
-    SupplyChainAnalyzer, SupplyChainAnalysis,
-    IntegrityChecker, IntegrityCheckResult,
+    AdvisoryScanResult, AdvisoryScanner, CveScanResult, CveScanner, IntegrityCheckResult,
+    IntegrityChecker, MalwareScanResult, MalwareScanner, SupplyChainAnalysis, SupplyChainAnalyzer,
+    VulnerabilityScanOutput, VulnerabilityScannerRegistry,
 };
 
 pub use licenses::{
-    LicenseCheckerRegistry, LicenseCheckOutput,
-    LicenseAnalyzer, LicenseAnalysisResult,
-    ComplianceChecker, ComplianceResult,
-    ConflictDetector, ConflictAnalysis,
-    PolicyEnforcer, PolicyResult,
+    ComplianceChecker, ComplianceResult, ConflictAnalysis, ConflictDetector, LicenseAnalysisResult,
+    LicenseAnalyzer, LicenseCheckOutput, LicenseCheckerRegistry, PolicyEnforcer, PolicyResult,
 };
 
 pub use language_support::{
-    LanguageParserRegistry,
-    RustDependencyParser, CargoManifest,
-    PythonDependencyParser, PythonRequirement,
-    JavaScriptDependencyParser, PackageJson,
+    CargoManifest, JavaScriptDependencyParser, LanguageParserRegistry, PackageJson,
+    PythonDependencyParser, PythonRequirement, RustDependencyParser,
 };
 
 pub use crate::database::models::{Dependency, DependencyType};
@@ -57,7 +46,10 @@ impl DependencyExtractor {
         Ok(Self { detector })
     }
 
-    pub fn extract_from_file(&mut self, file_path: &Path) -> Result<Vec<Dependency>, ExtractionError> {
+    pub fn extract_from_file(
+        &mut self,
+        file_path: &Path,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         self.detector.analyze_file(file_path)
     }
 
@@ -77,7 +69,10 @@ impl DependencyExtractor {
         self.detector.extract_from_ast(&ast_parsed_file)
     }
 
-    pub fn extract_from_ast(&self, parsed_file: &crate::ast::tree_sitter_impl::ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+    pub fn extract_from_ast(
+        &self,
+        parsed_file: &crate::ast::tree_sitter_impl::ParsedFile,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         self.detector.extract_from_ast(parsed_file)
     }
 }

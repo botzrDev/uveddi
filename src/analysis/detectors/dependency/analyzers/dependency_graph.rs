@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet, VecDeque};
-use serde::{Deserialize, Serialize};
-use crate::analysis::detectors::dependency::types::*;
+use super::{AnalysisOutput, DependencyAnalyzer};
 use crate::analysis::detectors::dependency::config::*;
-use super::{DependencyAnalyzer, AnalysisOutput};
+use crate::analysis::detectors::dependency::types::*;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphAnalysisResult {
@@ -50,43 +50,63 @@ impl DependencyGraphAnalyzer {
         let mut roots = HashSet::new();
 
         for (idx, dep) in dependencies.iter().enumerate() {
-            let node_id = format!("{}@{}", dep.name, dep.version.as_ref().unwrap_or(&"latest".to_string()));
-            
-            nodes.insert(node_id.clone(), DependencyNode {
-                id: node_id.clone(),
-                info: dep.clone(),
-                depth: 0,
-                is_direct: idx < 10, // Simple heuristic, first 10 are direct
-            });
+            let node_id = format!(
+                "{}@{}",
+                dep.name,
+                dep.version.as_ref().unwrap_or(&"latest".to_string())
+            );
+
+            nodes.insert(
+                node_id.clone(),
+                DependencyNode {
+                    id: node_id.clone(),
+                    info: dep.clone(),
+                    depth: 0,
+                    is_direct: idx < 10, // Simple heuristic, first 10 are direct
+                },
+            );
 
             if idx < 10 {
                 roots.insert(node_id.clone());
             }
 
-            self.adjacency_list.entry(node_id.clone())
+            self.adjacency_list
+                .entry(node_id.clone())
                 .or_insert_with(HashSet::new);
         }
 
         for i in 0..dependencies.len() {
-            for j in i+1..dependencies.len() {
+            for j in i + 1..dependencies.len() {
                 if self.has_dependency_relation(&dependencies[i], &dependencies[j]) {
-                    let from = format!("{}@{}", 
-                        dependencies[i].name, 
-                        dependencies[i].version.as_ref().unwrap_or(&"latest".to_string()));
-                    let to = format!("{}@{}", 
-                        dependencies[j].name, 
-                        dependencies[j].version.as_ref().unwrap_or(&"latest".to_string()));
-                    
+                    let from = format!(
+                        "{}@{}",
+                        dependencies[i].name,
+                        dependencies[i]
+                            .version
+                            .as_ref()
+                            .unwrap_or(&"latest".to_string())
+                    );
+                    let to = format!(
+                        "{}@{}",
+                        dependencies[j].name,
+                        dependencies[j]
+                            .version
+                            .as_ref()
+                            .unwrap_or(&"latest".to_string())
+                    );
+
                     edges.push(DependencyEdge {
                         from: from.clone(),
                         to: to.clone(),
                         edge_type: EdgeType::Direct,
                     });
 
-                    self.adjacency_list.entry(from.clone())
+                    self.adjacency_list
+                        .entry(from.clone())
                         .or_insert_with(HashSet::new)
                         .insert(to.clone());
-                    self.reverse_adjacency.entry(to)
+                    self.reverse_adjacency
+                        .entry(to)
                         .or_insert_with(HashSet::new)
                         .insert(from);
                 }
@@ -95,14 +115,22 @@ impl DependencyGraphAnalyzer {
 
         self.calculate_depths(&mut nodes, &roots);
 
-        DependencyGraph { nodes, edges, roots }
+        DependencyGraph {
+            nodes,
+            edges,
+            roots,
+        }
     }
 
     fn has_dependency_relation(&self, dep1: &DependencyInfo, dep2: &DependencyInfo) -> bool {
         dep1.name.contains(&dep2.name[..dep2.name.len().min(3)])
     }
 
-    fn calculate_depths(&self, nodes: &mut HashMap<String, DependencyNode>, roots: &HashSet<String>) {
+    fn calculate_depths(
+        &self,
+        nodes: &mut HashMap<String, DependencyNode>,
+        roots: &HashSet<String>,
+    ) {
         let mut queue = VecDeque::new();
         let mut visited = HashSet::new();
 
@@ -132,7 +160,7 @@ impl DependencyGraphAnalyzer {
 
     pub fn find_critical_paths(&self, graph: &DependencyGraph) -> Vec<Vec<String>> {
         let mut paths = Vec::new();
-        
+
         for root in &graph.roots {
             let mut path = Vec::new();
             let mut visited = HashSet::new();
@@ -183,11 +211,11 @@ impl DependencyGraphAnalyzer {
             if !visited.contains(node_id) {
                 let mut cluster_members = HashSet::new();
                 self.bfs_cluster(node_id, &mut cluster_members, &mut visited);
-                
+
                 if cluster_members.len() > 1 {
                     let (internal, external) = self.count_cluster_edges(&cluster_members);
                     let cohesion = internal as f64 / (internal + external).max(1) as f64;
-                    
+
                     clusters.push(DependencyCluster {
                         id: format!("cluster_{}", cluster_id),
                         members: cluster_members,
@@ -203,7 +231,12 @@ impl DependencyGraphAnalyzer {
         clusters
     }
 
-    fn bfs_cluster(&self, start: &str, cluster: &mut HashSet<String>, visited: &mut HashSet<String>) {
+    fn bfs_cluster(
+        &self,
+        start: &str,
+        cluster: &mut HashSet<String>,
+        visited: &mut HashSet<String>,
+    ) {
         let mut queue = VecDeque::new();
         queue.push_back(start.to_string());
 

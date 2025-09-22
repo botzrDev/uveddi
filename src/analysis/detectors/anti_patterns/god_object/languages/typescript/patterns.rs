@@ -5,10 +5,10 @@ use super::super::super::detector::DetectedPattern;
 use super::queries::TYPESCRIPT_IMPORT_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
-use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::error::ErrorHelpers;
 use std::collections::HashSet;
+use streaming_iterator::StreamingIterator;
 
 /// TypeScript pattern detector
 pub struct TypeScriptPatternDetector<'a> {

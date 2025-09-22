@@ -1,9 +1,9 @@
-use crate::analysis::detectors::dependency::types::*;
 use super::LanguageDependencyParser;
+use crate::analysis::detectors::dependency::types::*;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct PythonRequirement {
@@ -67,7 +67,9 @@ impl PythonDependencyParser {
         let line = line.trim();
 
         if line.is_empty() || line.starts_with('#') {
-            return Err(DependencyError::ParseError("Empty or comment line".to_string()));
+            return Err(DependencyError::ParseError(
+                "Empty or comment line".to_string(),
+            ));
         }
 
         let (is_editable, line) = if line.starts_with("-e ") {
@@ -77,7 +79,9 @@ impl PythonDependencyParser {
         };
 
         if line.contains("://") {
-            let name = self.extract_name_from_url(line).unwrap_or_else(|| "unknown".to_string());
+            let name = self
+                .extract_name_from_url(line)
+                .unwrap_or_else(|| "unknown".to_string());
             return Ok(PythonRequirement {
                 name,
                 version_spec: None,
@@ -87,11 +91,12 @@ impl PythonDependencyParser {
             });
         }
 
-        let (name_and_extras, version_spec) = if let Some(pos) = line.find(&['>', '<', '=', '!', '~'][..]) {
-            line.split_at(pos)
-        } else {
-            (line, "")
-        };
+        let (name_and_extras, version_spec) =
+            if let Some(pos) = line.find(&['>', '<', '=', '!', '~'][..]) {
+                line.split_at(pos)
+            } else {
+                (line, "")
+            };
 
         let (name, extras) = if let Some(bracket_pos) = name_and_extras.find('[') {
             let name = name_and_extras[..bracket_pos].trim();
@@ -112,7 +117,14 @@ impl PythonDependencyParser {
         let version_spec = if version_spec.trim().is_empty() {
             None
         } else {
-            Some(version_spec.trim().split(';').next().unwrap_or("").to_string())
+            Some(
+                version_spec
+                    .trim()
+                    .split(';')
+                    .next()
+                    .unwrap_or("")
+                    .to_string(),
+            )
         };
 
         Ok(PythonRequirement {
@@ -148,9 +160,18 @@ impl PythonDependencyParser {
                 scope,
                 resolved_path: None,
             },
-            PipfileDependency::Detailed { version, git, path, editable, .. } => {
+            PipfileDependency::Detailed {
+                version,
+                git,
+                path,
+                editable,
+                ..
+            } => {
                 let source = if let Some(git_url) = git {
-                    DependencySource::Git { url: git_url.clone(), branch: None }
+                    DependencySource::Git {
+                        url: git_url.clone(),
+                        branch: None,
+                    }
                 } else if let Some(local_path) = path {
                     DependencySource::Local(PathBuf::from(local_path))
                 } else {
@@ -175,8 +196,9 @@ impl PythonDependencyParser {
     }
 
     fn parse_requirements_txt(&self, path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to read requirements.txt: {}", e)))?;
+        let content = fs::read_to_string(path).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to read requirements.txt: {}", e))
+        })?;
 
         let mut dependencies = Vec::new();
 
@@ -189,7 +211,9 @@ impl PythonDependencyParser {
                             branch: None,
                         }
                     } else if url.starts_with("file://") || req.is_editable {
-                        DependencySource::Local(PathBuf::from(url.strip_prefix("file://").unwrap_or(&url)))
+                        DependencySource::Local(PathBuf::from(
+                            url.strip_prefix("file://").unwrap_or(&url),
+                        ))
                     } else {
                         DependencySource::Unknown
                     }
@@ -217,11 +241,13 @@ impl PythonDependencyParser {
     }
 
     fn parse_pyproject_toml(&self, path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to read pyproject.toml: {}", e)))?;
+        let content = fs::read_to_string(path).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to read pyproject.toml: {}", e))
+        })?;
 
-        let pyproject: PyprojectToml = toml::from_str(&content)
-            .map_err(|e| DependencyError::ParseError(format!("Failed to parse pyproject.toml: {}", e)))?;
+        let pyproject: PyprojectToml = toml::from_str(&content).map_err(|e| {
+            DependencyError::ParseError(format!("Failed to parse pyproject.toml: {}", e))
+        })?;
 
         let mut dependencies = Vec::new();
 
@@ -293,12 +319,18 @@ impl PythonDependencyParser {
         if let Some(packages) = &pipfile.packages {
             for (name, dep) in packages {
                 let (version, source) = match dep {
-                    PipfileDependency::Simple(version_spec) => {
-                        (Some(version_spec.clone()), DependencySource::Registry(self.default_index.clone()))
-                    }
-                    PipfileDependency::Detailed { version, git, path, .. } => {
+                    PipfileDependency::Simple(version_spec) => (
+                        Some(version_spec.clone()),
+                        DependencySource::Registry(self.default_index.clone()),
+                    ),
+                    PipfileDependency::Detailed {
+                        version, git, path, ..
+                    } => {
                         let source = if let Some(git_url) = git {
-                            DependencySource::Git { url: git_url.clone(), branch: None }
+                            DependencySource::Git {
+                                url: git_url.clone(),
+                                branch: None,
+                            }
                         } else if let Some(file_path) = path {
                             DependencySource::Local(PathBuf::from(file_path))
                         } else {
@@ -322,12 +354,18 @@ impl PythonDependencyParser {
         if let Some(dev_packages) = &pipfile.dev_packages {
             for (name, dep) in dev_packages {
                 let (version, source) = match dep {
-                    PipfileDependency::Simple(version_spec) => {
-                        (Some(version_spec.clone()), DependencySource::Registry(self.default_index.clone()))
-                    }
-                    PipfileDependency::Detailed { version, git, path, .. } => {
+                    PipfileDependency::Simple(version_spec) => (
+                        Some(version_spec.clone()),
+                        DependencySource::Registry(self.default_index.clone()),
+                    ),
+                    PipfileDependency::Detailed {
+                        version, git, path, ..
+                    } => {
                         let source = if let Some(git_url) = git {
-                            DependencySource::Git { url: git_url.clone(), branch: None }
+                            DependencySource::Git {
+                                url: git_url.clone(),
+                                branch: None,
+                            }
                         } else if let Some(file_path) = path {
                             DependencySource::Local(PathBuf::from(file_path))
                         } else {

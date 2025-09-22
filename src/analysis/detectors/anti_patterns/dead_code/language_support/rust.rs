@@ -4,8 +4,8 @@ use std::collections::HashSet;
 
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
+use streaming_iterator::StreamingIterator;
 
 use crate::analysis::detectors::anti_patterns::dead_code::types::{Symbol, SymbolType};
 

@@ -17,7 +17,9 @@ use super::analysis::{
 };
 use super::config::ConfigSecurityConfig;
 use super::language_support::{EnvAnalyzer, LanguageAnalyzer, TomlAnalyzer, YamlAnalyzer};
-use super::patterns::{ConfigPatternMatcher, PatternMatcher, SecretPatternMatcher, VulnerabilityPatternMatcher};
+use super::patterns::{
+    ConfigPatternMatcher, PatternMatcher, SecretPatternMatcher, VulnerabilityPatternMatcher,
+};
 use super::types::{ConfigIssue, ConfigSeverity, ConfigType};
 use super::validation::{ComplianceValidator, PolicyValidator};
 
@@ -174,7 +176,10 @@ impl ConfigSecurityDetector {
             context.insert("owasp_category".to_string(), json!(owasp));
         }
         if !config_issue.references.is_empty() {
-            context.insert("references".to_string(), json!(config_issue.references.clone()));
+            context.insert(
+                "references".to_string(),
+                json!(config_issue.references.clone()),
+            );
         }
         if !config_issue.tags.is_empty() {
             context.insert("tags".to_string(), json!(config_issue.tags.clone()));

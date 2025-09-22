@@ -105,7 +105,13 @@ impl DetectionPipeline {
         findings
     }
 
-    fn run_analyzer<A: Analyzer>(&self, analyzer: &A, ctx: &DetectionContext<'_>, patterns: &[SqlInjectionPattern], sanitizer: SanitizerStatus) -> Vec<DetectionFinding> {
+    fn run_analyzer<A: Analyzer>(
+        &self,
+        analyzer: &A,
+        ctx: &DetectionContext<'_>,
+        patterns: &[SqlInjectionPattern],
+        sanitizer: SanitizerStatus,
+    ) -> Vec<DetectionFinding> {
         analyzer.analyze(ctx, patterns, sanitizer)
     }
 }
