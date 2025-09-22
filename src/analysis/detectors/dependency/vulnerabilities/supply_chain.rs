@@ -81,6 +81,34 @@ struct PublisherVerifier {
     suspicious_patterns: Vec<String>,
 }
 
+impl PublisherVerifier {
+    pub fn new() -> Self {
+        let mut trusted_publishers = HashMap::new();
+        trusted_publishers.insert("rust-lang".to_string(), PublisherInfo {
+            name: "rust-lang".to_string(),
+            verified: true,
+            reputation_score: 1.0,
+            has_security_policy: true,
+        });
+        trusted_publishers.insert("tokio-rs".to_string(), PublisherInfo {
+            name: "tokio-rs".to_string(),
+            verified: true,
+            reputation_score: 0.95,
+            has_security_policy: true,
+        });
+
+        Self {
+            trusted_publishers,
+            suspicious_patterns: vec![
+                "temp-".to_string(),
+                "test-".to_string(),
+                "quick-".to_string(),
+                "fast-".to_string(),
+            ],
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 struct PublisherInfo {
     name: String,
@@ -92,6 +120,14 @@ struct PublisherInfo {
 #[derive(Debug, Clone)]
 struct MaintenanceTracker {
     package_metadata: HashMap<String, PackageMetadata>,
+}
+
+impl MaintenanceTracker {
+    pub fn new() -> Self {
+        Self {
+            package_metadata: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -199,7 +235,7 @@ impl SupplyChainAnalyzer {
     }
 
     fn calculate_typosquat_confidence(&self, package: &str, similar: &[String]) -> f32 {
-        let mut max_confidence = 0.0;
+        let mut max_confidence: f32 = 0.0;
 
         for similar_pkg in similar {
             let distance = self.calculate_edit_distance(package, similar_pkg);

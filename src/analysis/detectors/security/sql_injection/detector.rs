@@ -124,7 +124,7 @@ impl OwaspCategoryDetector for SqlInjectionDetector {
             return Ok(vulnerabilities);
         }
 
-        for (line_number, line) in file.content.lines().enumerate() {
+        for (line_number, line) in file.source.lines().enumerate() {
             let context = DetectionContext {
                 line,
                 line_number: line_number + 1,

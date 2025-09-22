@@ -85,7 +85,7 @@ pub enum PolicyViolationType {
     CommercialRestriction,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum PolicySeverity {
     Info,
     Low,
@@ -137,6 +137,31 @@ struct PolicyEngine {
     rules: Vec<PolicyRule>,
 }
 
+impl PolicyEngine {
+    pub fn default() -> Self {
+        let mut rules = Vec::new();
+
+        // Add some default policy rules
+        rules.push(PolicyRule {
+            id: "no_gpl".to_string(),
+            name: "No GPL Licenses".to_string(),
+            rule_type: RuleType::LicenseDenylist,
+            severity: PolicySeverity::High,
+            enabled: true,
+        });
+
+        rules.push(PolicyRule {
+            id: "require_attribution".to_string(),
+            name: "Require Attribution".to_string(),
+            rule_type: RuleType::AttributionRequirement,
+            severity: PolicySeverity::Medium,
+            enabled: true,
+        });
+
+        Self { rules }
+    }
+}
+
 #[derive(Debug, Clone)]
 struct PolicyRule {
     id: String,
@@ -173,19 +198,21 @@ impl PolicyEnforcer {
         for dep in dependencies {
             let license_info = self.extract_license_info(dep)?;
 
-            for rule in &self.policy_engine.rules {
-                if !rule.enabled {
-                    continue;
-                }
+            if let Some(license) = license_info {
+                for rule in &self.policy_engine.rules {
+                    if !rule.enabled {
+                        continue;
+                    }
 
-                if let Some(violation) = self.evaluate_rule(dep, &license_info, rule, config) {
-                    if violation.severity >= PolicySeverity::Medium {
-                        let actions = self.generate_enforcement_actions(&violation);
-                        enforcement_actions.extend(actions);
-                        policy_violations.push(violation);
-                    } else {
-                        let warning = self.create_policy_warning(dep, &license_info, rule);
-                        policy_warnings.push(warning);
+                    if let Some(violation) = self.evaluate_rule(dep, &Some(license.clone()), rule, config) {
+                        if violation.severity >= PolicySeverity::Medium {
+                            let actions = self.generate_enforcement_actions(&violation);
+                            enforcement_actions.extend(actions);
+                            policy_violations.push(violation);
+                        } else {
+                            let warning = self.create_policy_warning(dep, &license, rule);
+                            policy_warnings.push(warning);
+                        }
                     }
                 }
             }
@@ -297,5 +324,51 @@ impl PolicyEnforcer {
         }
 
         None
+    }
+
+    fn generate_enforcement_actions(&self, violation: &PolicyViolation) -> Vec<EnforcementAction> {
+        vec![EnforcementAction {
+            action_type: ActionType::RequireApproval,
+            target_package: violation.package.clone(),
+            description: "Package requires manual approval due to policy violation".to_string(),
+            urgency: ActionUrgency::High,
+        }]
+    }
+
+    fn create_policy_warning(&self, dep: &DependencyInfo, license_info: &LicenseInfo, rule: &PolicyRule) -> PolicyWarning {
+        PolicyWarning {
+            package: dep.name.clone(),
+            license: license_info.name.clone(),
+            rule_id: rule.id.clone(),
+            message: format!("Package '{}' with license '{}' requires attention under rule '{}'", dep.name, license_info.name, rule.name),
+            severity: WarningSeverity::Medium,
+        }
+    }
+
+    fn calculate_compliance_metrics(&self, dependencies: &[DependencyInfo], violations: &[PolicyViolation]) -> ComplianceMetrics {
+        ComplianceMetrics {
+            total_packages: dependencies.len(),
+            compliant_packages: dependencies.len() - violations.len(),
+            violation_count: violations.len(),
+            compliance_percentage: if dependencies.is_empty() { 100.0 } else {
+                ((dependencies.len() - violations.len()) as f64 / dependencies.len() as f64) * 100.0
+            },
+        }
+    }
+
+    fn determine_enforcement_status(&self, violations: &[PolicyViolation], actions: &[EnforcementAction]) -> EnforcementStatus {
+        if violations.is_empty() {
+            EnforcementStatus::Compliant
+        } else if actions.iter().any(|a| a.urgency == ActionUrgency::Critical) {
+            EnforcementStatus::Critical
+        } else if violations.len() > 5 {
+            EnforcementStatus::NonCompliant
+        } else {
+            EnforcementStatus::RequiresAction
+        }
+    }
+
+    fn check_category_restriction(&self, license: &LicenseInfo, category: &LicenseCategory) -> bool {
+        &license.category == category
     }
 }

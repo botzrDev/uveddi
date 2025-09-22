@@ -57,7 +57,7 @@ impl LanguageAnalyzer for PythonAnalyzer {
                     if let Ok(name) = name_node.utf8_text(source) {
                         let is_exported = !name.starts_with('_');
                         let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                        let confidence = self.calculate_python_confidence(name, parsed_file);
+                        let confidence = self.calculate_python_confidence(name, parsed_file.path());
 
                         symbols.push(Symbol {
                             name: name.to_string(),
@@ -89,7 +89,7 @@ impl LanguageAnalyzer for PythonAnalyzer {
                     if let Ok(name) = name_node.utf8_text(source) {
                         let is_exported = !name.starts_with('_');
                         let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                        let confidence = self.calculate_python_confidence(name, parsed_file);
+                        let confidence = self.calculate_python_confidence(name, parsed_file.path());
 
                         symbols.push(Symbol {
                             name: name.to_string(),

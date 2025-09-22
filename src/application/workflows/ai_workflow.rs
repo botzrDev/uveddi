@@ -229,7 +229,7 @@ impl AiWorkflow {
 
     /// Calculate priority score for an issue using heuristics
     fn calculate_issue_priority(&self, message: &str) -> f64 {
-        let mut score = 0.5; // Base score
+        let mut score: f64 = 0.5; // Base score
 
         // Increase priority for certain keywords
         if message.contains("critical") || message.contains("Critical") {

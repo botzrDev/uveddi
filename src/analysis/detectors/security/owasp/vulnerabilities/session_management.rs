@@ -240,7 +240,7 @@ impl SessionManagementDetector {
                 if regex.is_match(line) {
                     let location = SecurityLocation::new(
                         PathBuf::from("unknown"), // Will be updated by caller
-                        line_number,
+                        line_number as i32,
                         0,
                     );
 
@@ -334,7 +334,7 @@ impl OwaspCategoryDetector for SessionManagementDetector {
 
         let mut vulnerabilities = Vec::new();
 
-        for (line_number, line) in file.content.lines().enumerate() {
+        for (line_number, line) in file.source.lines().enumerate() {
             let mut line_vulnerabilities = self.analyze_line(line, line_number + 1, patterns);
 
             // Update file path in location

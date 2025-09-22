@@ -172,8 +172,12 @@ pub struct SourceLocation {
 /// Taint level enumeration
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TaintLevel {
-    Clean,        // No taint
-    Tainted,      // Fully tainted
+    Untainted,    // No taint
+    Low,          // Low taint level
+    Medium,       // Medium taint level
+    High,         // High taint level
+    Tainted,      // Fully tainted (legacy)
+    Clean,        // No taint (legacy)
     Sanitized,    // Was tainted but sanitized
     Partial(f64), // Partially tainted (0.0 - 1.0)
 }
@@ -181,16 +185,20 @@ pub enum TaintLevel {
 impl TaintLevel {
     pub fn is_dangerous(&self) -> bool {
         match self {
-            TaintLevel::Tainted => true,
+            TaintLevel::High | TaintLevel::Tainted => true,
+            TaintLevel::Medium => true,
             TaintLevel::Partial(level) => *level > 0.5,
-            _ => false,
+            TaintLevel::Untainted | TaintLevel::Clean | TaintLevel::Low | TaintLevel::Sanitized => false,
         }
     }
 
     pub fn score(&self) -> f64 {
         match self {
-            TaintLevel::Clean => 0.0,
+            TaintLevel::Untainted | TaintLevel::Clean => 0.0,
             TaintLevel::Sanitized => 0.1, // Small residual risk
+            TaintLevel::Low => 0.3,
+            TaintLevel::Medium => 0.6,
+            TaintLevel::High => 0.9,
             TaintLevel::Partial(level) => *level,
             TaintLevel::Tainted => 1.0,
         }
@@ -198,9 +206,12 @@ impl TaintLevel {
 
     pub fn combine(&self, other: &TaintLevel) -> TaintLevel {
         match (self, other) {
-            (TaintLevel::Clean, other) => other.clone(),
-            (other, TaintLevel::Clean) => other.clone(),
-            (TaintLevel::Tainted, _) | (_, TaintLevel::Tainted) => TaintLevel::Tainted,
+            (TaintLevel::Untainted | TaintLevel::Clean, other) => other.clone(),
+            (other, TaintLevel::Untainted | TaintLevel::Clean) => other.clone(),
+            (TaintLevel::High | TaintLevel::Tainted, _) | (_, TaintLevel::High | TaintLevel::Tainted) => TaintLevel::High,
+            (TaintLevel::Medium, TaintLevel::Low) | (TaintLevel::Low, TaintLevel::Medium) => TaintLevel::Medium,
+            (TaintLevel::Medium, _) | (_, TaintLevel::Medium) => TaintLevel::Medium,
+            (TaintLevel::Low, TaintLevel::Low) => TaintLevel::Low,
             (TaintLevel::Partial(a), TaintLevel::Partial(b)) => {
                 TaintLevel::Partial((*a + *b).min(1.0))
             }
@@ -209,6 +220,21 @@ impl TaintLevel {
                 TaintLevel::Partial(*level * 0.5) // Sanitization reduces risk
             }
             (TaintLevel::Sanitized, TaintLevel::Sanitized) => TaintLevel::Sanitized,
+            // Handle combinations with discrete levels
+            (TaintLevel::Low, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::Low) => TaintLevel::Low,
+            (TaintLevel::Medium, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::Medium) => TaintLevel::Medium,
+            (TaintLevel::High, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::High) => TaintLevel::High,
+            // Handle remaining combinations with Partial
+            (TaintLevel::Low, TaintLevel::Partial(level)) | (TaintLevel::Partial(level), TaintLevel::Low) => {
+                TaintLevel::Partial((*level + 0.3).min(1.0))
+            }
+            (TaintLevel::Medium, TaintLevel::Partial(level)) | (TaintLevel::Partial(level), TaintLevel::Medium) => {
+                TaintLevel::Partial((*level + 0.6).min(1.0))
+            }
+            (TaintLevel::High, TaintLevel::Partial(level)) | (TaintLevel::Partial(level), TaintLevel::High) => {
+                TaintLevel::Partial((*level + 0.9).min(1.0))
+            }
+            (TaintLevel::Tainted, TaintLevel::Partial(_)) | (TaintLevel::Partial(_), TaintLevel::Tainted) => TaintLevel::Tainted,
         }
     }
 }

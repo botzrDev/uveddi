@@ -146,7 +146,14 @@ impl LicenseAnalyzer {
                 return Ok(Some(DetectedLicense {
                     package_name: dep.name.clone(),
                     package_version: dep.version.clone().unwrap_or_default(),
-                    license_info,
+                    license_info: LicenseInfo {
+                        spdx_id: Some(license_info.id.clone()),
+                        name: license_info.name.clone(),
+                        url: None,
+                        is_osi_approved: license_info.is_osi_approved,
+                        is_fsf_approved: license_info.is_fsf_approved,
+                        category: license_info.category,
+                    },
                     confidence: 0.95,
                     detection_method: DetectionMethod::SpdxIdentifier,
                     source_file: None,
@@ -261,7 +268,6 @@ impl LicenseAnalyzer {
 impl SpdxDatabase {
     fn new() -> Self {
         let mut licenses = HashMap::new();
-        let aliases = HashMap::new();
 
         licenses.insert("MIT".to_string(), SpdxLicense {
             id: "MIT".to_string(),
@@ -290,7 +296,12 @@ impl SpdxDatabase {
             text_patterns: vec!["GNU GENERAL PUBLIC LICENSE".to_string()],
         });
 
-        Self { licenses }
+        let mut aliases: HashMap<String, String> = HashMap::new();
+        aliases.insert("GPL-3".to_string(), "GPL-3.0".to_string());
+        aliases.insert("MIT License".to_string(), "MIT".to_string());
+        aliases.insert("Apache License 2.0".to_string(), "Apache-2.0".to_string());
+
+        Self { licenses, aliases }
     }
 
     fn get_license(&self, license_id: &str) -> Option<&SpdxLicense> {

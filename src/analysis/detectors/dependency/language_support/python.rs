@@ -298,9 +298,9 @@ impl PythonDependencyParser {
                     }
                     PipfileDependency::Detailed { version, git, path, .. } => {
                         let source = if let Some(git_url) = git {
-                            DependencySource::Git(git_url.clone())
+                            DependencySource::Git { url: git_url.clone(), branch: None }
                         } else if let Some(file_path) = path {
-                            DependencySource::Path(PathBuf::from(file_path))
+                            DependencySource::Local(PathBuf::from(file_path))
                         } else {
                             DependencySource::Registry(self.default_index.clone())
                         };
@@ -312,7 +312,7 @@ impl PythonDependencyParser {
                     name: name.clone(),
                     version,
                     source,
-                    scope: DependencyScope::Runtime,
+                    scope: DependencyScope::Production,
                     resolved_path: None,
                 });
             }
@@ -327,9 +327,9 @@ impl PythonDependencyParser {
                     }
                     PipfileDependency::Detailed { version, git, path, .. } => {
                         let source = if let Some(git_url) = git {
-                            DependencySource::Git(git_url.clone())
+                            DependencySource::Git { url: git_url.clone(), branch: None }
                         } else if let Some(file_path) = path {
-                            DependencySource::Path(PathBuf::from(file_path))
+                            DependencySource::Local(PathBuf::from(file_path))
                         } else {
                             DependencySource::Registry(self.default_index.clone())
                         };

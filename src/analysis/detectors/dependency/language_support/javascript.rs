@@ -296,7 +296,7 @@ impl JavaScriptDependencyParser {
                             name: package_name.to_string(),
                             version,
                             source: DependencySource::Registry("npm".to_string()),
-                            scope: DependencyScope::Runtime,
+                            scope: DependencyScope::Production,
                             resolved_path: current_resolved.take().map(PathBuf::from),
                         });
                     }
@@ -311,7 +311,7 @@ impl JavaScriptDependencyParser {
                     name: package_name.to_string(),
                     version,
                     source: DependencySource::Registry("npm".to_string()),
-                    scope: DependencyScope::Runtime,
+                    scope: DependencyScope::Production,
                     resolved_path: current_resolved.map(PathBuf::from),
                 });
             }

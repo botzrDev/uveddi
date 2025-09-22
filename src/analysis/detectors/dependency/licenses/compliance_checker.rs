@@ -71,7 +71,7 @@ pub enum ViolationType {
     CommercialRestriction,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ViolationSeverity {
     Low,
     Medium,
@@ -90,6 +90,33 @@ pub enum WarningType {
 struct ComplianceRuleSet {
     license_rules: HashMap<String, LicenseRule>,
     global_rules: GlobalRules,
+}
+
+impl ComplianceRuleSet {
+    pub fn default() -> Self {
+        let mut license_rules = HashMap::new();
+
+        // Add some default license rules
+        license_rules.insert("MIT".to_string(), LicenseRule {
+            allowed: true,
+            requires_attribution: true,
+            allows_commercial_use: true,
+        });
+
+        license_rules.insert("Apache-2.0".to_string(), LicenseRule {
+            allowed: true,
+            requires_attribution: true,
+            allows_commercial_use: true,
+        });
+
+        Self {
+            license_rules,
+            global_rules: GlobalRules {
+                require_osi_approved: true,
+                allow_unknown_licenses: false,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -168,6 +195,21 @@ impl ComplianceChecker {
             compliance_summary,
             attribution_requirements,
         })
+    }
+
+    fn determine_overall_status(&self, violations: &[ComplianceViolation]) -> ComplianceStatus {
+        if violations.is_empty() {
+            ComplianceStatus::Compliant
+        } else {
+            let critical_violations = violations.iter()
+                .any(|v| matches!(v.violation_type, ViolationType::DeniedLicense));
+
+            if critical_violations {
+                ComplianceStatus::NonCompliant
+            } else {
+                ComplianceStatus::RequiresAttention
+            }
+        }
     }
 
     fn extract_license_info(&self, dep: &DependencyInfo) -> Result<Option<LicenseInfo>, DependencyError> {

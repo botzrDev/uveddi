@@ -143,8 +143,7 @@ impl DependencyAnalysisService {
         // Extract dependencies from the parsed file
         let dependencies = self
             .dependency_extractor
-            .extract_dependencies(&parsed_file)
-            .await?;
+            .extract_dependencies(&parsed_file)?;
 
         // Build graph from dependencies
         Ok(self
@@ -218,7 +217,7 @@ impl DependencyAnalysisService {
         let mut all_dependencies = Vec::new();
 
         for file in files {
-            match self.dependency_extractor.extract_dependencies(file).await {
+            match self.dependency_extractor.extract_dependencies(file) {
                 Ok(deps) => all_dependencies.extend(deps),
                 Err(e) => warn!(
                     "Failed to extract dependencies from {}: {}",

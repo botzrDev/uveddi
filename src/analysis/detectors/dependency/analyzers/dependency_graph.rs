@@ -283,6 +283,24 @@ impl DependencyGraphAnalyzer {
 
         components
     }
+
+    pub fn find_clusters(&self, graph: &DependencyGraph) -> Vec<DependencyCluster> {
+        self.detect_clusters(graph)
+    }
+
+    pub fn analyze_graph(&mut self, dependencies: &[DependencyInfo]) -> GraphAnalysisResult {
+        let graph = self.build_graph(dependencies);
+        let statistics = self.calculate_statistics(&graph);
+        let critical_paths = self.find_critical_paths(&graph);
+        let dependency_clusters = self.find_clusters(&graph);
+
+        GraphAnalysisResult {
+            graph,
+            statistics,
+            critical_paths,
+            dependency_clusters,
+        }
+    }
 }
 
 impl DependencyAnalyzer for DependencyGraphAnalyzer {

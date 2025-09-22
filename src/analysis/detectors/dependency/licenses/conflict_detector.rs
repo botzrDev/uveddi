@@ -57,6 +57,49 @@ struct LicenseCompatibilityMatrix {
     category_compatibility: HashMap<(LicenseCategory, LicenseCategory), CompatibilityLevel>,
 }
 
+impl LicenseCompatibilityMatrix {
+    pub fn new() -> Self {
+        let mut category_compatibility = HashMap::new();
+
+        // Define compatibility between different license categories
+        use LicenseCategory::*;
+        use CompatibilityLevel::*;
+
+        // Permissive licenses are generally compatible with everything
+        category_compatibility.insert((Permissive, Permissive), Compatible);
+        category_compatibility.insert((Permissive, Copyleft), Compatible);
+        category_compatibility.insert((Permissive, WeakCopyleft), Compatible);
+        category_compatibility.insert((Permissive, Proprietary), Compatible);
+
+        // Copyleft licenses have restrictions
+        category_compatibility.insert((Copyleft, Permissive), Compatible);
+        category_compatibility.insert((Copyleft, Copyleft), Compatible);
+        category_compatibility.insert((Copyleft, WeakCopyleft), RequiresReview);
+        category_compatibility.insert((Copyleft, Proprietary), Incompatible);
+
+        // Weak copyleft licenses
+        category_compatibility.insert((WeakCopyleft, Permissive), Compatible);
+        category_compatibility.insert((WeakCopyleft, Copyleft), RequiresReview);
+        category_compatibility.insert((WeakCopyleft, WeakCopyleft), Compatible);
+        category_compatibility.insert((WeakCopyleft, Proprietary), RequiresReview);
+
+        // Proprietary licenses
+        category_compatibility.insert((Proprietary, Permissive), Compatible);
+        category_compatibility.insert((Proprietary, Copyleft), Incompatible);
+        category_compatibility.insert((Proprietary, WeakCopyleft), RequiresReview);
+        category_compatibility.insert((Proprietary, Proprietary), Compatible);
+
+        Self { category_compatibility }
+    }
+
+    pub fn get_compatibility(&self, license1: &LicenseInfo, license2: &LicenseInfo) -> CompatibilityLevel {
+        let key = (license1.category.clone(), license2.category.clone());
+        self.category_compatibility.get(&key)
+            .cloned()
+            .unwrap_or(CompatibilityLevel::Unknown)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum CompatibilityLevel {
     Compatible,
@@ -248,7 +291,7 @@ impl ConflictDetector {
     }
 
     fn calculate_conflict_probability(&self, license1: &LicenseInfo, license2: &LicenseInfo) -> (f32, Vec<String>) {
-        let mut probability = 0.0;
+        let mut probability: f32 = 0.0;
         let mut reasons = Vec::new();
 
         if license1.category == LicenseCategory::Copyleft || license2.category == LicenseCategory::Copyleft {
@@ -308,6 +351,49 @@ impl ConflictDetector {
             incompatible_pairs,
             compatibility_score,
             license_distribution,
+        }
+    }
+
+    fn assess_conflict_risks(&self, conflicts: &[LicenseConflict], potential_conflicts: &[PotentialConflict]) -> ConflictRiskAssessment {
+        let conflict_count = conflicts.len() + potential_conflicts.len();
+
+        let overall_risk = if conflict_count == 0 {
+            RiskLevel::Low
+        } else if conflict_count <= 2 {
+            RiskLevel::Medium
+        } else {
+            RiskLevel::High
+        };
+
+        let legal_risk = if conflicts.iter().any(|c| matches!(c.conflict_type, ConflictType::Incompatible | ConflictType::RequiresDisclosure)) {
+            RiskLevel::High
+        } else if conflicts.is_empty() {
+            RiskLevel::Low
+        } else {
+            RiskLevel::Medium
+        };
+
+        let business_risk = if conflicts.len() > 3 {
+            RiskLevel::High
+        } else if conflicts.is_empty() {
+            RiskLevel::Low
+        } else {
+            RiskLevel::Medium
+        };
+
+        let mitigation_urgency = if overall_risk == RiskLevel::High {
+            MitigationUrgency::Immediate
+        } else if overall_risk == RiskLevel::Medium {
+            MitigationUrgency::High
+        } else {
+            MitigationUrgency::Low
+        };
+
+        ConflictRiskAssessment {
+            overall_risk,
+            legal_risk,
+            business_risk,
+            mitigation_urgency,
         }
     }
 }

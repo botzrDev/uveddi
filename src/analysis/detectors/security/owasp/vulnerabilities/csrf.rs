@@ -321,7 +321,7 @@ impl OwaspCategoryDetector for CsrfDetector {
 
         let mut vulnerabilities = Vec::new();
 
-        for (line_number, line) in file.content.lines().enumerate() {
+        for (line_number, line) in file.source.lines().enumerate() {
             let mut line_vulnerabilities = self.analyze_line(line, line_number + 1, patterns);
 
             // Update file path in location

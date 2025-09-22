@@ -215,9 +215,9 @@ impl DependencyDetector {
         #[cfg(feature = "tree-sitter")]
         {
             use crate::ast::tree_sitter::queries::{
-use streaming_iterator::StreamingIterator;
                 JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY,
             };
+            use streaming_iterator::StreamingIterator;
             use tree_sitter::{Query, QueryCursor};
 
             let (query_str, dependency_type) = match parsed_file.language {

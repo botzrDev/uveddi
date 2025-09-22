@@ -105,6 +105,26 @@ impl SanitizerDetector {
                     TaintLevel::High
                 }
             }
+            TaintLevel::Tainted => {
+                // Treat Tainted similar to High
+                if sanitizer.effectiveness > 0.95 {
+                    TaintLevel::Sanitized
+                } else if sanitizer.effectiveness > 0.8 {
+                    TaintLevel::Medium
+                } else if sanitizer.effectiveness > 0.6 {
+                    TaintLevel::Low
+                } else {
+                    TaintLevel::Tainted
+                }
+            }
+            TaintLevel::Clean => TaintLevel::Clean, // Already clean
+            TaintLevel::Partial(level) => {
+                if sanitizer.effectiveness > 0.9 {
+                    TaintLevel::Sanitized
+                } else {
+                    TaintLevel::Partial(level * (1.0 - sanitizer.effectiveness))
+                }
+            }
         }
     }
 

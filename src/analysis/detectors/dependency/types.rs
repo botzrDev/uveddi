@@ -100,7 +100,7 @@ pub struct LicenseInfo {
     pub category: LicenseCategory,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LicenseCategory {
     Permissive,
     Copyleft,
@@ -156,7 +156,7 @@ pub struct CircularDependency {
     pub severity: CircularDependencySeverity,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CircularDependencySeverity {
     Low,
     Medium,
