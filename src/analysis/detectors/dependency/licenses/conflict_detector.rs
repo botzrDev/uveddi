@@ -288,3 +288,26 @@ impl ConflictDetector {
 
                 match self.compatibility_matrix.get_compatibility(license1, license2) {
                     CompatibilityLevel::Compatible => compatible_pairs += 1,
+                    CompatibilityLevel::Incompatible => incompatible_pairs += 1,
+                    CompatibilityLevel::RequiresReview => {},
+                    CompatibilityLevel::Unknown => {},
+                }
+            }
+        }
+
+        let total_pairs = packages.len() * (packages.len() - 1) / 2;
+        let compatibility_score = if total_pairs > 0 {
+            compatible_pairs as f32 / total_pairs as f32
+        } else {
+            1.0
+        };
+
+        CompatibilitySummary {
+            total_license_pairs: total_pairs,
+            compatible_pairs,
+            incompatible_pairs,
+            compatibility_score,
+            license_distribution,
+        }
+    }
+}

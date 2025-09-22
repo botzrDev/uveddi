@@ -5,6 +5,7 @@ use super::super::super::metrics::MetricsCalculator;
 use super::queries::TYPESCRIPT_INTERFACE_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
+use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use tracing::debug;

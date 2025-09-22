@@ -215,6 +215,7 @@ impl DependencyDetector {
         #[cfg(feature = "tree-sitter")]
         {
             use crate::ast::tree_sitter::queries::{
+use streaming_iterator::StreamingIterator;
                 JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY,
             };
             use tree_sitter::{Query, QueryCursor};

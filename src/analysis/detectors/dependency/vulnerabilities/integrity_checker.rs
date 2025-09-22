@@ -288,3 +288,28 @@ impl VulnerabilityScanner for IntegrityChecker {
 
         // Analyze failures
         let checksum_failures = self.analyze_checksum_failures(&integrity_results);
+        let signature_failures = self.analyze_signature_failures(&integrity_results);
+
+        let scan_duration = start_time.elapsed();
+        let total_verified = integrity_results.iter().filter(|r| r.checksum_verified && r.signature_verified).count();
+        let total_failed = integrity_results.len() - total_verified;
+
+        Ok(VulnerabilityScanOutput::Integrity(IntegrityCheckResult {
+            scanned_packages: dependencies.len(),
+            integrity_results,
+            checksum_failures,
+            signature_failures,
+            scan_duration_ms: scan_duration.as_millis() as u64,
+            total_verified,
+            total_failed,
+        }))
+    }
+
+    fn name(&self) -> &str {
+        "Package Integrity Checker"
+    }
+
+    fn priority(&self) -> ScanPriority {
+        ScanPriority::High
+    }
+}

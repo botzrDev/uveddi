@@ -288,3 +288,19 @@ impl DependencyGraphAnalyzer {
 impl DependencyAnalyzer for DependencyGraphAnalyzer {
     fn analyze(
         &self,
+        dependencies: &[DependencyInfo],
+        _config: &DependencyDetectorConfig,
+    ) -> Result<AnalysisOutput, DependencyError> {
+        let mut analyzer = Self::new();
+        let analysis = analyzer.analyze_graph(dependencies);
+        Ok(AnalysisOutput::Graph(analysis))
+    }
+
+    fn name(&self) -> &str {
+        "DependencyGraphAnalyzer"
+    }
+
+    fn description(&self) -> &str {
+        "Analyzes dependency graph structure, statistics, and clustering patterns"
+    }
+}

@@ -1,6 +1,7 @@
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor, Tree};
+use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use std::path::Path;
 

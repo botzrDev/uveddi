@@ -39,7 +39,7 @@ pub use licenses::{
 pub use language_support::{
     LanguageParserRegistry,
     RustDependencyParser, CargoManifest,
-    PythonDependencyParser, RequirementsTxt,
+    PythonDependencyParser, PythonRequirement,
     JavaScriptDependencyParser, PackageJson,
 };
 

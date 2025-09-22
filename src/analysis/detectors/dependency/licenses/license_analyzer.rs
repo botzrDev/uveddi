@@ -288,3 +288,23 @@ impl SpdxDatabase {
             is_osi_approved: true,
             is_fsf_approved: true,
             text_patterns: vec!["GNU GENERAL PUBLIC LICENSE".to_string()],
+        });
+
+        Self { licenses }
+    }
+
+    fn get_license(&self, license_id: &str) -> Option<&SpdxLicense> {
+        self.licenses.get(license_id)
+    }
+
+    fn find_license_by_text(&self, text: &str) -> Option<&SpdxLicense> {
+        for license in self.licenses.values() {
+            for pattern in &license.text_patterns {
+                if text.contains(pattern) {
+                    return Some(license);
+                }
+            }
+        }
+        None
+    }
+}

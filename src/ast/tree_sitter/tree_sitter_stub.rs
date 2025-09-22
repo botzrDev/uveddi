@@ -72,7 +72,7 @@ impl QueryCursor {
         _query: &Query,
         _node: Node<'a>,
         _source: &'a [u8],
-    ) -> impl Iterator<Item = QueryMatch<'a>> {
+    ) -> impl Iterator<Item = QueryMatch<'a, 'a>> {
         std::iter::empty()
     }
 
@@ -81,7 +81,7 @@ impl QueryCursor {
         _query: &'a Query,
         _node: Node<'a>,
         _source: &'a [u8],
-    ) -> std::iter::Empty<(QueryMatch<'a>, usize)> {
+    ) -> std::iter::Empty<(QueryMatch<'a, 'a>, usize)> {
         std::iter::empty()
     }
 }
@@ -238,12 +238,12 @@ pub struct Point {
 }
 
 #[derive(Debug, Clone)]
-pub struct QueryMatch<'a> {
-    pub captures: Vec<QueryCapture<'a>>,
+pub struct QueryMatch<'cursor, 'tree> {
+    pub captures: Vec<QueryCapture<'cursor>>,
 }
 
 // Need this as a standalone export too
-pub type QueryMatchRef<'a> = QueryMatch<'a>;
+pub type QueryMatchRef<'cursor, 'tree> = QueryMatch<'cursor, 'tree>;
 
 #[derive(Debug, Clone)]
 pub struct QueryCapture<'a> {

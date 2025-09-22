@@ -64,13 +64,13 @@ impl RustQueries {
         query: &'a Query,
         tree: &'a Tree,
         source: &'a str,
-    ) -> Result<Vec<crate::ast::tree_sitter::QueryMatch<'a>>, AnalysisError> {
+    ) -> Result<Vec<crate::ast::tree_sitter::QueryMatch<'a, 'a>>, AnalysisError> {
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(query, tree.root_node(), source.as_bytes());
         let mut results = Vec::new();
 
-        while let Some(m) = matches.next() {
-            results.push(m.clone());
+        for m in matches {
+            results.push(m);
         }
 
         Ok(results)

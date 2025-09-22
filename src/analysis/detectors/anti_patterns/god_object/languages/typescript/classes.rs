@@ -7,6 +7,7 @@ use super::patterns::TypeScriptPatternDetector;
 use super::queries::TYPESCRIPT_CLASS_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+use streaming_iterator::StreamingIterator;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use std::collections::HashSet;

@@ -25,6 +25,7 @@ impl MethodExtractor {
     fn extract_rust_metrics(parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
         use crate::analysis::detectors::anti_patterns::long_methods::language_support::rust::RustMethodAnalyzer;
         use crate::ast::tree_sitter::QueryCursor;
+use streaming_iterator::StreamingIterator;
 
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
@@ -64,6 +65,7 @@ impl MethodExtractor {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         use crate::analysis::detectors::anti_patterns::long_methods::language_support::python::PythonMethodAnalyzer;
         use crate::ast::tree_sitter::QueryCursor;
+use streaming_iterator::StreamingIterator;
 
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
@@ -103,6 +105,7 @@ impl MethodExtractor {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         use crate::analysis::detectors::anti_patterns::long_methods::language_support::typescript::TypeScriptMethodAnalyzer;
         use crate::ast::tree_sitter::QueryCursor;
+use streaming_iterator::StreamingIterator;
 
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {

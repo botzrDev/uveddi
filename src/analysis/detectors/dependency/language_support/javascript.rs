@@ -288,3 +288,35 @@ impl JavaScriptDependencyParser {
                 current_version = Some(line.strip_prefix("version ").unwrap_or("").trim_matches('"').to_string());
             } else if line.starts_with("resolved ") {
                 current_resolved = Some(line.strip_prefix("resolved ").unwrap_or("").trim_matches('"').to_string());
+            } else if line.trim().is_empty() && current_package.is_some() {
+                // End of package entry
+                if let (Some(package), version) = (current_package.take(), current_version.take()) {
+                    if let Some(package_name) = package.split('@').next() {
+                        dependencies.push(DependencyInfo {
+                            name: package_name.to_string(),
+                            version,
+                            source: DependencySource::Registry("npm".to_string()),
+                            scope: DependencyScope::Runtime,
+                            resolved_path: current_resolved.take().map(PathBuf::from),
+                        });
+                    }
+                }
+            }
+        }
+
+        // Handle last package if file doesn't end with empty line
+        if let (Some(package), version) = (current_package, current_version) {
+            if let Some(package_name) = package.split('@').next() {
+                dependencies.push(DependencyInfo {
+                    name: package_name.to_string(),
+                    version,
+                    source: DependencySource::Registry("npm".to_string()),
+                    scope: DependencyScope::Runtime,
+                    resolved_path: current_resolved.map(PathBuf::from),
+                });
+            }
+        }
+
+        Ok(dependencies)
+    }
+}

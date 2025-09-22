@@ -3,7 +3,7 @@ pub mod python;
 pub mod javascript;
 
 pub use rust::{RustDependencyParser, CargoManifest};
-pub use python::{PythonDependencyParser, RequirementsTxt};
+pub use python::{PythonDependencyParser, PythonRequirement};
 pub use javascript::{JavaScriptDependencyParser, PackageJson};
 
 use crate::analysis::detectors::dependency::types::*;

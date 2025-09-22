@@ -288,3 +288,65 @@ impl PythonDependencyParser {
             .map_err(|e| DependencyError::ParseError(format!("Failed to parse Pipfile: {}", e)))?;
 
         let mut dependencies = Vec::new();
+
+        // Process regular packages
+        if let Some(packages) = &pipfile.packages {
+            for (name, dep) in packages {
+                let (version, source) = match dep {
+                    PipfileDependency::Simple(version_spec) => {
+                        (Some(version_spec.clone()), DependencySource::Registry(self.default_index.clone()))
+                    }
+                    PipfileDependency::Detailed { version, git, path, .. } => {
+                        let source = if let Some(git_url) = git {
+                            DependencySource::Git(git_url.clone())
+                        } else if let Some(file_path) = path {
+                            DependencySource::Path(PathBuf::from(file_path))
+                        } else {
+                            DependencySource::Registry(self.default_index.clone())
+                        };
+                        (version.clone(), source)
+                    }
+                };
+
+                dependencies.push(DependencyInfo {
+                    name: name.clone(),
+                    version,
+                    source,
+                    scope: DependencyScope::Runtime,
+                    resolved_path: None,
+                });
+            }
+        }
+
+        // Process dev packages
+        if let Some(dev_packages) = &pipfile.dev_packages {
+            for (name, dep) in dev_packages {
+                let (version, source) = match dep {
+                    PipfileDependency::Simple(version_spec) => {
+                        (Some(version_spec.clone()), DependencySource::Registry(self.default_index.clone()))
+                    }
+                    PipfileDependency::Detailed { version, git, path, .. } => {
+                        let source = if let Some(git_url) = git {
+                            DependencySource::Git(git_url.clone())
+                        } else if let Some(file_path) = path {
+                            DependencySource::Path(PathBuf::from(file_path))
+                        } else {
+                            DependencySource::Registry(self.default_index.clone())
+                        };
+                        (version.clone(), source)
+                    }
+                };
+
+                dependencies.push(DependencyInfo {
+                    name: name.clone(),
+                    version,
+                    source,
+                    scope: DependencyScope::Development,
+                    resolved_path: None,
+                });
+            }
+        }
+
+        Ok(dependencies)
+    }
+}

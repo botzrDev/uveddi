@@ -288,3 +288,26 @@ impl ComplianceChecker {
         let non_compliant_packages = violations_by_package.len();
         let compliant_packages = total_packages.saturating_sub(non_compliant_packages);
 
+        // Count violations by severity
+        let mut violations_by_severity = HashMap::new();
+        for violation in violations {
+            *violations_by_severity.entry(violation.severity.clone()).or_insert(0) += 1;
+        }
+
+        // Calculate compliance score (0.0 to 1.0)
+        let compliance_score = if total_packages > 0 {
+            compliant_packages as f32 / total_packages as f32
+        } else {
+            1.0
+        };
+
+        ComplianceSummary {
+            total_packages,
+            compliant_packages,
+            non_compliant_packages,
+            violations_by_severity,
+            compliance_score,
+        }
+    }
+}
+

@@ -160,7 +160,7 @@ impl RustInterfaceAnalyzer {
     /// Helper function to find a sibling capture by name.
     fn find_sibling_capture<'a>(
         &self,
-        captures: &'a [crate::ast::tree_sitter::QueryCapture],
+        captures: &'a [tree_sitter::QueryCapture],
         query: &Query,
         capture_name: &str,
     ) -> Option<Node<'a>> {

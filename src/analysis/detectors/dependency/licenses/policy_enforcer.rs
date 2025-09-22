@@ -288,3 +288,14 @@ impl PolicyEnforcer {
                             action_id: format!("approve-{}", dep.name),
                             action_type: RemediationActionType::RequestException,
                             description: "Request approval for license".to_string(),
+                            urgency: RemediationUrgency::High,
+                            estimated_effort: "1-2 business days".to_string(),
+                        }],
+                    });
+                }
+            }
+        }
+
+        None
+    }
+}
