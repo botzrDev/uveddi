@@ -363,7 +363,7 @@ mod integration_tests {
             mermaid_only: false,
             no_fallback: false,
             rendering_service_url: "http://localhost:3000".to_string(),
-            #[cfg(feature = "enterprise")]
+            #[cfg(feature = "image-rendering")]
             diagram_format: "png".to_string(),
         };
 
@@ -396,7 +396,7 @@ mod integration_tests {
             mermaid_only: false,
             no_fallback: false,
             rendering_service_url: "http://localhost:3000".to_string(),
-            #[cfg(feature = "enterprise")]
+            #[cfg(feature = "image-rendering")]
             diagram_format: "png".to_string(),
         };
 

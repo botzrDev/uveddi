@@ -234,6 +234,29 @@ pre-commit install
 4. Place in `plugins/` directory
 5. Test with `scripts/test-plugin.sh`
 
+### Feature Gate Best Practices
+When adding conditional compilation:
+
+**Use Leaf Features for Code Gating:**
+```rust
+#[cfg(feature = "security")]     // ✓ Correct
+#[cfg(feature = "wasm-plugins")] // ✓ Correct
+#[cfg(feature = "ai")]          // ✓ Correct
+```
+
+**Avoid Profile Features in Code:**
+```rust
+#[cfg(feature = "full")]     // ✗ Wrong - profiles are for build selection
+#[cfg(feature = "standard")] // ✗ Wrong - profiles are for build selection
+```
+
+**Language Feature Examples:**
+```rust
+#[cfg(feature = "rust-lang")]       // ✓ Specific language
+#[cfg(feature = "languages-core")]  // ✓ Language pack
+#[cfg(feature = "tree-sitter")]     // ✓ All languages
+```
+
 ## Performance Considerations
 
 - The codebase uses memory pooling and caching for large file analysis
