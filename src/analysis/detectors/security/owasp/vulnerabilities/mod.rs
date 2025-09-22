@@ -4,7 +4,9 @@ pub mod command_injection;
 pub mod csrf;
 pub mod path_traversal;
 pub mod session_management;
-pub mod sql_injection;
+pub mod sql_injection {
+    pub use crate::analysis::detectors::security::sql_injection::*;
+}
 
 // Re-exports
 pub use command_injection::CommandInjectionDetector;

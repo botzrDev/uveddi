@@ -64,6 +64,7 @@ pub mod detector;
 pub mod knowledge_graph;
 pub mod owasp;
 pub mod strategies;
+pub mod sql_injection;
 pub mod taint_analysis;
 pub mod types;
 pub mod validation;
@@ -80,6 +81,7 @@ pub use core::{ConfidenceScore, SecurityAnalysisResult, SecurityContext, Vulnera
 pub use detector::SecurityDetector;
 pub use knowledge_graph::{KnowledgeGraphBuilder, SecurityKnowledgeGraph, StructuralSemanticGraph};
 pub use owasp::{OwaspCategory, OwaspConfig, OwaspDetector, OwaspVulnerability};
+pub use sql_injection::{SqlInjectionConfig, SqlInjectionDetector};
 pub use strategies::{
     ConfigFileAnalyzer, DeterministicPatternMatcher, SoftwareCompositionAnalyzer,
     VulnerabilityCorrelationEngine,
