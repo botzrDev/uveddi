@@ -50,10 +50,10 @@ jobs:
       run: cargo build --release --bin uveddi
     
     - name: Run CLI integration tests
-      run: cargo test --test cli_comprehensive_automation --features="dev-core" -- --nocapture
+      run: cargo test --test cli_comprehensive_automation --features="standard" -- --nocapture
     
     - name: Run CLI command validation tests
-      run: cargo test --test cli_integration --features="dev-core" -- --nocapture
+      run: cargo test --test cli_integration --features="standard" -- --nocapture
     
     - name: Test CLI help commands
       run: |
@@ -94,20 +94,20 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Build TUI with dev-core+tui features
-      run: cargo build --features="tui dev-core" --bin tui_test
+    - name: Build TUI with standard+tui features
+      run: cargo build --features="tui standard" --bin tui_test
     
     - name: Run TUI component tests
-      run: cargo test --test tui_component_automation --features="tui dev-core" -- --nocapture
+      run: cargo test --test tui_component_automation --features="tui standard" -- --nocapture
     
     - name: Run TUI form validation tests  
-      run: cargo test --test tui_form_validation --features="tui dev-core" -- --nocapture
+      run: cargo test --test tui_form_validation --features="tui standard" -- --nocapture
     
     - name: Run TUI virtual terminal tests
-      run: cargo test --test tui_virtual_terminal_automation --features="tui dev-core" -- --nocapture
+      run: cargo test --test tui_virtual_terminal_automation --features="tui standard" -- --nocapture
     
     - name: Run TUI E2E workflow tests
-      run: cargo test --test tui_e2e --features="tui dev-core" -- --nocapture
+      run: cargo test --test tui_e2e --features="tui standard" -- --nocapture
 
   performance-tests:
     name: Performance & Load Testing
@@ -129,10 +129,10 @@ jobs:
         key: ubuntu-performance-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build optimized binaries
-      run: cargo build --release --features="dev-core"
+      run: cargo build --release --features="standard"
     
     - name: Run performance benchmarks
-      run: cargo bench --features="dev-core"
+      run: cargo bench --features="standard"
     
     - name: Create large test project
       run: |
@@ -183,11 +183,11 @@ jobs:
         key: ${{ matrix.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build for target
-      run: cargo build --target ${{ matrix.target }} --features="dev-core" --bin uveddi
+      run: cargo build --target ${{ matrix.target }} --features="standard" --bin uveddi
     
     - name: Test basic functionality
       if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
-      run: cargo test --target ${{ matrix.target }} --features="dev-core" --test cli_integration
+      run: cargo test --target ${{ matrix.target }} --features="standard" --test cli_integration
 
   security-tests:
     name: Security & Input Validation
@@ -209,10 +209,10 @@ jobs:
         key: ubuntu-security-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build with security features
-      run: cargo build --features="security dev-core" --bin uveddi
+      run: cargo build --features="security standard" --bin uveddi
     
     - name: Run security validation tests
-      run: cargo test --test security --features="security dev-core" -- --nocapture
+      run: cargo test --test security --features="security standard" -- --nocapture
     
     - name: Test input validation
       run: |
@@ -229,7 +229,7 @@ jobs:
     - name: Run fuzzing tests (if available)
       run: |
         if cargo test --list | grep -q fuzz; then
-          cargo test fuzz --features="dev-core" -- --nocapture
+          cargo test fuzz --features="standard" -- --nocapture
         else
           echo "No fuzzing tests found, skipping..."
         fi
@@ -254,18 +254,18 @@ jobs:
         key: ubuntu-accessibility-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build TUI
-      run: cargo build --features="tui dev-core" --bin tui_test
+      run: cargo build --features="tui standard" --bin tui_test
     
     - name: Test keyboard accessibility
-      run: cargo test --test tui_component_automation --features="tui dev-core" -- keyboard --nocapture
+      run: cargo test --test tui_component_automation --features="tui standard" -- keyboard --nocapture
     
     - name: Test screen reader compatibility
       run: |
         # Test that TUI components provide accessible text
-        cargo test --features="tui dev-core" -- accessibility --nocapture || echo "Accessibility tests completed"
+        cargo test --features="tui standard" -- accessibility --nocapture || echo "Accessibility tests completed"
     
     - name: Test different terminal sizes
-      run: cargo test --test tui_virtual_terminal_automation --features="tui dev-core" -- responsive --nocapture
+      run: cargo test --test tui_virtual_terminal_automation --features="tui standard" -- responsive --nocapture
 
   integration-workflow:
     name: End-to-End Workflow Tests
@@ -288,7 +288,7 @@ jobs:
         key: ubuntu-workflow-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build all binaries
-      run: cargo build --release --features="dev-core"
+      run: cargo build --release --features="standard"
     
     - name: Create comprehensive test project
       run: |
@@ -393,7 +393,7 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
     
     - name: Build optimized release
-      run: cargo build --release --features="dev-core"
+      run: cargo build --release --features="standard"
     
     - name: Strip binaries
       run: strip target/release/uveddi

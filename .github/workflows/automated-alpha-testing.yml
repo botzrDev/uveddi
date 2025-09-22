@@ -93,10 +93,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gh
     
-    - name: Build Uveddi with dev-core features
+    - name: Build Uveddi with standard features
       run: |
-        echo "Building Uveddi with dev-core features..."
-        cargo build --release --features="dev-core"
+        echo "Building Uveddi with standard features..."
+        cargo build --release --features="standard"
         
         # Verify binary works
         ./target/release/uveddi --version

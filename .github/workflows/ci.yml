@@ -39,11 +39,11 @@ jobs:
     - name: Check code formatting
       run: cargo fmt --all -- --check
 
-    - name: Quick clippy check (dev-core only)
-      run: cargo clippy --features dev-core --lib -- -D warnings
+    - name: Quick clippy check (standard profile)
+      run: cargo clippy --features standard --lib -- -D warnings
 
     - name: Quick compile check
-      run: cargo check --features dev-core
+      run: cargo check --features standard
 
   test:
     name: Test Suite
@@ -53,23 +53,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Development builds (fast)
+          # New profile system builds
           - rust-version: stable
-            feature-set: dev-ultra-minimal
+            feature-set: minimal
             profile: test-fast
           - rust-version: stable
-            feature-set: dev-core
+            feature-set: standard
             profile: test-fast
-          # Language-specific builds (targeted testing)
+          # Language pack testing
           - rust-version: stable
-            feature-set: dev-rust-only
+            feature-set: "minimal,languages-core"
             profile: test-fast
-          # Production build (thorough)
+          - rust-version: stable
+            feature-set: "minimal,languages-web"
+            profile: test-fast
+          # Full production build (thorough)
           - rust-version: 1.70.0
-            feature-set: production-secure
+            feature-set: full
             profile: test
           - rust-version: stable
-            feature-set: production-secure
+            feature-set: full
             profile: test
 
     steps:
@@ -94,8 +97,8 @@ jobs:
         packages: pkg-config libssl-dev libsqlite3-dev
         version: 1.0
 
-    - name: Run Clippy (if not dev build)
-      if: "!startsWith(matrix.feature-set, 'dev-')"
+    - name: Run Clippy (full features only)
+      if: "matrix.feature-set == 'full'"
       run: cargo clippy --features ${{ matrix.feature-set }} --lib -- -D warnings
 
     - name: Run tests
@@ -105,7 +108,7 @@ jobs:
       timeout-minutes: 20
       
     - name: Run security audit
-      if: matrix.feature-set == 'production'
+      if: matrix.feature-set == 'full'
       uses: actions-rs/audit-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -144,7 +147,7 @@ jobs:
     - name: Generate coverage report (fast build)
       run: |
         cargo tarpaulin \
-          --features dev-core \
+          --features standard \
           --out xml \
           --output-dir coverage/ \
           --skip-clean \
@@ -301,7 +304,7 @@ jobs:
         version: 1.0
 
     - name: Build with release optimizations
-      run: cargo build --profile release --features production-secure
+      run: cargo build --profile release --features full
 
     - name: Run performance benchmarks
       run: |
