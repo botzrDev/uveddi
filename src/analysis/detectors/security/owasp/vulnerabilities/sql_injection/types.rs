@@ -87,7 +87,7 @@ impl SqlInjectionPattern {
         self.languages.is_empty() || self.languages.iter().any(|lang| lang == language)
     }
 
-    fn regex(&self) => Option<Regex> {
+    fn regex(&self) -> Option<Regex> {
         Regex::new(&self.pattern).ok()
     }
 
@@ -106,6 +106,7 @@ impl SqlInjectionPattern {
             self,
             context.line_number,
             Some(captures.start()),
+            captures.end() - captures.start(),
             sanitization,
         ))
     }
@@ -172,6 +173,7 @@ pub struct DetectionFinding {
     pub pattern: SqlInjectionPattern,
     pub line_number: usize,
     pub column: Option<usize>,
+    pub match_length: usize,
     pub sanitization: SanitizationStatus,
 }
 
@@ -180,12 +182,14 @@ impl DetectionFinding {
         pattern: &SqlInjectionPattern,
         line_number: usize,
         column: Option<usize>,
+        match_length: usize,
         sanitization: &SanitizationStatus,
     ) -> Self {
         Self {
             pattern: pattern.clone(),
             line_number,
             column,
+            match_length,
             sanitization: *sanitization,
         }
     }
