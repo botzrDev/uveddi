@@ -157,7 +157,7 @@ impl PythonDependencyParser {
                 name: name.to_string(),
                 version: Some(version.clone()),
                 source: DependencySource::Registry(self.default_index.clone()),
-                scope,
+                            scope: scope.clone(),
                 resolved_path: None,
             },
             PipfileDependency::Detailed {
@@ -386,5 +386,36 @@ impl PythonDependencyParser {
         }
 
         Ok(dependencies)
+    }
+}
+
+impl LanguageDependencyParser for PythonDependencyParser {
+    fn parse_manifest(&self, manifest_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
+        match manifest_path.file_name().and_then(|s| s.to_str()) {
+            Some("pyproject.toml") => self.parse_pyproject_toml(manifest_path),
+            Some("Pipfile") => self.parse_pipfile(manifest_path),
+            Some("requirements.txt") => self.parse_requirements(manifest_path),
+            _ => Ok(Vec::new()),
+        }
+    }
+
+    fn parse_lockfile(&self, lockfile_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
+        match lockfile_path.file_name().and_then(|s| s.to_str()) {
+            Some("requirements.txt") => self.parse_requirements(lockfile_path),
+            // TODO: Implement Pipfile.lock parsing when available
+            _ => Ok(Vec::new()),
+        }
+    }
+
+    fn supported_manifests(&self) -> Vec<&'static str> {
+        vec!["pyproject.toml", "Pipfile", "requirements.txt"]
+    }
+
+    fn supported_lockfiles(&self) -> Vec<&'static str> {
+        vec!["requirements.txt", "Pipfile.lock"]
+    }
+
+    fn language_name(&self) -> &'static str {
+        "Python"
     }
 }

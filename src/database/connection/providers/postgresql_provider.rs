@@ -575,7 +575,7 @@ struct PostgreSqlConnectionPool {
 
 impl PostgreSqlConnectionPool {
     fn new(connection_string: &str, config: &DatabaseConfig) -> Result<Self> {
-        let semaphore = Arc::new(Semaphore::new(config.max_connections as usize));
+        let semaphore = Arc::new(Semaphore::new(config.pool.max_connections));
 
         Ok(Self {
             connection_string: connection_string.to_string(),
@@ -609,9 +609,9 @@ impl PostgreSqlConnectionPool {
 
     async fn get_stats(&self) -> Result<PoolStats> {
         Ok(PoolStats {
-            max_connections: self.config.max_connections as usize,
+            max_connections: self.config.pool.max_connections,
             available_connections: self.semaphore.available_permits(),
-            active_connections: self.config.max_connections as usize
+            active_connections: self.config.pool.max_connections
                 - self.semaphore.available_permits(),
             pending_requests: 0,
             total_connections_created: 0,

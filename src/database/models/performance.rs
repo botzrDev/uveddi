@@ -40,3 +40,41 @@ impl Default for PerformanceMetricsConfig {
         }
     }
 }
+
+/// Benchmark result for analysis performance testing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BenchmarkResult {
+    pub benchmark_id: Option<i64>,
+    pub test_name: String,
+    pub project_path: String,
+    pub duration_ms: u64,
+    pub memory_peak_bytes: u64,
+    pub files_analyzed: u32,
+    pub issues_found: u32,
+    pub timestamp: DateTime<Utc>,
+    pub metadata: serde_json::Value,
+}
+
+/// Benchmark configuration for performance tests
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BenchmarkConfig {
+    pub iterations: u32,
+    pub warmup_iterations: u32,
+    pub timeout_seconds: u64,
+    pub measure_memory: bool,
+    pub measure_disk_io: bool,
+    pub parallel_execution: bool,
+}
+
+impl Default for BenchmarkConfig {
+    fn default() -> Self {
+        Self {
+            iterations: 5,
+            warmup_iterations: 2,
+            timeout_seconds: 300,
+            measure_memory: true,
+            measure_disk_io: false,
+            parallel_execution: true,
+        }
+    }
+}

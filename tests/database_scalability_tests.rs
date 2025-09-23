@@ -12,27 +12,53 @@ use uveddi::database::{
     migration_manager::MigrationManager,
     models::{AnalysisRun, AntiPatternType, ArchitecturalIssue},
     monitoring::{DatabaseMonitor, MonitoringConfig},
-    providers::{create_database_provider, DatabaseConfig, DatabaseType},
+    providers::create_database_provider,
     scalable_manager::ScalableDatabase,
+    DatabaseConfig,
+    DatabaseType,
+    PoolConfig,
 };
 use uveddi::error::Result;
+
+fn build_sqlite_config(
+    connection_string: &str,
+    read_connections: Vec<String>,
+    max_connections: usize,
+    min_connections: usize,
+    connection_timeout: Duration,
+    idle_timeout: Duration,
+    max_lifetime: Duration,
+    pool_timeout: Duration,
+) -> DatabaseConfig {
+    let pool = PoolConfig::builder()
+        .max_connections(max_connections)
+        .min_connections(min_connections)
+        .connection_timeout(connection_timeout)
+        .idle_timeout(idle_timeout)
+        .max_lifetime(max_lifetime)
+        .pool_timeout(pool_timeout)
+        .build();
+
+    DatabaseConfig::sqlite(connection_string)
+        .with_pool(pool)
+        .with_read_connections(read_connections)
+        .with_logging(false)
+        .with_prepared_statements(true)
+}
 
 /// Test basic connection pooling functionality
 #[tokio::test]
 async fn test_connection_pooling() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 10,
-        min_connections: 2,
-        connection_timeout: Duration::from_secs(5),
-        idle_timeout: Duration::from_secs(30),
-        max_lifetime: Duration::from_secs(300),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(5),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        10,
+        2,
+        Duration::from_secs(5),
+        Duration::from_secs(30),
+        Duration::from_secs(300),
+        Duration::from_secs(5),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -65,19 +91,16 @@ async fn test_connection_pooling() -> Result<()> {
 /// Test read/write separation and load balancing
 #[tokio::test]
 async fn test_read_write_separation() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![":memory:".to_string()], // Simulate read replica
-        max_connections: 10,
-        min_connections: 2,
-        connection_timeout: Duration::from_secs(5),
-        idle_timeout: Duration::from_secs(30),
-        max_lifetime: Duration::from_secs(300),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(5),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![":memory:".to_string()],
+        10,
+        2,
+        Duration::from_secs(5),
+        Duration::from_secs(30),
+        Duration::from_secs(300),
+        Duration::from_secs(5),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -128,19 +151,16 @@ async fn test_read_write_separation() -> Result<()> {
 /// Test database under high concurrent load
 #[tokio::test]
 async fn test_concurrent_load() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 50,
-        min_connections: 10,
-        connection_timeout: Duration::from_secs(10),
-        idle_timeout: Duration::from_secs(60),
-        max_lifetime: Duration::from_secs(600),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(10),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        50,
+        10,
+        Duration::from_secs(10),
+        Duration::from_secs(60),
+        Duration::from_secs(600),
+        Duration::from_secs(10),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -266,19 +286,16 @@ async fn test_concurrent_load() -> Result<()> {
 /// Test connection pool limits and timeouts
 #[tokio::test]
 async fn test_connection_pool_limits() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 5, // Intentionally low for testing
-        min_connections: 1,
-        connection_timeout: Duration::from_millis(100),
-        idle_timeout: Duration::from_secs(10),
-        max_lifetime: Duration::from_secs(60),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_millis(500),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        5,
+        1,
+        Duration::from_millis(100),
+        Duration::from_secs(10),
+        Duration::from_secs(60),
+        Duration::from_millis(500),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -329,19 +346,16 @@ async fn test_connection_pool_limits() -> Result<()> {
 /// Test monitoring system functionality
 #[tokio::test]
 async fn test_monitoring_system() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 10,
-        min_connections: 2,
-        connection_timeout: Duration::from_secs(5),
-        idle_timeout: Duration::from_secs(30),
-        max_lifetime: Duration::from_secs(300),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(5),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        10,
+        2,
+        Duration::from_secs(5),
+        Duration::from_secs(30),
+        Duration::from_secs(300),
+        Duration::from_secs(5),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -408,9 +422,11 @@ async fn test_configuration_management() -> Result<()> {
     let dev_config = config_manager.get_config_for_env(Environment::Development);
     let prod_config = config_manager.get_config_for_env(Environment::Production);
 
-    assert_eq!(dev_config.provider_type, DatabaseType::SQLite);
-    assert_eq!(prod_config.provider_type, DatabaseType::PostgreSQL);
-    assert!(prod_config.max_connections > dev_config.max_connections);
+    assert_eq!(dev_config.database_type, DatabaseType::SQLite);
+    assert_eq!(prod_config.database_type, DatabaseType::PostgreSQL);
+    assert!(
+        prod_config.pool.max_connections > dev_config.pool.max_connections
+    );
 
     // Test masked connection string
     let masked = config_manager.get_masked_connection_string();
@@ -425,19 +441,16 @@ async fn test_configuration_management() -> Result<()> {
 /// Test database migration system
 #[tokio::test]
 async fn test_migration_system() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 5,
-        min_connections: 1,
-        connection_timeout: Duration::from_secs(5),
-        idle_timeout: Duration::from_secs(30),
-        max_lifetime: Duration::from_secs(300),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(5),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        5,
+        1,
+        Duration::from_secs(5),
+        Duration::from_secs(30),
+        Duration::from_secs(300),
+        Duration::from_secs(5),
+    );
 
     let temp_dir = tempfile::tempdir().unwrap();
     let migrations_dir = temp_dir.path().to_path_buf();
@@ -484,19 +497,16 @@ async fn test_migration_system() -> Result<()> {
 /// Benchmark database performance under various loads
 #[tokio::test]
 async fn benchmark_database_performance() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 25,
-        min_connections: 5,
-        connection_timeout: Duration::from_secs(10),
-        idle_timeout: Duration::from_secs(60),
-        max_lifetime: Duration::from_secs(600),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(10),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        25,
+        5,
+        Duration::from_secs(10),
+        Duration::from_secs(60),
+        Duration::from_secs(600),
+        Duration::from_secs(10),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -580,19 +590,16 @@ where
 /// Test cleanup operations
 #[tokio::test]
 async fn test_cleanup_operations() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 10,
-        min_connections: 2,
-        connection_timeout: Duration::from_secs(1),
-        idle_timeout: Duration::from_millis(100), // Very short for testing
-        max_lifetime: Duration::from_millis(500),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(5),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        10,
+        2,
+        Duration::from_secs(1),
+        Duration::from_millis(100),
+        Duration::from_millis(500),
+        Duration::from_secs(5),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 
@@ -647,19 +654,16 @@ fn generate_test_issues(
 /// Test batch operations performance
 #[tokio::test]
 async fn test_batch_operations() -> Result<()> {
-    let config = DatabaseConfig {
-        provider_type: DatabaseType::SQLite,
-        connection_string: ":memory:".to_string(),
-        read_connection_strings: vec![],
-        max_connections: 20,
-        min_connections: 5,
-        connection_timeout: Duration::from_secs(10),
-        idle_timeout: Duration::from_secs(60),
-        max_lifetime: Duration::from_secs(600),
-        enable_logging: false,
-        enable_prepared_statements: true,
-        pool_timeout: Duration::from_secs(10),
-    };
+    let config = build_sqlite_config(
+        ":memory:",
+        vec![],
+        20,
+        5,
+        Duration::from_secs(10),
+        Duration::from_secs(60),
+        Duration::from_secs(600),
+        Duration::from_secs(10),
+    );
 
     let database = Arc::new(ScalableDatabase::new(config).await?);
 

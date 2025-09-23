@@ -245,7 +245,7 @@ pub use self::connection::{
 };
 
 #[cfg(feature = "postgresql")]
-pub use self::connection::providers::PostgresqlProvider;
+pub use self::connection::providers::PostgreSqlProvider;
 
 // Re-export new scalability features
 pub use self::config_manager::{DatabaseConfigBuilder, DatabaseConfigManager, Environment};
@@ -257,8 +257,8 @@ pub use self::monitoring::{
 pub fn create_database_provider(
     config: &DatabaseConfig,
 ) -> crate::error::Result<std::sync::Arc<dyn DatabaseProvider>> {
-    let manager = ConnectionManager::new(config.clone())?;
-    Ok(std::sync::Arc::new(manager.provider().clone()))
+    let provider = connection::providers::create_database_provider(config)?;
+    Ok(std::sync::Arc::from(provider))
 }
 pub use self::scalable_manager::{LoadBalancerStats, ScalableDatabase};
 
@@ -280,7 +280,7 @@ pub async fn initialize_database() -> crate::error::Result<ScalableDatabase> {
 
     tracing::info!(
         "Database initialized successfully with provider: {:?}",
-        config_manager.get_config().provider_type
+        config_manager.get_config().database_type
     );
 
     Ok(database)

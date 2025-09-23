@@ -95,7 +95,7 @@ impl DependencyDetector {
     }
 
     fn discover_dependencies(
-        &self,
+        &mut self,
         project_root: &Path,
     ) -> Result<Vec<DependencyInfo>, ExtractionError> {
         let mut all_dependencies = Vec::new();
@@ -151,9 +151,9 @@ impl DependencyDetector {
 
     fn deduplicate_dependencies(&self, dependencies: &mut Vec<DependencyInfo>) {
         use std::collections::HashSet;
-        let mut seen = HashSet::new();
+        let mut seen: HashSet<(String, Option<String>)> = HashSet::new();
         dependencies.retain(|dep| {
-            let key = (&dep.name, &dep.version);
+            let key = (dep.name.clone(), dep.version.clone());
             seen.insert(key)
         });
     }

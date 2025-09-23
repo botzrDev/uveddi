@@ -161,7 +161,7 @@ impl LicenseAnalyzer {
                         url: None,
                         is_osi_approved: license_info.is_osi_approved,
                         is_fsf_approved: license_info.is_fsf_approved,
-                        category: license_info.category,
+                        category: license_info.category.clone(),
                     },
                     confidence: 0.95,
                     detection_method: DetectionMethod::SpdxIdentifier,

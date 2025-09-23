@@ -39,13 +39,17 @@
 pub mod analysis;
 pub mod anti_pattern;
 pub mod architectural_issue;
+pub mod cache;
 pub mod dependency;
 pub mod lifecycle;
 pub mod performance;
+pub mod project;
 
 pub use analysis::{AnalysisRun, AnalysisStats};
 pub use anti_pattern::AntiPatternType;
 pub use architectural_issue::ArchitecturalIssue;
+pub use cache::{CacheEntry, CacheEntryRecord, CacheMetadata};
 pub use dependency::{Dependency, DependencyType};
 pub use lifecycle::{LifecycleEvent, LifecycleEventType};
-pub use performance::{ComponentPerformanceMetrics, PerformanceMetricsConfig};
+pub use performance::{ComponentPerformanceMetrics, PerformanceMetricsConfig, BenchmarkResult, BenchmarkConfig};
+pub use project::{Project, ProjectRecord, ProjectConfig};

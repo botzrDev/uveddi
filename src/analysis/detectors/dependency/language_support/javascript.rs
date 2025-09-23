@@ -369,3 +369,31 @@ impl JavaScriptDependencyParser {
         Ok(dependencies)
     }
 }
+
+impl LanguageDependencyParser for JavaScriptDependencyParser {
+    fn parse_manifest(&self, manifest_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
+        match manifest_path.file_name().and_then(|s| s.to_str()) {
+            Some("package.json") => self.parse_package_json(manifest_path),
+            _ => Ok(Vec::new()),
+        }
+    }
+
+    fn parse_lockfile(&self, lockfile_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
+        match lockfile_path.file_name().and_then(|s| s.to_str()) {
+            Some("package-lock.json") => self.parse_package_lock_json(lockfile_path),
+            _ => Ok(Vec::new()),
+        }
+    }
+
+    fn supported_manifests(&self) -> Vec<&'static str> {
+        vec!["package.json"]
+    }
+
+    fn supported_lockfiles(&self) -> Vec<&'static str> {
+        vec!["package-lock.json"]
+    }
+
+    fn language_name(&self) -> &'static str {
+        "JavaScript"
+    }
+}

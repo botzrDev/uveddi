@@ -294,7 +294,7 @@ impl PolicyEnforcer {
                 self.check_category_restriction(dep, license_info, rule)
             }
             RuleType::AttributionRequirement => {
-                self.check_attribution_requirement(dep, license_info, rule)
+                self.check_attribution_requirement(dep, license_info, rule, config)
             }
         }
     }
@@ -368,10 +368,11 @@ impl PolicyEnforcer {
 
     fn generate_enforcement_actions(&self, violation: &PolicyViolation) -> Vec<EnforcementAction> {
         vec![EnforcementAction {
+            action_id: format!("action-{}", violation.package_name),
             action_type: ActionType::RequireApproval,
-            target_package: violation.package.clone(),
+            target_packages: vec![violation.package_name.clone()],
             description: "Package requires manual approval due to policy violation".to_string(),
-            urgency: ActionUrgency::High,
+            execution_status: ExecutionStatus::Pending,
         }]
     }
 
@@ -382,14 +383,14 @@ impl PolicyEnforcer {
         rule: &PolicyRule,
     ) -> PolicyWarning {
         PolicyWarning {
-            package: dep.name.clone(),
-            license: license_info.name.clone(),
-            rule_id: rule.id.clone(),
-            message: format!(
+            package_name: dep.name.clone(),
+            license: Some(license_info.clone()),
+            policy_rule: rule.name.clone(),
+            warning_message: format!(
                 "Package '{}' with license '{}' requires attention under rule '{}'",
                 dep.name, license_info.name, rule.name
             ),
-            severity: WarningSeverity::Medium,
+            suggested_actions: vec!["Review license compliance requirements".to_string()],
         }
     }
 
@@ -398,15 +399,38 @@ impl PolicyEnforcer {
         dependencies: &[DependencyInfo],
         violations: &[PolicyViolation],
     ) -> ComplianceMetrics {
+        let total_packages = dependencies.len();
+        let violating_packages: HashSet<_> = violations
+            .iter()
+            .map(|v| v.package_name.clone())
+            .collect();
+        let policy_violation_packages = violating_packages.len();
+        let policy_compliant_packages = total_packages.saturating_sub(policy_violation_packages);
+
+        let mut violations_by_severity = HashMap::new();
+        for violation in violations {
+            *violations_by_severity.entry(violation.severity.clone()).or_insert(0) += 1;
+        }
+
+        let compliance_percentage = if total_packages == 0 {
+            100.0
+        } else {
+            (policy_compliant_packages as f32 / total_packages as f32) * 100.0
+        };
+
+        let risk_score = if total_packages == 0 {
+            0.0
+        } else {
+            (violations.len() as f32 / total_packages as f32) * 10.0
+        };
+
         ComplianceMetrics {
-            total_packages: dependencies.len(),
-            compliant_packages: dependencies.len() - violations.len(),
-            violation_count: violations.len(),
-            compliance_percentage: if dependencies.is_empty() {
-                100.0
-            } else {
-                ((dependencies.len() - violations.len()) as f64 / dependencies.len() as f64) * 100.0
-            },
+            total_packages,
+            policy_compliant_packages,
+            policy_violation_packages,
+            compliance_percentage,
+            risk_score,
+            violations_by_severity,
         }
     }
 
@@ -416,21 +440,55 @@ impl PolicyEnforcer {
         actions: &[EnforcementAction],
     ) -> EnforcementStatus {
         if violations.is_empty() {
-            EnforcementStatus::Compliant
-        } else if actions.iter().any(|a| a.urgency == ActionUrgency::Critical) {
-            EnforcementStatus::Critical
-        } else if violations.len() > 5 {
-            EnforcementStatus::NonCompliant
+            EnforcementStatus::Enforced
+        } else if actions.is_empty() {
+            EnforcementStatus::PolicyViolation
         } else {
-            EnforcementStatus::RequiresAction
+            EnforcementStatus::PartiallyEnforced
         }
     }
 
     fn check_category_restriction(
         &self,
-        license: &LicenseInfo,
-        category: &LicenseCategory,
-    ) -> bool {
-        &license.category == category
+        _dep: &DependencyInfo,
+        _license_info: &Option<LicenseInfo>,
+        _rule: &PolicyRule,
+    ) -> Option<PolicyViolation> {
+        None
+    }
+
+    fn check_attribution_requirement(
+        &self,
+        dep: &DependencyInfo,
+        license_info: &Option<LicenseInfo>,
+        rule: &PolicyRule,
+        config: &LicenseConfig,
+    ) -> Option<PolicyViolation> {
+        if !config.require_attribution {
+            return None;
+        }
+
+        if let Some(license) = license_info {
+            return Some(PolicyViolation {
+                package_name: dep.name.clone(),
+                license: Some(license.clone()),
+                policy_rule: rule.name.clone(),
+                violation_type: PolicyViolationType::MissingDocumentation,
+                severity: PolicySeverity::Low,
+                description: format!(
+                    "Package '{}' requires attribution under policy '{}'",
+                    dep.name, rule.name
+                ),
+                remediation_actions: vec![RemediationAction {
+                    action_id: format!("attribution-{}", dep.name),
+                    action_type: RemediationActionType::AddAttribution,
+                    description: "Add required attribution notice".to_string(),
+                    urgency: RemediationUrgency::Medium,
+                    estimated_effort: "1-2 hours".to_string(),
+                }],
+            });
+        }
+
+        None
     }
 }

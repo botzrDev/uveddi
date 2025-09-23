@@ -40,7 +40,7 @@ impl MigrationManager {
 
     /// Initialize the migration tracking table
     async fn initialize_migration_table(&self) -> Result<()> {
-        match self.config.provider_type {
+        match self.config.database_type {
             DatabaseType::SQLite => {
                 self.provider
                     .execute_write(
@@ -302,7 +302,7 @@ impl MigrationManager {
         let applied_at = Utc::now();
         let execution_time_ms = execution_time.as_millis() as i32;
 
-        match self.config.provider_type {
+        match self.config.database_type {
             DatabaseType::SQLite => {
                 self.provider.execute_write(
                     "INSERT INTO schema_migrations (version, name, applied_at, checksum, execution_time_ms) VALUES (?, ?, ?, ?, ?)",
@@ -390,7 +390,7 @@ impl MigrationManager {
 
         // Create SQLite provider for source
         let mut sqlite_config = self.config.clone();
-        sqlite_config.provider_type = DatabaseType::SQLite;
+        sqlite_config.database_type = DatabaseType::SQLite;
         sqlite_config.connection_string = sqlite_path.to_string();
         let sqlite_provider: Arc<dyn DatabaseProvider> =
             create_database_provider(&sqlite_config)?;

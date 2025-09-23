@@ -92,10 +92,11 @@ impl StaticAnalysisScanner {
         static_vulns
             .into_iter()
             .map(|v| {
+                let issue_type = v.issue_type.clone();
                 OwaspVulnerability::new(
                     v.category,
                     v.issue_type,
-                    format!("Static Analysis: {}", v.issue_type.to_string()),
+                    format!("Static Analysis: {}", issue_type.to_string()),
                     v.context,
                     v.location,
                 )

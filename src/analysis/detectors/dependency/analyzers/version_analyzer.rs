@@ -204,14 +204,13 @@ impl VersionAnalyzer {
 
         for conflict in conflicts {
             if let Some(resolution) = &conflict.resolution {
-                let current = conflict
-                    .conflicting_versions
-                    .first()
-                    .unwrap_or(&"unknown".to_string());
-
                 suggestions.push(ResolutionSuggestion {
                     package: conflict.package.clone(),
-                    current_version: current.clone(),
+                    current_version: conflict
+                        .conflicting_versions
+                        .first()
+                        .cloned()
+                        .unwrap_or_else(|| "unknown".to_string()),
                     suggested_version: resolution.clone(),
                     reason: format!(
                         "Resolve version conflict (severity: {:?})",

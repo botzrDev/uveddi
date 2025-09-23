@@ -12,50 +12,11 @@ pub use postgresql_provider::PostgreSqlProvider;
 pub use sqlite_provider::SqliteProvider;
 pub use traits::{ConnectionProvider, DatabaseProvider, TransactionProvider};
 
+pub use super::config::{DatabaseConfig, DatabaseType};
 use crate::error::{Result, UveddiError};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-
-/// Database configuration for different provider types
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct DatabaseConfig {
-    pub provider_type: DatabaseType,
-    pub connection_string: String,
-    pub read_connection_strings: Vec<String>,
-    pub max_connections: u32,
-    pub min_connections: u32,
-    pub connection_timeout: Duration,
-    pub idle_timeout: Duration,
-    pub max_lifetime: Duration,
-    pub enable_logging: bool,
-    pub enable_prepared_statements: bool,
-    pub pool_timeout: Duration,
-}
-
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub enum DatabaseType {
-    SQLite,
-    PostgreSQL,
-}
-
-impl Default for DatabaseConfig {
-    fn default() -> Self {
-        Self {
-            provider_type: DatabaseType::SQLite,
-            connection_string: "./uveddi.db".to_string(),
-            read_connection_strings: Vec::new(),
-            max_connections: 20,
-            min_connections: 5,
-            connection_timeout: Duration::from_secs(30),
-            idle_timeout: Duration::from_secs(600),
-            max_lifetime: Duration::from_secs(1800),
-            enable_logging: false,
-            enable_prepared_statements: true,
-            pool_timeout: Duration::from_secs(30),
-        }
-    }
-}
 
 /// Database health status information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -142,7 +103,7 @@ impl DatabaseMetrics {
 
 /// Factory function to create appropriate database provider
 pub fn create_database_provider(config: &DatabaseConfig) -> Result<Box<dyn DatabaseProvider>> {
-    match config.provider_type {
+    match config.database_type {
         DatabaseType::SQLite => {
             let provider = SqliteProvider::new(config.clone())?;
             Ok(Box::new(provider))

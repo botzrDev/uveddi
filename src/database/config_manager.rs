@@ -3,7 +3,7 @@
 //! This module provides comprehensive configuration management for database
 //! providers, connection settings, and environment-specific configurations.
 
-use super::connection::config::{DatabaseConfig, DatabaseType};
+use super::connection::config::{DatabaseConfig, DatabaseType, PoolConfig};
 use crate::error::{Result, UveddiError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -99,17 +99,17 @@ impl DatabaseConfigManager {
 
     /// Load configuration from environment variables
     fn load_from_environment(environment: &Environment) -> DatabaseEnvironmentConfig {
-        let default_provider_type = match environment {
+        let default_database_type = match environment {
             Environment::Production | Environment::Staging => DatabaseType::PostgreSQL,
             _ => DatabaseType::SQLite,
         };
 
-        let provider_type = env::var("DATABASE_TYPE")
-            .unwrap_or_else(|_| format!("{:?}", default_provider_type))
+        let database_type = env::var("DATABASE_TYPE")
+            .unwrap_or_else(|_| format!("{:?}", default_database_type))
             .parse::<DatabaseType>()
-            .unwrap_or(default_provider_type);
+            .unwrap_or(default_database_type);
 
-        let connection_string = env::var("DATABASE_URL").unwrap_or_else(|_| match provider_type {
+        let connection_string = env::var("DATABASE_URL").unwrap_or_else(|_| match database_type {
             DatabaseType::SQLite => "./uveddi.db".to_string(),
             DatabaseType::PostgreSQL => "postgresql://localhost:5432/uveddi".to_string(),
         });
@@ -121,25 +121,25 @@ impl DatabaseConfigManager {
         DatabaseEnvironmentConfig {
             development: Self::create_config_for_env(
                 Environment::Development,
-                &provider_type,
+                &database_type,
                 &connection_string,
                 &read_connection_strings,
             ),
             staging: Self::create_config_for_env(
                 Environment::Staging,
-                &provider_type,
+                &database_type,
                 &connection_string,
                 &read_connection_strings,
             ),
             production: Self::create_config_for_env(
                 Environment::Production,
-                &provider_type,
+                &database_type,
                 &connection_string,
                 &read_connection_strings,
             ),
             test: Self::create_config_for_env(
                 Environment::Test,
-                &provider_type,
+                &database_type,
                 &connection_string,
                 &read_connection_strings,
             ),
@@ -149,29 +149,35 @@ impl DatabaseConfigManager {
     /// Create configuration for specific environment
     fn create_config_for_env(
         env: Environment,
-        provider_type: &DatabaseType,
+        database_type: &DatabaseType,
         connection_string: &str,
         read_connection_strings: &[String],
     ) -> DatabaseConfig {
         let (max_connections, connection_timeout, pool_timeout) = match env {
-            Environment::Production => (100, Duration::from_secs(30), Duration::from_secs(30)),
-            Environment::Staging => (50, Duration::from_secs(20), Duration::from_secs(20)),
-            Environment::Test => (5, Duration::from_secs(10), Duration::from_secs(5)),
-            Environment::Development => (20, Duration::from_secs(30), Duration::from_secs(15)),
+            Environment::Production => (100usize, Duration::from_secs(30), Duration::from_secs(30)),
+            Environment::Staging => (50usize, Duration::from_secs(20), Duration::from_secs(20)),
+            Environment::Test => (5usize, Duration::from_secs(10), Duration::from_secs(5)),
+            Environment::Development => (20usize, Duration::from_secs(30), Duration::from_secs(15)),
         };
 
-        DatabaseConfig {
-            provider_type: provider_type.clone(),
-            connection_string: connection_string.to_string(),
-            read_connection_strings: read_connection_strings.to_vec(),
+        let pool = PoolConfig {
             max_connections,
             min_connections: max_connections / 4,
             connection_timeout,
             idle_timeout: Duration::from_secs(600),
             max_lifetime: Duration::from_secs(1800),
+            test_on_checkout: true,
+            pool_timeout,
+        };
+
+        DatabaseConfig {
+            database_type: database_type.clone(),
+            connection_string: connection_string.to_string(),
+            read_connection_strings: read_connection_strings.to_vec(),
+            pool,
+            enable_metrics: false,
             enable_logging: matches!(env, Environment::Development | Environment::Test),
             enable_prepared_statements: true,
-            pool_timeout,
         }
     }
 
@@ -200,7 +206,7 @@ impl DatabaseConfigManager {
         let config = self.get_config();
 
         // Validate connection string format
-        match config.provider_type {
+        match config.database_type {
             DatabaseType::SQLite => {
                 if config.connection_string.is_empty() {
                     return Err(UveddiError::configuration_error(
@@ -220,20 +226,20 @@ impl DatabaseConfigManager {
         }
 
         // Validate connection pool settings
-        if config.max_connections == 0 {
+        if config.pool.max_connections == 0 {
             return Err(UveddiError::configuration_error(
                 "max_connections must be greater than 0",
             ));
         }
 
-        if config.min_connections > config.max_connections {
+        if config.pool.min_connections > config.pool.max_connections {
             return Err(UveddiError::configuration_error(
                 "min_connections cannot be greater than max_connections",
             ));
         }
 
         // Validate timeouts
-        if config.connection_timeout.as_secs() == 0 {
+        if config.pool.connection_timeout.as_secs() == 0 {
             return Err(UveddiError::configuration_error(
                 "connection_timeout must be greater than 0",
             ));
@@ -248,18 +254,18 @@ impl DatabaseConfigManager {
                     );
                 }
 
-                if config.max_connections < 50 {
+                if config.pool.max_connections < 50 {
                     warn!("Low max_connections setting for production environment");
                 }
 
-                if config.provider_type == DatabaseType::SQLite {
+                if config.database_type == DatabaseType::SQLite {
                     warn!(
                         "Using SQLite in production - consider PostgreSQL for better scalability"
                     );
                 }
             }
             Environment::Test => {
-                if config.max_connections > 10 {
+                if config.pool.max_connections > 10 {
                     warn!("High max_connections setting for test environment");
                 }
             }
@@ -332,12 +338,18 @@ impl DatabaseConfigManager {
 
         // Override connection pool settings if set
         if let Ok(max_conn_str) = env::var("DATABASE_MAX_CONNECTIONS") {
-            if let Ok(max_conn) = max_conn_str.parse::<u32>() {
+            if let Ok(max_conn) = max_conn_str.parse::<usize>() {
                 match self.environment {
-                    Environment::Development => self.config.development.max_connections = max_conn,
-                    Environment::Staging => self.config.staging.max_connections = max_conn,
-                    Environment::Production => self.config.production.max_connections = max_conn,
-                    Environment::Test => self.config.test.max_connections = max_conn,
+                    Environment::Development => {
+                        self.config.development.pool.max_connections = max_conn
+                    }
+                    Environment::Staging => {
+                        self.config.staging.pool.max_connections = max_conn
+                    }
+                    Environment::Production => {
+                        self.config.production.pool.max_connections = max_conn
+                    }
+                    Environment::Test => self.config.test.pool.max_connections = max_conn,
                 }
             }
         }
@@ -406,62 +418,78 @@ impl Default for DatabaseEnvironmentConfig {
     fn default() -> Self {
         Self {
             development: DatabaseConfig {
-                provider_type: DatabaseType::SQLite,
+                database_type: DatabaseType::SQLite,
                 connection_string: "./uveddi-dev.db".to_string(),
-                read_connection_strings: vec![],
-                max_connections: 20,
-                min_connections: 5,
-                connection_timeout: Duration::from_secs(30),
-                idle_timeout: Duration::from_secs(600),
-                max_lifetime: Duration::from_secs(1800),
+                read_connection_strings: Vec::new(),
+                pool: PoolConfig {
+                    max_connections: 20,
+                    min_connections: 5,
+                    connection_timeout: Duration::from_secs(30),
+                    idle_timeout: Duration::from_secs(600),
+                    max_lifetime: Duration::from_secs(1800),
+                    test_on_checkout: true,
+                    pool_timeout: Duration::from_secs(15),
+                },
+                enable_metrics: false,
                 enable_logging: true,
                 enable_prepared_statements: true,
-                pool_timeout: Duration::from_secs(15),
             },
             staging: DatabaseConfig {
-                provider_type: DatabaseType::PostgreSQL,
+                database_type: DatabaseType::PostgreSQL,
                 connection_string: "postgresql://user:password@localhost:5432/uveddi_staging"
                     .to_string(),
                 read_connection_strings: vec![
                     "postgresql://user:password@read-replica1:5432/uveddi_staging".to_string(),
                 ],
-                max_connections: 50,
-                min_connections: 10,
-                connection_timeout: Duration::from_secs(20),
-                idle_timeout: Duration::from_secs(600),
-                max_lifetime: Duration::from_secs(1800),
+                pool: PoolConfig {
+                    max_connections: 50,
+                    min_connections: 10,
+                    connection_timeout: Duration::from_secs(20),
+                    idle_timeout: Duration::from_secs(600),
+                    max_lifetime: Duration::from_secs(1800),
+                    test_on_checkout: true,
+                    pool_timeout: Duration::from_secs(20),
+                },
+                enable_metrics: false,
                 enable_logging: false,
                 enable_prepared_statements: true,
-                pool_timeout: Duration::from_secs(20),
             },
             production: DatabaseConfig {
-                provider_type: DatabaseType::PostgreSQL,
+                database_type: DatabaseType::PostgreSQL,
                 connection_string: "postgresql://user:password@db-primary:5432/uveddi".to_string(),
                 read_connection_strings: vec![
                     "postgresql://user:password@db-read1:5432/uveddi".to_string(),
                     "postgresql://user:password@db-read2:5432/uveddi".to_string(),
                 ],
-                max_connections: 100,
-                min_connections: 25,
-                connection_timeout: Duration::from_secs(30),
-                idle_timeout: Duration::from_secs(600),
-                max_lifetime: Duration::from_secs(1800),
+                pool: PoolConfig {
+                    max_connections: 100,
+                    min_connections: 25,
+                    connection_timeout: Duration::from_secs(30),
+                    idle_timeout: Duration::from_secs(600),
+                    max_lifetime: Duration::from_secs(1800),
+                    test_on_checkout: true,
+                    pool_timeout: Duration::from_secs(30),
+                },
+                enable_metrics: true,
                 enable_logging: false,
                 enable_prepared_statements: true,
-                pool_timeout: Duration::from_secs(30),
             },
             test: DatabaseConfig {
-                provider_type: DatabaseType::SQLite,
+                database_type: DatabaseType::SQLite,
                 connection_string: ":memory:".to_string(),
-                read_connection_strings: vec![],
-                max_connections: 5,
-                min_connections: 1,
-                connection_timeout: Duration::from_secs(10),
-                idle_timeout: Duration::from_secs(300),
-                max_lifetime: Duration::from_secs(600),
+                read_connection_strings: Vec::new(),
+                pool: PoolConfig {
+                    max_connections: 5,
+                    min_connections: 1,
+                    connection_timeout: Duration::from_secs(10),
+                    idle_timeout: Duration::from_secs(300),
+                    max_lifetime: Duration::from_secs(600),
+                    test_on_checkout: true,
+                    pool_timeout: Duration::from_secs(5),
+                },
+                enable_metrics: false,
                 enable_logging: true,
                 enable_prepared_statements: true,
-                pool_timeout: Duration::from_secs(5),
             },
         }
     }
@@ -496,11 +524,11 @@ pub struct DatabaseConfigBuilder {
 }
 
 impl DatabaseConfigBuilder {
-    pub fn new(provider_type: DatabaseType) -> Self {
+    pub fn new(database_type: DatabaseType) -> Self {
         Self {
             config: DatabaseConfig {
-                provider_type,
-                ..Default::default()
+                database_type,
+                ..DatabaseConfig::default()
             },
         }
     }
@@ -515,23 +543,33 @@ impl DatabaseConfigBuilder {
         self
     }
 
-    pub fn max_connections(mut self, max: u32) -> Self {
-        self.config.max_connections = max;
+    pub fn max_connections(mut self, max: usize) -> Self {
+        self.config.pool.max_connections = max;
         self
     }
 
-    pub fn min_connections(mut self, min: u32) -> Self {
-        self.config.min_connections = min;
+    pub fn min_connections(mut self, min: usize) -> Self {
+        self.config.pool.min_connections = min;
         self
     }
 
     pub fn connection_timeout(mut self, timeout: Duration) -> Self {
-        self.config.connection_timeout = timeout;
+        self.config.pool.connection_timeout = timeout;
+        self
+    }
+
+    pub fn enable_prepared_statements(mut self, enable: bool) -> Self {
+        self.config.enable_prepared_statements = enable;
         self
     }
 
     pub fn enable_logging(mut self, enable: bool) -> Self {
         self.config.enable_logging = enable;
+        self
+    }
+
+    pub fn enable_metrics(mut self, enable: bool) -> Self {
+        self.config.enable_metrics = enable;
         self
     }
 
@@ -563,9 +601,9 @@ mod tests {
             .enable_logging(false)
             .build();
 
-        assert_eq!(config.provider_type, DatabaseType::PostgreSQL);
+        assert_eq!(config.database_type, DatabaseType::PostgreSQL);
         assert_eq!(config.connection_string, "postgresql://localhost:5432/test");
-        assert_eq!(config.max_connections, 50);
+        assert_eq!(config.pool.max_connections, 50);
         assert!(!config.enable_logging);
     }
 

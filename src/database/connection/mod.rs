@@ -11,7 +11,7 @@ pub use pool::{ConnectionPool, PooledConnection};
 pub use providers::{DatabaseProvider, SqliteProvider};
 
 #[cfg(feature = "postgresql")]
-pub use providers::PostgresqlProvider;
+pub use providers::PostgreSqlProvider;
 
 use crate::error::{Result, UveddiError};
 use std::sync::Arc;
@@ -27,12 +27,14 @@ pub trait DatabaseConnection: Send + Sync {
     /// Query rows from the database
     fn query<T, F>(&self, query: &str, params: &[&dyn rusqlite::ToSql], f: F) -> Result<Vec<T>>
     where
+        Self: Sized,
         T: Send + 'static,
         F: FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<T> + Send;
 
     /// Query a single row from the database
     fn query_row<T, F>(&self, query: &str, params: &[&dyn rusqlite::ToSql], f: F) -> Result<Option<T>>
     where
+        Self: Sized,
         T: Send + 'static,
         F: FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T> + Send;
 
@@ -75,9 +77,9 @@ impl ConnectionManager {
     /// Create a new connection manager
     pub fn new(config: DatabaseConfig) -> Result<Self> {
         let provider: Arc<dyn DatabaseProvider> = match config.database_type {
-            DatabaseType::Sqlite => Arc::new(SqliteProvider::new(&config)?),
+            DatabaseType::SQLite => Arc::new(SqliteProvider::new(&config)?),
             #[cfg(feature = "postgresql")]
-            DatabaseType::Postgresql => Arc::new(PostgresqlProvider::new(&config)?),
+            DatabaseType::PostgreSQL => Arc::new(PostgreSqlProvider::new(&config)?),
         };
 
         Ok(Self { config, provider })
@@ -154,7 +156,7 @@ mod tests {
                 .min_connections(2)
                 .build());
 
-        assert!(matches!(config.database_type, DatabaseType::Sqlite));
+        assert!(matches!(config.database_type, DatabaseType::SQLite));
         assert_eq!(config.pool.max_connections, 20);
         assert_eq!(config.pool.min_connections, 2);
         assert!(config.enable_metrics);

@@ -36,7 +36,7 @@ impl ComplianceValidator {
 
         // Find applicable compliance requirements
         let mut compliance_mappings = Vec::new();
-        let mut enhanced_remediation = issue.remediation.unwrap_or_default();
+        let mut enhanced_remediation = issue.remediation.clone().unwrap_or_default();
 
         for standard in &self.standards {
             if !standard.enabled {

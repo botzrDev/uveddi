@@ -550,9 +550,9 @@ struct SqliteConnectionPool {
 
 impl SqliteConnectionPool {
     fn new(db_path: &str, config: &DatabaseConfig) -> Result<Self> {
-        let semaphore = Arc::new(Semaphore::new(config.max_connections as usize));
+        let semaphore = Arc::new(Semaphore::new(config.pool.max_connections));
         let stats = Arc::new(Mutex::new(PoolStats {
-            max_connections: config.max_connections as usize,
+            max_connections: config.pool.max_connections,
             available_connections: 0,
             active_connections: 0,
             pending_requests: 0,
@@ -671,12 +671,12 @@ impl PooledSqliteConnection {
         let now = Instant::now();
 
         // Check max lifetime
-        if now.duration_since(self.created_at) > config.max_lifetime {
+        if now.duration_since(self.created_at) > config.pool.max_lifetime {
             return true;
         }
 
         // Check idle timeout
-        if now.duration_since(self.last_used) > config.idle_timeout {
+        if now.duration_since(self.last_used) > config.pool.idle_timeout {
             return true;
         }
 

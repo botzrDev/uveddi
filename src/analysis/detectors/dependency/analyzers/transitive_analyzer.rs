@@ -151,9 +151,9 @@ impl TransitiveAnalyzer {
             });
         }
 
-        if let Some(children) = self.dependency_tree.get(node) {
+        if let Some(children) = self.dependency_tree.get(node).cloned() {
             for child in children {
-                self.dfs_transitive(child, depth + 1, path, transitive, all_deps);
+                self.dfs_transitive(&child, depth + 1, path, transitive, all_deps);
             }
         }
 
