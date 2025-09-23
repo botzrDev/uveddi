@@ -3,7 +3,7 @@
 //! This module provides comprehensive monitoring, alerting, and health checking
 //! capabilities for the scalable database system.
 
-use super::providers::{DatabaseHealthStatus, DatabaseMetrics, DatabaseProvider};
+use super::connection::providers::{DatabaseHealthStatus, DatabaseMetrics, DatabaseProvider};
 use super::scalable_manager::{LoadBalancerStats, ScalableDatabase};
 use crate::error::{Result, UveddiError};
 use serde::{Deserialize, Serialize};

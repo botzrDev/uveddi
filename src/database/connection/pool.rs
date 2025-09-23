@@ -3,32 +3,14 @@
 //! This module provides efficient connection pooling for SQLite databases to improve
 //! performance and reduce connection overhead in multi-threaded environments.
 
+use super::config::{DatabaseConfig, PoolConfig};
+use super::providers::DatabaseProvider;
 use crate::error::{Result, UveddiError};
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
-
-/// Configuration for database connection pool
-#[derive(Debug, Clone)]
-pub struct PoolConfig {
-    pub max_connections: usize,
-    pub connection_timeout: Duration,
-    pub idle_timeout: Duration,
-    pub max_lifetime: Duration,
-}
-
-impl Default for PoolConfig {
-    fn default() -> Self {
-        Self {
-            max_connections: 10,
-            connection_timeout: Duration::from_secs(30),
-            idle_timeout: Duration::from_secs(600), // 10 minutes
-            max_lifetime: Duration::from_secs(1800), // 30 minutes
-        }
-    }
-}
 
 /// Pooled connection wrapper
 pub struct PooledConnection {
@@ -98,25 +80,27 @@ impl PooledConnection {
 }
 
 /// Database connection pool
-pub struct DatabasePool {
+pub struct ConnectionPool {
     db_path: Option<std::path::PathBuf>,
     connections: Arc<Mutex<Vec<PooledConnection>>>,
     semaphore: Arc<Semaphore>,
     config: PoolConfig,
+    provider: Arc<dyn DatabaseProvider>,
 }
 
-impl DatabasePool {
+impl ConnectionPool {
     /// Create a new database connection pool
-    pub fn new(db_path: Option<&Path>, config: PoolConfig) -> Result<Self> {
-        let db_path = db_path.map(|p| p.to_path_buf());
-        let semaphore = Arc::new(Semaphore::new(config.max_connections));
+    pub async fn new(db_config: DatabaseConfig, provider: Arc<dyn DatabaseProvider>) -> Result<Arc<Self>> {
+        let db_path = Some(std::path::PathBuf::from(&db_config.connection_string));
+        let semaphore = Arc::new(Semaphore::new(db_config.pool.max_connections));
 
-        Ok(Self {
+        Ok(Arc::new(Self {
             db_path,
             connections: Arc::new(Mutex::new(Vec::new())),
             semaphore,
-            config,
-        })
+            config: db_config.pool,
+            provider,
+        }))
     }
 
     /// Get a connection from the pool
@@ -213,14 +197,13 @@ pub struct PoolStats {
 
 /// Pool-aware database wrapper
 pub struct PooledDatabase {
-    pool: Arc<DatabasePool>,
+    pool: Arc<ConnectionPool>,
 }
 
 impl PooledDatabase {
     /// Create new pooled database
-    pub fn new(db_path: Option<&Path>, config: Option<PoolConfig>) -> Result<Self> {
-        let config = config.unwrap_or_default();
-        let pool = Arc::new(DatabasePool::new(db_path, config)?);
+    pub async fn new(db_config: DatabaseConfig, provider: Arc<dyn DatabaseProvider>) -> Result<Self> {
+        let pool = ConnectionPool::new(db_config, provider).await?;
 
         Ok(Self { pool })
     }

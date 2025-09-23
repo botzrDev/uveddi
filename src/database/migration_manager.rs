@@ -3,7 +3,8 @@
 //! This module provides a comprehensive database migration system that supports
 //! both SQLite and PostgreSQL, enabling seamless schema evolution and data migration.
 
-use super::providers::{create_database_provider, DatabaseConfig, DatabaseProvider, DatabaseType};
+use super::connection::{config::{DatabaseConfig, DatabaseType}, providers::DatabaseProvider, ConnectionManager};
+use super::create_database_provider;
 use crate::error::{Result, UveddiError};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -22,7 +23,7 @@ pub struct MigrationManager {
 impl MigrationManager {
     /// Create a new migration manager
     pub async fn new(config: DatabaseConfig, migrations_dir: Option<PathBuf>) -> Result<Self> {
-        let provider: Arc<dyn DatabaseProvider> = Arc::from(create_database_provider(&config)?);
+        let provider: Arc<dyn DatabaseProvider> = create_database_provider(&config)?;
         let migrations_dir = migrations_dir.unwrap_or_else(|| PathBuf::from("migrations"));
 
         let manager = Self {
@@ -392,11 +393,11 @@ impl MigrationManager {
         sqlite_config.provider_type = DatabaseType::SQLite;
         sqlite_config.connection_string = sqlite_path.to_string();
         let sqlite_provider: Arc<dyn DatabaseProvider> =
-            Arc::from(create_database_provider(&sqlite_config)?);
+            create_database_provider(&sqlite_config)?;
 
         // Create PostgreSQL provider for destination
         let pg_provider: Arc<dyn DatabaseProvider> =
-            Arc::from(create_database_provider(&postgresql_config)?);
+            create_database_provider(&postgresql_config)?;
 
         // Initialize PostgreSQL schema
         pg_provider.initialize().await?;

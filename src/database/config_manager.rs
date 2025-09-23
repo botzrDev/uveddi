@@ -3,7 +3,7 @@
 //! This module provides comprehensive configuration management for database
 //! providers, connection settings, and environment-specific configurations.
 
-use super::providers::{DatabaseConfig, DatabaseType};
+use super::connection::config::{DatabaseConfig, DatabaseType};
 use crate::error::{Result, UveddiError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

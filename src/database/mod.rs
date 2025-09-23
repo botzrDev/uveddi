@@ -219,16 +219,15 @@
 //! # }
 //! ```
 
+pub mod connection;
 pub mod crud;
 pub mod migrations;
 pub mod models;
-pub mod pool;
 
 // New scalability modules
 pub mod config_manager;
 pub mod migration_manager;
 pub mod monitoring;
-pub mod providers;
 pub mod scalable_manager;
 
 // Re-export core functionality
@@ -236,7 +235,17 @@ pub use self::crud::Database;
 pub use self::migrations::{
     Migration, MigrationManager as LegacyMigrationManager, MigrationStatus,
 };
-pub use self::pool::{DatabasePool, PoolConfig, PoolStats, PooledDatabase};
+
+// Re-export connection infrastructure
+pub use self::connection::{
+    config::{DatabaseConfig, DatabaseType, PoolConfig, PoolConfigBuilder},
+    pool::{ConnectionPool, PoolStats, PooledDatabase},
+    providers::{DatabaseProvider, SqliteProvider},
+    ConnectionManager, ConnectionManagerBuilder, DatabaseConnection,
+};
+
+#[cfg(feature = "postgresql")]
+pub use self::connection::providers::PostgresqlProvider;
 
 // Re-export new scalability features
 pub use self::config_manager::{DatabaseConfigBuilder, DatabaseConfigManager, Environment};
@@ -244,9 +253,13 @@ pub use self::migration_manager::{DataMigrationResult, MigrationManager, Migrati
 pub use self::monitoring::{
     Alert, AlertSeverity, AlertType, DatabaseMonitor, MonitoringConfig, MonitoringReport,
 };
-pub use self::providers::{
-    create_database_provider, DatabaseConfig, DatabaseProvider, DatabaseType,
-};
+// Backward compatibility helper
+pub fn create_database_provider(
+    config: &DatabaseConfig,
+) -> crate::error::Result<std::sync::Arc<dyn DatabaseProvider>> {
+    let manager = ConnectionManager::new(config.clone())?;
+    Ok(std::sync::Arc::new(manager.provider().clone()))
+}
 pub use self::scalable_manager::{LoadBalancerStats, ScalableDatabase};
 
 // Re-export models for convenience

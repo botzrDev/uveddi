@@ -3,10 +3,11 @@
 //! This module provides read/write separation, load balancing, and high-level
 //! database management functionality for production scalability.
 
-use super::providers::{
-    create_database_provider, DatabaseConfig, DatabaseHealthStatus, DatabaseMetrics,
-    DatabaseProvider, DatabaseType,
+use super::connection::{
+    config::{DatabaseConfig, DatabaseType},
+    providers::{DatabaseHealthStatus, DatabaseMetrics, DatabaseProvider},
 };
+use super::create_database_provider;
 use crate::database::models::{
     AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue, Dependency,
 };
