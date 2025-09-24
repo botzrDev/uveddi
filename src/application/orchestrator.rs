@@ -6,7 +6,7 @@
 
 use crate::analysis::AnalysisEngine;
 use crate::core::logging::{debug, error, info, warn};
-use crate::database::crud::Database;
+use crate::database::{Database, DatabaseConfig, DatabaseType, RepositoryManager, create_repository_factory};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::resource_management::{ResourceConfig, ResourceManager};
@@ -23,6 +23,8 @@ use crate::analysis::memory::MemoryOptimizationConfig;
 pub struct AnalysisOrchestrator {
     /// The database connection for storing and retrieving analysis results
     database: Database,
+    /// Repository manager for data access
+    repository_manager: RepositoryManager,
     /// The core analysis engine that performs code parsing and issue detection
     analysis_engine: AnalysisEngine,
     /// Resource manager for memory and system resource control
@@ -55,28 +57,68 @@ pub struct AnalysisResult {
 
 impl AnalysisOrchestrator {
     /// Creates a new AnalysisOrchestrator with a database at the specified path
-    pub fn with_db_path(db_path: &std::path::Path) -> Result<Self, UveddiError> {
-        let database =
-            Database::new(Some(db_path)).context("Failed to initialize database with path")?;
+    pub async fn with_db_path(db_path: &std::path::Path) -> Result<Self, UveddiError> {
+        let config = DatabaseConfig {
+            database_type: DatabaseType::SQLite,
+            connection_string: db_path.to_string_lossy().to_string(),
+            ..Default::default()
+        };
 
-        Self::initialize_with_database(database)
+        let database = Database::new_with_repositories(Some(config.clone())).await
+            .context("Failed to initialize database with path")?;
+
+        let repository_factory = create_repository_factory(&config).await
+            .context("Failed to create repository factory")?;
+        let repository_manager = RepositoryManager::new(repository_factory);
+
+        Self::initialize_with_database(database, repository_manager).await
     }
 
     /// Creates a new AnalysisOrchestrator with an in-memory database
-    pub fn new() -> Result<Self, UveddiError> {
-        let database = Database::new(None).context("Failed to initialize in-memory database")?;
+    pub async fn new() -> Result<Self, UveddiError> {
+        let config = DatabaseConfig {
+            database_type: DatabaseType::SQLite,
+            connection_string: ":memory:".to_string(),
+            ..Default::default()
+        };
 
-        Self::initialize_with_database(database)
+        let database = Database::new_with_repositories(Some(config.clone())).await
+            .context("Failed to initialize in-memory database")?;
+
+        let repository_factory = create_repository_factory(&config).await
+            .context("Failed to create repository factory")?;
+        let repository_manager = RepositoryManager::new(repository_factory);
+
+        Self::initialize_with_database(database, repository_manager).await
     }
 
     /// Creates a new AnalysisOrchestrator with custom memory optimization configuration
-    pub fn with_memory_config(
+    pub async fn with_memory_config(
         db_path: Option<&std::path::Path>,
         memory_config: Option<crate::analysis::memory::MemoryOptimizationConfig>,
     ) -> Result<Self, UveddiError> {
-        let database = Database::new(db_path).context("Failed to initialize database")?;
+        let config = if let Some(path) = db_path {
+            DatabaseConfig {
+                database_type: DatabaseType::SQLite,
+                connection_string: path.to_string_lossy().to_string(),
+                ..Default::default()
+            }
+        } else {
+            DatabaseConfig {
+                database_type: DatabaseType::SQLite,
+                connection_string: ":memory:".to_string(),
+                ..Default::default()
+            }
+        };
 
-        let mut orchestrator = Self::initialize_with_database(database)?;
+        let database = Database::new_with_repositories(Some(config.clone())).await
+            .context("Failed to initialize database")?;
+
+        let repository_factory = create_repository_factory(&config).await
+            .context("Failed to create repository factory")?;
+        let repository_manager = RepositoryManager::new(repository_factory);
+
+        let mut orchestrator = Self::initialize_with_database(database, repository_manager).await?;
 
         // Initialize memory optimization with custom configuration
         #[cfg(feature = "memory-optimization")]
@@ -91,8 +133,8 @@ impl AnalysisOrchestrator {
         Ok(orchestrator)
     }
 
-    /// Initialize orchestrator with given database
-    fn initialize_with_database(database: Database) -> Result<Self, UveddiError> {
+    /// Initialize orchestrator with given database and repository manager
+    async fn initialize_with_database(database: Database, repository_manager: RepositoryManager) -> Result<Self, UveddiError> {
         // Initialize memory optimization with default configuration
         #[cfg(feature = "memory-optimization")]
         {
@@ -130,6 +172,7 @@ impl AnalysisOrchestrator {
 
         Ok(Self {
             database,
+            repository_manager,
             analysis_engine,
             resource_manager,
         })
@@ -320,10 +363,17 @@ impl AnalysisOrchestrator {
         config: &super::configuration::AnalysisConfig,
     ) -> Result<AnalysisRun, UveddiError> {
         debug!("Creating analysis run record");
-        let analysis_run = self
-            .database
-            .create_analysis_run(&config.target_path)
+
+        // Get project repository to create project if needed
+        let project_repo = self.repository_manager.project_repository();
+        let project_id = project_repo.get_or_create_project_id(&config.target_path).await
+            .context("Failed to get or create project")?;
+
+        // Get analysis repository and create analysis run
+        let analysis_repo = self.repository_manager.analysis_repository();
+        let analysis_run = analysis_repo.create_analysis_run(project_id).await
             .context("Failed to create analysis run")?;
+
         debug!(
             "Analysis run record created with ID: {:?}",
             analysis_run.run_id
@@ -343,8 +393,9 @@ impl AnalysisOrchestrator {
         analysis_run.end_time = Some(chrono::Utc::now());
         analysis_run.status = "completed".to_string();
 
-        self.database
-            .update_analysis_run(analysis_run)
+        // Use analysis repository to update
+        let analysis_repo = self.repository_manager.analysis_repository();
+        analysis_repo.update(analysis_run).await
             .context("Failed to update analysis run")?;
         Ok(())
     }
@@ -448,15 +499,5 @@ impl AnalysisOrchestrator {
     }
 }
 
-impl Default for AnalysisOrchestrator {
-    /// Creates a default AnalysisOrchestrator with in-memory database
-    ///
-    /// # Panics
-    ///
-    /// This will panic if the orchestrator cannot be created.
-    /// For production code, prefer using `AnalysisOrchestrator::new()` or
-    /// `AnalysisOrchestrator::with_db_path()` which return a `Result`.
-    fn default() -> Self {
-        Self::new().expect("Failed to create default AnalysisOrchestrator")
-    }
-}
+// Remove Default implementation as async construction is now required
+// Use AnalysisOrchestrator::new().await instead

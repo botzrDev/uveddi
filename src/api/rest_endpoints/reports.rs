@@ -1,7 +1,7 @@
 //! Report-related endpoints for the REST API
 
 use crate::api::rest::AppState;
-use crate::database::Database;
+use crate::database::{Database, AnalysisRepository};
 use crate::report::interactive_models::*;
 use crate::{error::UveddiError, security};
 use axum::{
@@ -196,9 +196,14 @@ async fn load_report_from_database(
     use crate::database::models::AntiPatternType;
     use crate::report::data_transformer::DataTransformer;
 
+    // Get analysis repository
+    let analysis_repo = database
+        .analysis_repository()
+        .ok_or("Analysis repository not available")?;
+
     // Get analysis run
-    let analysis_run = database
-        .get_analysis_run(run_id)
+    let analysis_run = analysis_repo
+        .find_by_id(run_id)
         .await?
         .ok_or("Analysis run not found")?;
 
@@ -241,7 +246,12 @@ async fn load_report_from_database(
 async fn list_reports_from_database(
     database: &Database,
 ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
-    let runs = database.get_recent_analysis_runs(10).await?;
+    // Get analysis repository
+    let analysis_repo = database
+        .analysis_repository()
+        .ok_or("Analysis repository not available")?;
+
+    let runs = analysis_repo.find_recent(10).await?;
 
     let reports: Vec<serde_json::Value> = runs
         .into_iter()

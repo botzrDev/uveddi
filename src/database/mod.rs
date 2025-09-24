@@ -271,7 +271,7 @@ pub use self::scalable_manager::{LoadBalancerStats, ScalableDatabase};
 pub use self::repositories::{
     Repository, ProjectRepository, AnalysisRepository, CacheRepository,
     SqliteProjectRepository, SqliteAnalysisRepository, SqliteCacheRepository,
-    create_repository_factory,
+    RepositoryManager, create_repository_factory,
 };
 
 // Re-export models for convenience

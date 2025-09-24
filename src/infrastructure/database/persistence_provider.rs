@@ -8,7 +8,7 @@ use crate::core::interfaces::persistence::{
     AnalysisRunDomain, DomainIssue, IssueFilter, IssueSeverity, IssueStats, PersistenceError,
     PersistenceProvider, PersistenceResult,
 };
-use crate::database::crud::Database;
+use crate::database::{Database, RepositoryManager};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -20,12 +20,16 @@ use std::sync::Arc;
 /// and database models (used by storage layer) to eliminate circular dependencies.
 pub struct DatabasePersistenceProvider {
     database: Arc<Database>,
+    repository_manager: Arc<RepositoryManager>,
 }
 
 impl DatabasePersistenceProvider {
     /// Create a new database persistence provider
-    pub fn new(database: Arc<Database>) -> Self {
-        Self { database }
+    pub fn new(database: Arc<Database>, repository_manager: Arc<RepositoryManager>) -> Self {
+        Self {
+            database,
+            repository_manager,
+        }
     }
 }
 
@@ -70,20 +74,16 @@ impl PersistenceProvider for DatabasePersistenceProvider {
     }
 
     async fn save_analysis_run(&self, run: AnalysisRunDomain) -> Result<i64, Self::Error> {
-        let database = self.database.clone();
-        let _run_copy = run.clone();
+        // Use repository to save analysis run
+        let analysis_repo = self.repository_manager.analysis_repository();
 
-        tokio::task::spawn_blocking(move || {
-            // Create an analysis run using the existing database method
-            // This is a simplified implementation
-            let project_path = std::path::Path::new("default"); // TODO: Extract from run
-            match database.create_analysis_run(project_path) {
-                Ok(analysis_run) => Ok(analysis_run.run_id.unwrap_or(0)),
-                Err(e) => Err(PersistenceError::QueryError(e.to_string())),
-            }
-        })
-        .await
-        .map_err(|e| PersistenceError::Internal(e.to_string()))?
+        // Create a new analysis run - assuming project_id is available in the domain run
+        let project_id = 1; // TODO: Extract from run domain object properly
+        let analysis_run = analysis_repo.create_analysis_run(project_id)
+            .await
+            .map_err(|e| PersistenceError::QueryError(e.to_string()))?;
+
+        Ok(analysis_run.run_id.unwrap_or(0))
     }
 
     async fn update_analysis_run(

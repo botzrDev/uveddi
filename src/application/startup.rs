@@ -6,7 +6,7 @@
 
 use crate::analysis::{plugin_detector_adapter::PluginDetectorManager, AnalysisEngine};
 use crate::application::plugin_manager::{ApplicationPluginManager, PluginManagerConfig};
-use crate::database::crud::Database;
+use crate::database::{Database, DatabaseConfig, DatabaseType, RepositoryManager, create_repository_factory};
 use crate::error::UveddiError;
 use crate::plugins::{PluginRuntime, RuntimeFactory};
 use std::path::PathBuf;
@@ -18,6 +18,8 @@ use tracing::{debug, error, info, warn};
 pub struct StartupManager {
     /// Database connection
     database: Option<Arc<Database>>,
+    /// Repository manager for data access
+    repository_manager: Option<Arc<RepositoryManager>>,
     /// Analysis engine
     analysis_engine: Option<Arc<RwLock<AnalysisEngine>>>,
     /// Plugin manager
@@ -65,6 +67,7 @@ impl StartupManager {
     pub fn new() -> Self {
         Self {
             database: None,
+            repository_manager: None,
             analysis_engine: None,
             plugin_manager: None,
             plugin_detector_manager: None,
@@ -77,6 +80,7 @@ impl StartupManager {
     pub fn with_config(config: StartupConfig) -> Self {
         Self {
             database: None,
+            repository_manager: None,
             analysis_engine: None,
             plugin_manager: None,
             plugin_detector_manager: None,
@@ -119,26 +123,40 @@ impl StartupManager {
     async fn initialize_database(&mut self) -> Result<(), UveddiError> {
         debug!("Initializing database connection");
 
-        let database = if let Some(db_path) = &self.config.database_path {
+        // Create configuration for repository-based database
+        let db_config = if let Some(db_path) = &self.config.database_path {
             // Ensure directory exists
             if let Some(parent) = db_path.parent() {
                 tokio::fs::create_dir_all(parent).await.map_err(|e| {
                     UveddiError::io_error("create database directory", &parent.to_string_lossy(), e)
                 })?;
             }
-            Database::new(Some(db_path)).map_err(|e| {
-                UveddiError::database_error_msg(&format!("Failed to open database: {}", e))
-            })?
+            DatabaseConfig {
+                database_type: DatabaseType::SQLite,
+                connection_string: db_path.to_string_lossy().to_string(),
+                ..Default::default()
+            }
         } else {
-            Database::new(None).map_err(|e| {
-                UveddiError::database_error_msg(&format!(
-                    "Failed to create in-memory database: {}",
-                    e
-                ))
-            })?
+            DatabaseConfig {
+                database_type: DatabaseType::SQLite,
+                connection_string: ":memory:".to_string(),
+                ..Default::default()
+            }
         };
 
+        // Create database with repositories
+        let database = Database::new_with_repositories(Some(db_config.clone())).await.map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to initialize database: {}", e))
+        })?;
+
+        // Create repository factory and manager
+        let repository_factory = create_repository_factory(&db_config).await.map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to create repository factory: {}", e))
+        })?;
+        let repository_manager = RepositoryManager::new(repository_factory);
+
         self.database = Some(Arc::new(database));
+        self.repository_manager = Some(Arc::new(repository_manager));
         Ok(())
     }
 
@@ -307,6 +325,11 @@ impl StartupManager {
         self.database.clone()
     }
 
+    /// Get the repository manager
+    pub fn repository_manager(&self) -> Option<Arc<RepositoryManager>> {
+        self.repository_manager.clone()
+    }
+
     /// Get the initialized analysis engine
     pub fn analysis_engine(&self) -> Option<Arc<RwLock<AnalysisEngine>>> {
         self.analysis_engine.clone()
@@ -352,6 +375,7 @@ impl StartupManager {
         self.plugin_manager = None;
         self.plugin_detector_manager = None;
         self.analysis_engine = None;
+        self.repository_manager = None;
         self.database = None;
 
         info!("Uveddi application shutdown complete");
