@@ -5,6 +5,7 @@
 
 use crate::ast::SourceLanguage;
 use crate::engine::parsing::{LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind};
+use std::sync::Mutex;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Parser, Tree};
@@ -13,7 +14,7 @@ use crate::ast::tree_sitter::{Parser, Tree};
 
 /// TypeScript-specific parser implementation
 pub struct TypeScriptParser {
-    parser: Parser,
+    parser: Mutex<Parser>,
 }
 
 impl TypeScriptParser {
@@ -30,7 +31,7 @@ impl TypeScriptParser {
                     parser.set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
                         .map_err(|e| ParseError::ParseFailed(format!("Failed to set TypeScript language: {}", e)))?;
                 }
-                Ok(Self { parser })
+                Ok(Self { parser: Mutex::new(parser) })
             }
             #[cfg(not(feature = "typescript-lang"))]
             {
@@ -40,7 +41,7 @@ impl TypeScriptParser {
         #[cfg(not(feature = "tree-sitter"))]
         {
             let parser = Parser::new();
-            Ok(Self { parser })
+            Ok(Self { parser: Mutex::new(parser) })
         }
     }
 }
@@ -53,7 +54,12 @@ impl LanguageParser for TypeScriptParser {
     fn parse(&self, source: &str) -> Result<Tree, ParseError> {
         #[cfg(feature = "tree-sitter")]
         {
-            self.parser.parse(source, None)
+            let mut parser = self
+                .parser
+                .lock()
+                .map_err(|_| ParseError::ParseFailed("TypeScript parser lock poisoned".to_string()))?;
+            parser
+                .parse(source, None)
                 .ok_or_else(|| ParseError::ParseFailed("Failed to parse TypeScript source".to_string()))
         }
         #[cfg(not(feature = "tree-sitter"))]

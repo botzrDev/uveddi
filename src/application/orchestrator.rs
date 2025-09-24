@@ -9,6 +9,7 @@ use crate::core::logging::{debug, error, info, warn};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::database::{
     create_repository_factory, Database, DatabaseConfig, DatabaseType, RepositoryManager,
+    connection::ConnectionManager,
 };
 use crate::error::UveddiError;
 use crate::resource_management::{ResourceConfig, ResourceManager};
@@ -70,10 +71,13 @@ impl AnalysisOrchestrator {
             .await
             .context("Failed to initialize database with path")?;
 
-        let repository_factory = create_repository_factory(&config)
-            .await
+        let connection_manager = ConnectionManager::new(config.clone())
+            .context("Failed to create connection manager")?;
+        let connection_pool = connection_manager.create_pool().await
+            .context("Failed to create connection pool")?;
+        let repository_factory = create_repository_factory(connection_pool)
             .context("Failed to create repository factory")?;
-        let repository_manager = RepositoryManager::new(repository_factory);
+        let repository_manager = RepositoryManager::new(repository_factory.into());
 
         Self::initialize_with_database(database, repository_manager).await
     }
@@ -90,10 +94,13 @@ impl AnalysisOrchestrator {
             .await
             .context("Failed to initialize in-memory database")?;
 
-        let repository_factory = create_repository_factory(&config)
-            .await
+        let connection_manager = ConnectionManager::new(config.clone())
+            .context("Failed to create connection manager")?;
+        let connection_pool = connection_manager.create_pool().await
+            .context("Failed to create connection pool")?;
+        let repository_factory = create_repository_factory(connection_pool)
             .context("Failed to create repository factory")?;
-        let repository_manager = RepositoryManager::new(repository_factory);
+        let repository_manager = RepositoryManager::new(repository_factory.into());
 
         Self::initialize_with_database(database, repository_manager).await
     }
@@ -121,10 +128,13 @@ impl AnalysisOrchestrator {
             .await
             .context("Failed to initialize database")?;
 
-        let repository_factory = create_repository_factory(&config)
-            .await
+        let connection_manager = ConnectionManager::new(config.clone())
+            .context("Failed to create connection manager")?;
+        let connection_pool = connection_manager.create_pool().await
+            .context("Failed to create connection pool")?;
+        let repository_factory = create_repository_factory(connection_pool)
             .context("Failed to create repository factory")?;
-        let repository_manager = RepositoryManager::new(repository_factory);
+        let repository_manager = RepositoryManager::new(repository_factory.into());
 
         let mut orchestrator = Self::initialize_with_database(database, repository_manager).await?;
 
@@ -376,14 +386,14 @@ impl AnalysisOrchestrator {
         debug!("Creating analysis run record");
 
         // Get project repository to create project if needed
-        let project_repo = self.repository_manager.project_repository();
+        let project_repo = self.repository_manager.project();
         let project_id = project_repo
             .get_or_create_project_id(&config.target_path)
             .await
             .context("Failed to get or create project")?;
 
         // Get analysis repository and create analysis run
-        let analysis_repo = self.repository_manager.analysis_repository();
+        let analysis_repo = self.repository_manager.analysis();
         let analysis_run = analysis_repo
             .create_analysis_run(project_id)
             .await
@@ -409,7 +419,7 @@ impl AnalysisOrchestrator {
         analysis_run.status = "completed".to_string();
 
         // Use analysis repository to update
-        let analysis_repo = self.repository_manager.analysis_repository();
+        let analysis_repo = self.repository_manager.analysis();
         analysis_repo
             .update(analysis_run)
             .await

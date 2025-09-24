@@ -8,6 +8,7 @@ use crate::analysis::{plugin_detector_adapter::PluginDetectorManager, AnalysisEn
 use crate::application::plugin_manager::{ApplicationPluginManager, PluginManagerConfig};
 use crate::database::{
     create_repository_factory, Database, DatabaseConfig, DatabaseType, RepositoryManager,
+    connection::ConnectionManager,
 };
 use crate::error::UveddiError;
 use crate::plugins::{PluginRuntime, RuntimeFactory};
@@ -154,10 +155,16 @@ impl StartupManager {
             })?;
 
         // Create repository factory and manager
-        let repository_factory = create_repository_factory(&db_config).await.map_err(|e| {
+        let connection_manager = ConnectionManager::new(db_config.clone()).map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to create connection manager: {}", e))
+        })?;
+        let connection_pool = connection_manager.create_pool().await.map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to create connection pool: {}", e))
+        })?;
+        let repository_factory = create_repository_factory(connection_pool).map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to create repository factory: {}", e))
         })?;
-        let repository_manager = RepositoryManager::new(repository_factory);
+        let repository_manager = RepositoryManager::new(repository_factory.into());
 
         self.database = Some(Arc::new(database));
         self.repository_manager = Some(Arc::new(repository_manager));

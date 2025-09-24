@@ -75,7 +75,7 @@ impl PersistenceProvider for DatabasePersistenceProvider {
 
     async fn save_analysis_run(&self, run: AnalysisRunDomain) -> Result<i64, Self::Error> {
         // Use repository to save analysis run
-        let analysis_repo = self.repository_manager.analysis_repository();
+        let analysis_repo = self.repository_manager.analysis();
 
         // Create a new analysis run - assuming project_id is available in the domain run
         let project_id = 1; // TODO: Extract from run domain object properly

@@ -5,6 +5,7 @@
 
 use crate::ast::SourceLanguage;
 use crate::engine::parsing::{LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind};
+use std::sync::Mutex;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Parser, Tree};
@@ -13,7 +14,7 @@ use crate::ast::tree_sitter::{Parser, Tree};
 
 /// JavaScript-specific parser implementation
 pub struct JavaScriptParser {
-    parser: Parser,
+    parser: Mutex<Parser>,
 }
 
 impl JavaScriptParser {
@@ -26,7 +27,7 @@ impl JavaScriptParser {
                 let mut parser = Parser::new();
                 parser.set_language(&tree_sitter_javascript::LANGUAGE.into())
                     .map_err(|e| ParseError::ParseFailed(format!("Failed to set JavaScript language: {}", e)))?;
-                Ok(Self { parser })
+                Ok(Self { parser: Mutex::new(parser) })
             }
             #[cfg(not(feature = "javascript-lang"))]
             {
@@ -36,7 +37,7 @@ impl JavaScriptParser {
         #[cfg(not(feature = "tree-sitter"))]
         {
             let parser = Parser::new();
-            Ok(Self { parser })
+            Ok(Self { parser: Mutex::new(parser) })
         }
     }
 }
@@ -49,7 +50,12 @@ impl LanguageParser for JavaScriptParser {
     fn parse(&self, source: &str) -> Result<Tree, ParseError> {
         #[cfg(feature = "tree-sitter")]
         {
-            self.parser.parse(source, None)
+            let mut parser = self
+                .parser
+                .lock()
+                .map_err(|_| ParseError::ParseFailed("JavaScript parser lock poisoned".to_string()))?;
+            parser
+                .parse(source, None)
                 .ok_or_else(|| ParseError::ParseFailed("Failed to parse JavaScript source".to_string()))
         }
         #[cfg(not(feature = "tree-sitter"))]

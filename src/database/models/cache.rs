@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use base64::Engine;
 
 /// Database record for cache entries
 ///
@@ -80,7 +81,7 @@ impl Default for CacheMetadata {
 /// Conversion from domain model to persistence model
 impl From<CacheEntry> for CacheEntryRecord {
     fn from(entry: CacheEntry) -> Self {
-        let data_str = base64::encode(&entry.data);
+        let data_str = base64::engine::general_purpose::STANDARD.encode(&entry.data);
         Self {
             cache_id: entry.id,
             cache_key: entry.key,
@@ -97,7 +98,7 @@ impl TryFrom<CacheEntryRecord> for CacheEntry {
     type Error = base64::DecodeError;
 
     fn try_from(record: CacheEntryRecord) -> Result<Self, Self::Error> {
-        let data = base64::decode(&record.data)?;
+        let data = base64::engine::general_purpose::STANDARD.decode(&record.data)?;
         let metadata = CacheMetadata {
             data_type: "unknown".to_string(), // Would need to be stored separately
             file_path: None,

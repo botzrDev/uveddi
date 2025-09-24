@@ -5,6 +5,7 @@
 
 use crate::ast::SourceLanguage;
 use crate::engine::parsing::{LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind};
+use std::sync::Mutex;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Parser, Tree};
@@ -13,7 +14,7 @@ use crate::ast::tree_sitter::{Parser, Tree};
 
 /// Rust-specific parser implementation
 pub struct RustParser {
-    parser: Parser,
+    parser: Mutex<Parser>,
 }
 
 impl RustParser {
@@ -26,7 +27,7 @@ impl RustParser {
                 let mut parser = Parser::new();
                 parser.set_language(&tree_sitter_rust::LANGUAGE.into())
                     .map_err(|e| ParseError::ParseFailed(format!("Failed to set Rust language: {}", e)))?;
-                Ok(Self { parser })
+                Ok(Self { parser: Mutex::new(parser) })
             }
             #[cfg(not(feature = "rust-lang"))]
             {
@@ -37,7 +38,7 @@ impl RustParser {
         {
             // Use stub parser when tree-sitter feature is disabled
             let parser = Parser::new();
-            Ok(Self { parser })
+            Ok(Self { parser: Mutex::new(parser) })
         }
     }
 }
@@ -50,7 +51,12 @@ impl LanguageParser for RustParser {
     fn parse(&self, source: &str) -> Result<Tree, ParseError> {
         #[cfg(feature = "tree-sitter")]
         {
-            self.parser.parse(source, None)
+            let mut parser = self
+                .parser
+                .lock()
+                .map_err(|_| ParseError::ParseFailed("Rust parser lock poisoned".to_string()))?;
+            parser
+                .parse(source, None)
                 .ok_or_else(|| ParseError::ParseFailed("Failed to parse Rust source".to_string()))
         }
         #[cfg(not(feature = "tree-sitter"))]

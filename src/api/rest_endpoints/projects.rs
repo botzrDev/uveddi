@@ -47,13 +47,17 @@ pub struct ProjectSummary {
 pub async fn list_projects_repository(
     Query(params): Query<ProjectsQuery>,
     State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<Json<ProjectsResponse>, StatusCode> {
     // Check if repository manager is available
     let repo_manager = match &state.repository_manager {
         Some(manager) => manager,
         None => {
             error!("Repository manager not available, falling back to legacy");
-            return list_projects_legacy(Query(params), State(state)).await;
+            // Instead of returning the result directly, we need to match it to ensure consistent types
+            match list_projects_legacy(Query(params), State(state)).await {
+                Ok(response) => return Ok(response),
+                Err(status) => return Err(status),
+            }
         }
     };
 
@@ -122,20 +126,20 @@ pub async fn list_projects_repository(
         "Successfully fetched {} projects using repository pattern",
         response.total
     );
-    Ok(Json(response).into_response())
+    Ok(Json(response))
 }
 
 /// Legacy implementation for backward compatibility
 async fn list_projects_legacy(
     Query(_params): Query<ProjectsQuery>,
     State(_state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<Json<ProjectsResponse>, StatusCode> {
     // For now, return empty list as legacy method doesn't exist
     let response = ProjectsResponse {
         total: 0,
         projects: vec![],
     };
-    Ok(Json(response).into_response())
+    Ok(Json(response))
 }
 
 /// Get a specific project by ID using repository pattern
@@ -199,7 +203,7 @@ pub async fn get_project_repository(
                 "Successfully fetched project {} using repository pattern",
                 project_id
             );
-            Ok(Json(response).into_response())
+            Ok(Json(response))
         }
         Ok(None) => {
             error!("Project {} not found", project_id);

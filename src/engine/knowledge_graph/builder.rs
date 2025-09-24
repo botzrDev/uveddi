@@ -44,7 +44,8 @@ impl GraphBuilder {
     /// Add symbols from a file to the graph
     pub fn add_symbols(&mut self, file_path: &str, symbols: Vec<Symbol>) {
         for symbol in symbols {
-            let node_id = self.generate_node_id(file_path, &symbol.name);
+            let symbol_name = symbol.name.clone();
+            let node_id = self.generate_node_id(file_path, &symbol_name);
             let node = GraphNode {
                 id: node_id.clone(),
                 symbol,
@@ -56,7 +57,7 @@ impl GraphBuilder {
             // Update symbol index
             self.graph
                 .symbol_index
-                .entry(symbol.name.clone())
+                .entry(symbol_name)
                 .or_insert_with(HashSet::new)
                 .insert(node_id);
         }
