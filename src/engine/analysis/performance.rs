@@ -2,9 +2,9 @@
 //!
 //! Provides performance monitoring and metrics collection for the analysis pipeline.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use serde::{Serialize, Deserialize};
 
 /// Performance metrics for analysis operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,9 +64,11 @@ impl PerformanceTimer {
     pub fn start_phase(&mut self, phase_name: &str) {
         // End current phase if any
         if let (Some(current_phase), Some(phase_start)) =
-            (&self.current_phase, self.current_phase_start) {
+            (&self.current_phase, self.current_phase_start)
+        {
             let phase_duration = phase_start.elapsed();
-            self.phase_times.insert(current_phase.clone(), phase_duration);
+            self.phase_times
+                .insert(current_phase.clone(), phase_duration);
         }
 
         // Start new phase
@@ -77,9 +79,11 @@ impl PerformanceTimer {
     /// End the current phase
     pub fn end_phase(&mut self) {
         if let (Some(current_phase), Some(phase_start)) =
-            (&self.current_phase, self.current_phase_start) {
+            (&self.current_phase, self.current_phase_start)
+        {
             let phase_duration = phase_start.elapsed();
-            self.phase_times.insert(current_phase.clone(), phase_duration);
+            self.phase_times
+                .insert(current_phase.clone(), phase_duration);
             self.current_phase = None;
             self.current_phase_start = None;
         }
@@ -128,7 +132,9 @@ impl AnalysisInstrumentation {
     /// Record detector execution time
     pub fn record_detector_time(&mut self, detector_name: &str, duration: Duration) {
         if self.enabled {
-            self.metrics.detector_times.insert(detector_name.to_string(), duration);
+            self.metrics
+                .detector_times
+                .insert(detector_name.to_string(), duration);
         }
     }
 
@@ -156,13 +162,11 @@ impl AnalysisInstrumentation {
 
         // Update metrics from timer
         self.metrics.total_duration = self.timer.total_elapsed();
-        self.metrics.parsing_duration = self.timer
-            .phase_duration("parsing")
-            .unwrap_or_default();
-        self.metrics.detection_duration = self.timer
-            .phase_duration("detection")
-            .unwrap_or_default();
-        self.metrics.knowledge_graph_duration = self.timer
+        self.metrics.parsing_duration = self.timer.phase_duration("parsing").unwrap_or_default();
+        self.metrics.detection_duration =
+            self.timer.phase_duration("detection").unwrap_or_default();
+        self.metrics.knowledge_graph_duration = self
+            .timer
             .phase_duration("knowledge_graph")
             .unwrap_or_default();
 
@@ -229,14 +233,32 @@ impl AnalysisMetrics {
         let mut report = String::new();
 
         report.push_str("=== Analysis Performance Report ===\n");
-        report.push_str(&format!("Total Duration: {:.2}s\n", self.total_duration.as_secs_f64()));
-        report.push_str(&format!("Parsing Duration: {:.2}s\n", self.parsing_duration.as_secs_f64()));
-        report.push_str(&format!("Detection Duration: {:.2}s\n", self.detection_duration.as_secs_f64()));
-        report.push_str(&format!("Knowledge Graph Duration: {:.2}s\n", self.knowledge_graph_duration.as_secs_f64()));
+        report.push_str(&format!(
+            "Total Duration: {:.2}s\n",
+            self.total_duration.as_secs_f64()
+        ));
+        report.push_str(&format!(
+            "Parsing Duration: {:.2}s\n",
+            self.parsing_duration.as_secs_f64()
+        ));
+        report.push_str(&format!(
+            "Detection Duration: {:.2}s\n",
+            self.detection_duration.as_secs_f64()
+        ));
+        report.push_str(&format!(
+            "Knowledge Graph Duration: {:.2}s\n",
+            self.knowledge_graph_duration.as_secs_f64()
+        ));
         report.push_str(&format!("Files Processed: {}\n", self.files_processed));
         report.push_str(&format!("Issues Found: {}\n", self.issues_found));
-        report.push_str(&format!("Throughput: {:.2} files/sec\n", self.files_per_second()));
-        report.push_str(&format!("Detection Rate: {:.2} issues/file\n", self.issues_per_file()));
+        report.push_str(&format!(
+            "Throughput: {:.2} files/sec\n",
+            self.files_per_second()
+        ));
+        report.push_str(&format!(
+            "Detection Rate: {:.2} issues/file\n",
+            self.issues_per_file()
+        ));
 
         if let Some(memory) = self.peak_memory_usage {
             report.push_str(&format!("Peak Memory: {} MB\n", memory / 1_000_000));

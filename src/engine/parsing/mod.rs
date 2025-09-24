@@ -15,11 +15,11 @@ pub use language_detection::detect_language;
 pub use ParseResult as ParsedFile; // Alias for backward compatibility
 
 // Language parser trait that all parsers must implement
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::Tree;
 use crate::ast::SourceLanguage;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::Tree;
-#[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::Tree;
 
 /// Common interface for all language-specific parsers
 pub trait LanguageParser: Send + Sync {

@@ -67,10 +67,12 @@ impl GraphBuilder {
     pub fn add_relations(&mut self, file_path: &str, relations: Vec<Relation>) {
         for relation in relations {
             let from_id = self.generate_node_id(file_path, &relation.from);
-            let to_id = self.resolve_symbol_reference(&relation.to).unwrap_or_else(|| {
-                // Create external reference node if not found
-                self.generate_node_id("external", &relation.to)
-            });
+            let to_id = self
+                .resolve_symbol_reference(&relation.to)
+                .unwrap_or_else(|| {
+                    // Create external reference node if not found
+                    self.generate_node_id("external", &relation.to)
+                });
 
             let graph_relation = GraphRelation {
                 from: from_id.clone(),

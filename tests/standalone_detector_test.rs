@@ -59,40 +59,100 @@ fn test_detector_migration_concept() {
             parent: None,
         },
         // Add 6+ methods to exceed typical threshold
-        Symbol { name: "method1".to_string(), kind: SymbolKind::Method, line: 2, parent: Some("LargeClass".to_string()) },
-        Symbol { name: "method2".to_string(), kind: SymbolKind::Method, line: 4, parent: Some("LargeClass".to_string()) },
-        Symbol { name: "method3".to_string(), kind: SymbolKind::Method, line: 6, parent: Some("LargeClass".to_string()) },
-        Symbol { name: "method4".to_string(), kind: SymbolKind::Method, line: 8, parent: Some("LargeClass".to_string()) },
-        Symbol { name: "method5".to_string(), kind: SymbolKind::Method, line: 10, parent: Some("LargeClass".to_string()) },
-        Symbol { name: "method6".to_string(), kind: SymbolKind::Method, line: 12, parent: Some("LargeClass".to_string()) },
+        Symbol {
+            name: "method1".to_string(),
+            kind: SymbolKind::Method,
+            line: 2,
+            parent: Some("LargeClass".to_string()),
+        },
+        Symbol {
+            name: "method2".to_string(),
+            kind: SymbolKind::Method,
+            line: 4,
+            parent: Some("LargeClass".to_string()),
+        },
+        Symbol {
+            name: "method3".to_string(),
+            kind: SymbolKind::Method,
+            line: 6,
+            parent: Some("LargeClass".to_string()),
+        },
+        Symbol {
+            name: "method4".to_string(),
+            kind: SymbolKind::Method,
+            line: 8,
+            parent: Some("LargeClass".to_string()),
+        },
+        Symbol {
+            name: "method5".to_string(),
+            kind: SymbolKind::Method,
+            line: 10,
+            parent: Some("LargeClass".to_string()),
+        },
+        Symbol {
+            name: "method6".to_string(),
+            kind: SymbolKind::Method,
+            line: 12,
+            parent: Some("LargeClass".to_string()),
+        },
         // Add some functions for dead code detection
-        Symbol { name: "unused_function".to_string(), kind: SymbolKind::Function, line: 20, parent: None },
-        Symbol { name: "used_function".to_string(), kind: SymbolKind::Function, line: 22, parent: None },
-        Symbol { name: "main".to_string(), kind: SymbolKind::Function, line: 24, parent: None },
+        Symbol {
+            name: "unused_function".to_string(),
+            kind: SymbolKind::Function,
+            line: 20,
+            parent: None,
+        },
+        Symbol {
+            name: "used_function".to_string(),
+            kind: SymbolKind::Function,
+            line: 22,
+            parent: None,
+        },
+        Symbol {
+            name: "main".to_string(),
+            kind: SymbolKind::Function,
+            line: 24,
+            parent: None,
+        },
     ];
 
-    let relations = vec![
-        Relation { from: "main".to_string(), to: "used_function".to_string(), kind: "calls".to_string() },
-    ];
+    let relations = vec![Relation {
+        from: "main".to_string(),
+        to: "used_function".to_string(),
+        kind: "calls".to_string(),
+    }];
 
     // Test god object detection logic
-    let methods_in_large_class = symbols.iter()
+    let methods_in_large_class = symbols
+        .iter()
         .filter(|s| s.parent == Some("LargeClass".to_string()) && s.kind == SymbolKind::Method)
         .count();
 
-    assert_eq!(methods_in_large_class, 6, "Should have 6 methods in LargeClass");
+    assert_eq!(
+        methods_in_large_class, 6,
+        "Should have 6 methods in LargeClass"
+    );
 
     let should_be_god_object = methods_in_large_class > 5; // Typical threshold
-    assert!(should_be_god_object, "LargeClass should be detected as god object");
+    assert!(
+        should_be_god_object,
+        "LargeClass should be detected as god object"
+    );
 
     // Test dead code detection logic
     let unused_referenced = relations.iter().any(|r| r.to == "unused_function");
     let used_referenced = relations.iter().any(|r| r.to == "used_function");
 
-    assert!(!unused_referenced, "unused_function should not be referenced");
+    assert!(
+        !unused_referenced,
+        "unused_function should not be referenced"
+    );
     assert!(used_referenced, "used_function should be referenced");
 
-    println!("  ✅ God object detection: {} methods in LargeClass", methods_in_large_class);
+    println!(
+        "  ✅ God object detection: {} methods in LargeClass",
+        methods_in_large_class
+    );
     println!("  ✅ Dead code detection: unused_function not referenced");
 }
 
@@ -172,15 +232,19 @@ fn test_knowledge_graph_concept() {
     assert_eq!(graph.node_count(), 3, "Should have 3 nodes");
     assert_eq!(graph.edge_count(), 3, "Should have 3 edges");
 
-    println!("  ✅ Knowledge graph: {} nodes, {} edges", graph.node_count(), graph.edge_count());
+    println!(
+        "  ✅ Knowledge graph: {} nodes, {} edges",
+        graph.node_count(),
+        graph.edge_count()
+    );
     println!("  ✅ Dependency queries: main->2, helper1->1, helper2->0");
 }
 
 fn test_performance_instrumentation_concept() {
     println!("\n⚡ Testing performance instrumentation concept...");
 
-    use std::time::{Instant, Duration};
     use std::collections::HashMap;
+    use std::time::{Duration, Instant};
 
     #[derive(Debug)]
     struct MockPerformanceMetrics {
@@ -234,7 +298,9 @@ fn test_performance_instrumentation_concept() {
         }
 
         fn slowest_detector(&self) -> Option<(&String, &Duration)> {
-            self.detector_times.iter().max_by_key(|(_, duration)| *duration)
+            self.detector_times
+                .iter()
+                .max_by_key(|(_, duration)| *duration)
         }
     }
 
@@ -253,22 +319,44 @@ fn test_performance_instrumentation_concept() {
     }
 
     // Verify metrics
-    assert_eq!(metrics.detector_times.len(), 3, "Should have 3 detector timings");
+    assert_eq!(
+        metrics.detector_times.len(),
+        3,
+        "Should have 3 detector timings"
+    );
     assert_eq!(metrics.total_files, 5, "Should have processed 5 files");
-    assert_eq!(metrics.total_issues, 15, "Should have found 15 total issues"); // 1+2+3+4+5
+    assert_eq!(
+        metrics.total_issues, 15,
+        "Should have found 15 total issues"
+    ); // 1+2+3+4+5
 
     let total_time = metrics.total_detection_time();
-    assert_eq!(total_time, Duration::from_millis(50), "Total detection time should be 50ms");
+    assert_eq!(
+        total_time,
+        Duration::from_millis(50),
+        "Total detection time should be 50ms"
+    );
 
     let issues_per_file = metrics.issues_per_file();
     assert_eq!(issues_per_file, 3.0, "Should average 3 issues per file");
 
     let slowest = metrics.slowest_detector();
     assert!(slowest.is_some(), "Should identify slowest detector");
-    assert_eq!(slowest.unwrap().0, "CodeDuplicationDetector", "CodeDuplication should be slowest");
+    assert_eq!(
+        slowest.unwrap().0,
+        "CodeDuplicationDetector",
+        "CodeDuplication should be slowest"
+    );
 
-    println!("  ✅ Performance tracking: {}ms total detection time", total_time.as_millis());
-    println!("  ✅ Throughput: {:.2} files/sec, {:.1} issues/file", metrics.throughput(), issues_per_file);
+    println!(
+        "  ✅ Performance tracking: {}ms total detection time",
+        total_time.as_millis()
+    );
+    println!(
+        "  ✅ Throughput: {:.2} files/sec, {:.1} issues/file",
+        metrics.throughput(),
+        issues_per_file
+    );
     println!("  ✅ Slowest detector: {}", slowest.unwrap().0);
 }
 
@@ -302,28 +390,52 @@ fn test_migration_status_concept() {
         }
 
         fn remaining_count(&self) -> usize {
-            self.total_detectors.saturating_sub(self.migrated_detectors.len())
+            self.total_detectors
+                .saturating_sub(self.migrated_detectors.len())
         }
 
         fn is_migrated(&self, detector_name: &str) -> bool {
-            self.migrated_detectors.iter().any(|name| name == detector_name)
+            self.migrated_detectors
+                .iter()
+                .any(|name| name == detector_name)
         }
     }
 
     let status = MockMigrationStatus::new();
 
-    assert_eq!(status.migrated_detectors.len(), 3, "Should have 3 migrated detectors");
-    assert_eq!(status.remaining_count(), 4, "Should have 4 remaining detectors");
+    assert_eq!(
+        status.migrated_detectors.len(),
+        3,
+        "Should have 3 migrated detectors"
+    );
+    assert_eq!(
+        status.remaining_count(),
+        4,
+        "Should have 4 remaining detectors"
+    );
 
     let progress = status.progress_percentage();
     let expected_progress = 3.0 / 7.0 * 100.0; // ~42.86%
-    assert!((progress - expected_progress).abs() < 0.01, "Progress should be ~42.86%");
+    assert!(
+        (progress - expected_progress).abs() < 0.01,
+        "Progress should be ~42.86%"
+    );
 
-    assert!(status.is_migrated("GodObjectDetector"), "GodObjectDetector should be migrated");
-    assert!(!status.is_migrated("LongMethodsDetector"), "LongMethodsDetector should not be migrated");
+    assert!(
+        status.is_migrated("GodObjectDetector"),
+        "GodObjectDetector should be migrated"
+    );
+    assert!(
+        !status.is_migrated("LongMethodsDetector"),
+        "LongMethodsDetector should not be migrated"
+    );
 
-    println!("  ✅ Migration status: {}/{} detectors ({:.1}%)",
-             status.migrated_detectors.len(), status.total_detectors, progress);
+    println!(
+        "  ✅ Migration status: {}/{} detectors ({:.1}%)",
+        status.migrated_detectors.len(),
+        status.total_detectors,
+        progress
+    );
     println!("  ✅ Remaining: {} detectors", status.remaining_count());
 }
 

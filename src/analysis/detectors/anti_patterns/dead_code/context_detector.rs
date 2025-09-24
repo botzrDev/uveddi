@@ -2,12 +2,12 @@
 //!
 //! This detector uses the new AnalysisContext interface for dead code detection.
 
+use crate::ast::SourceLanguage;
 use crate::database::models::ArchitecturalIssue;
 use crate::engine::analysis::context::AnalysisContext;
 use crate::engine::analysis::pipeline::{Detector, PipelineError};
 use crate::engine::knowledge_graph::{KnowledgeGraph, QueryBuilder};
-use crate::engine::parsing::{Symbol, SymbolKind, RelationKind};
-use crate::ast::SourceLanguage;
+use crate::engine::parsing::{RelationKind, Symbol, SymbolKind};
 use std::collections::{HashMap, HashSet};
 
 /// Dead code detector using analysis context and knowledge graph
@@ -72,13 +72,19 @@ impl ContextDeadCodeDetector {
 
         // Also check for symbol references in source code (simple text matching)
         for symbol in &context.symbols {
-            if matches!(symbol.kind, SymbolKind::Function | SymbolKind::Method | SymbolKind::Variable) {
+            if matches!(
+                symbol.kind,
+                SymbolKind::Function | SymbolKind::Method | SymbolKind::Variable
+            ) {
                 let occurrences = self.count_symbol_occurrences(&context.source, &symbol.name);
                 // Subtract 1 for the definition itself
                 let usage_count = occurrences.saturating_sub(1);
 
                 let current_count = usage_map.get(&symbol.name).unwrap_or(&0);
-                usage_map.insert(symbol.name.clone(), std::cmp::max(*current_count, usage_count));
+                usage_map.insert(
+                    symbol.name.clone(),
+                    std::cmp::max(*current_count, usage_count),
+                );
             }
         }
 
@@ -104,11 +110,9 @@ impl ContextDeadCodeDetector {
             let after_pos = absolute_pos + symbol_name.len();
             let after_char = source.chars().nth(after_pos);
 
-            let is_word_boundary = |c: Option<char>| {
-                match c {
-                    Some(ch) => !ch.is_alphanumeric() && ch != '_',
-                    None => true,
-                }
+            let is_word_boundary = |c: Option<char>| match c {
+                Some(ch) => !ch.is_alphanumeric() && ch != '_',
+                None => true,
             };
 
             if is_word_boundary(before_char) && is_word_boundary(after_char) {
@@ -130,15 +134,15 @@ impl ContextDeadCodeDetector {
                     return false;
                 }
                 true
-            },
+            }
             SymbolKind::Variable | SymbolKind::Field => {
                 // Include private variables if configured
                 self.include_private || !self.is_private_symbol(symbol)
-            },
+            }
             SymbolKind::Class | SymbolKind::Struct => {
                 // Only analyze if configured to include private symbols
                 self.include_private || !self.is_private_symbol(symbol)
-            },
+            }
             SymbolKind::Module => false, // Modules are rarely completely unused
             _ => false,
         }
@@ -151,12 +155,17 @@ impl ContextDeadCodeDetector {
     }
 
     /// Calculate confidence that a symbol is dead code
-    fn calculate_dead_code_confidence(&self, symbol: &Symbol, usage_count: usize, context: &AnalysisContext) -> f64 {
+    fn calculate_dead_code_confidence(
+        &self,
+        symbol: &Symbol,
+        usage_count: usize,
+        context: &AnalysisContext,
+    ) -> f64 {
         let mut confidence = match usage_count {
-            0 => 0.9, // High confidence for truly unused symbols
-            1 => 0.6, // Medium confidence for barely used symbols
+            0 => 0.9,     // High confidence for truly unused symbols
+            1 => 0.6,     // Medium confidence for barely used symbols
             2..=3 => 0.3, // Low confidence for occasionally used symbols
-            _ => 0.0, // No confidence for frequently used symbols
+            _ => 0.0,     // No confidence for frequently used symbols
         };
 
         // Adjust confidence based on symbol type
@@ -166,13 +175,13 @@ impl ContextDeadCodeDetector {
                 if usage_count == 0 {
                     confidence = 0.95;
                 }
-            },
+            }
             SymbolKind::Variable => {
                 // Variables should definitely be used
                 if usage_count == 0 {
                     confidence = 0.85;
                 }
-            },
+            }
             _ => {}
         }
 
@@ -182,7 +191,10 @@ impl ContextDeadCodeDetector {
         }
 
         // Reduce confidence for exports in JavaScript/TypeScript
-        if matches!(context.file_info.language, SourceLanguage::JavaScript | SourceLanguage::TypeScript) {
+        if matches!(
+            context.file_info.language,
+            SourceLanguage::JavaScript | SourceLanguage::TypeScript
+        ) {
             if context.source.contains(&format!("export {}", symbol.name)) {
                 confidence *= 0.3;
             }
@@ -194,9 +206,22 @@ impl ContextDeadCodeDetector {
     /// Determine the reason for dead code classification
     fn determine_dead_code_reason(&self, symbol: &Symbol, usage_count: usize) -> String {
         match usage_count {
-            0 => format!("{} '{}' is never used", symbol.kind.description(), symbol.name),
-            1 => format!("{} '{}' is only used once and may be unnecessary", symbol.kind.description(), symbol.name),
-            _ => format!("{} '{}' has limited usage ({})", symbol.kind.description(), symbol.name, usage_count),
+            0 => format!(
+                "{} '{}' is never used",
+                symbol.kind.description(),
+                symbol.name
+            ),
+            1 => format!(
+                "{} '{}' is only used once and may be unnecessary",
+                symbol.kind.description(),
+                symbol.name
+            ),
+            _ => format!(
+                "{} '{}' has limited usage ({})",
+                symbol.kind.description(),
+                symbol.name,
+                usage_count
+            ),
         }
     }
 }
@@ -252,14 +277,21 @@ impl Detector for ContextDeadCodeDetector {
     fn supports_language(&self, language: &SourceLanguage) -> bool {
         matches!(
             language,
-            SourceLanguage::Rust | SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript
+            SourceLanguage::Rust
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 }
 
 impl ContextDeadCodeDetector {
     /// Extract context snippet for the issue
-    fn extract_context_snippet(&self, context: &AnalysisContext, symbol: &Symbol) -> Option<String> {
+    fn extract_context_snippet(
+        &self,
+        context: &AnalysisContext,
+        symbol: &Symbol,
+    ) -> Option<String> {
         let lines: Vec<&str> = context.source.lines().collect();
         if symbol.line == 0 || symbol.line > lines.len() {
             return None;
@@ -302,7 +334,7 @@ impl SymbolKind {
 mod tests {
     use super::*;
     use crate::engine::analysis::context::{FileInfo, ProjectContext};
-    use crate::engine::parsing::{Symbol, SymbolKind, Relation, RelationKind};
+    use crate::engine::parsing::{Relation, RelationKind, Symbol, SymbolKind};
     use std::path::PathBuf;
     use std::time::SystemTime;
 
@@ -354,13 +386,11 @@ fn main() {
             },
         ];
 
-        let relations = vec![
-            Relation {
-                from: "main".to_string(),
-                to: "used_function".to_string(),
-                kind: RelationKind::Calls,
-            },
-        ];
+        let relations = vec![Relation {
+            from: "main".to_string(),
+            to: "used_function".to_string(),
+            kind: RelationKind::Calls,
+        }];
 
         let file_info = FileInfo {
             path: PathBuf::from("test.rs"),

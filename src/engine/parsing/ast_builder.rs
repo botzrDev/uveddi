@@ -8,9 +8,7 @@
 use super::{LanguageParser, ParseError, Relation, Symbol};
 use crate::ast::SourceLanguage;
 use crate::engine::parsing::parsers::{
-    javascript_parser::JavaScriptParser,
-    python_parser::PythonParser,
-    rust_parser::RustParser,
+    javascript_parser::JavaScriptParser, python_parser::PythonParser, rust_parser::RustParser,
     typescript_parser::TypeScriptParser,
 };
 use crate::security;
@@ -20,10 +18,10 @@ use std::sync::Arc;
 use tracing::{info, warn};
 
 // Tree-sitter imports with feature gate
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Parser, Tree};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Parser, Tree};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Parser, Tree};
 
 /// Parse result containing the AST and metadata
 #[derive(Debug, Clone)]
@@ -168,9 +166,7 @@ impl AstBuilder {
         let parser = self
             .parsers
             .get(&language)
-            .ok_or_else(|| {
-                ParseError::UnsupportedLanguage(language)
-            })?;
+            .ok_or_else(|| ParseError::UnsupportedLanguage(language))?;
 
         // Parse the source
         let tree = parser.parse(&source)?;
@@ -262,10 +258,7 @@ impl AstBuilder {
 
     /// Detect language from file extension
     fn detect_language(&self, file_path: &Path) -> Result<SourceLanguage, ParseError> {
-        let ext = file_path
-            .extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
+        let ext = file_path.extension().and_then(|s| s.to_str()).unwrap_or("");
 
         match ext {
             "rs" => Ok(SourceLanguage::Rust),

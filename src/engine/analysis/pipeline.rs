@@ -3,11 +3,13 @@
 //! Orchestrates detector execution with the new analysis context.
 //! Provides clear separation between business logic and AST parsing.
 
-use super::AnalysisContext;
 use super::performance::{AnalysisInstrumentation, AnalysisMetrics};
+use super::AnalysisContext;
 use crate::database::models::ArchitecturalIssue;
-use crate::engine::parsing::{ParseResult, AstBuilder, LanguageParser};
-use crate::engine::analysis::context::{FileInfo, ProjectContext, ProjectDependency, DependencySource};
+use crate::engine::analysis::context::{
+    DependencySource, FileInfo, ProjectContext, ProjectDependency,
+};
+use crate::engine::parsing::{AstBuilder, LanguageParser, ParseResult};
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
@@ -167,7 +169,7 @@ impl AnalysisPipeline {
                         let issue_count = issues.len();
                         all_issues.append(&mut issues);
                         instrumentation.record_issues_found(issue_count);
-                    },
+                    }
                     Err(e) => {
                         eprintln!("Detector {} failed: {}", detector.name(), e);
                         // Continue with other detectors

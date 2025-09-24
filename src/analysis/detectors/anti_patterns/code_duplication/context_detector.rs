@@ -2,10 +2,10 @@
 //!
 //! This detector uses the new AnalysisContext interface for duplication detection.
 
+use crate::ast::SourceLanguage;
 use crate::database::models::ArchitecturalIssue;
 use crate::engine::analysis::context::AnalysisContext;
 use crate::engine::analysis::pipeline::{Detector, PipelineError};
-use crate::ast::SourceLanguage;
 use std::collections::HashMap;
 
 /// Simple code duplication detection using context analysis
@@ -72,7 +72,8 @@ impl ContextCodeDuplicationDetector {
                 && !trimmed.starts_with("//")
                 && !trimmed.starts_with("/*")
                 && !trimmed.starts_with("*")
-                && !trimmed.starts_with("#") {
+                && !trimmed.starts_with("#")
+            {
                 significant_lines += 1;
             }
         }
@@ -85,10 +86,7 @@ impl ContextCodeDuplicationDetector {
             .lines()
             .map(|line| {
                 // Remove leading/trailing whitespace and normalize internal whitespace
-                line.trim()
-                    .split_whitespace()
-                    .collect::<Vec<_>>()
-                    .join(" ")
+                line.trim().split_whitespace().collect::<Vec<_>>().join(" ")
             })
             .filter(|line| !line.is_empty())
             .collect::<Vec<_>>()
@@ -113,7 +111,10 @@ impl ContextCodeDuplicationDetector {
 
         // Use Levenshtein distance for similarity
         let distance = levenshtein_distance(&block1.normalized_content, &block2.normalized_content);
-        let max_len = std::cmp::max(block1.normalized_content.len(), block2.normalized_content.len());
+        let max_len = std::cmp::max(
+            block1.normalized_content.len(),
+            block2.normalized_content.len(),
+        );
 
         if max_len == 0 {
             return 1.0;

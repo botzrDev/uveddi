@@ -4,13 +4,15 @@
 //! Migrated from tree_sitter_impl.rs with enhanced TypeScript-specific logic.
 
 use crate::ast::SourceLanguage;
-use crate::engine::parsing::{LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind};
+use crate::engine::parsing::{
+    LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind,
+};
 use std::sync::Mutex;
 
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Parser, Tree};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Parser, Tree};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Parser, Tree};
 
 /// TypeScript-specific parser implementation
 pub struct TypeScriptParser {
@@ -28,20 +30,32 @@ impl TypeScriptParser {
                 // Try TSX first for broader compatibility, fallback to TypeScript
                 let tsx_result = parser.set_language(&tree_sitter_typescript::LANGUAGE_TSX.into());
                 if tsx_result.is_err() {
-                    parser.set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
-                        .map_err(|e| ParseError::ParseFailed(format!("Failed to set TypeScript language: {}", e)))?;
+                    parser
+                        .set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
+                        .map_err(|e| {
+                            ParseError::ParseFailed(format!(
+                                "Failed to set TypeScript language: {}",
+                                e
+                            ))
+                        })?;
                 }
-                Ok(Self { parser: Mutex::new(parser) })
+                Ok(Self {
+                    parser: Mutex::new(parser),
+                })
             }
             #[cfg(not(feature = "typescript-lang"))]
             {
-                Err(ParseError::ParseFailed("TypeScript language support not enabled".to_string()))
+                Err(ParseError::ParseFailed(
+                    "TypeScript language support not enabled".to_string(),
+                ))
             }
         }
         #[cfg(not(feature = "tree-sitter"))]
         {
             let parser = Parser::new();
-            Ok(Self { parser: Mutex::new(parser) })
+            Ok(Self {
+                parser: Mutex::new(parser),
+            })
         }
     }
 }
@@ -54,13 +68,12 @@ impl LanguageParser for TypeScriptParser {
     fn parse(&self, source: &str) -> Result<Tree, ParseError> {
         #[cfg(feature = "tree-sitter")]
         {
-            let mut parser = self
-                .parser
-                .lock()
-                .map_err(|_| ParseError::ParseFailed("TypeScript parser lock poisoned".to_string()))?;
-            parser
-                .parse(source, None)
-                .ok_or_else(|| ParseError::ParseFailed("Failed to parse TypeScript source".to_string()))
+            let mut parser = self.parser.lock().map_err(|_| {
+                ParseError::ParseFailed("TypeScript parser lock poisoned".to_string())
+            })?;
+            parser.parse(source, None).ok_or_else(|| {
+                ParseError::ParseFailed("Failed to parse TypeScript source".to_string())
+            })
         }
         #[cfg(not(feature = "tree-sitter"))]
         {

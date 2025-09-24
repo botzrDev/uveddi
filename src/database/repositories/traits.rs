@@ -55,6 +55,12 @@ pub trait ProjectRepository: Repository<Entity = Project> {
 
     /// Update project last accessed time
     async fn update_last_accessed(&self, id: i64) -> RepositoryResult<()>;
+
+    /// Get or create project ID for a path (backward compatibility)
+    async fn get_or_create_project_id(
+        &self,
+        project_path: &std::path::Path,
+    ) -> RepositoryResult<i64>;
 }
 
 /// Repository for AnalysisRun entities
@@ -82,6 +88,9 @@ pub trait AnalysisRepository: Repository<Entity = AnalysisRun> {
 
     /// Create a new analysis run for a project path
     async fn create_for_path(&self, project_path: &Path) -> RepositoryResult<AnalysisRun>;
+
+    /// Create a new analysis run for a project ID (backward compatibility)
+    async fn create_analysis_run(&self, project_id: i64) -> RepositoryResult<AnalysisRun>;
 }
 
 /// Repository for CacheEntry entities

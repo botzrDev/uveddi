@@ -7,8 +7,8 @@
 use crate::analysis::{plugin_detector_adapter::PluginDetectorManager, AnalysisEngine};
 use crate::application::plugin_manager::{ApplicationPluginManager, PluginManagerConfig};
 use crate::database::{
-    create_repository_factory, Database, DatabaseConfig, DatabaseType, RepositoryManager,
-    connection::ConnectionManager,
+    connection::ConnectionManager, create_repository_factory, Database, DatabaseConfig,
+    DatabaseType, RepositoryManager,
 };
 use crate::error::UveddiError;
 use crate::plugins::{PluginRuntime, RuntimeFactory};

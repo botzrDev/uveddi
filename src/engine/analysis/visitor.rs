@@ -4,10 +4,10 @@
 //! Implements the visitor pattern for tree-sitter nodes.
 
 // Tree-sitter imports with feature gate
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Node, Tree};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Node, Tree};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Node, Tree};
 
 /// Result of visiting a node
 #[derive(Debug, PartialEq)]
@@ -118,9 +118,7 @@ pub struct BaseVisitor {
 impl BaseVisitor {
     /// Create a new base visitor
     pub fn new() -> Self {
-        Self {
-            issues: Vec::new(),
-        }
+        Self { issues: Vec::new() }
     }
 
     /// Add an issue to the collection

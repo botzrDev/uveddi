@@ -5,15 +5,13 @@
 #[cfg(feature = "engine-integration")]
 #[cfg(test)]
 mod tests {
-    use super::super::analysis::{
-        AnalysisContext, AnalysisPipeline, ContextDetectorFactory
-    };
     use super::super::analysis::context::{FileInfo, ProjectContext};
-    use super::super::parsing::{AstBuilder, Symbol, SymbolKind, Relation, RelationKind};
+    use super::super::analysis::{AnalysisContext, AnalysisPipeline, ContextDetectorFactory};
+    use super::super::parsing::{AstBuilder, Relation, RelationKind, Symbol, SymbolKind};
     use crate::ast::SourceLanguage;
     use std::path::PathBuf;
-    use std::time::SystemTime;
     use std::sync::Arc;
+    use std::time::SystemTime;
 
     fn create_test_context() -> AnalysisContext {
         let source = r#"
@@ -153,13 +151,11 @@ fn main() {
             },
         ];
 
-        let relations = vec![
-            Relation {
-                from: "main".to_string(),
-                to: "used_function".to_string(),
-                kind: RelationKind::Calls,
-            },
-        ];
+        let relations = vec![Relation {
+            from: "main".to_string(),
+            to: "used_function".to_string(),
+            kind: RelationKind::Calls,
+        }];
 
         let file_info = FileInfo {
             path: PathBuf::from("test.rs"),
@@ -193,11 +189,11 @@ fn main() {
         let pipeline = Arc::new(AnalysisPipeline::new(ast_builder));
         let factory = ContextDetectorFactory::new(pipeline);
 
-        let god_detector = factory.create_context_detector("context_god_object")
+        let god_detector = factory
+            .create_context_detector("context_god_object")
             .expect("Failed to create god object detector");
 
-        let issues = god_detector.detect(&context)
-            .expect("Detection failed");
+        let issues = god_detector.detect(&context).expect("Detection failed");
 
         // Should detect TestStruct as a god object (7 methods + 10 fields)
         assert!(!issues.is_empty(), "Should detect god object");
@@ -212,15 +208,18 @@ fn main() {
         let pipeline = Arc::new(AnalysisPipeline::new(ast_builder));
         let factory = ContextDetectorFactory::new(pipeline);
 
-        let dead_code_detector = factory.create_context_detector("context_dead_code")
+        let dead_code_detector = factory
+            .create_context_detector("context_dead_code")
             .expect("Failed to create dead code detector");
 
-        let issues = dead_code_detector.detect(&context)
+        let issues = dead_code_detector
+            .detect(&context)
             .expect("Detection failed");
 
         // Should detect unused_function as dead code
         assert!(!issues.is_empty(), "Should detect dead code");
-        let unused_issue = issues.iter()
+        let unused_issue = issues
+            .iter()
             .find(|issue| issue.description.contains("unused_function"));
         assert!(unused_issue.is_some(), "Should find unused_function issue");
     }
@@ -232,10 +231,12 @@ fn main() {
         let pipeline = Arc::new(AnalysisPipeline::new(ast_builder));
         let factory = ContextDetectorFactory::new(pipeline);
 
-        let duplication_detector = factory.create_context_detector("context_code_duplication")
+        let duplication_detector = factory
+            .create_context_detector("context_code_duplication")
             .expect("Failed to create code duplication detector");
 
-        let issues = duplication_detector.detect(&context)
+        let issues = duplication_detector
+            .detect(&context)
             .expect("Detection failed");
 
         // This test code doesn't have significant duplication, so issues may be empty
@@ -247,29 +248,47 @@ fn main() {
         let context = create_test_context();
         let ast_builder = Arc::new(AstBuilder::new().expect("Failed to create AstBuilder"));
         let pipeline = Arc::new(
-            AnalysisPipeline::new(ast_builder.clone())
-                .with_performance_instrumentation(true)
+            AnalysisPipeline::new(ast_builder.clone()).with_performance_instrumentation(true),
         );
         let factory = ContextDetectorFactory::new(pipeline.clone());
 
         // Create pipeline with all context detectors
         let analysis_pipeline = AnalysisPipeline::new(ast_builder)
             .with_performance_instrumentation(true)
-            .with_detector(factory.create_context_detector("context_god_object").unwrap())
-            .with_detector(factory.create_context_detector("context_code_duplication").unwrap())
-            .with_detector(factory.create_context_detector("context_dead_code").unwrap());
+            .with_detector(
+                factory
+                    .create_context_detector("context_god_object")
+                    .unwrap(),
+            )
+            .with_detector(
+                factory
+                    .create_context_detector("context_code_duplication")
+                    .unwrap(),
+            )
+            .with_detector(
+                factory
+                    .create_context_detector("context_dead_code")
+                    .unwrap(),
+            );
 
-        let result = analysis_pipeline.analyze(context)
+        let result = analysis_pipeline
+            .analyze(context)
             .expect("Pipeline analysis failed");
 
         // Should have some issues
         assert!(!result.issues.is_empty(), "Pipeline should detect issues");
 
         // Should have performance metrics
-        assert!(result.performance_metrics.is_some(), "Should have performance metrics");
+        assert!(
+            result.performance_metrics.is_some(),
+            "Should have performance metrics"
+        );
         let metrics = result.performance_metrics.unwrap();
         assert!(metrics.files_processed > 0, "Should have processed files");
-        assert!(metrics.detector_times.len() > 0, "Should have detector timing data");
+        assert!(
+            metrics.detector_times.len() > 0,
+            "Should have detector timing data"
+        );
     }
 
     #[test]
@@ -282,13 +301,25 @@ fn main() {
 
         assert!(status.total_detectors > 0, "Should have total detectors");
         assert!(status.migrated_count > 0, "Should have migrated detectors");
-        assert!(status.migrated_count <= status.total_detectors, "Migrated should not exceed total");
+        assert!(
+            status.migrated_count <= status.total_detectors,
+            "Migrated should not exceed total"
+        );
         assert!(status.progress_percentage() > 0.0, "Should have progress");
-        assert!(status.progress_percentage() <= 100.0, "Progress should not exceed 100%");
+        assert!(
+            status.progress_percentage() <= 100.0,
+            "Progress should not exceed 100%"
+        );
 
         // Check specific migrated detectors
-        assert!(status.migrated_detectors.contains(&"GodObjectDetector".to_string()));
-        assert!(status.migrated_detectors.contains(&"CodeDuplicationDetector".to_string()));
-        assert!(status.migrated_detectors.contains(&"DeadCodeDetector".to_string()));
+        assert!(status
+            .migrated_detectors
+            .contains(&"GodObjectDetector".to_string()));
+        assert!(status
+            .migrated_detectors
+            .contains(&"CodeDuplicationDetector".to_string()));
+        assert!(status
+            .migrated_detectors
+            .contains(&"DeadCodeDetector".to_string()));
     }
 }

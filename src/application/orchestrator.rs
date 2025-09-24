@@ -8,8 +8,8 @@ use crate::analysis::AnalysisEngine;
 use crate::core::logging::{debug, error, info, warn};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::database::{
-    create_repository_factory, Database, DatabaseConfig, DatabaseType, RepositoryManager,
-    connection::ConnectionManager,
+    connection::ConnectionManager, create_repository_factory, Database, DatabaseConfig,
+    DatabaseType, RepositoryManager,
 };
 use crate::error::UveddiError;
 use crate::resource_management::{ResourceConfig, ResourceManager};
@@ -73,7 +73,9 @@ impl AnalysisOrchestrator {
 
         let connection_manager = ConnectionManager::new(config.clone())
             .context("Failed to create connection manager")?;
-        let connection_pool = connection_manager.create_pool().await
+        let connection_pool = connection_manager
+            .create_pool()
+            .await
             .context("Failed to create connection pool")?;
         let repository_factory = create_repository_factory(connection_pool)
             .context("Failed to create repository factory")?;
@@ -96,7 +98,9 @@ impl AnalysisOrchestrator {
 
         let connection_manager = ConnectionManager::new(config.clone())
             .context("Failed to create connection manager")?;
-        let connection_pool = connection_manager.create_pool().await
+        let connection_pool = connection_manager
+            .create_pool()
+            .await
             .context("Failed to create connection pool")?;
         let repository_factory = create_repository_factory(connection_pool)
             .context("Failed to create repository factory")?;
@@ -130,7 +134,9 @@ impl AnalysisOrchestrator {
 
         let connection_manager = ConnectionManager::new(config.clone())
             .context("Failed to create connection manager")?;
-        let connection_pool = connection_manager.create_pool().await
+        let connection_pool = connection_manager
+            .create_pool()
+            .await
             .context("Failed to create connection pool")?;
         let repository_factory = create_repository_factory(connection_pool)
             .context("Failed to create repository factory")?;

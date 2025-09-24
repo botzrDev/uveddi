@@ -3,14 +3,14 @@
 //! This detector uses the new AnalysisContext interface and pipeline integration.
 //! It demonstrates migration from the legacy ParsedFile interface.
 
+use super::config::GodObjectConfig;
+use super::detector::{ComplexityMetrics, DetectedPattern};
+use crate::ast::SourceLanguage;
 use crate::database::models::ArchitecturalIssue;
 use crate::engine::analysis::context::AnalysisContext;
 use crate::engine::analysis::pipeline::{Detector, PipelineError};
 use crate::engine::knowledge_graph::{KnowledgeGraph, QueryBuilder};
 use crate::engine::parsing::{Symbol, SymbolKind};
-use crate::ast::SourceLanguage;
-use super::config::GodObjectConfig;
-use super::detector::{ComplexityMetrics, DetectedPattern};
 
 /// God Object detector using the new analysis context
 pub struct ContextGodObjectDetector {
@@ -37,7 +37,10 @@ impl ContextGodObjectDetector {
         symbol: &Symbol,
     ) -> Result<Option<ArchitecturalIssue>, PipelineError> {
         // Skip if not a class/struct/module symbol
-        if !matches!(symbol.kind, SymbolKind::Class | SymbolKind::Struct | SymbolKind::Module) {
+        if !matches!(
+            symbol.kind,
+            SymbolKind::Class | SymbolKind::Struct | SymbolKind::Module
+        ) {
             return Ok(None);
         }
 
@@ -45,8 +48,12 @@ impl ContextGodObjectDetector {
         let metrics = self.calculate_metrics_from_context(context, symbol)?;
 
         // Get language-specific thresholds
-        let method_threshold = self.config.get_method_threshold(context.file_info.language.clone());
-        let field_threshold = self.config.get_field_threshold(context.file_info.language.clone());
+        let method_threshold = self
+            .config
+            .get_method_threshold(context.file_info.language.clone());
+        let field_threshold = self
+            .config
+            .get_field_threshold(context.file_info.language.clone());
 
         // Check thresholds
         let exceeds_method_threshold = metrics.method_count > method_threshold;
@@ -105,10 +112,10 @@ impl ContextGodObjectDetector {
                         } else {
                             metrics.trivial_methods += 1;
                         }
-                    },
+                    }
                     SymbolKind::Field | SymbolKind::Variable => {
                         metrics.field_count += 1;
-                    },
+                    }
                     _ => {}
                 }
             }
@@ -174,7 +181,10 @@ impl Detector for ContextGodObjectDetector {
     fn supports_language(&self, language: &SourceLanguage) -> bool {
         matches!(
             language,
-            SourceLanguage::Rust | SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript
+            SourceLanguage::Rust
+                | SourceLanguage::Python
+                | SourceLanguage::JavaScript
+                | SourceLanguage::TypeScript
         )
     }
 }
@@ -183,7 +193,7 @@ impl Detector for ContextGodObjectDetector {
 mod tests {
     use super::*;
     use crate::engine::analysis::context::{FileInfo, ProjectContext};
-    use crate::engine::parsing::{Symbol, SymbolKind, Relation, RelationKind};
+    use crate::engine::parsing::{Relation, RelationKind, Symbol, SymbolKind};
     use std::path::PathBuf;
     use std::time::SystemTime;
 

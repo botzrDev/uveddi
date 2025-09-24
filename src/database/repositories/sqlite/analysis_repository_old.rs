@@ -9,7 +9,7 @@ use crate::database::connection::pool::ConnectionPool;
 use crate::database::models::AnalysisRun;
 use crate::database::repositories::traits::{Repository, AnalysisRepository};
 use crate::database::repositories::sqlite::project_repository::SqliteProjectRepository;
-use crate::error::{Result, UveddiError};
+use crate::database::repositories::errors::{RepositoryError, RepositoryResult};
 
 pub struct SqliteAnalysisRepository {
     pool: Arc<ConnectionPool>,
@@ -25,7 +25,7 @@ impl SqliteAnalysisRepository {
 impl Repository for SqliteAnalysisRepository {
     type Entity = AnalysisRun;
 
-    async fn find_by_id(&self, id: i64) -> Result<Option<Self::Entity>> {
+    async fn find_by_id(&self, id: i64) -> RepositoryResult<Option<Self::Entity>> {
         let conn = self.pool.get_connection().await?;
 
         let mut stmt = conn.prepare(
@@ -39,13 +39,13 @@ impl Repository for SqliteAnalysisRepository {
                 run_id: Some(row.get(0)?),
                 project_id: row.get(1)?,
                 start_time: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map_err(|e| UveddiError::database_error_msg(&format!("Invalid start_time: {}", e)))?
+                    .map_err(|e| RepositoryError::Runtime(&format!("Invalid start_time: {}", e)))?
                     .with_timezone(&Utc),
                 end_time: {
                     let end_time_str: Option<String> = row.get(3)?;
                     match end_time_str {
                         Some(s) => Some(DateTime::parse_from_rfc3339(&s)
-                            .map_err(|e| UveddiError::database_error_msg(&format!("Invalid end_time: {}", e)))?
+                            .map_err(|e| RepositoryError::Runtime(&format!("Invalid end_time: {}", e)))?
                             .with_timezone(&Utc)),
                         None => None,
                     }
@@ -64,7 +64,7 @@ impl Repository for SqliteAnalysisRepository {
         }
     }
 
-    async fn find_all(&self) -> Result<Vec<Self::Entity>> {
+    async fn find_all(&self) -> RepositoryResult<Vec<Self::Entity>> {
         let conn = self.pool.get_connection().await?;
 
         let mut stmt = conn.prepare(
@@ -114,7 +114,7 @@ impl Repository for SqliteAnalysisRepository {
         Ok(analysis_runs)
     }
 
-    async fn save(&self, entity: &Self::Entity) -> Result<Self::Entity> {
+    async fn save(&self, entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         let conn = self.pool.get_connection().await?;
 
         let end_time_str = entity.end_time.map(|dt| dt.to_rfc3339());
@@ -150,9 +150,9 @@ impl Repository for SqliteAnalysisRepository {
         Ok(saved_run)
     }
 
-    async fn update(&self, entity: &Self::Entity) -> Result<Self::Entity> {
+    async fn update(&self, entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         let id = entity.run_id.ok_or_else(|| {
-            UveddiError::database_error_msg("Cannot update analysis run without ID")
+            RepositoryError::Runtime("Cannot update analysis run without ID")
         })?;
 
         let conn = self.pool.get_connection().await?;
@@ -175,7 +175,7 @@ impl Repository for SqliteAnalysisRepository {
 
         if rows_affected == 0 {
             self.pool.return_connection(conn).await?;
-            return Err(UveddiError::database_error_msg("Analysis run not found for update"));
+            return Err(RepositoryError::Runtime("Analysis run not found for update"));
         }
 
         let updated_run = entity.clone();
@@ -183,7 +183,7 @@ impl Repository for SqliteAnalysisRepository {
         Ok(updated_run)
     }
 
-    async fn delete(&self, id: i64) -> Result<bool> {
+    async fn delete(&self, id: i64) -> RepositoryResult<bool> {
         let conn = self.pool.get_connection().await?;
 
         let rows_affected = conn.execute(
@@ -196,7 +196,7 @@ impl Repository for SqliteAnalysisRepository {
         Ok(deleted)
     }
 
-    async fn count(&self) -> Result<usize> {
+    async fn count(&self) -> RepositoryResult<usize> {
         let conn = self.pool.get_connection().await?;
 
         let mut stmt = conn.prepare("SELECT COUNT(*) FROM analysis_runs")?;
@@ -209,7 +209,7 @@ impl Repository for SqliteAnalysisRepository {
 
 #[async_trait]
 impl AnalysisRepository for SqliteAnalysisRepository {
-    async fn find_by_project(&self, project_id: i64) -> Result<Vec<AnalysisRun>> {
+    async fn find_by_project(&self, project_id: i64) -> RepositoryResult<Vec<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
         let mut stmt = conn.prepare(
@@ -259,7 +259,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
         Ok(analysis_runs)
     }
 
-    async fn find_latest(&self, project_id: i64) -> Result<Option<AnalysisRun>> {
+    async fn find_latest(&self, project_id: i64) -> RepositoryResult<Option<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
         let mut stmt = conn.prepare(
@@ -273,13 +273,13 @@ impl AnalysisRepository for SqliteAnalysisRepository {
                 run_id: Some(row.get(0)?),
                 project_id: row.get(1)?,
                 start_time: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map_err(|e| UveddiError::database_error_msg(&format!("Invalid start_time: {}", e)))?
+                    .map_err(|e| RepositoryError::Runtime(&format!("Invalid start_time: {}", e)))?
                     .with_timezone(&Utc),
                 end_time: {
                     let end_time_str: Option<String> = row.get(3)?;
                     match end_time_str {
                         Some(s) => Some(DateTime::parse_from_rfc3339(&s)
-                            .map_err(|e| UveddiError::database_error_msg(&format!("Invalid end_time: {}", e)))?
+                            .map_err(|e| RepositoryError::Runtime(&format!("Invalid end_time: {}", e)))?
                             .with_timezone(&Utc)),
                         None => None,
                     }
@@ -298,7 +298,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
         }
     }
 
-    async fn find_recent(&self, limit: usize) -> Result<Vec<AnalysisRun>> {
+    async fn find_recent(&self, limit: usize) -> RepositoryResult<Vec<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
         let mut stmt = conn.prepare(
@@ -353,7 +353,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
         project_id: Option<i64>,
         start: DateTime<Utc>,
         end: DateTime<Utc>,
-    ) -> Result<Vec<AnalysisRun>> {
+    ) -> RepositoryResult<Vec<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
         let (query, analysis_runs) = match project_id {
@@ -451,7 +451,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
         Ok(analysis_runs)
     }
 
-    async fn update_status(&self, id: i64, status: String) -> Result<()> {
+    async fn update_status(&self, id: i64, status: String) -> RepositoryResult<()> {
         let conn = self.pool.get_connection().await?;
 
         let rows_affected = conn.execute(
@@ -461,14 +461,14 @@ impl AnalysisRepository for SqliteAnalysisRepository {
 
         if rows_affected == 0 {
             self.pool.return_connection(conn).await?;
-            return Err(UveddiError::database_error_msg("Analysis run not found for status update"));
+            return Err(RepositoryError::Runtime("Analysis run not found for status update"));
         }
 
         self.pool.return_connection(conn).await?;
         Ok(())
     }
 
-    async fn create_for_path(&self, project_path: &Path) -> Result<AnalysisRun> {
+    async fn create_for_path(&self, project_path: &Path) -> RepositoryResult<AnalysisRun> {
         // Use the project repository to get or create project ID
         let project_repo = SqliteProjectRepository::new(self.pool.clone());
         let project_id = project_repo.get_or_create_project_id(project_path).await?;

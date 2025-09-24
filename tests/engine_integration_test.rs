@@ -159,33 +159,36 @@ mod integration_tests {
             },
         ];
 
-        let relations = vec![
-            Relation {
-                from: "main".to_string(),
-                to: "used_function".to_string(),
-                kind: RelationKind::Calls,
-            },
-        ];
+        let relations = vec![Relation {
+            from: "main".to_string(),
+            to: "used_function".to_string(),
+            kind: RelationKind::Calls,
+        }];
 
         // Verify basic structure
         assert_eq!(symbols.len(), 9);
         assert_eq!(relations.len(), 1);
 
         // Count methods in LargeClass
-        let methods_in_large_class = symbols.iter()
+        let methods_in_large_class = symbols
+            .iter()
             .filter(|s| s.parent == Some("LargeClass".to_string()) && s.kind == SymbolKind::Method)
             .count();
 
-        assert_eq!(methods_in_large_class, 6, "Should have 6 methods in LargeClass");
+        assert_eq!(
+            methods_in_large_class, 6,
+            "Should have 6 methods in LargeClass"
+        );
 
         // Verify unused function is not referenced in relations
-        let unused_referenced = relations.iter()
-            .any(|r| r.to == "unused_function");
-        assert!(!unused_referenced, "unused_function should not be referenced");
+        let unused_referenced = relations.iter().any(|r| r.to == "unused_function");
+        assert!(
+            !unused_referenced,
+            "unused_function should not be referenced"
+        );
 
         // Verify used function is referenced
-        let used_referenced = relations.iter()
-            .any(|r| r.to == "used_function");
+        let used_referenced = relations.iter().any(|r| r.to == "used_function");
         assert!(used_referenced, "used_function should be referenced");
 
         println!("✅ Detector migration concept test passed");
@@ -233,25 +236,31 @@ mod integration_tests {
         let mut graph = MockKnowledgeGraph::new();
 
         // Add nodes
-        graph.add_node("main".to_string(), Symbol {
-            name: "main".to_string(),
-            kind: SymbolKind::Function,
-            line: 1,
-            column: 0,
-            end_line: 5,
-            end_column: 1,
-            parent: None,
-        });
+        graph.add_node(
+            "main".to_string(),
+            Symbol {
+                name: "main".to_string(),
+                kind: SymbolKind::Function,
+                line: 1,
+                column: 0,
+                end_line: 5,
+                end_column: 1,
+                parent: None,
+            },
+        );
 
-        graph.add_node("helper".to_string(), Symbol {
-            name: "helper".to_string(),
-            kind: SymbolKind::Function,
-            line: 7,
-            column: 0,
-            end_line: 10,
-            end_column: 1,
-            parent: None,
-        });
+        graph.add_node(
+            "helper".to_string(),
+            Symbol {
+                name: "helper".to_string(),
+                kind: SymbolKind::Function,
+                line: 7,
+                column: 0,
+                end_line: 10,
+                end_column: 1,
+                parent: None,
+            },
+        );
 
         // Add relationship
         graph.add_edge("main".to_string(), "helper".to_string());
@@ -269,8 +278,8 @@ mod integration_tests {
 
     #[test]
     fn test_performance_instrumentation_concept() {
-        use std::time::Instant;
         use std::collections::HashMap;
+        use std::time::Instant;
 
         #[derive(Debug)]
         struct MockPerformanceMetrics {
@@ -289,7 +298,8 @@ mod integration_tests {
             }
 
             fn record_detector_time(&mut self, detector_name: &str, duration: std::time::Duration) {
-                self.detector_times.insert(detector_name.to_string(), duration);
+                self.detector_times
+                    .insert(detector_name.to_string(), duration);
             }
 
             fn record_file(&mut self) {
@@ -367,7 +377,8 @@ mod integration_tests {
             }
 
             fn remaining_count(&self) -> usize {
-                self.total_detectors.saturating_sub(self.migrated_detectors.len())
+                self.total_detectors
+                    .saturating_sub(self.migrated_detectors.len())
             }
         }
 

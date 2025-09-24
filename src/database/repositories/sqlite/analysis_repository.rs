@@ -449,8 +449,23 @@ impl AnalysisRepository for SqliteAnalysisRepository {
             start_time: Utc::now(),
             end_time: None,
             status: "pending".to_string(),
-            total_files_analyzed: 0,
-            total_issues_found: 0,
+            total_files_analyzed: Some(0),
+            total_issues_found: Some(0),
+            analysis_config: "{}".to_string(),
+        };
+
+        self.save(&new_run).await
+    }
+
+    async fn create_analysis_run(&self, project_id: i64) -> RepositoryResult<AnalysisRun> {
+        let new_run = AnalysisRun {
+            run_id: None,
+            project_id,
+            start_time: Utc::now(),
+            end_time: None,
+            status: "pending".to_string(),
+            total_files_analyzed: Some(0),
+            total_issues_found: Some(0),
             analysis_config: "{}".to_string(),
         };
 

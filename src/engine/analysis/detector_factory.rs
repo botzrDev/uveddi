@@ -2,13 +2,13 @@
 //!
 //! Factory for creating new context-aware detectors alongside legacy detector adapters.
 
-use crate::ast::compatibility_shim::DetectorAdapter;
+use super::pipeline::{AnalysisPipeline, Detector};
 use crate::analysis::detector_factory::DetectorFactory as LegacyFactory;
-use crate::analysis::detectors::anti_patterns::god_object::context_detector::ContextGodObjectDetector;
 use crate::analysis::detectors::anti_patterns::code_duplication::context_detector::ContextCodeDuplicationDetector;
 use crate::analysis::detectors::anti_patterns::dead_code::context_detector::ContextDeadCodeDetector;
+use crate::analysis::detectors::anti_patterns::god_object::context_detector::ContextGodObjectDetector;
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectConfig;
-use super::pipeline::{Detector, AnalysisPipeline};
+use crate::ast::compatibility_shim::DetectorAdapter;
 use std::sync::Arc;
 
 /// Factory for creating both new context detectors and legacy detector adapters
@@ -73,7 +73,7 @@ impl ContextDetectorFactory {
                 "GodObjectDetector" | "CodeDuplicationDetector" | "DeadCodeDetector" => {
                     // Skip - we have context versions
                     continue;
-                },
+                }
                 _ => {
                     // Include legacy detector via adapter
                     let adapter = DetectorAdapter::new(legacy_detector, self.pipeline.clone());

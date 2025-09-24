@@ -3,10 +3,10 @@
 //! This module defines models for caching system used by the analysis engine
 //! to store and retrieve parsed ASTs and analysis results.
 
+use base64::Engine;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use base64::Engine;
 
 /// Database record for cache entries
 ///

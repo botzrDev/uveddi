@@ -4,13 +4,15 @@
 //! Migrated from tree_sitter_impl.rs with language-specific logic.
 
 use crate::ast::SourceLanguage;
-use crate::engine::parsing::{LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind};
+use crate::engine::parsing::{
+    LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind,
+};
 use std::sync::Mutex;
 
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Parser, Tree};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Parser, Tree};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Parser, Tree};
 
 /// Python-specific parser implementation
 pub struct PythonParser {
@@ -25,19 +27,28 @@ impl PythonParser {
             #[cfg(feature = "python-lang")]
             {
                 let mut parser = Parser::new();
-                parser.set_language(&tree_sitter_python::LANGUAGE.into())
-                    .map_err(|e| ParseError::ParseFailed(format!("Failed to set Python language: {}", e)))?;
-                Ok(Self { parser: Mutex::new(parser) })
+                parser
+                    .set_language(&tree_sitter_python::LANGUAGE.into())
+                    .map_err(|e| {
+                        ParseError::ParseFailed(format!("Failed to set Python language: {}", e))
+                    })?;
+                Ok(Self {
+                    parser: Mutex::new(parser),
+                })
             }
             #[cfg(not(feature = "python-lang"))]
             {
-                Err(ParseError::ParseFailed("Python language support not enabled".to_string()))
+                Err(ParseError::ParseFailed(
+                    "Python language support not enabled".to_string(),
+                ))
             }
         }
         #[cfg(not(feature = "tree-sitter"))]
         {
             let parser = Parser::new();
-            Ok(Self { parser: Mutex::new(parser) })
+            Ok(Self {
+                parser: Mutex::new(parser),
+            })
         }
     }
 }

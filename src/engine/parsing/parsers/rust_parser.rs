@@ -4,13 +4,15 @@
 //! Migrated from tree_sitter_impl.rs with language-specific logic.
 
 use crate::ast::SourceLanguage;
-use crate::engine::parsing::{LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind};
+use crate::engine::parsing::{
+    LanguageParser, ParseError, Relation, RelationKind, Symbol, SymbolKind,
+};
 use std::sync::Mutex;
 
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Parser, Tree};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Parser, Tree};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Parser, Tree};
 
 /// Rust-specific parser implementation
 pub struct RustParser {
@@ -25,20 +27,29 @@ impl RustParser {
             #[cfg(feature = "rust-lang")]
             {
                 let mut parser = Parser::new();
-                parser.set_language(&tree_sitter_rust::LANGUAGE.into())
-                    .map_err(|e| ParseError::ParseFailed(format!("Failed to set Rust language: {}", e)))?;
-                Ok(Self { parser: Mutex::new(parser) })
+                parser
+                    .set_language(&tree_sitter_rust::LANGUAGE.into())
+                    .map_err(|e| {
+                        ParseError::ParseFailed(format!("Failed to set Rust language: {}", e))
+                    })?;
+                Ok(Self {
+                    parser: Mutex::new(parser),
+                })
             }
             #[cfg(not(feature = "rust-lang"))]
             {
-                Err(ParseError::ParseFailed("Rust language support not enabled".to_string()))
+                Err(ParseError::ParseFailed(
+                    "Rust language support not enabled".to_string(),
+                ))
             }
         }
         #[cfg(not(feature = "tree-sitter"))]
         {
             // Use stub parser when tree-sitter feature is disabled
             let parser = Parser::new();
-            Ok(Self { parser: Mutex::new(parser) })
+            Ok(Self {
+                parser: Mutex::new(parser),
+            })
         }
     }
 }
@@ -172,7 +183,7 @@ impl LanguageParser for RustParser {
                         if let Some(type_node) = child.child_by_field_name("type") {
                             if let (Ok(trait_name), Ok(type_name)) = (
                                 trait_node.utf8_text(source.as_bytes()),
-                                type_node.utf8_text(source.as_bytes())
+                                type_node.utf8_text(source.as_bytes()),
                             ) {
                                 relations.push(Relation {
                                     from: type_name.to_string(),

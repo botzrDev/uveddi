@@ -7,10 +7,10 @@ use crate::engine::parsing::{Relation, Symbol};
 use std::path::PathBuf;
 
 // Tree-sitter imports with feature gate
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::Tree;
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::Tree;
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::Tree;
 
 /// Comprehensive analysis context for detectors
 #[derive(Debug)]
