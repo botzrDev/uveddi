@@ -122,7 +122,7 @@ pub async fn list_projects_repository(
     };
 
     info!("Successfully fetched {} projects using repository pattern", response.total);
-    Ok(Json(response))
+    Ok(Json(response).into_response())
 }
 
 /// Legacy implementation for backward compatibility
@@ -135,7 +135,7 @@ async fn list_projects_legacy(
         total: 0,
         projects: vec![],
     };
-    Ok(Json(response))
+    Ok(Json(response).into_response())
 }
 
 /// Get a specific project by ID using repository pattern
@@ -196,7 +196,7 @@ pub async fn get_project_repository(
             });
 
             info!("Successfully fetched project {} using repository pattern", project_id);
-            Ok(Json(response))
+            Ok(Json(response).into_response())
         }
         Ok(None) => {
             error!("Project {} not found", project_id);

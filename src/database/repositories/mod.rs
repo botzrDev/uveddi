@@ -3,6 +3,7 @@
 //! This module provides the repository abstraction layer that separates
 //! business logic from data access logic, following clean architecture principles.
 
+pub mod errors;
 pub mod traits;
 pub mod sqlite;
 pub mod factory;
@@ -23,12 +24,13 @@ pub use sqlite::{
 // Re-export factory implementations
 pub use factory::{SqliteRepositoryFactory, RepositoryManager};
 
-use crate::error::Result;
+// Re-export error types
+pub use errors::{RepositoryError, RepositoryResult};
 use std::sync::Arc;
 
 /// Create a repository factory based on the database configuration
 pub fn create_repository_factory(
     pool: Arc<crate::database::connection::pool::ConnectionPool>,
-) -> Result<Box<dyn RepositoryFactory>> {
+) -> RepositoryResult<Box<dyn RepositoryFactory>> {
     Ok(Box::new(SqliteRepositoryFactory::new(pool)))
 }

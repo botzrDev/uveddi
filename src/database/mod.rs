@@ -233,9 +233,13 @@ pub mod scalable_manager;
 
 // Re-export core functionality
 pub use self::crud::Database;
+// Re-export new migration system
 pub use self::migrations::{
-    Migration, MigrationManager as LegacyMigrationManager, MigrationStatus,
+    Migration, MigrationRegistry, MigrationRecord, MigrationResult, create_standard_registry
 };
+
+// Re-export migration runner
+pub use self::migrations::runner::MigrationRunner;
 
 // Re-export connection infrastructure
 pub use self::connection::{
@@ -250,7 +254,7 @@ pub use self::connection::providers::PostgreSqlProvider;
 
 // Re-export new scalability features
 pub use self::config_manager::{DatabaseConfigBuilder, DatabaseConfigManager, Environment};
-pub use self::migration_manager::{DataMigrationResult, MigrationManager, MigrationResult};
+pub use self::migration_manager::{DataMigrationResult, MigrationManager, MigrationResult as LegacyMigrationResult};
 pub use self::monitoring::{
     Alert, AlertSeverity, AlertType, DatabaseMonitor, MonitoringConfig, MonitoringReport,
 };

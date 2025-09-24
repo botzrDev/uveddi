@@ -1,7 +1,6 @@
-// Integration test module for UV-243 Testing Infrastructure
+// Integration test module for Assignment 05 Migration & Error Handling
 
-pub mod websocket_reliability;
-pub mod database_operations;
+pub mod migration_tests;
 
 // Common integration test utilities
 pub mod test_setup {
