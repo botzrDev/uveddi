@@ -246,6 +246,8 @@
 pub mod ai;
 pub mod analysis;
 pub mod api;
+#[cfg(feature = "engine-integration")]
+pub mod engine;
 pub mod application;
 pub mod ast;
 pub mod cache;

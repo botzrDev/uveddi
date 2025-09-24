@@ -79,7 +79,7 @@ impl ContextGodObjectDetector {
                 symbol.name
             )),
             context_snippet: self.extract_context_snippet(context, symbol),
-            created_at: chrono::Utc::now().naive_utc(),
+            created_at: chrono::Utc::now(),
         };
 
         Ok(Some(issue))

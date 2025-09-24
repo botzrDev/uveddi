@@ -162,6 +162,9 @@ ai = []
 local-ai = ["ai"]
 image-rendering = []
 
+# Engine refactor integration
+engine-integration = ["tree-sitter"]
+
 # ==================== TESTING AND DEVELOPMENT ====================
 # Chaos engineering and load testing
 chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]

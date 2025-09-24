@@ -11,6 +11,8 @@ pub mod parsing;
 
 #[cfg(test)]
 mod test_compilation;
+#[cfg(test)]
+mod test_integration;
 
 // Re-export commonly used types
 pub use analysis::{AnalysisContext, AnalysisPipeline};

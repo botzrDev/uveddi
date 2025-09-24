@@ -23,6 +23,8 @@
 
 mod analysis;
 mod config;
+#[cfg(feature = "engine-integration")]
+pub mod context_detector;
 mod detector;
 mod language_support;
 mod patterns;

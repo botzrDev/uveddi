@@ -236,7 +236,7 @@ impl Detector for ContextDeadCodeDetector {
                     unused.symbol.name
                 )),
                 context_snippet: self.extract_context_snippet(context, &unused.symbol),
-                created_at: chrono::Utc::now().naive_utc(),
+                created_at: chrono::Utc::now(),
             };
 
             issues.push(issue);

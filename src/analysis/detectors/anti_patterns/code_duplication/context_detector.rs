@@ -191,7 +191,7 @@ impl Detector for ContextCodeDuplicationDetector {
                     duplicate.block2.end_line
                 )),
                 context_snippet: Some(duplicate.block1.content.clone()),
-                created_at: chrono::Utc::now().naive_utc(),
+                created_at: chrono::Utc::now(),
             };
 
             issues.push(issue);

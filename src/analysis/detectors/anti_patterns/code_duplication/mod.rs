@@ -19,6 +19,8 @@
 
 pub mod algorithms;
 pub mod config;
+#[cfg(feature = "engine-integration")]
+pub mod context_detector;
 pub mod detector;
 pub mod helpers;
 pub mod language_support;
