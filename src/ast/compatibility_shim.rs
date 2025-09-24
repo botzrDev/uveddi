@@ -9,6 +9,16 @@ use crate::ast::SourceLanguage;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+// Import types conditionally when engine module is available
+#[cfg(feature = "engine-integration")]
+use crate::engine::analysis::context::{AnalysisContext, FileInfo, ProjectContext, ProjectDependency, DependencySource};
+#[cfg(feature = "engine-integration")]
+use crate::engine::analysis::pipeline::{AnalysisPipeline, ContextBuilder, Detector, PipelineError, AnalysisResult};
+#[cfg(feature = "engine-integration")]
+use crate::engine::parsing::AstBuilder;
+#[cfg(feature = "engine-integration")]
+use crate::database::models::ArchitecturalIssue;
+
 // Re-export tree-sitter types
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::Tree;
@@ -138,10 +148,79 @@ pub struct AstParserCompat {
     // TODO: Replace with AstBuilder when engine integration is complete
 }
 
+#[cfg(feature = "engine-integration")]
+/// Adapter that bridges old detector interface to new analysis context
+pub struct DetectorAdapter {
+    legacy_detector: Box<dyn crate::analysis::AnalysisDetector>,
+    pipeline: Arc<AnalysisPipeline>,
+}
+
+#[cfg(feature = "engine-integration")]
+impl DetectorAdapter {
+    /// Create adapter for legacy detector
+    pub fn new(
+        legacy_detector: Box<dyn crate::analysis::AnalysisDetector>,
+        pipeline: Arc<AnalysisPipeline>,
+    ) -> Self {
+        Self {
+            legacy_detector,
+            pipeline,
+        }
+    }
+}
+
+#[cfg(feature = "engine-integration")]
+impl Detector for DetectorAdapter {
+    fn detect(&self, context: &AnalysisContext) -> Result<Vec<ArchitecturalIssue>, PipelineError> {
+        // Convert AnalysisContext to ParsedFileCompat for legacy detector
+        let compat_file = ParsedFileCompat {
+            file_path: Arc::new(context.file_info.path.clone()),
+            language: context.file_info.language.clone(),
+            tree: context.syntax_tree.clone(),
+            source: Arc::new(context.source.clone()),
+            custom_ast: Arc::new(None), // Legacy AST not available
+            modified_at: context.file_info.modified_at.into(),
+        };
+
+        // Call legacy detector with compatibility wrapper
+        tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async {
+                self.legacy_detector
+                    .detect_issues(&compat_file)
+                    .await
+                    .map_err(|e| PipelineError::DetectorError(format!("Legacy detector failed: {}", e)))
+            })
+    }
+
+    fn name(&self) -> &str {
+        self.legacy_detector.get_detector_name()
+    }
+
+    fn supports_language(&self, language: &SourceLanguage) -> bool {
+        // Most legacy detectors support all languages
+        true
+    }
+}
+
+#[cfg(feature = "engine-integration")]
+/// Helper to convert AnalysisContext to ParsedFileCompat
+impl From<&AnalysisContext> for ParsedFileCompat {
+    fn from(context: &AnalysisContext) -> Self {
+        Self {
+            file_path: Arc::new(context.file_info.path.clone()),
+            language: context.file_info.language.clone(),
+            tree: context.syntax_tree.clone(),
+            source: Arc::new(context.source.clone()),
+            custom_ast: Arc::new(None),
+            modified_at: context.file_info.modified_at.into(),
+        }
+    }
+}
+
 impl AstParserCompat {
-    /// Create a new compatibility wrapper (stub implementation)
+    /// Create a new compatibility wrapper
     pub fn new() -> Result<Self, crate::ast::tree_sitter_impl::AstError> {
-        // TODO: Initialize with AstBuilder when engine is ready
         Ok(Self {})
     }
 

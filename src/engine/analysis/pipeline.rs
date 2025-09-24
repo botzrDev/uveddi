@@ -5,6 +5,9 @@
 
 use super::AnalysisContext;
 use crate::database::models::ArchitecturalIssue;
+use crate::engine::parsing::{ParseResult, AstBuilder, LanguageParser};
+use crate::engine::analysis::context::{FileInfo, ProjectContext, ProjectDependency, DependencySource};
+use std::path::Path;
 use std::sync::Arc;
 
 /// Analysis pipeline error types
@@ -51,15 +54,78 @@ pub trait Detector: Send + Sync {
 
 /// Builds analysis context from parse results
 pub struct ContextBuilder {
-    // TODO: Add necessary components for context building
+    ast_builder: Arc<AstBuilder>,
+}
+
+impl ContextBuilder {
+    /// Create new context builder
+    pub fn new(ast_builder: Arc<AstBuilder>) -> Self {
+        Self { ast_builder }
+    }
+
+    /// Build analysis context from file path
+    pub fn build_context(
+        &self,
+        file_path: &Path,
+        project_context: ProjectContext,
+    ) -> Result<AnalysisContext, PipelineError> {
+        // Parse file using AstBuilder
+        let parse_result = self
+            .ast_builder
+            .parse_file(file_path)
+            .map_err(|e| PipelineError::ContextBuildError(format!("Parse failed: {}", e)))?;
+
+        // Build file info
+        let file_info = FileInfo {
+            path: file_path.to_path_buf(),
+            language: parse_result.language.clone(),
+            lines_of_code: parse_result.source.lines().count(),
+            size_bytes: parse_result.source.len(),
+            modified_at: std::time::SystemTime::now(),
+        };
+
+        // Create analysis context
+        Ok(AnalysisContext::new(
+            file_info,
+            parse_result.tree,
+            parse_result.source,
+            parse_result.symbols,
+            parse_result.relations,
+            project_context,
+        ))
+    }
+
+    /// Build context from existing parse result
+    pub fn build_from_parse_result(
+        &self,
+        parse_result: ParseResult,
+        project_context: ProjectContext,
+    ) -> AnalysisContext {
+        let file_info = FileInfo {
+            path: parse_result.path.clone(),
+            language: parse_result.language.clone(),
+            lines_of_code: parse_result.source.lines().count(),
+            size_bytes: parse_result.source.len(),
+            modified_at: parse_result.modified_at,
+        };
+
+        AnalysisContext::new(
+            file_info,
+            parse_result.tree,
+            parse_result.source,
+            parse_result.symbols,
+            parse_result.relations,
+            project_context,
+        )
+    }
 }
 
 impl AnalysisPipeline {
     /// Create a new analysis pipeline
-    pub fn new() -> Self {
+    pub fn new(ast_builder: Arc<AstBuilder>) -> Self {
         Self {
             detectors: Vec::new(),
-            context_builder: Arc::new(ContextBuilder {}),
+            context_builder: Arc::new(ContextBuilder::new(ast_builder)),
         }
     }
 
@@ -92,5 +158,22 @@ impl AnalysisPipeline {
             context,
             execution_time: start_time.elapsed(),
         })
+    }
+
+    /// Analyze a file by path, building context automatically
+    pub fn analyze_file(
+        &self,
+        file_path: &Path,
+        project_context: ProjectContext,
+    ) -> Result<AnalysisResult, PipelineError> {
+        let context = self
+            .context_builder
+            .build_context(file_path, project_context)?;
+        self.analyze(context)
+    }
+
+    /// Get registered detector count
+    pub fn detector_count(&self) -> usize {
+        self.detectors.len()
     }
 }
