@@ -16,4 +16,4 @@ mod test_compilation;
 pub use analysis::{AnalysisContext, AnalysisPipeline};
 pub use cache::{AnalysisCache, AstCache};
 pub use knowledge_graph::{KnowledgeGraph, QueryBuilder};
-pub use parsing::{AstBuilder, LanguageParser};
+pub use parsing::{AstBuilder, LanguageParser, ParseResult, ParsedFile};

@@ -4,11 +4,11 @@
 //! following the Repository pattern. These traits provide a clean interface between
 //! the domain layer and the persistence layer.
 
-use async_trait::async_trait;
-use crate::database::repositories::errors::{RepositoryResult, RepositoryError};
 use crate::database::models::{
-    Project, AnalysisRun, CacheEntry, ArchitecturalIssue, Dependency, LifecycleEvent,
+    AnalysisRun, ArchitecturalIssue, CacheEntry, Dependency, LifecycleEvent, Project,
 };
+use crate::database::repositories::errors::{RepositoryError, RepositoryResult};
+use async_trait::async_trait;
 
 // For now, use placeholder types for models that don't exist yet
 pub type PerformanceMetrics = String; // Placeholder
@@ -126,7 +126,11 @@ pub trait MetricsRepository: Repository<Entity = PerformanceMetrics> {
 #[async_trait]
 pub trait EventRepository: Repository<Entity = LifecycleEvent> {
     /// Find events by entity type and ID
-    async fn find_by_entity(&self, entity_type: &str, entity_id: i64) -> RepositoryResult<Vec<LifecycleEvent>>;
+    async fn find_by_entity(
+        &self,
+        entity_type: &str,
+        entity_id: i64,
+    ) -> RepositoryResult<Vec<LifecycleEvent>>;
 
     /// Find events in a time range
     async fn find_by_time_range(
@@ -158,7 +162,10 @@ pub trait IssueRepository: Repository<Entity = ArchitecturalIssue> {
     async fn find_by_type(&self, issue_type: &str) -> RepositoryResult<Vec<ArchitecturalIssue>>;
 
     /// Count issues by severity for a run
-    async fn count_by_severity(&self, run_id: i64) -> RepositoryResult<std::collections::HashMap<String, usize>>;
+    async fn count_by_severity(
+        &self,
+        run_id: i64,
+    ) -> RepositoryResult<std::collections::HashMap<String, usize>>;
 }
 
 /// Repository for Dependency entities

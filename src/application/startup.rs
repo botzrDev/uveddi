@@ -6,7 +6,9 @@
 
 use crate::analysis::{plugin_detector_adapter::PluginDetectorManager, AnalysisEngine};
 use crate::application::plugin_manager::{ApplicationPluginManager, PluginManagerConfig};
-use crate::database::{Database, DatabaseConfig, DatabaseType, RepositoryManager, create_repository_factory};
+use crate::database::{
+    create_repository_factory, Database, DatabaseConfig, DatabaseType, RepositoryManager,
+};
 use crate::error::UveddiError;
 use crate::plugins::{PluginRuntime, RuntimeFactory};
 use std::path::PathBuf;
@@ -145,9 +147,11 @@ impl StartupManager {
         };
 
         // Create database with repositories
-        let database = Database::new_with_repositories(Some(db_config.clone())).await.map_err(|e| {
-            UveddiError::database_error_msg(&format!("Failed to initialize database: {}", e))
-        })?;
+        let database = Database::new_with_repositories(Some(db_config.clone()))
+            .await
+            .map_err(|e| {
+                UveddiError::database_error_msg(&format!("Failed to initialize database: {}", e))
+            })?;
 
         // Create repository factory and manager
         let repository_factory = create_repository_factory(&db_config).await.map_err(|e| {

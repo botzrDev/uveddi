@@ -1,12 +1,12 @@
 //! SQLite implementation for IssueRepository (stub implementation)
 
 use async_trait::async_trait;
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::database::connection::pool::ConnectionPool;
 use crate::database::models::ArchitecturalIssue;
-use crate::database::repositories::traits::{Repository, IssueRepository};
+use crate::database::repositories::traits::{IssueRepository, Repository};
 use crate::error::{Result, UveddiError};
 
 pub struct SqliteIssueRepository {
@@ -32,11 +32,15 @@ impl Repository for SqliteIssueRepository {
     }
 
     async fn save(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Issue functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Issue functionality not implemented",
+        ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Issue functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Issue functionality not implemented",
+        ))
     }
 
     async fn delete(&self, _id: i64) -> Result<bool> {

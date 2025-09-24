@@ -6,8 +6,10 @@
 
 use crate::analysis::AnalysisEngine;
 use crate::core::logging::{debug, error, info, warn};
-use crate::database::{Database, DatabaseConfig, DatabaseType, RepositoryManager, create_repository_factory};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
+use crate::database::{
+    create_repository_factory, Database, DatabaseConfig, DatabaseType, RepositoryManager,
+};
 use crate::error::UveddiError;
 use crate::resource_management::{ResourceConfig, ResourceManager};
 use anyhow::Context;
@@ -64,10 +66,12 @@ impl AnalysisOrchestrator {
             ..Default::default()
         };
 
-        let database = Database::new_with_repositories(Some(config.clone())).await
+        let database = Database::new_with_repositories(Some(config.clone()))
+            .await
             .context("Failed to initialize database with path")?;
 
-        let repository_factory = create_repository_factory(&config).await
+        let repository_factory = create_repository_factory(&config)
+            .await
             .context("Failed to create repository factory")?;
         let repository_manager = RepositoryManager::new(repository_factory);
 
@@ -82,10 +86,12 @@ impl AnalysisOrchestrator {
             ..Default::default()
         };
 
-        let database = Database::new_with_repositories(Some(config.clone())).await
+        let database = Database::new_with_repositories(Some(config.clone()))
+            .await
             .context("Failed to initialize in-memory database")?;
 
-        let repository_factory = create_repository_factory(&config).await
+        let repository_factory = create_repository_factory(&config)
+            .await
             .context("Failed to create repository factory")?;
         let repository_manager = RepositoryManager::new(repository_factory);
 
@@ -111,10 +117,12 @@ impl AnalysisOrchestrator {
             }
         };
 
-        let database = Database::new_with_repositories(Some(config.clone())).await
+        let database = Database::new_with_repositories(Some(config.clone()))
+            .await
             .context("Failed to initialize database")?;
 
-        let repository_factory = create_repository_factory(&config).await
+        let repository_factory = create_repository_factory(&config)
+            .await
             .context("Failed to create repository factory")?;
         let repository_manager = RepositoryManager::new(repository_factory);
 
@@ -134,7 +142,10 @@ impl AnalysisOrchestrator {
     }
 
     /// Initialize orchestrator with given database and repository manager
-    async fn initialize_with_database(database: Database, repository_manager: RepositoryManager) -> Result<Self, UveddiError> {
+    async fn initialize_with_database(
+        database: Database,
+        repository_manager: RepositoryManager,
+    ) -> Result<Self, UveddiError> {
         // Initialize memory optimization with default configuration
         #[cfg(feature = "memory-optimization")]
         {
@@ -366,12 +377,16 @@ impl AnalysisOrchestrator {
 
         // Get project repository to create project if needed
         let project_repo = self.repository_manager.project_repository();
-        let project_id = project_repo.get_or_create_project_id(&config.target_path).await
+        let project_id = project_repo
+            .get_or_create_project_id(&config.target_path)
+            .await
             .context("Failed to get or create project")?;
 
         // Get analysis repository and create analysis run
         let analysis_repo = self.repository_manager.analysis_repository();
-        let analysis_run = analysis_repo.create_analysis_run(project_id).await
+        let analysis_run = analysis_repo
+            .create_analysis_run(project_id)
+            .await
             .context("Failed to create analysis run")?;
 
         debug!(
@@ -395,7 +410,9 @@ impl AnalysisOrchestrator {
 
         // Use analysis repository to update
         let analysis_repo = self.repository_manager.analysis_repository();
-        analysis_repo.update(analysis_run).await
+        analysis_repo
+            .update(analysis_run)
+            .await
             .context("Failed to update analysis run")?;
         Ok(())
     }

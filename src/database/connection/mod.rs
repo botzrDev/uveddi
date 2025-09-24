@@ -32,7 +32,12 @@ pub trait DatabaseConnection: Send + Sync {
         F: FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<T> + Send;
 
     /// Query a single row from the database
-    fn query_row<T, F>(&self, query: &str, params: &[&dyn rusqlite::ToSql], f: F) -> Result<Option<T>>
+    fn query_row<T, F>(
+        &self,
+        query: &str,
+        params: &[&dyn rusqlite::ToSql],
+        f: F,
+    ) -> Result<Option<T>>
     where
         Self: Sized,
         T: Send + 'static,
@@ -151,10 +156,12 @@ mod tests {
     fn test_database_config_builder() {
         let config = DatabaseConfig::sqlite("test.db")
             .with_metrics(true)
-            .with_pool(PoolConfig::builder()
-                .max_connections(20)
-                .min_connections(2)
-                .build());
+            .with_pool(
+                PoolConfig::builder()
+                    .max_connections(20)
+                    .min_connections(2)
+                    .build(),
+            );
 
         assert!(matches!(config.database_type, DatabaseType::SQLite));
         assert_eq!(config.pool.max_connections, 20);

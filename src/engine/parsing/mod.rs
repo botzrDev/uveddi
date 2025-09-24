@@ -11,6 +11,9 @@ pub mod parsers;
 pub use ast_builder::{AstBuilder, ParseResult};
 pub use language_detection::detect_language;
 
+// Compatibility types
+pub use ParseResult as ParsedFile; // Alias for backward compatibility
+
 // Language parser trait that all parsers must implement
 use crate::ast::SourceLanguage;
 #[cfg(feature = "tree-sitter")]

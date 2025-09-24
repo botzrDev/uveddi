@@ -188,9 +188,7 @@ impl PoolConfigBuilder {
                 .unwrap_or(default.connection_timeout),
             idle_timeout: self.idle_timeout.unwrap_or(default.idle_timeout),
             max_lifetime: self.max_lifetime.unwrap_or(default.max_lifetime),
-            test_on_checkout: self
-                .test_on_checkout
-                .unwrap_or(default.test_on_checkout),
+            test_on_checkout: self.test_on_checkout.unwrap_or(default.test_on_checkout),
             pool_timeout: self.pool_timeout.unwrap_or(default.pool_timeout),
         }
     }

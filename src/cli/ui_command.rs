@@ -5,7 +5,10 @@
 //! web-based visualization interface.
 
 use crate::api::{CombinedApiServer, RestApiConfig};
-use crate::database::{Database, connection::{DatabaseConfig, DatabaseType}};
+use crate::database::{
+    connection::{DatabaseConfig, DatabaseType},
+    Database,
+};
 use crate::report::{InteractiveReportConfig, InteractiveReportGenerator};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
@@ -126,11 +129,17 @@ impl UiCommand {
             };
             match Database::new_with_repositories(Some(config)).await {
                 Ok(db) => {
-                    info!("✅ Database initialized with repository pattern: {}", args.database.display());
+                    info!(
+                        "✅ Database initialized with repository pattern: {}",
+                        args.database.display()
+                    );
                     Arc::new(db)
-                },
+                }
                 Err(e) => {
-                    info!("⚠️ Failed to initialize repository pattern, falling back to legacy: {}", e);
+                    info!(
+                        "⚠️ Failed to initialize repository pattern, falling back to legacy: {}",
+                        e
+                    );
                     Arc::new(Database::new(Some(args.database.as_path()))?)
                 }
             }

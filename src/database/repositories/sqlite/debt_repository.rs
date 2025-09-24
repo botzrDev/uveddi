@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::database::connection::pool::ConnectionPool;
 use crate::database::repositories::traits::TechnicalDebt;
-use crate::database::repositories::traits::{Repository, DebtRepository};
+use crate::database::repositories::traits::{DebtRepository, Repository};
 use crate::error::{Result, UveddiError};
 
 pub struct SqliteDebtRepository {
@@ -31,11 +31,15 @@ impl Repository for SqliteDebtRepository {
     }
 
     async fn save(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Debt functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Debt functionality not implemented",
+        ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Debt functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Debt functionality not implemented",
+        ))
     }
 
     async fn delete(&self, _id: i64) -> Result<bool> {

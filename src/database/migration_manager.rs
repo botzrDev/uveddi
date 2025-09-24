@@ -3,7 +3,11 @@
 //! This module provides a comprehensive database migration system that supports
 //! both SQLite and PostgreSQL, enabling seamless schema evolution and data migration.
 
-use super::connection::{config::{DatabaseConfig, DatabaseType}, providers::DatabaseProvider, ConnectionManager};
+use super::connection::{
+    config::{DatabaseConfig, DatabaseType},
+    providers::DatabaseProvider,
+    ConnectionManager,
+};
 use super::create_database_provider;
 use crate::error::{Result, UveddiError};
 use chrono::{DateTime, Utc};
@@ -392,12 +396,10 @@ impl MigrationManager {
         let mut sqlite_config = self.config.clone();
         sqlite_config.database_type = DatabaseType::SQLite;
         sqlite_config.connection_string = sqlite_path.to_string();
-        let sqlite_provider: Arc<dyn DatabaseProvider> =
-            create_database_provider(&sqlite_config)?;
+        let sqlite_provider: Arc<dyn DatabaseProvider> = create_database_provider(&sqlite_config)?;
 
         // Create PostgreSQL provider for destination
-        let pg_provider: Arc<dyn DatabaseProvider> =
-            create_database_provider(&postgresql_config)?;
+        let pg_provider: Arc<dyn DatabaseProvider> = create_database_provider(&postgresql_config)?;
 
         // Initialize PostgreSQL schema
         pg_provider.initialize().await?;

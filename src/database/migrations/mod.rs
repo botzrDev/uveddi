@@ -74,7 +74,8 @@ impl MigrationRegistry {
 
     /// Get migrations after a specific version
     pub fn get_pending(&self, after_version: u32) -> Vec<&Migration> {
-        let mut migrations: Vec<_> = self.migrations
+        let mut migrations: Vec<_> = self
+            .migrations
             .values()
             .filter(|m| m.version > after_version)
             .collect();

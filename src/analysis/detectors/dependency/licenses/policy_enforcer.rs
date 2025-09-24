@@ -400,16 +400,16 @@ impl PolicyEnforcer {
         violations: &[PolicyViolation],
     ) -> ComplianceMetrics {
         let total_packages = dependencies.len();
-        let violating_packages: HashSet<_> = violations
-            .iter()
-            .map(|v| v.package_name.clone())
-            .collect();
+        let violating_packages: HashSet<_> =
+            violations.iter().map(|v| v.package_name.clone()).collect();
         let policy_violation_packages = violating_packages.len();
         let policy_compliant_packages = total_packages.saturating_sub(policy_violation_packages);
 
         let mut violations_by_severity = HashMap::new();
         for violation in violations {
-            *violations_by_severity.entry(violation.severity.clone()).or_insert(0) += 1;
+            *violations_by_severity
+                .entry(violation.severity.clone())
+                .or_insert(0) += 1;
         }
 
         let compliance_percentage = if total_packages == 0 {

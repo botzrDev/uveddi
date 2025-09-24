@@ -71,15 +71,15 @@ impl MigrationRunner {
             let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare("SELECT MAX(version) FROM migration_history")?;
-            let rows: Result<Option<u32>, rusqlite::Error> = stmt.query_row([], |row| {
-                Ok(row.get::<_, Option<u32>>(0)?)
-            });
+            let rows: Result<Option<u32>, rusqlite::Error> =
+                stmt.query_row([], |row| Ok(row.get::<_, Option<u32>>(0)?));
 
             match rows {
                 Ok(Some(version)) => Ok(version),
                 Ok(None) => Ok(0), // No migrations applied yet
                 Err(rusqlite::Error::SqliteFailure(err, _))
-                    if err.code == rusqlite::ErrorCode::DatabaseCorrupt => {
+                    if err.code == rusqlite::ErrorCode::DatabaseCorrupt =>
+                {
                     // Table doesn't exist yet
                     Ok(0)
                 }
@@ -105,8 +105,15 @@ impl MigrationRunner {
 
             let rows = stmt.query_map([], |row| {
                 let applied_at_str: String = row.get(2)?;
-                let applied_at = applied_at_str.parse::<chrono::DateTime<Utc>>()
-                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "applied_at".to_string(), rusqlite::types::Type::Text))?;
+                let applied_at = applied_at_str
+                    .parse::<chrono::DateTime<Utc>>()
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            2,
+                            "applied_at".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?;
 
                 Ok(MigrationRecord {
                     version: row.get(0)?,
@@ -170,8 +177,14 @@ impl MigrationRunner {
     }
 
     /// Apply a single migration
-    async fn apply_migration(&self, migration: &Migration) -> Result<MigrationResult, MigrationError> {
-        info!("Applying migration {}: {}", migration.version, migration.name);
+    async fn apply_migration(
+        &self,
+        migration: &Migration,
+    ) -> Result<MigrationResult, MigrationError> {
+        info!(
+            "Applying migration {}: {}",
+            migration.version, migration.name
+        );
 
         let pool = Arc::clone(&self.pool);
         let migration_clone = migration.clone();
@@ -213,12 +226,18 @@ impl MigrationRunner {
     }
 
     /// Rollback to a specific migration version
-    pub async fn rollback_to_version(&self, target_version: u32) -> Result<Vec<MigrationResult>, MigrationError> {
+    pub async fn rollback_to_version(
+        &self,
+        target_version: u32,
+    ) -> Result<Vec<MigrationResult>, MigrationError> {
         info!("Rolling back to version {}", target_version);
 
         let current_version = self.current_version().await?;
         if current_version <= target_version {
-            warn!("Current version {} is already at or below target {}", current_version, target_version);
+            warn!(
+                "Current version {} is already at or below target {}",
+                current_version, target_version
+            );
             return Ok(vec![]);
         }
 
@@ -246,7 +265,10 @@ impl MigrationRunner {
                     }
                 }
             } else {
-                warn!("Migration {} not found in registry for rollback", record.version);
+                warn!(
+                    "Migration {} not found in registry for rollback",
+                    record.version
+                );
                 results.push(MigrationResult::Failed {
                     version: record.version,
                     error: "Migration not found in registry".to_string(),
@@ -264,7 +286,10 @@ impl MigrationRunner {
         migration: &Migration,
         record: &MigrationRecord,
     ) -> Result<MigrationResult, MigrationError> {
-        info!("Rolling back migration {}: {}", migration.version, migration.name);
+        info!(
+            "Rolling back migration {}: {}",
+            migration.version, migration.name
+        );
 
         let pool = Arc::clone(&self.pool);
         let migration_clone = migration.clone();

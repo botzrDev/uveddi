@@ -29,7 +29,10 @@ pub fn validate_migration_sql(sql: &str) -> Result<(), String> {
     let sql_upper = sql.to_uppercase();
     for pattern in dangerous_patterns {
         if sql_upper.contains(pattern) {
-            return Err(format!("Migration contains potentially dangerous pattern: {}", pattern));
+            return Err(format!(
+                "Migration contains potentially dangerous pattern: {}",
+                pattern
+            ));
         }
     }
 
@@ -38,7 +41,7 @@ pub fn validate_migration_sql(sql: &str) -> Result<(), String> {
 
 /// Get the current schema version from database
 pub async fn get_current_schema_version(
-    pool: &std::sync::Arc<crate::database::connection::ConnectionPool>
+    pool: &std::sync::Arc<crate::database::connection::ConnectionPool>,
 ) -> Result<u32, Box<dyn std::error::Error + Send + Sync>> {
     let pool = std::sync::Arc::clone(pool);
 
@@ -50,7 +53,8 @@ pub async fn get_current_schema_version(
         let version: Option<u32> = stmt.query_row([], |row| row.get(0)).unwrap_or(None);
 
         Ok(version.unwrap_or(0))
-    }).await?
+    })
+    .await?
 }
 
 #[cfg(test)]

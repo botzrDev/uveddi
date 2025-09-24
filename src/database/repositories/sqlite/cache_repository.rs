@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use crate::database::connection::pool::ConnectionPool;
 use crate::database::models::CacheEntry;
-use crate::database::repositories::traits::{Repository, CacheRepository};
+use crate::database::repositories::traits::{CacheRepository, Repository};
 use crate::error::{Result, UveddiError};
 
 pub struct SqliteCacheRepository {
@@ -36,12 +36,16 @@ impl Repository for SqliteCacheRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
         // Stub implementation - cache table doesn't exist in current schema
-        Err(UveddiError::database_error_msg("Cache functionality not implemented - requires schema migration"))
+        Err(UveddiError::database_error_msg(
+            "Cache functionality not implemented - requires schema migration",
+        ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
         // Stub implementation - cache table doesn't exist in current schema
-        Err(UveddiError::database_error_msg("Cache functionality not implemented - requires schema migration"))
+        Err(UveddiError::database_error_msg(
+            "Cache functionality not implemented - requires schema migration",
+        ))
     }
 
     async fn delete(&self, _id: i64) -> Result<bool> {
@@ -75,12 +79,16 @@ impl CacheRepository for SqliteCacheRepository {
     async fn get_or_create(&self, key: &str, category: &str) -> Result<CacheEntry> {
         // Stub implementation - cache table doesn't exist in current schema
         let _ = (key, category); // Suppress unused warnings
-        Err(UveddiError::database_error_msg("Cache functionality not implemented - requires schema migration"))
+        Err(UveddiError::database_error_msg(
+            "Cache functionality not implemented - requires schema migration",
+        ))
     }
 
     async fn update_value(&self, _key: &str, _value: Vec<u8>) -> Result<()> {
         // Stub implementation - cache table doesn't exist in current schema
-        Err(UveddiError::database_error_msg("Cache functionality not implemented - requires schema migration"))
+        Err(UveddiError::database_error_msg(
+            "Cache functionality not implemented - requires schema migration",
+        ))
     }
 
     async fn is_valid(&self, _key: &str) -> Result<bool> {

@@ -14,9 +14,7 @@ use uveddi::database::{
     monitoring::{DatabaseMonitor, MonitoringConfig},
     providers::create_database_provider,
     scalable_manager::ScalableDatabase,
-    DatabaseConfig,
-    DatabaseType,
-    PoolConfig,
+    DatabaseConfig, DatabaseType, PoolConfig,
 };
 use uveddi::error::Result;
 
@@ -424,9 +422,7 @@ async fn test_configuration_management() -> Result<()> {
 
     assert_eq!(dev_config.database_type, DatabaseType::SQLite);
     assert_eq!(prod_config.database_type, DatabaseType::PostgreSQL);
-    assert!(
-        prod_config.pool.max_connections > dev_config.pool.max_connections
-    );
+    assert!(prod_config.pool.max_connections > dev_config.pool.max_connections);
 
     // Test masked connection string
     let masked = config_manager.get_masked_connection_string();

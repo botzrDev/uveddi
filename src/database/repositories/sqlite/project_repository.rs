@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use crate::database::connection::pool::ConnectionPool;
 use crate::database::models::{Project, ProjectConfig};
-use crate::database::repositories::traits::{Repository, ProjectRepository};
+use crate::database::repositories::traits::{ProjectRepository, Repository};
 use crate::error::{Result, UveddiError};
 
 pub struct SqliteProjectRepository {
@@ -27,7 +27,8 @@ impl Repository for SqliteProjectRepository {
     async fn find_by_id(&self, id: i64) -> Result<Option<Self::Entity>> {
         let conn = self.pool.get_connection().await?;
 
-        let mut stmt = conn.prepare("SELECT project_id, path FROM projects WHERE project_id = ?")?;
+        let mut stmt =
+            conn.prepare("SELECT project_id, path FROM projects WHERE project_id = ?")?;
         let mut rows = stmt.query([id])?;
 
         if let Some(row) = rows.next()? {
@@ -49,7 +50,8 @@ impl Repository for SqliteProjectRepository {
     async fn find_all(&self) -> Result<Vec<Self::Entity>> {
         let conn = self.pool.get_connection().await?;
 
-        let mut stmt = conn.prepare("SELECT project_id, path FROM projects ORDER BY project_id DESC")?;
+        let mut stmt =
+            conn.prepare("SELECT project_id, path FROM projects ORDER BY project_id DESC")?;
         let rows = stmt.query_map([], |row| {
             Ok(Project {
                 id: Some(row.get(0)?),
@@ -72,10 +74,7 @@ impl Repository for SqliteProjectRepository {
         let path_str = entity.path.to_string_lossy().to_string();
         let conn = self.pool.get_connection().await?;
 
-        conn.execute(
-            "INSERT INTO projects (path) VALUES (?)",
-            [&path_str],
-        )?;
+        conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
 
         let id = conn.last_insert_rowid();
 
@@ -91,9 +90,9 @@ impl Repository for SqliteProjectRepository {
     }
 
     async fn update(&self, entity: &Self::Entity) -> Result<Self::Entity> {
-        let id = entity.id.ok_or_else(|| {
-            UveddiError::database_error_msg("Cannot update project without ID")
-        })?;
+        let id = entity
+            .id
+            .ok_or_else(|| UveddiError::database_error_msg("Cannot update project without ID"))?;
 
         let path_str = entity.path.to_string_lossy().to_string();
         let conn = self.pool.get_connection().await?;
@@ -105,7 +104,9 @@ impl Repository for SqliteProjectRepository {
 
         if rows_affected == 0 {
             self.pool.return_connection(conn).await?;
-            return Err(UveddiError::database_error_msg("Project not found for update"));
+            return Err(UveddiError::database_error_msg(
+                "Project not found for update",
+            ));
         }
 
         let updated_project = Project {
@@ -122,10 +123,7 @@ impl Repository for SqliteProjectRepository {
     async fn delete(&self, id: i64) -> Result<bool> {
         let conn = self.pool.get_connection().await?;
 
-        let rows_affected = conn.execute(
-            "DELETE FROM projects WHERE project_id = ?",
-            [id],
-        )?;
+        let rows_affected = conn.execute("DELETE FROM projects WHERE project_id = ?", [id])?;
 
         let deleted = rows_affected > 0;
         self.pool.return_connection(conn).await?;
@@ -176,9 +174,8 @@ impl ProjectRepository for SqliteProjectRepository {
     async fn find_recent(&self, limit: usize) -> Result<Vec<Project>> {
         let conn = self.pool.get_connection().await?;
 
-        let mut stmt = conn.prepare(
-            "SELECT project_id, path FROM projects ORDER BY project_id DESC LIMIT ?"
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT project_id, path FROM projects ORDER BY project_id DESC LIMIT ?")?;
         let rows = stmt.query_map([limit], |row| {
             Ok(Project {
                 id: Some(row.get(0)?),

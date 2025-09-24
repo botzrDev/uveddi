@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::database::connection::pool::ConnectionPool;
 use crate::database::repositories::traits::PerformanceMetrics;
-use crate::database::repositories::traits::{Repository, MetricsRepository};
+use crate::database::repositories::traits::{MetricsRepository, Repository};
 use crate::error::{Result, UveddiError};
 
 pub struct SqliteMetricsRepository {
@@ -31,11 +31,15 @@ impl Repository for SqliteMetricsRepository {
     }
 
     async fn save(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Metrics functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Metrics functionality not implemented",
+        ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Metrics functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Metrics functionality not implemented",
+        ))
     }
 
     async fn delete(&self, _id: i64) -> Result<bool> {
@@ -58,7 +62,9 @@ impl MetricsRepository for SqliteMetricsRepository {
     }
 
     async fn calculate_averages(&self, _project_id: i64) -> Result<PerformanceMetrics> {
-        Err(UveddiError::database_error_msg("Metrics functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Metrics functionality not implemented",
+        ))
     }
 
     async fn find_latest(&self, _project_id: i64) -> Result<Option<PerformanceMetrics>> {

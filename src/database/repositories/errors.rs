@@ -12,7 +12,7 @@ pub enum RepositoryError {
     Database {
         message: String,
         #[source]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
 
     /// Connection pool error
@@ -23,21 +23,16 @@ pub enum RepositoryError {
     #[error("Entity not found: {entity_type} with {identifier}")]
     NotFound {
         entity_type: String,
-        identifier: String
+        identifier: String,
     },
 
     /// Validation error (invalid data)
     #[error("Validation error: {field} - {message}")]
-    Validation {
-        field: String,
-        message: String
-    },
+    Validation { field: String, message: String },
 
     /// Conflict error (e.g., unique constraint violation)
     #[error("Conflict error: {message}")]
-    Conflict {
-        message: String
-    },
+    Conflict { message: String },
 
     /// Serialization/deserialization error
     #[error("Serialization error: {0}")]
@@ -45,16 +40,11 @@ pub enum RepositoryError {
 
     /// Network/connection timeout
     #[error("Timeout error: operation took longer than {timeout_seconds}s")]
-    Timeout {
-        timeout_seconds: u64
-    },
+    Timeout { timeout_seconds: u64 },
 
     /// Permission/access denied
     #[error("Access denied: {operation} on {resource}")]
-    AccessDenied {
-        operation: String,
-        resource: String
-    },
+    AccessDenied { operation: String, resource: String },
 
     /// Transaction error
     #[error("Transaction error: {0}")]
@@ -121,9 +111,9 @@ impl RepositoryError {
     pub fn is_recoverable(&self) -> bool {
         matches!(
             self,
-            RepositoryError::Pool(_) |
-            RepositoryError::Timeout { .. } |
-            RepositoryError::Runtime(_)
+            RepositoryError::Pool(_)
+                | RepositoryError::Timeout { .. }
+                | RepositoryError::Runtime(_)
         )
     }
 
@@ -156,32 +146,26 @@ pub trait IntoRepositoryError<T> {
 impl From<rusqlite::Error> for RepositoryError {
     fn from(err: rusqlite::Error) -> Self {
         match err {
-            rusqlite::Error::SqliteFailure(sqlite_err, msg) => {
-                match sqlite_err.code {
-                    rusqlite::ErrorCode::DatabaseBusy => {
-                        Self::Timeout { timeout_seconds: 30 }
-                    }
-                    rusqlite::ErrorCode::ConstraintViolation => {
-                        Self::Conflict {
-                            message: msg.unwrap_or_else(|| "Constraint violation".to_string())
-                        }
-                    }
-                    _ => Self::Database {
-                        message: format!("SQLite error: {:?}", sqlite_err),
-                        source: Some(Box::new(err))
-                    }
-                }
-            }
-            rusqlite::Error::InvalidColumnType(_, column, _) => {
-                Self::Validation {
-                    field: column,
-                    message: "Invalid column type".to_string()
-                }
-            }
+            rusqlite::Error::SqliteFailure(sqlite_err, msg) => match sqlite_err.code {
+                rusqlite::ErrorCode::DatabaseBusy => Self::Timeout {
+                    timeout_seconds: 30,
+                },
+                rusqlite::ErrorCode::ConstraintViolation => Self::Conflict {
+                    message: msg.unwrap_or_else(|| "Constraint violation".to_string()),
+                },
+                _ => Self::Database {
+                    message: format!("SQLite error: {:?}", sqlite_err),
+                    source: Some(Box::new(err)),
+                },
+            },
+            rusqlite::Error::InvalidColumnType(_, column, _) => Self::Validation {
+                field: column,
+                message: "Invalid column type".to_string(),
+            },
             _ => Self::Database {
                 message: "Database operation failed".to_string(),
-                source: Some(Box::new(err))
-            }
+                source: Some(Box::new(err)),
+            },
         }
     }
 }
@@ -195,14 +179,14 @@ impl From<serde_json::Error> for RepositoryError {
 impl From<std::io::Error> for RepositoryError {
     fn from(err: std::io::Error) -> Self {
         match err.kind() {
-            std::io::ErrorKind::TimedOut => Self::Timeout { timeout_seconds: 30 },
-            std::io::ErrorKind::PermissionDenied => {
-                Self::AccessDenied {
-                    operation: "file_access".to_string(),
-                    resource: err.to_string()
-                }
-            }
-            _ => Self::Runtime(format!("IO error: {}", err))
+            std::io::ErrorKind::TimedOut => Self::Timeout {
+                timeout_seconds: 30,
+            },
+            std::io::ErrorKind::PermissionDenied => Self::AccessDenied {
+                operation: "file_access".to_string(),
+                resource: err.to_string(),
+            },
+            _ => Self::Runtime(format!("IO error: {}", err)),
         }
     }
 }
@@ -246,7 +230,10 @@ macro_rules! repo_error {
         $crate::database::repositories::errors::RepositoryError::conflict($msg)
     };
     (database, $msg:expr) => {
-        $crate::database::repositories::errors::RepositoryError::database($msg, None::<std::io::Error>)
+        $crate::database::repositories::errors::RepositoryError::database(
+            $msg,
+            None::<std::io::Error>,
+        )
     };
     (runtime, $msg:expr) => {
         $crate::database::repositories::errors::RepositoryError::Runtime($msg.to_string())
@@ -282,7 +269,7 @@ mod tests {
     fn test_rusqlite_error_conversion() {
         let sqlite_err = rusqlite::Error::SqliteFailure(
             rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_BUSY),
-            None
+            None,
         );
 
         let repo_err = RepositoryError::from(sqlite_err);

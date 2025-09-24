@@ -51,5 +51,7 @@ pub use architectural_issue::ArchitecturalIssue;
 pub use cache::{CacheEntry, CacheEntryRecord, CacheMetadata};
 pub use dependency::{Dependency, DependencyType};
 pub use lifecycle::{LifecycleEvent, LifecycleEventType};
-pub use performance::{ComponentPerformanceMetrics, PerformanceMetricsConfig, BenchmarkResult, BenchmarkConfig};
-pub use project::{Project, ProjectRecord, ProjectConfig};
+pub use performance::{
+    BenchmarkConfig, BenchmarkResult, ComponentPerformanceMetrics, PerformanceMetricsConfig,
+};
+pub use project::{Project, ProjectConfig, ProjectRecord};

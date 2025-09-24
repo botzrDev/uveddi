@@ -1,7 +1,7 @@
 //! Report-related endpoints for the REST API
 
 use crate::api::rest::AppState;
-use crate::database::{Database, AnalysisRepository};
+use crate::database::{AnalysisRepository, Database};
 use crate::report::interactive_models::*;
 use crate::{error::UveddiError, security};
 use axum::{

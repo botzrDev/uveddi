@@ -1,17 +1,16 @@
 //! Repository factory implementation for creating repository instances
 
-use std::sync::Arc;
 use crate::database::connection::pool::ConnectionPool;
-use crate::database::repositories::traits::{
-    RepositoryFactory, ProjectRepository, AnalysisRepository, CacheRepository,
-    MetricsRepository, EventRepository, IssueRepository, DependencyRepository,
-    SecurityRepository, DebtRepository,
-};
 use crate::database::repositories::sqlite::{
-    SqliteProjectRepository, SqliteAnalysisRepository, SqliteCacheRepository,
-    SqliteMetricsRepository, SqliteEventRepository, SqliteIssueRepository,
-    SqliteDependencyRepository, SqliteSecurityRepository, SqliteDebtRepository,
+    SqliteAnalysisRepository, SqliteCacheRepository, SqliteDebtRepository,
+    SqliteDependencyRepository, SqliteEventRepository, SqliteIssueRepository,
+    SqliteMetricsRepository, SqliteProjectRepository, SqliteSecurityRepository,
 };
+use crate::database::repositories::traits::{
+    AnalysisRepository, CacheRepository, DebtRepository, DependencyRepository, EventRepository,
+    IssueRepository, MetricsRepository, ProjectRepository, RepositoryFactory, SecurityRepository,
+};
+use std::sync::Arc;
 
 /// SQLite-based repository factory
 pub struct SqliteRepositoryFactory {

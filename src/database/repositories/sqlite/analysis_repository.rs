@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crate::database::connection::ConnectionPool;
 use crate::database::models::AnalysisRun;
 use crate::database::repositories::errors::{RepositoryError, RepositoryResult};
-use crate::database::repositories::traits::{Repository, AnalysisRepository};
+use crate::database::repositories::traits::{AnalysisRepository, Repository};
 
 pub struct SqliteAnalysisRepository {
     pool: Arc<ConnectionPool>,
@@ -213,7 +213,8 @@ impl Repository for SqliteAnalysisRepository {
 
         tokio::task::spawn_blocking(move || {
             let conn = pool.get_connection()?;
-            let count: i64 = conn.query_row("SELECT COUNT(*) FROM analysis_runs", [], |row| row.get(0))?;
+            let count: i64 =
+                conn.query_row("SELECT COUNT(*) FROM analysis_runs", [], |row| row.get(0))?;
             Ok(count as usize)
         })
         .await?
@@ -499,7 +500,8 @@ mod tests {
                     analysis_config TEXT DEFAULT '{}'
                 )",
                 [],
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         (SqliteAnalysisRepository::new(pool), temp_file)

@@ -1,7 +1,7 @@
 //! Project-related endpoints for the REST API using repository pattern
 
 use crate::api::rest::AppState;
-use crate::database::repositories::{ProjectRepository, AnalysisRepository};
+use crate::database::repositories::{AnalysisRepository, ProjectRepository};
 use axum::{
     extract::{Path as AxumPath, Query, State},
     http::StatusCode,
@@ -87,11 +87,7 @@ pub async fn list_projects_repository(
     for project in projects.iter() {
         if let Some(project_id) = project.id {
             // Get latest analysis for this project
-            let latest_analysis = analysis_repo
-                .find_latest(project_id)
-                .await
-                .ok()
-                .flatten();
+            let latest_analysis = analysis_repo.find_latest(project_id).await.ok().flatten();
 
             // Count total analyses
             let analysis_count = analysis_repo
@@ -103,7 +99,8 @@ pub async fn list_projects_repository(
             let summary = ProjectSummary {
                 id: project_id,
                 path: project.path.to_string_lossy().to_string(),
-                name: project.path
+                name: project
+                    .path
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("Unknown")
@@ -121,7 +118,10 @@ pub async fn list_projects_repository(
         projects: project_summaries,
     };
 
-    info!("Successfully fetched {} projects using repository pattern", response.total);
+    info!(
+        "Successfully fetched {} projects using repository pattern",
+        response.total
+    );
     Ok(Json(response).into_response())
 }
 
@@ -195,7 +195,10 @@ pub async fn get_project_repository(
                 "analysis_count": analyses.len(),
             });
 
-            info!("Successfully fetched project {} using repository pattern", project_id);
+            info!(
+                "Successfully fetched project {} using repository pattern",
+                project_id
+            );
             Ok(Json(response).into_response())
         }
         Ok(None) => {
@@ -243,7 +246,11 @@ pub async fn create_project_repository(
         path: std::path::PathBuf::from(&payload.path),
         config: crate::database::models::ProjectConfig {
             languages: payload.language.map(|l| vec![l]).unwrap_or_else(|| {
-                vec!["rust".to_string(), "javascript".to_string(), "typescript".to_string()]
+                vec![
+                    "rust".to_string(),
+                    "javascript".to_string(),
+                    "typescript".to_string(),
+                ]
             }),
             exclude_patterns: vec!["target/".to_string(), "node_modules/".to_string()],
             analysis_depth: 5,

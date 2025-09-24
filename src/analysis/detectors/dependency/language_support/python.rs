@@ -157,7 +157,7 @@ impl PythonDependencyParser {
                 name: name.to_string(),
                 version: Some(version.clone()),
                 source: DependencySource::Registry(self.default_index.clone()),
-                            scope: scope.clone(),
+                scope: scope.clone(),
                 resolved_path: None,
             },
             PipfileDependency::Detailed {

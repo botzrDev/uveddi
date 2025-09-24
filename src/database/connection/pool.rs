@@ -90,7 +90,10 @@ pub struct ConnectionPool {
 
 impl ConnectionPool {
     /// Create a new database connection pool
-    pub async fn new(db_config: DatabaseConfig, provider: Arc<dyn DatabaseProvider>) -> Result<Arc<Self>> {
+    pub async fn new(
+        db_config: DatabaseConfig,
+        provider: Arc<dyn DatabaseProvider>,
+    ) -> Result<Arc<Self>> {
         let db_path = Some(std::path::PathBuf::from(&db_config.connection_string));
         let semaphore = Arc::new(Semaphore::new(db_config.pool.max_connections));
 
@@ -202,7 +205,10 @@ pub struct PooledDatabase {
 
 impl PooledDatabase {
     /// Create new pooled database
-    pub async fn new(db_config: DatabaseConfig, provider: Arc<dyn DatabaseProvider>) -> Result<Self> {
+    pub async fn new(
+        db_config: DatabaseConfig,
+        provider: Arc<dyn DatabaseProvider>,
+    ) -> Result<Self> {
         let pool = ConnectionPool::new(db_config, provider).await?;
 
         Ok(Self { pool })

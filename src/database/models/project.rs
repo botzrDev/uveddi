@@ -53,8 +53,16 @@ pub struct ProjectConfig {
 impl Default for ProjectConfig {
     fn default() -> Self {
         Self {
-            languages: vec!["rust".to_string(), "javascript".to_string(), "typescript".to_string()],
-            exclude_patterns: vec!["target/".to_string(), "node_modules/".to_string(), ".git/".to_string()],
+            languages: vec![
+                "rust".to_string(),
+                "javascript".to_string(),
+                "typescript".to_string(),
+            ],
+            exclude_patterns: vec![
+                "target/".to_string(),
+                "node_modules/".to_string(),
+                ".git/".to_string(),
+            ],
             analysis_depth: 5,
             enable_caching: true,
         }
@@ -75,7 +83,7 @@ impl From<Project> for ProjectRecord {
 /// Conversion from persistence model to domain model
 impl TryFrom<ProjectRecord> for Project {
     type Error = std::io::Error;
-    
+
     fn try_from(record: ProjectRecord) -> Result<Self, Self::Error> {
         Ok(Self {
             id: record.project_id,

@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use crate::database::connection::pool::ConnectionPool;
 use crate::database::models::Dependency;
-use crate::database::repositories::traits::{Repository, DependencyRepository};
+use crate::database::repositories::traits::{DependencyRepository, Repository};
 use crate::error::{Result, UveddiError};
 
 pub struct SqliteDependencyRepository {
@@ -31,11 +31,15 @@ impl Repository for SqliteDependencyRepository {
     }
 
     async fn save(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Dependency functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Dependency functionality not implemented",
+        ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Dependency functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Dependency functionality not implemented",
+        ))
     }
 
     async fn delete(&self, _id: i64) -> Result<bool> {

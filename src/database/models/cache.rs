@@ -95,7 +95,7 @@ impl From<CacheEntry> for CacheEntryRecord {
 /// Conversion from persistence model to domain model
 impl TryFrom<CacheEntryRecord> for CacheEntry {
     type Error = base64::DecodeError;
-    
+
     fn try_from(record: CacheEntryRecord) -> Result<Self, Self::Error> {
         let data = base64::decode(&record.data)?;
         let metadata = CacheMetadata {
@@ -108,7 +108,7 @@ impl TryFrom<CacheEntryRecord> for CacheEntry {
             access_count: 0,
             last_accessed_at: None,
         };
-        
+
         Ok(Self {
             id: record.cache_id,
             key: record.cache_key,

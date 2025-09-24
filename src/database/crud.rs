@@ -1,10 +1,10 @@
 use crate::core::logging::error;
+use crate::database::connection::{ConnectionManager, DatabaseConfig, DatabaseType};
 use crate::database::models::{AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue};
 use crate::database::repositories::{
-    ProjectRepository, AnalysisRepository, SqliteProjectRepository, SqliteAnalysisRepository,
-    RepositoryManager, SqliteRepositoryFactory,
+    AnalysisRepository, ProjectRepository, RepositoryManager, SqliteAnalysisRepository,
+    SqliteProjectRepository, SqliteRepositoryFactory,
 };
-use crate::database::connection::{DatabaseConfig, DatabaseType, ConnectionManager};
 use crate::error::{Result, UveddiError};
 use crate::security;
 use chrono::Utc;
@@ -39,7 +39,10 @@ impl Database {
     ///
     /// * `Ok(Database)` - The initialized database instance.
     /// * `Err(UveddiError)` - If the database cannot be opened or initialized.
-    #[deprecated(since = "0.9.0", note = "Use Database::new_with_repositories() instead")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use Database::new_with_repositories() instead"
+    )]
     pub fn new(db_path: Option<&Path>) -> Result<Self> {
         let conn = match db_path {
             Some(path) => Connection::open(path).map_err(crate::error::UveddiError::from)?,
@@ -172,12 +175,16 @@ impl Database {
 
     /// Get the project repository if available
     pub fn project_repository(&self) -> Option<Arc<dyn ProjectRepository>> {
-        self.project_repo.clone().map(|r| r as Arc<dyn ProjectRepository>)
+        self.project_repo
+            .clone()
+            .map(|r| r as Arc<dyn ProjectRepository>)
     }
 
     /// Get the analysis repository if available
     pub fn analysis_repository(&self) -> Option<Arc<dyn AnalysisRepository>> {
-        self.analysis_repo.clone().map(|r| r as Arc<dyn AnalysisRepository>)
+        self.analysis_repo
+            .clone()
+            .map(|r| r as Arc<dyn AnalysisRepository>)
     }
 
     /// Gets the project ID for the given path, creating a new project entry if needed (DEPRECATED)
@@ -194,7 +201,10 @@ impl Database {
     ///
     /// * `Ok(i64)` - The project ID.
     /// * `Err(UveddiError)` - If the query or insert fails.
-    #[deprecated(since = "0.9.0", note = "Use ProjectRepository::get_or_create_project_id() instead")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use ProjectRepository::get_or_create_project_id() instead"
+    )]
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
         let conn = self.conn.lock().map_err(|e| {
@@ -225,7 +235,10 @@ impl Database {
     ///
     /// * `Ok(AnalysisRun)` - The created analysis run record.
     /// * `Err(UveddiError)` - If the insert fails.
-    #[deprecated(since = "0.9.0", note = "Use AnalysisRepository::create_analysis_run() instead")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use AnalysisRepository::create_analysis_run() instead"
+    )]
     pub fn create_analysis_run(&self, project_path: &Path) -> Result<AnalysisRun> {
         let project_id = self.get_or_create_project_id(project_path)?;
         let analysis_run = AnalysisRun {
@@ -305,7 +318,10 @@ impl Database {
     ///
     /// * `Ok(())` - If the operation succeeds.
     /// * `Err(UveddiError)` - If the insert or query fails.
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for anti-pattern type storage")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for anti-pattern type storage"
+    )]
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
         // Note: Skip strict validation for internal anti-pattern types as they contain
         // legitimate technical terms that may trigger false positives in SQL injection detection
@@ -524,7 +540,10 @@ impl Database {
     ///
     /// * `Ok(String)` - The project path
     /// * `Err(UveddiError)` - If the query fails or project not found
-    #[deprecated(since = "0.9.0", note = "Use ProjectRepository::get_project_path() instead")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use ProjectRepository::get_project_path() instead"
+    )]
     pub fn get_project_path(&self, project_id: i64) -> Result<String> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
@@ -548,7 +567,10 @@ impl Database {
     ///
     /// * `Ok(Vec<AntiPatternType>)` - Vector of all anti-pattern types in the database
     /// * `Err(UveddiError)` - If the query fails
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for anti-pattern type retrieval")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for anti-pattern type retrieval"
+    )]
     pub fn get_all_anti_pattern_types(&self) -> Result<Vec<AntiPatternType>> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
@@ -629,7 +651,10 @@ impl Database {
     /// # Deprecated
     ///
     /// Use `AnalysisRepository::find_latest()` instead.
-    #[deprecated(since = "0.9.0", note = "Use AnalysisRepository::find_latest() instead")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use AnalysisRepository::find_latest() instead"
+    )]
     pub async fn get_latest_analysis_run(&self) -> Result<Option<AnalysisRun>> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
@@ -679,7 +704,10 @@ impl Database {
     /// # Deprecated
     ///
     /// Use `AnalysisRepository::find_recent()` instead.
-    #[deprecated(since = "0.9.0", note = "Use AnalysisRepository::find_recent() instead")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use AnalysisRepository::find_recent() instead"
+    )]
     pub async fn get_recent_analysis_runs(&self, limit: u32) -> Result<Vec<AnalysisRun>> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
@@ -786,7 +814,10 @@ impl Database {
     /// # Deprecated
     ///
     /// Use the repository pattern for dependency storage instead.
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for dependency storage")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for dependency storage"
+    )]
     pub fn store_dependencies_batch(
         &mut self,
         run_id: i64,
@@ -818,7 +849,10 @@ impl Database {
     /// # Deprecated
     ///
     /// Use the repository pattern for dependency retrieval instead.
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for dependency retrieval")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for dependency retrieval"
+    )]
     pub async fn get_dependencies_for_run(
         &self,
         run_id: i64,
@@ -871,7 +905,10 @@ impl Database {
     ///
     /// Use the repository pattern for security issue retrieval instead.
     #[cfg(feature = "security")]
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for security issue retrieval")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for security issue retrieval"
+    )]
     pub async fn get_security_issues_for_run(
         &self,
         _run_id: i64,
@@ -897,7 +934,10 @@ impl Database {
     /// # Deprecated
     ///
     /// Use the repository pattern for issue and type retrieval instead.
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for issue and type retrieval")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for issue and type retrieval"
+    )]
     pub async fn get_issues_with_types_for_run(
         &self,
         run_id: i64,
@@ -972,7 +1012,10 @@ impl Database {
     /// # Deprecated
     ///
     /// Use the repository pattern for statistical queries instead.
-    #[deprecated(since = "0.9.0", note = "Use repository pattern for statistical queries")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Use repository pattern for statistical queries"
+    )]
     pub async fn get_analysis_stats(&self, run_id: i64) -> Result<AnalysisStats> {
         let conn = self.conn.lock().map_err(|e| {
             UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))

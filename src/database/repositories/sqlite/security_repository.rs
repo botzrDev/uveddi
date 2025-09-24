@@ -31,11 +31,15 @@ impl Repository for SqliteSecurityRepository {
     }
 
     async fn save(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Security functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Security functionality not implemented",
+        ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> Result<Self::Entity> {
-        Err(UveddiError::database_error_msg("Security functionality not implemented"))
+        Err(UveddiError::database_error_msg(
+            "Security functionality not implemented",
+        ))
     }
 
     async fn delete(&self, _id: i64) -> Result<bool> {

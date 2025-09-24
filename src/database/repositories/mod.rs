@@ -4,25 +4,25 @@
 //! business logic from data access logic, following clean architecture principles.
 
 pub mod errors;
-pub mod traits;
-pub mod sqlite;
 pub mod factory;
+pub mod sqlite;
+pub mod traits;
 
 pub use traits::{
-    Repository, ProjectRepository, AnalysisRepository, CacheRepository,
-    MetricsRepository, EventRepository, IssueRepository, DependencyRepository,
-    SecurityRepository, DebtRepository, UnitOfWork, RepositoryFactory,
+    AnalysisRepository, CacheRepository, DebtRepository, DependencyRepository, EventRepository,
+    IssueRepository, MetricsRepository, ProjectRepository, Repository, RepositoryFactory,
+    SecurityRepository, UnitOfWork,
 };
 
 // Re-export SQLite implementations
 pub use sqlite::{
-    SqliteProjectRepository, SqliteAnalysisRepository, SqliteCacheRepository,
-    SqliteMetricsRepository, SqliteEventRepository, SqliteIssueRepository,
-    SqliteDependencyRepository, SqliteSecurityRepository, SqliteDebtRepository,
+    SqliteAnalysisRepository, SqliteCacheRepository, SqliteDebtRepository,
+    SqliteDependencyRepository, SqliteEventRepository, SqliteIssueRepository,
+    SqliteMetricsRepository, SqliteProjectRepository, SqliteSecurityRepository,
 };
 
 // Re-export factory implementations
-pub use factory::{SqliteRepositoryFactory, RepositoryManager};
+pub use factory::{RepositoryManager, SqliteRepositoryFactory};
 
 // Re-export error types
 pub use errors::{RepositoryError, RepositoryResult};

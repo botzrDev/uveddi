@@ -343,9 +343,7 @@ impl DatabaseConfigManager {
                     Environment::Development => {
                         self.config.development.pool.max_connections = max_conn
                     }
-                    Environment::Staging => {
-                        self.config.staging.pool.max_connections = max_conn
-                    }
+                    Environment::Staging => self.config.staging.pool.max_connections = max_conn,
                     Environment::Production => {
                         self.config.production.pool.max_connections = max_conn
                     }

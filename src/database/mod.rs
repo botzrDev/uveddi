@@ -235,7 +235,7 @@ pub mod scalable_manager;
 pub use self::crud::Database;
 // Re-export new migration system
 pub use self::migrations::{
-    Migration, MigrationRegistry, MigrationRecord, MigrationResult, create_standard_registry
+    create_standard_registry, Migration, MigrationRecord, MigrationRegistry, MigrationResult,
 };
 
 // Re-export migration runner
@@ -254,7 +254,9 @@ pub use self::connection::providers::PostgreSqlProvider;
 
 // Re-export new scalability features
 pub use self::config_manager::{DatabaseConfigBuilder, DatabaseConfigManager, Environment};
-pub use self::migration_manager::{DataMigrationResult, MigrationManager, MigrationResult as LegacyMigrationResult};
+pub use self::migration_manager::{
+    DataMigrationResult, MigrationManager, MigrationResult as LegacyMigrationResult,
+};
 pub use self::monitoring::{
     Alert, AlertSeverity, AlertType, DatabaseMonitor, MonitoringConfig, MonitoringReport,
 };
@@ -269,9 +271,8 @@ pub use self::scalable_manager::{LoadBalancerStats, ScalableDatabase};
 
 // Re-export repositories
 pub use self::repositories::{
-    Repository, ProjectRepository, AnalysisRepository, CacheRepository,
-    SqliteProjectRepository, SqliteAnalysisRepository, SqliteCacheRepository,
-    RepositoryManager, create_repository_factory,
+    create_repository_factory, AnalysisRepository, CacheRepository, ProjectRepository, Repository,
+    RepositoryManager, SqliteAnalysisRepository, SqliteCacheRepository, SqliteProjectRepository,
 };
 
 // Re-export models for convenience

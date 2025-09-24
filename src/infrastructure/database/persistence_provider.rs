@@ -8,8 +8,8 @@ use crate::core::interfaces::persistence::{
     AnalysisRunDomain, DomainIssue, IssueFilter, IssueSeverity, IssueStats, PersistenceError,
     PersistenceProvider, PersistenceResult,
 };
-use crate::database::{Database, RepositoryManager};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
+use crate::database::{Database, RepositoryManager};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
@@ -79,7 +79,8 @@ impl PersistenceProvider for DatabasePersistenceProvider {
 
         // Create a new analysis run - assuming project_id is available in the domain run
         let project_id = 1; // TODO: Extract from run domain object properly
-        let analysis_run = analysis_repo.create_analysis_run(project_id)
+        let analysis_run = analysis_repo
+            .create_analysis_run(project_id)
             .await
             .map_err(|e| PersistenceError::QueryError(e.to_string()))?;
 

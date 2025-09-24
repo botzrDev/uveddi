@@ -29,7 +29,7 @@
 //! - `GET /*` - SPA fallback for client-side routing
 
 use crate::api::types::{ApiServer, RestApiConfig};
-use crate::database::{Database, repositories::RepositoryManager};
+use crate::database::{repositories::RepositoryManager, Database};
 use crate::report::interactive_models::REPORT_SCHEMA_VERSION;
 use crate::security::{self, validate_api_request};
 
@@ -41,7 +41,7 @@ use axum::{
     http::{header, HeaderMap, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Json},
-    routing::{get, post, get_service},
+    routing::{get, get_service, post},
     Router,
 };
 use chrono::Utc;
@@ -94,7 +94,10 @@ impl RestApiService {
             .route("/security/taint-flows", get(get_taint_flows))
             .route("/security/sarif", get(export_sarif))
             // Project endpoints (using repository pattern)
-            .route("/projects", get(list_projects_repository).post(create_project_repository))
+            .route(
+                "/projects",
+                get(list_projects_repository).post(create_project_repository),
+            )
             .route("/projects/{id}", get(get_project_repository));
 
         // Build the main app router
