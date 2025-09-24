@@ -11,13 +11,17 @@ use std::sync::Arc;
 
 // Import types conditionally when engine module is available
 #[cfg(feature = "engine-integration")]
-use crate::engine::analysis::context::{AnalysisContext, FileInfo, ProjectContext, ProjectDependency, DependencySource};
+use crate::database::models::ArchitecturalIssue;
 #[cfg(feature = "engine-integration")]
-use crate::engine::analysis::pipeline::{AnalysisPipeline, ContextBuilder, Detector, PipelineError, AnalysisResult};
+use crate::engine::analysis::context::{
+    AnalysisContext, DependencySource, FileInfo, ProjectContext, ProjectDependency,
+};
+#[cfg(feature = "engine-integration")]
+use crate::engine::analysis::pipeline::{
+    AnalysisPipeline, AnalysisResult, ContextBuilder, Detector, PipelineError,
+};
 #[cfg(feature = "engine-integration")]
 use crate::engine::parsing::AstBuilder;
-#[cfg(feature = "engine-integration")]
-use crate::database::models::ArchitecturalIssue;
 
 // Re-export tree-sitter types
 #[cfg(not(feature = "tree-sitter"))]
@@ -38,11 +42,7 @@ pub struct ParsedFileCompat {
 
 impl ParsedFileCompat {
     /// Create a new compatibility wrapper (stub implementation)
-    pub fn new(
-        file_path: PathBuf,
-        language: SourceLanguage,
-        source: String,
-    ) -> Self {
+    pub fn new(file_path: PathBuf, language: SourceLanguage, source: String) -> Self {
         let custom_ast = Arc::new(None);
 
         Self {
@@ -183,14 +183,22 @@ impl Detector for DetectorAdapter {
         };
 
         // Call legacy detector with compatibility wrapper
-        tokio::runtime::Runtime::new()
-            .unwrap()
-            .block_on(async {
-                self.legacy_detector
-                    .detect_issues(&compat_file)
-                    .await
-                    .map_err(|e| PipelineError::DetectorError(format!("Legacy detector failed: {}", e)))
-            })
+        // Use a more robust async execution approach
+        let rt = tokio::runtime::Handle::try_current()
+            .map_err(|_| PipelineError::DetectorError("No tokio runtime available".to_string()))?;
+
+        rt.block_on(async {
+            self.legacy_detector
+                .detect_issues(&compat_file)
+                .await
+                .map_err(|e| {
+                    PipelineError::DetectorError(format!(
+                        "Legacy detector '{}' failed: {}",
+                        self.legacy_detector.get_detector_name(),
+                        e
+                    ))
+                })
+        })
     }
 
     fn name(&self) -> &str {
@@ -198,8 +206,13 @@ impl Detector for DetectorAdapter {
     }
 
     fn supports_language(&self, language: &SourceLanguage) -> bool {
-        // Most legacy detectors support all languages
-        true
+        // Check if legacy detector has specific language support
+        // For now, assume most legacy detectors support all languages
+        // This could be enhanced by adding a language support method to AnalysisDetector
+        match self.legacy_detector.get_detector_name() {
+            "GodObjectDetector" | "CodeDuplicationDetector" | "DeadCodeDetector" => true,
+            _ => true, // Default to supporting all languages for unknown detectors
+        }
     }
 }
 
@@ -233,10 +246,15 @@ impl AstParserCompat {
         let source = std::fs::read_to_string(file_path)
             .map_err(|e| crate::ast::tree_sitter_impl::AstError::Other(e.to_string()))?;
 
-        let language = SourceLanguage::from_path(file_path)
-            .ok_or_else(|| crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage("Unknown".to_string()))?;
+        let language = SourceLanguage::from_path(file_path).ok_or_else(|| {
+            crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage("Unknown".to_string())
+        })?;
 
-        Ok(ParsedFileCompat::new(file_path.to_path_buf(), language, source))
+        Ok(ParsedFileCompat::new(
+            file_path.to_path_buf(),
+            language,
+            source,
+        ))
     }
 
     /// Parse content directly (stub)
@@ -247,6 +265,10 @@ impl AstParserCompat {
         language: SourceLanguage,
     ) -> Result<ParsedFileCompat, crate::ast::tree_sitter_impl::AstError> {
         // TODO: Implement using AstBuilder when engine is complete
-        Ok(ParsedFileCompat::new(file_path.to_path_buf(), language, content.to_string()))
+        Ok(ParsedFileCompat::new(
+            file_path.to_path_buf(),
+            language,
+            content.to_string(),
+        ))
     }
 }

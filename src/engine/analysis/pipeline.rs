@@ -4,11 +4,13 @@
 //! Provides clear separation between business logic and AST parsing.
 
 use super::AnalysisContext;
+use super::performance::{AnalysisInstrumentation, AnalysisMetrics};
 use crate::database::models::ArchitecturalIssue;
 use crate::engine::parsing::{ParseResult, AstBuilder, LanguageParser};
 use crate::engine::analysis::context::{FileInfo, ProjectContext, ProjectDependency, DependencySource};
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Instant;
 
 /// Analysis pipeline error types
 #[derive(Debug, thiserror::Error)]
@@ -29,6 +31,7 @@ pub struct AnalysisResult {
     pub issues: Vec<ArchitecturalIssue>,
     pub context: AnalysisContext,
     pub execution_time: std::time::Duration,
+    pub performance_metrics: Option<AnalysisMetrics>,
 }
 
 /// Analysis pipeline that orchestrates detector execution
@@ -38,6 +41,9 @@ pub struct AnalysisPipeline {
 
     /// Context builder for preparing analysis context
     context_builder: Arc<ContextBuilder>,
+
+    /// Performance instrumentation enabled
+    performance_enabled: bool,
 }
 
 /// Trait for analysis detectors using the new context
@@ -126,7 +132,14 @@ impl AnalysisPipeline {
         Self {
             detectors: Vec::new(),
             context_builder: Arc::new(ContextBuilder::new(ast_builder)),
+            performance_enabled: false,
         }
+    }
+
+    /// Enable performance instrumentation
+    pub fn with_performance_instrumentation(mut self, enabled: bool) -> Self {
+        self.performance_enabled = enabled;
+        self
     }
 
     /// Add a detector to the pipeline
@@ -139,24 +152,45 @@ impl AnalysisPipeline {
     pub fn analyze(&self, context: AnalysisContext) -> Result<AnalysisResult, PipelineError> {
         let start_time = std::time::Instant::now();
         let mut all_issues = Vec::new();
+        let mut instrumentation = AnalysisInstrumentation::new(self.performance_enabled);
+
+        // Start detection phase
+        instrumentation.start_phase("detection");
 
         // Run all applicable detectors
         for detector in &self.detectors {
             if detector.supports_language(&context.file_info.language) {
+                let detector_start = Instant::now();
+
                 match detector.detect(&context) {
-                    Ok(mut issues) => all_issues.append(&mut issues),
+                    Ok(mut issues) => {
+                        let issue_count = issues.len();
+                        all_issues.append(&mut issues);
+                        instrumentation.record_issues_found(issue_count);
+                    },
                     Err(e) => {
                         eprintln!("Detector {} failed: {}", detector.name(), e);
                         // Continue with other detectors
                     }
                 }
+
+                let detector_duration = detector_start.elapsed();
+                instrumentation.record_detector_time(detector.name(), detector_duration);
             }
         }
+
+        instrumentation.record_file_processed();
+        let metrics = if self.performance_enabled {
+            Some(instrumentation.finalize())
+        } else {
+            None
+        };
 
         Ok(AnalysisResult {
             issues: all_issues,
             context,
             execution_time: start_time.elapsed(),
+            performance_metrics: metrics,
         })
     }
 
