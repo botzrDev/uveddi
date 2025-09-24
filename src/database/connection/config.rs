@@ -47,7 +47,7 @@ impl DatabaseConfig {
     }
 
     /// Create PostgreSQL configuration
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "full")]
     pub fn postgresql(connection_string: impl Into<String>) -> Self {
         Self {
             database_type: DatabaseType::PostgreSQL,

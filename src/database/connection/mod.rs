@@ -10,7 +10,7 @@ pub use config::{DatabaseConfig, DatabaseType, PoolConfig, PoolConfigBuilder};
 pub use pool::{ConnectionPool, PooledConnection};
 pub use providers::{DatabaseProvider, SqliteProvider};
 
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "full")]
 pub use providers::PostgreSqlProvider;
 
 use crate::error::{Result, UveddiError};
@@ -78,7 +78,7 @@ impl ConnectionManager {
     pub fn new(config: DatabaseConfig) -> Result<Self> {
         let provider: Arc<dyn DatabaseProvider> = match config.database_type {
             DatabaseType::SQLite => Arc::new(SqliteProvider::new(&config)?),
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "full")]
             DatabaseType::PostgreSQL => Arc::new(PostgreSqlProvider::new(&config)?),
         };
 

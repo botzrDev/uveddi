@@ -1,5 +1,9 @@
 use crate::core::logging::error;
 use crate::database::models::{AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue};
+use crate::database::repositories::{
+    ProjectRepository, AnalysisRepository, SqliteProjectRepository, SqliteAnalysisRepository,
+};
+use crate::database::connection::{DatabaseConfig, DatabaseType, ConnectionManager};
 use crate::error::{Result, UveddiError};
 use crate::security;
 use chrono::Utc;
@@ -9,7 +13,11 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Database {
+    // Legacy connection for backward compatibility
     conn: Arc<Mutex<Connection>>,
+    // New repository-based architecture
+    project_repo: Option<Arc<SqliteProjectRepository>>,
+    analysis_repo: Option<Arc<SqliteAnalysisRepository>>,
 }
 
 impl Database {
@@ -110,7 +118,37 @@ impl Database {
         ").map_err(crate::error::UveddiError::from)?;
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
+            // For now, repositories are None to maintain compatibility
+            // They will be initialized when the connection pooling is used
+            project_repo: None,
+            analysis_repo: None,
         })
+    }
+
+    /// Create a new Database instance with connection pooling and repositories
+    pub async fn new_with_repositories(config: Option<DatabaseConfig>) -> Result<Self> {
+        // Create a legacy instance for backward compatibility
+        let legacy = match config.as_ref().map(|c| c.connection_string.as_str()) {
+            Some(path) => Self::new(Some(Path::new(path)))?,
+            None => Self::new(None)?,
+        };
+
+        // If config is provided, also set up repositories
+        if let Some(config) = config {
+            let manager = ConnectionManager::new(config)?;
+            let pool = manager.create_pool().await?;
+
+            let project_repo = Arc::new(SqliteProjectRepository::new(pool.clone()));
+            let analysis_repo = Arc::new(SqliteAnalysisRepository::new(pool.clone()));
+
+            Ok(Self {
+                conn: legacy.conn,
+                project_repo: Some(project_repo),
+                analysis_repo: Some(analysis_repo),
+            })
+        } else {
+            Ok(legacy)
+        }
     }
 
     /// Gets the project ID for the given path, creating a new project entry if needed.

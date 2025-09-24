@@ -223,6 +223,7 @@ pub mod connection;
 pub mod crud;
 pub mod migrations;
 pub mod models;
+pub mod repositories;
 
 // New scalability modules
 pub mod config_manager;
@@ -244,7 +245,7 @@ pub use self::connection::{
     ConnectionManager, ConnectionManagerBuilder, DatabaseConnection,
 };
 
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "full")]
 pub use self::connection::providers::PostgreSqlProvider;
 
 // Re-export new scalability features
@@ -261,6 +262,13 @@ pub fn create_database_provider(
     Ok(std::sync::Arc::from(provider))
 }
 pub use self::scalable_manager::{LoadBalancerStats, ScalableDatabase};
+
+// Re-export repositories
+pub use self::repositories::{
+    Repository, ProjectRepository, AnalysisRepository, CacheRepository,
+    SqliteProjectRepository, SqliteAnalysisRepository, SqliteCacheRepository,
+    create_repository_factory,
+};
 
 // Re-export models for convenience
 pub use self::models::{
