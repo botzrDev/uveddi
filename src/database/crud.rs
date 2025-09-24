@@ -2,6 +2,7 @@ use crate::core::logging::error;
 use crate::database::models::{AnalysisRun, AnalysisStats, AntiPatternType, ArchitecturalIssue};
 use crate::database::repositories::{
     ProjectRepository, AnalysisRepository, SqliteProjectRepository, SqliteAnalysisRepository,
+    RepositoryManager, SqliteRepositoryFactory,
 };
 use crate::database::connection::{DatabaseConfig, DatabaseType, ConnectionManager};
 use crate::error::{Result, UveddiError};
@@ -18,6 +19,8 @@ pub struct Database {
     // New repository-based architecture
     project_repo: Option<Arc<SqliteProjectRepository>>,
     analysis_repo: Option<Arc<SqliteAnalysisRepository>>,
+    // Repository manager for advanced usage
+    repository_manager: Option<Arc<RepositoryManager>>,
 }
 
 impl Database {
@@ -122,6 +125,7 @@ impl Database {
             // They will be initialized when the connection pooling is used
             project_repo: None,
             analysis_repo: None,
+            repository_manager: None,
         })
     }
 
@@ -138,17 +142,36 @@ impl Database {
             let manager = ConnectionManager::new(config)?;
             let pool = manager.create_pool().await?;
 
+            let factory = Arc::new(SqliteRepositoryFactory::new(pool.clone()));
+            let repository_manager = Arc::new(RepositoryManager::new(factory));
+
             let project_repo = Arc::new(SqliteProjectRepository::new(pool.clone()));
-            let analysis_repo = Arc::new(SqliteAnalysisRepository::new(pool.clone()));
+            let analysis_repo = Arc::new(SqliteAnalysisRepository::new(pool));
 
             Ok(Self {
                 conn: legacy.conn,
                 project_repo: Some(project_repo),
                 analysis_repo: Some(analysis_repo),
+                repository_manager: Some(repository_manager),
             })
         } else {
             Ok(legacy)
         }
+    }
+
+    /// Get the repository manager if available
+    pub fn repository_manager(&self) -> Option<Arc<RepositoryManager>> {
+        self.repository_manager.clone()
+    }
+
+    /// Get the project repository if available
+    pub fn project_repository(&self) -> Option<Arc<dyn ProjectRepository>> {
+        self.project_repo.clone().map(|r| r as Arc<dyn ProjectRepository>)
+    }
+
+    /// Get the analysis repository if available
+    pub fn analysis_repository(&self) -> Option<Arc<dyn AnalysisRepository>> {
+        self.analysis_repo.clone().map(|r| r as Arc<dyn AnalysisRepository>)
     }
 
     /// Gets the project ID for the given path, creating a new project entry if needed.

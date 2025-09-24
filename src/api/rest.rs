@@ -29,7 +29,7 @@
 //! - `GET /*` - SPA fallback for client-side routing
 
 use crate::api::types::{ApiServer, RestApiConfig};
-use crate::database::Database;
+use crate::database::{Database, repositories::RepositoryManager};
 use crate::report::interactive_models::REPORT_SCHEMA_VERSION;
 use crate::security::{self, validate_api_request};
 
@@ -41,7 +41,7 @@ use axum::{
     http::{header, HeaderMap, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Json},
-    routing::{get, get_service},
+    routing::{get, post, get_service},
     Router,
 };
 use chrono::Utc;
@@ -76,6 +76,7 @@ impl RestApiService {
         let state = Arc::new(AppState {
             config: self.config.clone(),
             database: self.database.clone(),
+            repository_manager: self.database.repository_manager(),
         });
 
         // API v1 routes - using modular endpoints
@@ -91,7 +92,10 @@ impl RestApiService {
             .route("/security/summary", get(get_security_summary))
             .route("/security/owasp-coverage", get(get_owasp_coverage))
             .route("/security/taint-flows", get(get_taint_flows))
-            .route("/security/sarif", get(export_sarif));
+            .route("/security/sarif", get(export_sarif))
+            // Project endpoints (using repository pattern)
+            .route("/projects", get(list_projects_repository).post(create_project_repository))
+            .route("/projects/{id}", get(get_project_repository));
 
         // Build the main app router
         let mut app = Router::new()
@@ -216,6 +220,7 @@ impl ApiServer for CombinedApiServer {
 pub struct AppState {
     pub config: RestApiConfig,
     pub database: Arc<Database>,
+    pub repository_manager: Option<Arc<RepositoryManager>>,
 }
 
 /// Request validation middleware that validates HTTP headers and parameters

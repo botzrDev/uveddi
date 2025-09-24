@@ -5,7 +5,7 @@
 //! web-based visualization interface.
 
 use crate::api::{CombinedApiServer, RestApiConfig};
-use crate::database::Database;
+use crate::database::{Database, connection::{DatabaseConfig, DatabaseType}};
 use crate::report::{InteractiveReportConfig, InteractiveReportGenerator};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
@@ -106,8 +106,38 @@ impl UiCommand {
         // Create reports directory if it doesn't exist
         tokio::fs::create_dir_all(&args.reports_dir).await?;
 
-        // Initialize database
-        let database = Arc::new(Database::new(Some(args.database.as_path()))?);
+        // Initialize database with repository support if possible
+        let database = if args.dev {
+            // In dev mode, use the new repository-based architecture
+            let config = DatabaseConfig {
+                database_type: DatabaseType::SQLite,
+                connection_string: args.database.to_string_lossy().to_string(),
+                read_connection_strings: vec![],
+                pool: crate::database::connection::PoolConfig {
+                    max_connections: 10,
+                    min_connections: 1,
+                    connection_timeout: std::time::Duration::from_secs(30),
+                    idle_timeout: std::time::Duration::from_secs(300),
+                    max_lifetime: std::time::Duration::from_secs(3600),
+                },
+                enable_metrics: false,
+                enable_logging: args.dev,
+                enable_prepared_statements: true,
+            };
+            match Database::new_with_repositories(Some(config)).await {
+                Ok(db) => {
+                    info!("✅ Database initialized with repository pattern: {}", args.database.display());
+                    Arc::new(db)
+                },
+                Err(e) => {
+                    info!("⚠️ Failed to initialize repository pattern, falling back to legacy: {}", e);
+                    Arc::new(Database::new(Some(args.database.as_path()))?)
+                }
+            }
+        } else {
+            // In production mode, use legacy for now
+            Arc::new(Database::new(Some(args.database.as_path()))?)
+        };
         info!("✅ Database initialized: {}", args.database.display());
 
         // Create server configuration

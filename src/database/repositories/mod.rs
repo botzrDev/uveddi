@@ -5,6 +5,7 @@
 
 pub mod traits;
 pub mod sqlite;
+pub mod factory;
 
 pub use traits::{
     Repository, ProjectRepository, AnalysisRepository, CacheRepository,
@@ -17,8 +18,10 @@ pub use sqlite::{
     SqliteProjectRepository, SqliteAnalysisRepository, SqliteCacheRepository,
     SqliteMetricsRepository, SqliteEventRepository, SqliteIssueRepository,
     SqliteDependencyRepository, SqliteSecurityRepository, SqliteDebtRepository,
-    SqliteRepositoryFactory,
 };
+
+// Re-export factory implementations
+pub use factory::{SqliteRepositoryFactory, RepositoryManager};
 
 use crate::error::Result;
 use std::sync::Arc;
