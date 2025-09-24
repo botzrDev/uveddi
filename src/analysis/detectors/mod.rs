@@ -6,6 +6,10 @@
 
 pub mod anti_patterns;
 pub mod base;
+#[cfg(feature = "analysis-cache")]
+pub mod cache_factory;
+#[cfg(feature = "analysis-cache")]
+pub mod cache_wrapper;
 pub mod cycle;
 pub mod dependency;
 pub mod registry;
@@ -15,6 +19,13 @@ pub use base::{
     AnalysisContext, BaseConfig, BaseMetrics, DetectionMetrics, Detector, DetectorCategory,
     DetectorConfig, DetectorOutput, Issue, Severity,
 };
+#[cfg(feature = "analysis-cache")]
+pub use cache_factory::{
+    CacheAwareDetectorFactory, CacheConfiguration, DetectorCacheSettings,
+    DetectorMigrationHelper, MixedDetectorCollection,
+};
+#[cfg(feature = "analysis-cache")]
+pub use cache_wrapper::CachedDetector;
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};
 pub use registry::{DetectorRegistry, DetectorRegistryFactory, RegistryConfig, RegistryResults};

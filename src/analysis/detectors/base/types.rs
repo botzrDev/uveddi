@@ -5,6 +5,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+#[cfg(feature = "analysis-cache")]
+use crate::engine::cache::AnalysisCache;
+#[cfg(feature = "analysis-cache")]
+use std::sync::{Arc, Mutex};
+
 /// Categories of detectors
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DetectorCategory {
@@ -173,17 +178,25 @@ pub struct AnalysisContext {
     pub parallel: bool,
     /// Maximum number of issues to report
     pub max_issues: Option<usize>,
+    /// Analysis result cache (if caching is enabled)
+    #[cfg(feature = "analysis-cache")]
+    pub analysis_cache: Arc<Mutex<AnalysisCache>>,
 }
 
 impl AnalysisContext {
     /// Creates a new analysis context
     pub fn new(files: Vec<ParsedFile>, root_path: PathBuf) -> Self {
+        #[cfg(feature = "analysis-cache")]
+        let analysis_cache = Arc::new(Mutex::new(AnalysisCache::new(5000))); // Default cache size
+
         Self {
             files,
             root_path,
             global_config: HashMap::new(),
             parallel: true,
             max_issues: None,
+            #[cfg(feature = "analysis-cache")]
+            analysis_cache,
         }
     }
 
@@ -213,5 +226,23 @@ impl AnalysisContext {
         self.global_config
             .get(key)
             .and_then(|v| serde_json::from_value(v.clone()).ok())
+    }
+
+    /// Gets analysis cache statistics if caching is enabled
+    #[cfg(feature = "analysis-cache")]
+    pub fn cache_stats(&self) -> Option<crate::engine::cache::analysis_cache::AnalysisCacheStats> {
+        if let Ok(cache) = self.analysis_cache.lock() {
+            Some(cache.stats().clone())
+        } else {
+            None
+        }
+    }
+
+    /// Clears the analysis cache if caching is enabled
+    #[cfg(feature = "analysis-cache")]
+    pub fn clear_cache(&self) {
+        if let Ok(mut cache) = self.analysis_cache.lock() {
+            cache.clear();
+        }
     }
 }

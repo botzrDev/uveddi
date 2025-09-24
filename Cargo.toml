@@ -126,12 +126,15 @@ production-secure = [
 minimal = ["dep:rusqlite", "dep:bincode", "dep:rayon", "dep:tokio-stream", "dep:async-stream"]
 
 # Recommended for development - includes parsing and monitoring
-standard = ["minimal", "tree-sitter", "prometheus"]
+standard = ["minimal", "tree-sitter", "prometheus", "ast-cache", "analysis-cache"]
 
 # Production-ready - all capabilities enabled
 full = ["standard", "security", "memory-optimization", "web", "tui", "wasm-plugins"]
 
 # ==================== SPECIALIZED FEATURES ====================
+# Caching systems
+ast-cache = []
+analysis-cache = []
 # Metrics and monitoring
 prometheus = ["dep:prometheus"]
 

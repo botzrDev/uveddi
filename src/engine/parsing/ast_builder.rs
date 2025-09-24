@@ -7,6 +7,7 @@
 
 use super::{LanguageParser, ParseError, Relation, Symbol};
 use crate::ast::SourceLanguage;
+use crate::engine::cache::AstCache;
 use crate::engine::parsing::parsers::{
     javascript_parser::JavaScriptParser, python_parser::PythonParser, rust_parser::RustParser,
     typescript_parser::TypeScriptParser,
@@ -14,8 +15,8 @@ use crate::engine::parsing::parsers::{
 use crate::security;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Arc;
-use tracing::{info, warn};
+use std::sync::{Arc, Mutex};
+use tracing::{info, warn, debug};
 
 // Tree-sitter imports with feature gate
 #[cfg(not(feature = "tree-sitter"))]
@@ -79,6 +80,10 @@ impl ParseResult {
 pub struct AstBuilder {
     /// Map of language parsers
     parsers: HashMap<SourceLanguage, Box<dyn LanguageParser>>,
+
+    /// AST cache for parsed trees
+    #[cfg(feature = "ast-cache")]
+    ast_cache: Arc<Mutex<AstCache>>,
 }
 
 impl AstBuilder {
@@ -140,7 +145,14 @@ impl AstBuilder {
             parsers.len()
         );
 
-        Ok(Self { parsers })
+        #[cfg(feature = "ast-cache")]
+        let ast_cache = Arc::new(Mutex::new(AstCache::new(1000))); // Default cache size
+
+        Ok(Self {
+            parsers,
+            #[cfg(feature = "ast-cache")]
+            ast_cache,
+        })
     }
 
     /// Parse a file into an AST
@@ -156,6 +168,41 @@ impl AstBuilder {
             .and_then(|meta| meta.modified())
             .map_err(|e| ParseError::ParseFailed(format!("Failed to get file metadata: {}", e)))?;
 
+        // Check cache first if available
+        #[cfg(feature = "ast-cache")]
+        {
+            if let Ok(mut cache) = self.ast_cache.lock() {
+                if let Some(cached_entry) = cache.get(file_path) {
+                    debug!("Cache hit for file: {}", file_path.display());
+
+                    // Detect language for cached result
+                    let language = self.detect_language(file_path)?;
+
+                    // Get appropriate parser for symbol extraction
+                    let parser = self
+                        .parsers
+                        .get(&language)
+                        .ok_or_else(|| ParseError::UnsupportedLanguage(language))?;
+
+                    // Extract symbols and relations from cached tree
+                    let symbols = parser.extract_symbols(&cached_entry.tree, &cached_entry.source);
+                    let relations = parser.build_relations(&cached_entry.tree, &cached_entry.source);
+
+                    return Ok(ParseResult::new(
+                        file_path.to_path_buf(),
+                        language,
+                        Some(cached_entry.tree.clone()),
+                        cached_entry.source.clone(),
+                        symbols,
+                        relations,
+                        cached_entry.modified_time,
+                    ));
+                } else {
+                    debug!("Cache miss for file: {}", file_path.display());
+                }
+            }
+        }
+
         // Read source safely
         let source = self.read_source_safely(file_path)?;
 
@@ -170,6 +217,16 @@ impl AstBuilder {
 
         // Parse the source
         let tree = parser.parse(&source)?;
+
+        // Store in cache if available
+        #[cfg(feature = "ast-cache")]
+        {
+            if let Ok(mut cache) = self.ast_cache.lock() {
+                if let Err(e) = cache.put(file_path.to_path_buf(), tree.clone(), source.clone()) {
+                    warn!("Failed to cache AST for {}: {}", file_path.display(), e);
+                }
+            }
+        }
 
         // Extract symbols and relations
         let symbols = parser.extract_symbols(&tree, &source);
@@ -232,6 +289,25 @@ impl AstBuilder {
     /// Check if a language is supported
     pub fn supports_language(&self, language: &SourceLanguage) -> bool {
         self.parsers.contains_key(language)
+    }
+
+    /// Get AST cache statistics if caching is enabled
+    #[cfg(feature = "ast-cache")]
+    pub fn cache_stats(&self) -> Option<crate::engine::cache::ast_cache::CacheStats> {
+        if let Ok(cache) = self.ast_cache.lock() {
+            Some(cache.stats().clone())
+        } else {
+            None
+        }
+    }
+
+    /// Clear AST cache if caching is enabled
+    #[cfg(feature = "ast-cache")]
+    pub fn clear_cache(&self) {
+        if let Ok(mut cache) = self.ast_cache.lock() {
+            cache.clear();
+            info!("AST cache cleared");
+        }
     }
 
     /// Safely read source code with robust UTF-8 handling
