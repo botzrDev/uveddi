@@ -16,7 +16,7 @@ use crate::security;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use tracing::{info, warn, debug};
+use tracing::{debug, info, warn};
 
 // Tree-sitter imports with feature gate
 #[cfg(not(feature = "tree-sitter"))]
@@ -186,7 +186,8 @@ impl AstBuilder {
 
                     // Extract symbols and relations from cached tree
                     let symbols = parser.extract_symbols(&cached_entry.tree, &cached_entry.source);
-                    let relations = parser.build_relations(&cached_entry.tree, &cached_entry.source);
+                    let relations =
+                        parser.build_relations(&cached_entry.tree, &cached_entry.source);
 
                     return Ok(ParseResult::new(
                         file_path.to_path_buf(),

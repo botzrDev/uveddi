@@ -14,6 +14,14 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 
+// Cache imports when feature is enabled
+#[cfg(feature = "analysis-cache")]
+use crate::engine::analysis::context::CacheHandles;
+#[cfg(feature = "analysis-cache")]
+use crate::engine::cache::{AnalysisCache, AstCache};
+#[cfg(feature = "analysis-cache")]
+use std::sync::Mutex;
+
 /// Analysis pipeline error types
 #[derive(Debug, thiserror::Error)]
 pub enum PipelineError {
@@ -46,6 +54,10 @@ pub struct AnalysisPipeline {
 
     /// Performance instrumentation enabled
     performance_enabled: bool,
+
+    /// Cache handles (when caching is enabled)
+    #[cfg(feature = "analysis-cache")]
+    cache_handles: Option<CacheHandles>,
 }
 
 /// Trait for analysis detectors using the new context
@@ -63,12 +75,29 @@ pub trait Detector: Send + Sync {
 /// Builds analysis context from parse results
 pub struct ContextBuilder {
     ast_builder: Arc<AstBuilder>,
+
+    /// Cache handles (when caching is enabled)
+    #[cfg(feature = "analysis-cache")]
+    cache_handles: Option<CacheHandles>,
 }
 
 impl ContextBuilder {
     /// Create new context builder
     pub fn new(ast_builder: Arc<AstBuilder>) -> Self {
-        Self { ast_builder }
+        Self {
+            ast_builder,
+            #[cfg(feature = "analysis-cache")]
+            cache_handles: None,
+        }
+    }
+
+    /// Create context builder with cache handles
+    #[cfg(feature = "analysis-cache")]
+    pub fn with_caches(ast_builder: Arc<AstBuilder>, cache_handles: CacheHandles) -> Self {
+        Self {
+            ast_builder,
+            cache_handles: Some(cache_handles),
+        }
     }
 
     /// Build analysis context from file path
@@ -77,7 +106,37 @@ impl ContextBuilder {
         file_path: &Path,
         project_context: ProjectContext,
     ) -> Result<AnalysisContext, PipelineError> {
-        // Parse file using AstBuilder
+        // Try to get AST from cache first if caching is enabled
+        #[cfg(feature = "analysis-cache")]
+        if let Some(ref cache_handles) = self.cache_handles {
+            if let Ok(mut ast_cache) = cache_handles.ast_cache.lock() {
+                if let Some(cached_entry) = ast_cache.get(file_path) {
+                    // Use cached AST - language detection from file extension
+                    let language = crate::ast::SourceLanguage::detect_from_path(file_path)
+                        .unwrap_or(crate::ast::SourceLanguage::Unknown);
+
+                    let file_info = FileInfo {
+                        path: file_path.to_path_buf(),
+                        language,
+                        lines_of_code: cached_entry.source.lines().count(),
+                        size_bytes: cached_entry.source.len(),
+                        modified_at: cached_entry.modified_time,
+                    };
+
+                    return Ok(AnalysisContext::with_caches(
+                        file_info,
+                        Some(cached_entry.tree.clone()),
+                        cached_entry.source.clone(),
+                        Vec::new(), // TODO: Cache symbols and relations
+                        Vec::new(),
+                        project_context,
+                        cache_handles.clone(),
+                    ));
+                }
+            }
+        }
+
+        // Parse file using AstBuilder (cache miss or no caching)
         let parse_result = self
             .ast_builder
             .parse_file(file_path)
@@ -92,7 +151,44 @@ impl ContextBuilder {
             modified_at: std::time::SystemTime::now(),
         };
 
+        // Cache the AST if caching is enabled
+        #[cfg(feature = "analysis-cache")]
+        if let Some(ref cache_handles) = self.cache_handles {
+            if let Ok(mut ast_cache) = cache_handles.ast_cache.lock() {
+                if let Some(ref tree) = parse_result.tree {
+                    let _ = ast_cache.put(
+                        file_path.to_path_buf(),
+                        tree.clone(),
+                        parse_result.source.clone(),
+                    );
+                }
+            }
+        }
+
         // Create analysis context
+        #[cfg(feature = "analysis-cache")]
+        if let Some(ref cache_handles) = self.cache_handles {
+            Ok(AnalysisContext::with_caches(
+                file_info,
+                parse_result.tree,
+                parse_result.source,
+                parse_result.symbols,
+                parse_result.relations,
+                project_context,
+                cache_handles.clone(),
+            ))
+        } else {
+            Ok(AnalysisContext::new(
+                file_info,
+                parse_result.tree,
+                parse_result.source,
+                parse_result.symbols,
+                parse_result.relations,
+                project_context,
+            ))
+        }
+
+        #[cfg(not(feature = "analysis-cache"))]
         Ok(AnalysisContext::new(
             file_info,
             parse_result.tree,
@@ -117,6 +213,20 @@ impl ContextBuilder {
             modified_at: parse_result.modified_at,
         };
 
+        // Use caches if available
+        #[cfg(feature = "analysis-cache")]
+        if let Some(ref cache_handles) = self.cache_handles {
+            return AnalysisContext::with_caches(
+                file_info,
+                parse_result.tree,
+                parse_result.source,
+                parse_result.symbols,
+                parse_result.relations,
+                project_context,
+                cache_handles.clone(),
+            );
+        }
+
         AnalysisContext::new(
             file_info,
             parse_result.tree,
@@ -135,6 +245,23 @@ impl AnalysisPipeline {
             detectors: Vec::new(),
             context_builder: Arc::new(ContextBuilder::new(ast_builder)),
             performance_enabled: false,
+            #[cfg(feature = "analysis-cache")]
+            cache_handles: None,
+        }
+    }
+
+    /// Create analysis pipeline with cache support
+    #[cfg(feature = "analysis-cache")]
+    pub fn with_caches(ast_builder: Arc<AstBuilder>, cache_handles: CacheHandles) -> Self {
+        let context_builder = Arc::new(ContextBuilder::with_caches(
+            ast_builder,
+            cache_handles.clone(),
+        ));
+        Self {
+            detectors: Vec::new(),
+            context_builder,
+            performance_enabled: false,
+            cache_handles: Some(cache_handles),
         }
     }
 

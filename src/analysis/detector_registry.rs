@@ -4,6 +4,12 @@ use crate::analysis::{
 use crate::error::UveddiError;
 use std::collections::HashMap;
 
+#[cfg(feature = "analysis-cache")]
+use crate::analysis::detectors::{
+    cache_factory::{CacheAwareDetectorFactory, DetectorMigrationHelper},
+    cache_wrapper::CachedDetector,
+};
+
 /// Registry for managing detector instances
 ///
 /// The `DetectorRegistry` provides centralized management of detector instances,
@@ -43,6 +49,9 @@ use std::collections::HashMap;
 pub struct DetectorRegistry {
     detectors: HashMap<String, Box<dyn AnalysisDetector + Send + Sync>>,
     factory: DetectorFactory,
+    /// Enable caching for registered detectors
+    #[cfg(feature = "analysis-cache")]
+    enable_caching: bool,
 }
 
 impl DetectorRegistry {
@@ -51,6 +60,18 @@ impl DetectorRegistry {
         Self {
             detectors: HashMap::new(),
             factory: DetectorFactory,
+            #[cfg(feature = "analysis-cache")]
+            enable_caching: false,
+        }
+    }
+
+    /// Create a detector registry with caching enabled
+    #[cfg(feature = "analysis-cache")]
+    pub fn with_caching_enabled() -> Self {
+        Self {
+            detectors: HashMap::new(),
+            factory: DetectorFactory,
+            enable_caching: true,
         }
     }
 

@@ -5,6 +5,13 @@
 
 use crate::engine::parsing::{Relation, Symbol};
 use std::path::PathBuf;
+use std::sync::Arc;
+
+// Cache imports when feature is enabled
+#[cfg(feature = "analysis-cache")]
+use crate::engine::cache::{AnalysisCache, AstCache};
+#[cfg(feature = "analysis-cache")]
+use std::sync::Mutex;
 
 // Tree-sitter imports with feature gate
 #[cfg(not(feature = "tree-sitter"))]
@@ -32,6 +39,10 @@ pub struct AnalysisContext {
 
     /// Project-wide context
     pub project_context: ProjectContext,
+
+    /// Cache handles (when caching is enabled)
+    #[cfg(feature = "analysis-cache")]
+    pub caches: Option<CacheHandles>,
 }
 
 /// File metadata and information
@@ -85,6 +96,16 @@ pub enum DependencySource {
     Path { path: PathBuf },
 }
 
+/// Cache handles for accessing AST and analysis caches
+#[cfg(feature = "analysis-cache")]
+#[derive(Debug)]
+pub struct CacheHandles {
+    /// AST cache for parsed syntax trees
+    pub ast_cache: Arc<Mutex<AstCache>>,
+    /// Analysis cache for detector results
+    pub analysis_cache: Arc<Mutex<AnalysisCache>>,
+}
+
 impl AnalysisContext {
     /// Create a new analysis context
     pub fn new(
@@ -102,6 +123,30 @@ impl AnalysisContext {
             symbols,
             relations,
             project_context,
+            #[cfg(feature = "analysis-cache")]
+            caches: None,
+        }
+    }
+
+    /// Create a new analysis context with caches
+    #[cfg(feature = "analysis-cache")]
+    pub fn with_caches(
+        file_info: FileInfo,
+        syntax_tree: Option<Tree>,
+        source: String,
+        symbols: Vec<Symbol>,
+        relations: Vec<Relation>,
+        project_context: ProjectContext,
+        caches: CacheHandles,
+    ) -> Self {
+        Self {
+            file_info,
+            syntax_tree,
+            source,
+            symbols,
+            relations,
+            project_context,
+            caches: Some(caches),
         }
     }
 
@@ -112,5 +157,16 @@ impl AnalysisContext {
             .strip_prefix(&self.project_context.project_root)
             .ok()
             .map(|p| p.to_path_buf())
+    }
+}
+
+#[cfg(feature = "analysis-cache")]
+impl CacheHandles {
+    /// Create new cache handles
+    pub fn new(ast_cache: Arc<Mutex<AstCache>>, analysis_cache: Arc<Mutex<AnalysisCache>>) -> Self {
+        Self {
+            ast_cache,
+            analysis_cache,
+        }
     }
 }

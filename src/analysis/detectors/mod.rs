@@ -21,8 +21,8 @@ pub use base::{
 };
 #[cfg(feature = "analysis-cache")]
 pub use cache_factory::{
-    CacheAwareDetectorFactory, CacheConfiguration, DetectorCacheSettings,
-    DetectorMigrationHelper, MixedDetectorCollection,
+    CacheAwareDetectorFactory, CacheConfiguration, DetectorCacheSettings, DetectorMigrationHelper,
+    MixedDetectorCollection,
 };
 #[cfg(feature = "analysis-cache")]
 pub use cache_wrapper::CachedDetector;

@@ -5,15 +5,14 @@
 
 #[cfg(feature = "analysis-cache")]
 use super::{
-    base::traits::Detector,
-    cache_wrapper::CachedDetector,
     anti_patterns::{
-        god_object::detector::GodObjectDetector,
-        dead_code::detector::DeadCodeDetector,
+        dead_code::detector::DeadCodeDetector, god_object::detector::GodObjectDetector,
         long_methods::detector::LongMethodDetector,
     },
-    security::detector::SecurityDetector,
+    base::traits::Detector,
+    cache_wrapper::CachedDetector,
     cycle::CycleDetector,
+    security::detector::SecurityDetector,
 };
 
 #[cfg(feature = "analysis-cache")]
@@ -54,9 +53,7 @@ impl CacheAwareDetectorFactory {
     }
 
     /// Create a cached version of the Cycle detector
-    pub fn create_cached_cycle_detector(
-        detector: CycleDetector,
-    ) -> CachedDetector<CycleDetector> {
+    pub fn create_cached_cycle_detector(detector: CycleDetector) -> CachedDetector<CycleDetector> {
         CachedDetector::with_version(detector, "cycle:v1.0".to_string())
     }
 
@@ -69,10 +66,7 @@ impl CacheAwareDetectorFactory {
     }
 
     /// Create a cached version of any detector with explicit version
-    pub fn create_cached_detector_with_version<D>(
-        detector: D,
-        version: String,
-    ) -> CachedDetector<D>
+    pub fn create_cached_detector_with_version<D>(detector: D, version: String) -> CachedDetector<D>
     where
         D: Detector + Send + Sync,
     {
@@ -99,26 +93,33 @@ impl DetectorMigrationHelper {
 
     /// Create a cache-enabled detector based on detector name
     /// This is useful for dynamic detector creation based on configuration
-    pub fn create_by_name(name: &str) -> Result<Box<dyn Detector<Config = (), Output = ()>>, AnalysisError> {
+    pub fn create_by_name(
+        name: &str,
+    ) -> Result<Box<dyn Detector<Config = (), Output = ()>>, AnalysisError> {
         // This is a simplified implementation - in practice you'd need proper type handling
         match name {
             "god_object" => {
                 // This would need proper configuration handling
-                Err(AnalysisError::ConfigurationError("Not implemented".to_string()))
-            },
-            "dead_code" => {
-                Err(AnalysisError::ConfigurationError("Not implemented".to_string()))
-            },
-            "long_method" => {
-                Err(AnalysisError::ConfigurationError("Not implemented".to_string()))
-            },
-            "security" => {
-                Err(AnalysisError::ConfigurationError("Not implemented".to_string()))
-            },
-            "cycle" => {
-                Err(AnalysisError::ConfigurationError("Not implemented".to_string()))
-            },
-            _ => Err(AnalysisError::ConfigurationError(format!("Unknown detector: {}", name))),
+                Err(AnalysisError::ConfigurationError(
+                    "Not implemented".to_string(),
+                ))
+            }
+            "dead_code" => Err(AnalysisError::ConfigurationError(
+                "Not implemented".to_string(),
+            )),
+            "long_method" => Err(AnalysisError::ConfigurationError(
+                "Not implemented".to_string(),
+            )),
+            "security" => Err(AnalysisError::ConfigurationError(
+                "Not implemented".to_string(),
+            )),
+            "cycle" => Err(AnalysisError::ConfigurationError(
+                "Not implemented".to_string(),
+            )),
+            _ => Err(AnalysisError::ConfigurationError(format!(
+                "Unknown detector: {}",
+                name
+            ))),
         }
     }
 }

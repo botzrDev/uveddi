@@ -11,9 +11,7 @@ use super::{
 
 #[cfg(feature = "analysis-cache")]
 use crate::{
-    analysis::AnalysisError,
-    database::models::ArchitecturalIssue,
-    engine::cache::AnalysisCache,
+    analysis::AnalysisError, database::models::ArchitecturalIssue, engine::cache::AnalysisCache,
 };
 
 #[cfg(feature = "analysis-cache")]
@@ -157,7 +155,11 @@ where
             // Check cache
             if let Ok(cache) = context.analysis_cache.lock() {
                 if let Some(cached_entry) = cache.get(file_path, &detector_versions) {
-                    debug!("Cache hit for {} on file: {}", self.inner.name(), file_path.display());
+                    debug!(
+                        "Cache hit for {} on file: {}",
+                        self.inner.name(),
+                        file_path.display()
+                    );
 
                     // Convert cached issues back to detector format
                     let issues = self.convert_from_architectural_issues(&cached_entry.issues);
@@ -166,7 +168,11 @@ where
                 }
             }
 
-            debug!("Cache miss for {} on file: {}", self.inner.name(), file_path.display());
+            debug!(
+                "Cache miss for {} on file: {}",
+                self.inner.name(),
+                file_path.display()
+            );
             files_to_analyze.push(parsed_file.clone());
         }
 
@@ -200,7 +206,8 @@ where
             let file_path = &parsed_file.path;
 
             // Convert output to architectural issues for caching
-            let issues = self.convert_to_architectural_issues(&result, file_path, self.inner.name());
+            let issues =
+                self.convert_to_architectural_issues(&result, file_path, self.inner.name());
 
             // Store in cache
             if let Ok(mut cache) = context.analysis_cache.lock() {
