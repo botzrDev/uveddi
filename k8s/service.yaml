@@ -1,0 +1,102 @@
+# Kubernetes Services for Uveddi Analysis Engine
+# Load balancing, service discovery, and traffic routing
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: uveddi-analysis-engine
+  namespace: uveddi
+  labels:
+    app: uveddi-analysis-engine
+    service: api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+spec:
+  type: LoadBalancer
+  selector:
+    app: uveddi-analysis-engine
+
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+
+  # Session affinity for WebSocket connections
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+
+---
+# Internal service for cluster communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: uveddi-analysis-engine-internal
+  namespace: uveddi
+  labels:
+    app: uveddi-analysis-engine
+    service: internal
+spec:
+  type: ClusterIP
+  selector:
+    app: uveddi-analysis-engine
+
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+---
+# Headless service for StatefulSet discovery
+apiVersion: v1
+kind: Service
+metadata:
+  name: uveddi-analysis-engine-headless
+  namespace: uveddi
+  labels:
+    app: uveddi-analysis-engine
+    service: headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: uveddi-analysis-engine
+
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+---
+# Service Monitor for Prometheus scraping
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: uveddi-analysis-engine-metrics
+  namespace: uveddi
+  labels:
+    app: uveddi-analysis-engine
+    monitoring: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: uveddi-analysis-engine
+
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+  namespaceSelector:
+    matchNames:
+    - uveddi

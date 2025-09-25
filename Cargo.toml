@@ -133,8 +133,8 @@ full = ["standard", "security", "memory-optimization", "web", "tui", "wasm-plugi
 
 # ==================== SPECIALIZED FEATURES ====================
 # Caching systems
-ast-cache = []
-analysis-cache = []
+ast-cache = ["dep:notify"]
+analysis-cache = ["dep:notify"]
 # Metrics and monitoring
 prometheus = ["dep:prometheus"]
 
@@ -235,6 +235,8 @@ dashmap = "6.1.0"
 tera = "1.19.1"
 # Base64 encoding/decoding for image handling
 base64 = "0.22.0"
+# File system event watching for cache invalidation
+notify = { version = "7.0", optional = true }
 # MD5 hashing for input validation
 md5 = "0.8.0"
 # UUID generation for component IDs
