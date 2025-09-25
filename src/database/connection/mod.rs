@@ -102,8 +102,8 @@ impl ConnectionManager {
     }
 
     /// Get a single connection (non-pooled)
-    pub fn connect(&self) -> Result<Box<dyn DatabaseConnection>> {
-        self.provider.connect()
+    pub async fn connect(&self) -> Result<Box<dyn DatabaseConnection>> {
+        self.provider.get_connection().await
     }
 
     /// Get the configuration

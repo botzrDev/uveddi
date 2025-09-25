@@ -35,11 +35,14 @@ pub mod tree_sitter;
 pub mod tree_sitter_impl;
 
 pub use tree_sitter_impl::{
-    AstError, AstParser, CacheStats, CustomAst, ParsedFile, SourceLanguage,
+    AstError, AstParser, CacheStats, CustomAst, SourceLanguage,
 };
 
 // Re-export compatibility shim for migration
 pub use compatibility_shim::{AstParserCompat, ParsedFileCompat};
+
+// Type alias for backward compatibility with legacy detectors
+pub type ParsedFile = ParsedFileCompat;
 
 // Add missing error types for compatibility
 #[derive(Debug, Clone)]

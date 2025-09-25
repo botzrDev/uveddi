@@ -88,7 +88,7 @@ impl FlowAnalyzer {
                 }
 
                 // Continue propagation to successors
-                let new_taint_level = sanitizer_detector.apply_sanitization(&taint_level, node);
+                let new_taint_level = sanitizer_detector.detect_sanitization(node, taint_level.clone());
 
                 // Only continue if there's still meaningful taint
                 if new_taint_level.score() > 0.1 {

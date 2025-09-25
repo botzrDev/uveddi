@@ -169,7 +169,7 @@ where
             detector_versions.insert(self.inner.name().to_string(), self.detector_version.clone());
 
             // Check cache
-            if let Ok(cache) = context.analysis_cache.lock() {
+            if let Ok(mut cache) = context.analysis_cache.lock() {
                 if let Some(cached_entry) = cache.get(file_path, &detector_versions) {
                     debug!(
                         "Cache hit for {} on file: {}",

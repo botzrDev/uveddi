@@ -19,7 +19,7 @@ pub enum DependencySource {
     Unknown,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DependencyScope {
     Production,
     Development,

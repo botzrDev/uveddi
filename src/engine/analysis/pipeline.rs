@@ -212,7 +212,7 @@ impl ContextBuilder {
         project_context: ProjectContext,
     ) -> AnalysisContext {
         let file_info = FileInfo {
-            path: parse_result.path.clone(),
+            path: parse_result.path().to_path_buf(),
             language: parse_result.language.clone(),
             lines_of_code: parse_result.source.lines().count(),
             size_bytes: parse_result.source.len(),

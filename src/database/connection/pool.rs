@@ -54,6 +54,15 @@ impl PooledConnection {
         self.connection.last_insert_rowid()
     }
 
+    pub fn query_row<T, P, F>(&self, sql: &str, params: P, f: F) -> rusqlite::Result<T>
+    where
+        P: rusqlite::Params,
+        F: FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T>,
+    {
+        self.update_last_used();
+        self.connection.query_row(sql, params, f)
+    }
+
     fn update_last_used(&self) {
         if let Ok(mut last_used) = self.last_used.lock() {
             *last_used = Instant::now();

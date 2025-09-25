@@ -12,7 +12,7 @@ pub struct QueryBuilder {
 }
 
 /// Graph query specification
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct GraphQuery {
     /// Start nodes for the query
     start_nodes: Vec<String>,
@@ -29,6 +29,17 @@ pub struct GraphQuery {
 
 /// Node filter function type
 type NodeFilter = Box<dyn Fn(&GraphNode) -> bool + Send + Sync>;
+
+impl std::fmt::Debug for GraphQuery {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GraphQuery")
+            .field("start_nodes", &self.start_nodes)
+            .field("relation_types", &self.relation_types)
+            .field("max_depth", &self.max_depth)
+            .field("node_filter", &self.node_filter.as_ref().map(|_| "<closure>"))
+            .finish()
+    }
+}
 
 /// Query result
 #[derive(Debug)]
