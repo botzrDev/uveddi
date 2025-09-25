@@ -98,6 +98,9 @@ impl LanguageParser for TypeScriptParser {
                                     kind: SymbolKind::Function,
                                     line: name_node.start_position().row,
                                     column: name_node.start_position().column,
+                                    end_line: name_node.end_position().row,
+                                    end_column: name_node.end_position().column,
+                                    parent: None,
                                 });
                             }
                         }
@@ -110,6 +113,9 @@ impl LanguageParser for TypeScriptParser {
                                     kind: SymbolKind::Class,
                                     line: name_node.start_position().row,
                                     column: name_node.start_position().column,
+                                    end_line: name_node.end_position().row,
+                                    end_column: name_node.end_position().column,
+                                    parent: None,
                                 });
                             }
                         }
@@ -122,6 +128,9 @@ impl LanguageParser for TypeScriptParser {
                                     kind: SymbolKind::Type,
                                     line: name_node.start_position().row,
                                     column: name_node.start_position().column,
+                                    end_line: name_node.end_position().row,
+                                    end_column: name_node.end_position().column,
+                                    parent: None,
                                 });
                             }
                         }
@@ -134,6 +143,9 @@ impl LanguageParser for TypeScriptParser {
                                     kind: SymbolKind::Type,
                                     line: name_node.start_position().row,
                                     column: name_node.start_position().column,
+                                    end_line: name_node.end_position().row,
+                                    end_column: name_node.end_position().column,
+                                    parent: None,
                                 });
                             }
                         }
@@ -146,6 +158,9 @@ impl LanguageParser for TypeScriptParser {
                                     kind: SymbolKind::Type,
                                     line: name_node.start_position().row,
                                     column: name_node.start_position().column,
+                                    end_line: name_node.end_position().row,
+                                    end_column: name_node.end_position().column,
+                                    parent: None,
                                 });
                             }
                         }

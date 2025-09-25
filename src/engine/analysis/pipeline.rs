@@ -165,7 +165,7 @@ impl ContextBuilder {
                     let _ = ast_cache.put(
                         file_path.to_path_buf(),
                         tree.clone(),
-                        parse_result.source.clone(),
+                        parse_result.source.to_string(),
                     );
                 }
             }
@@ -177,7 +177,7 @@ impl ContextBuilder {
             Ok(AnalysisContext::with_caches(
                 file_info,
                 parse_result.tree,
-                parse_result.source,
+                parse_result.source.to_string(),
                 parse_result.symbols,
                 parse_result.relations,
                 project_context,
@@ -187,7 +187,7 @@ impl ContextBuilder {
             Ok(AnalysisContext::new(
                 file_info,
                 parse_result.tree,
-                parse_result.source,
+                parse_result.source.to_string(),
                 parse_result.symbols,
                 parse_result.relations,
                 project_context,
@@ -198,7 +198,7 @@ impl ContextBuilder {
         Ok(AnalysisContext::new(
             file_info,
             parse_result.tree,
-            parse_result.source,
+            parse_result.source.to_string(),
             parse_result.symbols,
             parse_result.relations,
             project_context,
@@ -225,7 +225,7 @@ impl ContextBuilder {
             return AnalysisContext::with_caches(
                 file_info,
                 parse_result.tree,
-                parse_result.source,
+                parse_result.source.to_string(),
                 parse_result.symbols,
                 parse_result.relations,
                 project_context,
@@ -236,7 +236,7 @@ impl ContextBuilder {
         AnalysisContext::new(
             file_info,
             parse_result.tree,
-            parse_result.source,
+            parse_result.source.to_string(),
             parse_result.symbols,
             parse_result.relations,
             project_context,

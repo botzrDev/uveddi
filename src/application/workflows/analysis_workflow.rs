@@ -47,12 +47,20 @@ pub struct AnalysisWorkflowConfig {
 }
 
 /// Input for analysis workflow
-#[derive(Debug)]
 pub struct AnalysisWorkflowInput {
     /// Analysis configuration
     pub config: AnalysisConfig,
     /// Optional custom progress callback
     pub progress_callback: Option<Box<dyn Fn(f64, String) + Send + Sync>>,
+}
+
+impl std::fmt::Debug for AnalysisWorkflowInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AnalysisWorkflowInput")
+            .field("config", &self.config)
+            .field("progress_callback", &self.progress_callback.as_ref().map(|_| "Some(callback)"))
+            .finish()
+    }
 }
 
 /// Output from analysis workflow

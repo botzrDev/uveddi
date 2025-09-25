@@ -146,12 +146,12 @@ pub trait IntoRepositoryError<T> {
 impl From<rusqlite::Error> for RepositoryError {
     fn from(err: rusqlite::Error) -> Self {
         match err {
-            rusqlite::Error::SqliteFailure(sqlite_err, msg) => match sqlite_err.code {
+            rusqlite::Error::SqliteFailure(sqlite_err, ref msg) => match sqlite_err.code {
                 rusqlite::ErrorCode::DatabaseBusy => Self::Timeout {
                     timeout_seconds: 30,
                 },
                 rusqlite::ErrorCode::ConstraintViolation => Self::Conflict {
-                    message: msg.unwrap_or_else(|| "Constraint violation".to_string()),
+                    message: msg.clone().unwrap_or_else(|| "Constraint violation".to_string()),
                 },
                 _ => Self::Database {
                     message: format!("SQLite error: {:?}", sqlite_err),
@@ -201,6 +201,33 @@ impl From<std::io::Error> for RepositoryError {
 impl From<tokio::task::JoinError> for RepositoryError {
     fn from(err: tokio::task::JoinError) -> Self {
         Self::Runtime(format!("Task join error: {}", err))
+    }
+}
+
+impl From<crate::error::UveddiError> for RepositoryError {
+    fn from(err: crate::error::UveddiError) -> Self {
+        use crate::error::UveddiError;
+        match err {
+            UveddiError::DatabaseError { message, .. } => {
+                Self::Database { message, source: None }
+            }
+            UveddiError::DatabaseConnection(msg) => {
+                Self::Pool(msg)
+            }
+            UveddiError::ConfigError { message, .. } => {
+                Self::Validation { field: "config".to_string(), message }
+            }
+            UveddiError::Configuration(msg) => {
+                Self::Validation { field: "config".to_string(), message: msg }
+            }
+            UveddiError::IoError { message, .. } => {
+                Self::Runtime(format!("IO error: {}", message))
+            }
+            UveddiError::SerializationError { message, .. } => {
+                Self::Serialization(message)
+            }
+            _ => Self::Runtime(err.to_string())
+        }
     }
 }
 

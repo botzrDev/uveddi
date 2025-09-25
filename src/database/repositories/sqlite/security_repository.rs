@@ -32,13 +32,13 @@ impl Repository for SqliteSecurityRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Security functionality not implemented",
+            "Security functionality not implemented".to_string(),
         ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Security functionality not implemented",
+            "Security functionality not implemented".to_string(),
         ))
     }
 

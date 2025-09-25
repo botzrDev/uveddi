@@ -236,7 +236,7 @@ impl DependencyDetector {
         })
     }
 
-    fn extract_from_ast(
+    pub fn extract_from_ast(
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<Dependency>, ExtractionError> {

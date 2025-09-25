@@ -149,6 +149,13 @@ pub enum UveddiError {
         suggestion: String,
     },
 
+    // Aliases for common error patterns
+    #[error("Configuration error: {0}")]
+    Configuration(String),
+
+    #[error("Database connection error: {0}")]
+    DatabaseConnection(String),
+
     #[error("Command line error: {message}\n  → Command: {command}\n  → Suggestion: {suggestion}")]
     CliError {
         command: String,
@@ -491,6 +498,8 @@ impl UveddiError {
             UveddiError::DependencyExtractionError { .. } => ErrorCategory::Extraction,
             UveddiError::DatabaseError { .. } => ErrorCategory::Database,
             UveddiError::ConfigError { .. } => ErrorCategory::Configuration,
+            UveddiError::Configuration(_) => ErrorCategory::Configuration,
+            UveddiError::DatabaseConnection(_) => ErrorCategory::Database,
             UveddiError::ReportError { .. } => ErrorCategory::Reporting,
             UveddiError::PluginError { .. } => ErrorCategory::Plugin,
             UveddiError::SecurityError { .. } => ErrorCategory::ServiceSpecific,

@@ -34,7 +34,7 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || -> Result<Option<Project>, rusqlite::Error> {
+        let result = tokio::task::spawn_blocking(move || -> Result<Option<Project>, RepositoryError> {
             let mut stmt =
                 conn.prepare("SELECT project_id, path FROM projects WHERE project_id = ?")?;
             let mut rows = stmt.query([id])?;
@@ -63,7 +63,7 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<Vec<Project>, RepositoryError> {
             let mut stmt =
                 conn.prepare("SELECT project_id, path FROM projects ORDER BY project_id DESC")?;
             let rows = stmt.query_map([], |row| {
@@ -96,7 +96,7 @@ impl Repository for SqliteProjectRepository {
         let path_str = entity.path.to_string_lossy().to_string();
         let entity_clone = entity.clone();
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<Project, RepositoryError> {
             conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
 
             let id = conn.last_insert_rowid();
@@ -123,7 +123,7 @@ impl Repository for SqliteProjectRepository {
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
         let entity_clone = entity.clone();
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<Project, RepositoryError> {
             let id = entity_clone.id.ok_or_else(|| {
                 RepositoryError::validation("id", "Cannot update project without ID".to_string())
             })?;
@@ -160,7 +160,7 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<bool, RepositoryError> {
             let rows_affected = conn.execute("DELETE FROM projects WHERE project_id = ?", [id])?;
             Ok(rows_affected > 0)
         })
@@ -176,7 +176,7 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<usize, RepositoryError> {
             let mut stmt = conn.prepare("SELECT COUNT(*) FROM projects")?;
             let count: i64 = stmt.query_row([], |row| row.get(0))?;
             Ok(count as usize)
@@ -254,7 +254,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
         let path = path.to_string();
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<Option<Project>, RepositoryError> {
             let mut stmt = conn.prepare("SELECT project_id, path FROM projects WHERE path = ?")?;
             let mut rows = stmt.query([&path])?;
 
@@ -288,7 +288,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<Vec<Project>, RepositoryError> {
             let mut stmt = conn.prepare(
                 "SELECT project_id, path FROM projects ORDER BY project_id DESC LIMIT ?",
             )?;
@@ -353,7 +353,7 @@ impl SqliteProjectRepository {
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
         let path_str_clone = path_str.clone();
 
-        let result = tokio::task::spawn_blocking(move || -> Result<i64, rusqlite::Error> {
+        let result = tokio::task::spawn_blocking(move || -> Result<i64, RepositoryError> {
             conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str_clone])?;
             let id = conn.last_insert_rowid();
             Ok(id)

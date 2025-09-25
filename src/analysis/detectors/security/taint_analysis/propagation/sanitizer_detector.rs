@@ -56,7 +56,7 @@ impl SanitizerDetector {
         current_taint: TaintLevel,
     ) -> TaintLevel {
         // Check if this node represents a sanitization call
-        if let DataFlowNodeType::FunctionCall { function_name, .. } = &node.node_type {
+        if let DataFlowNodeType::FunctionCall(function_name) = &node.node_type {
             // Look for matching sanitizer patterns
             for sanitizer in self.sanitizers.values() {
                 if function_name.contains(&sanitizer.pattern) {
@@ -70,7 +70,7 @@ impl SanitizerDetector {
     }
 
     /// Apply sanitization based on sanitizer effectiveness
-    fn apply_sanitization(
+    pub fn apply_sanitization(
         &self,
         sanitizer: &SanitizationPoint,
         current_taint: TaintLevel,

@@ -296,7 +296,7 @@ impl AstBuilder {
     #[cfg(feature = "ast-cache")]
     pub fn cache_stats(&self) -> Option<crate::engine::cache::ast_cache::CacheStats> {
         if let Ok(cache) = self.ast_cache.lock() {
-            Some(cache.stats().clone())
+            Some(*cache.stats())
         } else {
             None
         }

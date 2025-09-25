@@ -30,7 +30,7 @@ impl Repository for SqliteAnalysisRepository {
     async fn find_by_id(&self, id: i64) -> RepositoryResult<Option<Self::Entity>> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<Option<AnalysisRun>, RepositoryError> {
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -71,7 +71,7 @@ impl Repository for SqliteAnalysisRepository {
     async fn find_all(&self) -> RepositoryResult<Vec<Self::Entity>> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<Vec<AnalysisRun>, RepositoryError> {
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -115,7 +115,7 @@ impl Repository for SqliteAnalysisRepository {
         let conn = self.pool.get_connection().await?;
         let entity_clone = entity.clone();
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<AnalysisRun, RepositoryError> {
 
             let mut stmt = conn.prepare(
                 "INSERT INTO analysis_runs (project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config)
@@ -165,7 +165,7 @@ impl Repository for SqliteAnalysisRepository {
         let conn = self.pool.get_connection().await?;
         let entity_clone = entity.clone();
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<AnalysisRun, RepositoryError> {
             let run_id = entity_clone.run_id.ok_or_else(||
                 RepositoryError::validation("run_id", "Cannot update analysis run without ID")
             )?;
@@ -195,7 +195,7 @@ impl Repository for SqliteAnalysisRepository {
     async fn delete(&self, id: i64) -> RepositoryResult<bool> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<bool, RepositoryError> {
             let affected = conn.execute("DELETE FROM analysis_runs WHERE run_id = ?", [id])?;
             Ok(affected > 0)
         })
@@ -205,7 +205,7 @@ impl Repository for SqliteAnalysisRepository {
     async fn count(&self) -> RepositoryResult<usize> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<usize, RepositoryError> {
             let count: i64 =
                 conn.query_row("SELECT COUNT(*) FROM analysis_runs", [], |row| row.get(0))?;
             Ok(count as usize)
@@ -219,7 +219,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     async fn find_by_project(&self, project_id: i64) -> RepositoryResult<Vec<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<Vec<AnalysisRun>, RepositoryError> {
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -262,7 +262,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     async fn find_latest(&self, project_id: i64) -> RepositoryResult<Option<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<Option<AnalysisRun>, RepositoryError> {
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -303,7 +303,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     async fn find_recent(&self, limit: usize) -> RepositoryResult<Vec<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<Vec<AnalysisRun>, RepositoryError> {
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -351,7 +351,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     ) -> RepositoryResult<Vec<AnalysisRun>> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<Vec<AnalysisRun>, RepositoryError> {
 
             let (sql, params): (String, Vec<Box<dyn rusqlite::ToSql>>) = if let Some(pid) = project_id {
                 (
@@ -413,7 +413,7 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     async fn update_status(&self, id: i64, status: String) -> RepositoryResult<()> {
         let conn = self.pool.get_connection().await?;
 
-        tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || -> Result<(), RepositoryError> {
             let affected = conn.execute(
                 "UPDATE analysis_runs SET status = ? WHERE run_id = ?",
                 (&status, id),

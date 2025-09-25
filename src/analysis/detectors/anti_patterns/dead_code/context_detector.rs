@@ -341,6 +341,8 @@ impl SymbolKind {
             SymbolKind::Interface => "Interface",
             SymbolKind::Trait => "Trait",
             SymbolKind::Enum => "Enum",
+            SymbolKind::Constant => "Constant",
+            SymbolKind::Type => "Type",
         }
     }
 }

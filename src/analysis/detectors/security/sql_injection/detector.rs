@@ -46,8 +46,8 @@ impl SqlInjectionDetector {
 
         let mut location = SecurityLocation::new(
             file.file_path.to_path_buf(),
-            metadata.line_number,
-            metadata.column as u32,
+            metadata.line_number as i32,
+            metadata.column as i32,
         );
 
         let mut metadata_map = VulnerabilityMetadata::new();

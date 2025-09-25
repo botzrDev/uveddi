@@ -85,6 +85,12 @@ impl ConnectionManager {
             DatabaseType::SQLite => Arc::new(SqliteProvider::new(config.clone())?),
             #[cfg(feature = "full")]
             DatabaseType::PostgreSQL => Arc::new(PostgreSqlProvider::new(&config)?),
+            #[cfg(not(feature = "full"))]
+            DatabaseType::PostgreSQL => {
+                return Err(UveddiError::DatabaseConnection(
+                    "PostgreSQL support not enabled. Enable with 'full' feature.".to_string()
+                ))
+            }
         };
 
         Ok(Self { config, provider })

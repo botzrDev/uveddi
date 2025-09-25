@@ -38,7 +38,7 @@ pub struct QueryResult {
 }
 
 /// Path through the graph
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GraphPath {
     pub nodes: Vec<String>,
     pub relations: Vec<GraphRelation>,
