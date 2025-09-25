@@ -507,6 +507,10 @@ path = "src/bin/cache_benchmark.rs"
 name = "cache-memory-profiler"
 path = "src/bin/cache_memory_profiler.rs"
 
+[[bin]]
+name = "detector-cache-validator"
+path = "src/bin/detector_cache_validator.rs"
+
 # Examples
 [[example]]
 name = "doctor_demo"
