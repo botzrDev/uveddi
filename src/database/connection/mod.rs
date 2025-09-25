@@ -82,7 +82,7 @@ impl ConnectionManager {
     /// Create a new connection manager
     pub fn new(config: DatabaseConfig) -> Result<Self> {
         let provider: Arc<dyn DatabaseProvider> = match config.database_type {
-            DatabaseType::SQLite => Arc::new(SqliteProvider::new(&config)?),
+            DatabaseType::SQLite => Arc::new(SqliteProvider::new(config.clone())?),
             #[cfg(feature = "full")]
             DatabaseType::PostgreSQL => Arc::new(PostgreSqlProvider::new(&config)?),
         };

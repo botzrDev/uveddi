@@ -32,13 +32,13 @@ impl Repository for SqliteDebtRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Debt functionality not implemented",
+            "Debt functionality not implemented".to_string(),
         ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Debt functionality not implemented",
+            "Debt functionality not implemented".to_string(),
         ))
     }
 

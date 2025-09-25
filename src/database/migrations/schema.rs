@@ -43,11 +43,9 @@ pub fn validate_migration_sql(sql: &str) -> Result<(), String> {
 pub async fn get_current_schema_version(
     pool: &std::sync::Arc<crate::database::connection::ConnectionPool>,
 ) -> Result<u32, Box<dyn std::error::Error + Send + Sync>> {
-    let pool = std::sync::Arc::clone(pool);
+    let conn = pool.get_connection().await?;
 
     tokio::task::spawn_blocking(move || {
-        let conn = pool.get_connection()?;
-
         // Try to get the latest migration version
         let mut stmt = conn.prepare("SELECT MAX(version) FROM migration_history")?;
         let version: Option<u32> = stmt.query_row([], |row| row.get(0)).unwrap_or(None);

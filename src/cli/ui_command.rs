@@ -122,6 +122,8 @@ impl UiCommand {
                     connection_timeout: std::time::Duration::from_secs(30),
                     idle_timeout: std::time::Duration::from_secs(300),
                     max_lifetime: std::time::Duration::from_secs(3600),
+                    pool_timeout: std::time::Duration::from_secs(10),
+                    test_on_checkout: false,
                 },
                 enable_metrics: false,
                 enable_logging: args.dev,

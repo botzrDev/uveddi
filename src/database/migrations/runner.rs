@@ -48,11 +48,10 @@ impl MigrationRunner {
         };
 
         // Execute the table creation using spawn_blocking for SQLite compatibility
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
         let sql = create_table_sql.to_string();
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
             conn.execute(&sql, [])?;
             Ok::<(), MigrationError>(())
         })
@@ -65,10 +64,9 @@ impl MigrationRunner {
 
     /// Get the current migration version
     pub async fn current_version(&self) -> Result<u32, MigrationError> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         let version = tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare("SELECT MAX(version) FROM migration_history")?;
             let rows: Result<Option<u32>, rusqlite::Error> =
@@ -94,10 +92,9 @@ impl MigrationRunner {
 
     /// Get all applied migration records
     pub async fn applied_migrations(&self) -> Result<Vec<MigrationRecord>, MigrationError> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         let records = tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "SELECT version, name, applied_at, checksum FROM migration_history ORDER BY version"
@@ -186,14 +183,14 @@ impl MigrationRunner {
             migration.version, migration.name
         );
 
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
         let migration_clone = migration.clone();
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
+            let mut conn = conn;
 
             // Start transaction
-            let tx = conn.unchecked_transaction()?;
+            let tx = conn.transaction()?;
 
             // Execute the migration SQL
             tx.execute_batch(&migration_clone.up_sql)?;
@@ -291,15 +288,15 @@ impl MigrationRunner {
             migration.version, migration.name
         );
 
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
         let migration_clone = migration.clone();
         let record_version = record.version;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
+            let mut conn = conn;
 
             // Start transaction
-            let tx = conn.unchecked_transaction()?;
+            let tx = conn.transaction()?;
 
             // Execute rollback SQL
             tx.execute_batch(&migration_clone.down_sql)?;
@@ -346,6 +343,12 @@ pub enum MigrationError {
 
     #[error("Migration not found: version {0}")]
     NotFound(u32),
+}
+
+impl From<crate::error::UveddiError> for MigrationError {
+    fn from(err: crate::error::UveddiError) -> Self {
+        MigrationError::Pool(err.to_string())
+    }
 }
 
 // TODO: Implement ConnectionError type in connection module

@@ -323,30 +323,48 @@ impl AnalysisDetector for DataClumpsDetector {
         for pattern in patterns {
             let severity = self.determine_severity(&pattern);
             
+            // Create metadata with issue_type and additional information
+            let mut metadata = serde_json::Map::new();
+            metadata.insert("issue_type".to_string(), serde_json::Value::String("data_clumps".to_string()));
+            metadata.insert("rule_id".to_string(), serde_json::Value::String("data_clumps".to_string()));
+            metadata.insert("parameter_count".to_string(), serde_json::Value::Number(serde_json::Number::from(pattern.parameter_group.parameter_names.len())));
+            metadata.insert("occurrence_count".to_string(), serde_json::Value::Number(serde_json::Number::from(pattern.occurrences.len())));
+            metadata.insert("confidence_score".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(pattern.confidence).unwrap_or(serde_json::Number::from(0))));
+            metadata.insert("impact_score".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(self.calculate_impact_score(&pattern)).unwrap_or(serde_json::Number::from(0))));
+            metadata.insert("parameter_names".to_string(), serde_json::Value::Array(pattern.parameter_group.parameter_names.iter().map(|n| serde_json::Value::String(n.clone())).collect()));
+            metadata.insert("affected_functions".to_string(), serde_json::Value::Array(pattern.occurrences.iter().take(3).map(|f| serde_json::Value::String(f.clone())).collect()));
+            metadata.insert("tags".to_string(), serde_json::Value::Array(vec![
+                serde_json::Value::String("maintainability".to_string()),
+                serde_json::Value::String("encapsulation".to_string()),
+                serde_json::Value::String("data-structure".to_string()),
+                serde_json::Value::String("cohesion".to_string()),
+            ]));
+
+            let title = format!("Data Clump detected: {} parameters", pattern.parameter_group.parameter_names.len());
+            let description = format!(
+                "The parameter group [{}] appears together in {} functions: {}. This suggests these parameters should be grouped into a class.",
+                pattern.parameter_group.parameter_names.join(", "),
+                pattern.occurrences.len(),
+                pattern.occurrences.iter().take(3).cloned().collect::<Vec<_>>().join(", ")
+            );
+
             let issue = ArchitecturalIssue {
-                id: uuid::Uuid::new_v4(),
-                issue_type: "data_clumps".to_string(),
-                title: format!("Data Clump detected: {} parameters", pattern.parameter_group.parameter_names.len()),
-                description: format!(
-                    "The parameter group [{}] appears together in {} functions: {}. This suggests these parameters should be grouped into a class.",
-                    pattern.parameter_group.parameter_names.join(", "),
-                    pattern.occurrences.len(),
-                    pattern.occurrences.iter().take(3).cloned().collect::<Vec<_>>().join(", ")
-                ),
-                severity: severity.to_string(),
+                issue_id: None,
+                analysis_run_id: 0, // TODO: Get from context
+                anti_pattern_type_id: 1, // TODO: Get from anti-pattern mapping
                 file_path: file_path.to_string_lossy().to_string(),
-                start_line: 1,
+                start_line: Some(1),
                 end_line: None,
-                recommendation: self.generate_recommendation(&pattern),
-                detected_at: chrono::Utc::now(),
-                confidence_score: Some(pattern.confidence),
-                impact_score: Some(self.calculate_impact_score(&pattern)),
-                tags: vec![
-                    "maintainability".to_string(),
-                    "encapsulation".to_string(),
-                    "data-structure".to_string(),
-                    "cohesion".to_string(),
-                ],
+                line_number: Some(1),
+                column_number: None,
+                message: title,
+                metadata: serde_json::to_string(&metadata).unwrap_or("{}".to_string()),
+                detector_name: "DataClumpsDetector".to_string(),
+                created_at: chrono::Utc::now(),
+                severity: severity.to_string().to_lowercase(),
+                description,
+                code_snippet: None,
+                ai_explanation: Some(self.generate_recommendation(&pattern)),
             };
             
             issues.push(issue);

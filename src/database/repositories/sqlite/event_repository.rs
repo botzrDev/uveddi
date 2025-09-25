@@ -33,13 +33,13 @@ impl Repository for SqliteEventRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Event functionality not implemented",
+            "Event functionality not implemented".to_string(),
         ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Event functionality not implemented",
+            "Event functionality not implemented".to_string(),
         ))
     }
 
@@ -78,7 +78,7 @@ impl EventRepository for SqliteEventRepository {
         _description: Option<String>,
     ) -> RepositoryResult<LifecycleEvent> {
         Err(RepositoryError::Runtime(
-            "Event functionality not implemented",
+            "Event functionality not implemented".to_string(),
         ))
     }
 }

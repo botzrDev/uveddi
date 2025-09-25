@@ -68,25 +68,41 @@ impl ContextGodObjectDetector {
             return Ok(None);
         }
 
+        // Create metadata with issue_type and rule_id
+        let mut metadata = serde_json::Map::new();
+        metadata.insert("issue_type".to_string(), serde_json::Value::String("God Object".to_string()));
+        metadata.insert("rule_id".to_string(), serde_json::Value::String("god_object".to_string()));
+        metadata.insert("method_count".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.method_count)));
+        metadata.insert("field_count".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.field_count)));
+        metadata.insert("method_threshold".to_string(), serde_json::Value::Number(serde_json::Number::from(method_threshold)));
+        metadata.insert("field_threshold".to_string(), serde_json::Value::Number(serde_json::Number::from(field_threshold)));
+
+        let description = format!(
+            "Class '{}' has {} methods and {} fields, exceeding thresholds (methods: {}, fields: {})",
+            symbol.name, metrics.method_count, metrics.field_count, method_threshold, field_threshold
+        );
+
         // Create the architectural issue
         let issue = ArchitecturalIssue {
             issue_id: None,
+            analysis_run_id: 0, // TODO: Get from context
+            anti_pattern_type_id: 1, // TODO: Get from anti-pattern mapping
             file_path: context.file_info.path.to_string_lossy().to_string(),
-            line_number: symbol.line as i32,
+            start_line: Some(symbol.line as i32),
+            end_line: Some(symbol.line as i32),
+            line_number: Some(symbol.line as i32),
             column_number: Some(symbol.column as i32),
-            issue_type: "God Object".to_string(),
-            description: format!(
-                "Class '{}' has {} methods and {} fields, exceeding thresholds (methods: {}, fields: {})",
-                symbol.name, metrics.method_count, metrics.field_count, method_threshold, field_threshold
-            ),
-            severity: "Medium".to_string(),
-            rule_id: Some("god_object".to_string()),
-            suggestion: Some(format!(
+            message: description.clone(),
+            metadata: serde_json::to_string(&metadata).unwrap_or("{}".to_string()),
+            detector_name: "GodObjectDetector".to_string(),
+            created_at: chrono::Utc::now(),
+            severity: "medium".to_string(),
+            description,
+            code_snippet: self.extract_context_snippet(context, symbol),
+            ai_explanation: Some(format!(
                 "Consider breaking down '{}' into smaller, more focused classes following the Single Responsibility Principle",
                 symbol.name
             )),
-            context_snippet: self.extract_context_snippet(context, symbol),
-            created_at: chrono::Utc::now(),
         };
 
         Ok(Some(issue))

@@ -5,14 +5,16 @@
 
 #[cfg(feature = "analysis-cache")]
 use super::{
-    anti_patterns::{
-        dead_code::detector::DeadCodeDetector, god_object::detector::GodObjectDetector,
-        long_methods::detector::LongMethodDetector,
-    },
+    // Note: These detector imports need to be updated once the detector modules are properly exported
+    // anti_patterns::{
+    //     dead_code::detector::DeadCodeDetector,
+    //     god_object::detector::GodObjectDetector,
+    //     long_methods::detector::LongMethodsDetector,
+    // },
     base::traits::Detector,
     cache_wrapper::CachedDetector,
-    cycle::CycleDetector,
-    security::detector::SecurityDetector,
+    // cycle::CycleDetector,
+    // security::detector::SecurityDetector,
 };
 
 #[cfg(feature = "analysis-cache")]
@@ -24,38 +26,17 @@ pub struct CacheAwareDetectorFactory;
 
 #[cfg(feature = "analysis-cache")]
 impl CacheAwareDetectorFactory {
-    /// Create a cached version of the God Object detector
-    pub fn create_cached_god_object_detector(
-        detector: GodObjectDetector,
-    ) -> CachedDetector<GodObjectDetector> {
-        CachedDetector::with_version(detector, "god_object:v1.2".to_string())
-    }
-
-    /// Create a cached version of the Dead Code detector
-    pub fn create_cached_dead_code_detector(
-        detector: DeadCodeDetector,
-    ) -> CachedDetector<DeadCodeDetector> {
-        CachedDetector::with_version(detector, "dead_code:v1.1".to_string())
-    }
-
-    /// Create a cached version of the Long Method detector
-    pub fn create_cached_long_method_detector(
-        detector: LongMethodDetector,
-    ) -> CachedDetector<LongMethodDetector> {
-        CachedDetector::with_version(detector, "long_method:v1.0".to_string())
-    }
-
-    /// Create a cached version of the Security detector
-    pub fn create_cached_security_detector(
-        detector: SecurityDetector,
-    ) -> CachedDetector<SecurityDetector> {
-        CachedDetector::with_version(detector, "security:v1.3".to_string())
-    }
-
-    /// Create a cached version of the Cycle detector
-    pub fn create_cached_cycle_detector(detector: CycleDetector) -> CachedDetector<CycleDetector> {
-        CachedDetector::with_version(detector, "cycle:v1.0".to_string())
-    }
+    // TODO: Implement specific detector cache methods once detector types are properly exposed
+    // These methods require concrete detector types to be available, which are currently
+    // behind private modules. Once the detector modules are refactored to expose their
+    // concrete types, these methods can be uncommented and implemented.
+    //
+    // Example implementation pattern:
+    // pub fn create_cached_god_object_detector<D: GodObjectDetector>(
+    //     detector: D,
+    // ) -> CachedDetector<D> {
+    //     CachedDetector::with_version(detector, "god_object:v1.2".to_string())
+    // }
 
     /// Create a cached version of any detector with automatic versioning
     pub fn create_cached_detector<D>(detector: D) -> CachedDetector<D>
@@ -100,26 +81,37 @@ impl DetectorMigrationHelper {
         match name {
             "god_object" => {
                 // This would need proper configuration handling
-                Err(AnalysisError::ConfigurationError(
-                    "Not implemented".to_string(),
-                ))
+                Err(AnalysisError::ConfigurationError {
+                    field: "detector_type".to_string(),
+                    value: "god_object".to_string(),
+                    reason: "Not implemented".to_string(),
+                })
             }
-            "dead_code" => Err(AnalysisError::ConfigurationError(
-                "Not implemented".to_string(),
-            )),
-            "long_method" => Err(AnalysisError::ConfigurationError(
-                "Not implemented".to_string(),
-            )),
-            "security" => Err(AnalysisError::ConfigurationError(
-                "Not implemented".to_string(),
-            )),
-            "cycle" => Err(AnalysisError::ConfigurationError(
-                "Not implemented".to_string(),
-            )),
-            _ => Err(AnalysisError::ConfigurationError(format!(
-                "Unknown detector: {}",
-                name
-            ))),
+            "dead_code" => Err(AnalysisError::ConfigurationError {
+                field: "detector_type".to_string(),
+                value: "dead_code".to_string(),
+                reason: "Not implemented".to_string(),
+            }),
+            "long_method" => Err(AnalysisError::ConfigurationError {
+                field: "detector_type".to_string(),
+                value: "long_method".to_string(),
+                reason: "Not implemented".to_string(),
+            }),
+            "security" => Err(AnalysisError::ConfigurationError {
+                field: "detector_type".to_string(),
+                value: "security".to_string(),
+                reason: "Not implemented".to_string(),
+            }),
+            "cycle" => Err(AnalysisError::ConfigurationError {
+                field: "detector_type".to_string(),
+                value: "cycle".to_string(),
+                reason: "Not implemented".to_string(),
+            }),
+            _ => Err(AnalysisError::ConfigurationError {
+                field: "detector_type".to_string(),
+                value: name.to_string(),
+                reason: format!("Unknown detector: {}", name),
+            }),
         }
     }
 }

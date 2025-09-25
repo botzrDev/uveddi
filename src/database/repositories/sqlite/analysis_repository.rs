@@ -28,10 +28,9 @@ impl Repository for SqliteAnalysisRepository {
     type Entity = AnalysisRun;
 
     async fn find_by_id(&self, id: i64) -> RepositoryResult<Option<Self::Entity>> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -70,10 +69,9 @@ impl Repository for SqliteAnalysisRepository {
     }
 
     async fn find_all(&self) -> RepositoryResult<Vec<Self::Entity>> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -114,11 +112,10 @@ impl Repository for SqliteAnalysisRepository {
     }
 
     async fn save(&self, entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
         let entity_clone = entity.clone();
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "INSERT INTO analysis_runs (project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config)
@@ -165,15 +162,13 @@ impl Repository for SqliteAnalysisRepository {
     }
 
     async fn update(&self, entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
         let entity_clone = entity.clone();
 
         tokio::task::spawn_blocking(move || {
             let run_id = entity_clone.run_id.ok_or_else(||
                 RepositoryError::validation("run_id", "Cannot update analysis run without ID")
             )?;
-
-            let conn = pool.get_connection()?;
 
             let end_time_str = entity_clone.end_time.map(|dt| dt.to_rfc3339());
 
@@ -198,10 +193,9 @@ impl Repository for SqliteAnalysisRepository {
     }
 
     async fn delete(&self, id: i64) -> RepositoryResult<bool> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
             let affected = conn.execute("DELETE FROM analysis_runs WHERE run_id = ?", [id])?;
             Ok(affected > 0)
         })
@@ -209,10 +203,9 @@ impl Repository for SqliteAnalysisRepository {
     }
 
     async fn count(&self) -> RepositoryResult<usize> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
             let count: i64 =
                 conn.query_row("SELECT COUNT(*) FROM analysis_runs", [], |row| row.get(0))?;
             Ok(count as usize)
@@ -224,10 +217,9 @@ impl Repository for SqliteAnalysisRepository {
 #[async_trait]
 impl AnalysisRepository for SqliteAnalysisRepository {
     async fn find_by_project(&self, project_id: i64) -> RepositoryResult<Vec<AnalysisRun>> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -268,10 +260,9 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     }
 
     async fn find_latest(&self, project_id: i64) -> RepositoryResult<Option<AnalysisRun>> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -310,10 +301,9 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     }
 
     async fn find_recent(&self, limit: usize) -> RepositoryResult<Vec<AnalysisRun>> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let mut stmt = conn.prepare(
                 "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
@@ -359,10 +349,9 @@ impl AnalysisRepository for SqliteAnalysisRepository {
         start: DateTime<Utc>,
         end: DateTime<Utc>,
     ) -> RepositoryResult<Vec<AnalysisRun>> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
 
             let (sql, params): (String, Vec<Box<dyn rusqlite::ToSql>>) = if let Some(pid) = project_id {
                 (
@@ -422,10 +411,9 @@ impl AnalysisRepository for SqliteAnalysisRepository {
     }
 
     async fn update_status(&self, id: i64, status: String) -> RepositoryResult<()> {
-        let pool = Arc::clone(&self.pool);
+        let conn = self.pool.get_connection().await?;
 
         tokio::task::spawn_blocking(move || {
-            let conn = pool.get_connection()?;
             let affected = conn.execute(
                 "UPDATE analysis_runs SET status = ? WHERE run_id = ?",
                 (&status, id),
@@ -502,7 +490,7 @@ mod tests {
 
         // Create the table
         {
-            let conn = pool.get_connection().unwrap();
+            let conn = pool.get_connection().await.unwrap();
             conn.execute(
                 "CREATE TABLE analysis_runs (
                     run_id INTEGER PRIMARY KEY AUTOINCREMENT,

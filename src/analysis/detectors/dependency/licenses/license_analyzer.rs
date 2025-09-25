@@ -357,3 +357,22 @@ impl SpdxDatabase {
         None
     }
 }
+
+impl LicenseChecker for LicenseAnalyzer {
+    fn check(
+        &self,
+        dependencies: &[DependencyInfo],
+        config: &LicenseConfig,
+    ) -> Result<LicenseCheckOutput, DependencyError> {
+        let result = self.analyze_licenses(dependencies, config)?;
+        Ok(LicenseCheckOutput::Analysis(result))
+    }
+
+    fn name(&self) -> &str {
+        "LicenseAnalyzer"
+    }
+
+    fn supports_transitive(&self) -> bool {
+        true
+    }
+}

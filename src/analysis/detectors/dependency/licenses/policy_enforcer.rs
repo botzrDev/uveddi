@@ -179,6 +179,25 @@ enum RuleType {
     AttributionRequirement,
 }
 
+impl LicenseChecker for PolicyEnforcer {
+    fn check(
+        &self,
+        dependencies: &[DependencyInfo],
+        config: &LicenseConfig,
+    ) -> Result<LicenseCheckOutput, DependencyError> {
+        let result = self.enforce_policies(dependencies, config)?;
+        Ok(LicenseCheckOutput::Policy(result))
+    }
+
+    fn name(&self) -> &str {
+        "PolicyEnforcer"
+    }
+
+    fn supports_transitive(&self) -> bool {
+        true
+    }
+}
+
 impl PolicyEnforcer {
     pub fn new() -> Self {
         Self {

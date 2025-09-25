@@ -18,7 +18,7 @@ use std::time::Instant;
 #[cfg(feature = "analysis-cache")]
 use crate::engine::analysis::context::CacheHandles;
 #[cfg(feature = "analysis-cache")]
-use crate::engine::cache::{AnalysisCache, AstCache};
+use crate::engine::cache::{AnalysisCache, AstCache, CacheServiceManager};
 #[cfg(feature = "analysis-cache")]
 use std::sync::Mutex;
 
@@ -58,6 +58,10 @@ pub struct AnalysisPipeline {
     /// Cache handles (when caching is enabled)
     #[cfg(feature = "analysis-cache")]
     cache_handles: Option<CacheHandles>,
+
+    /// Cache service manager (when caching is enabled)
+    #[cfg(feature = "analysis-cache")]
+    cache_service_manager: Option<std::sync::Arc<std::sync::Mutex<CacheServiceManager>>>,
 }
 
 /// Trait for analysis detectors using the new context
@@ -112,8 +116,10 @@ impl ContextBuilder {
             if let Ok(mut ast_cache) = cache_handles.ast_cache.lock() {
                 if let Some(cached_entry) = ast_cache.get(file_path) {
                     // Use cached AST - language detection from file extension
-                    let language = crate::ast::SourceLanguage::detect_from_path(file_path)
-                        .unwrap_or(crate::ast::SourceLanguage::Unknown);
+                    let language = crate::ast::SourceLanguage::from_path(file_path)
+                        .ok_or_else(|| PipelineError::ContextBuildError(
+                            format!("Unsupported file extension for '{}'", file_path.display())
+                        ))?;
 
                     let file_info = FileInfo {
                         path: file_path.to_path_buf(),
@@ -247,6 +253,8 @@ impl AnalysisPipeline {
             performance_enabled: false,
             #[cfg(feature = "analysis-cache")]
             cache_handles: None,
+            #[cfg(feature = "analysis-cache")]
+            cache_service_manager: None,
         }
     }
 
@@ -257,11 +265,17 @@ impl AnalysisPipeline {
             ast_builder,
             cache_handles.clone(),
         ));
+
+        // Create and start cache services
+        let service_manager = CacheServiceManager::new(cache_handles.clone());
+        let service_manager_arc = std::sync::Arc::new(std::sync::Mutex::new(service_manager));
+
         Self {
             detectors: Vec::new(),
             context_builder,
             performance_enabled: false,
             cache_handles: Some(cache_handles),
+            cache_service_manager: Some(service_manager_arc),
         }
     }
 
@@ -338,5 +352,38 @@ impl AnalysisPipeline {
     /// Get registered detector count
     pub fn detector_count(&self) -> usize {
         self.detectors.len()
+    }
+
+    /// Start cache services (file watcher and metrics collector)
+    #[cfg(feature = "analysis-cache")]
+    pub fn start_cache_services(&self, watch_paths: Vec<std::path::PathBuf>) -> Result<(), PipelineError> {
+        if let Some(ref manager_arc) = self.cache_service_manager {
+            if let Ok(mut manager) = manager_arc.lock() {
+                manager.start_services(watch_paths)
+                    .map_err(|e| PipelineError::ContextBuildError(format!("Failed to start cache services: {}", e)))?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Stop cache services gracefully
+    #[cfg(feature = "analysis-cache")]
+    pub fn stop_cache_services(&self) {
+        if let Some(ref manager_arc) = self.cache_service_manager {
+            if let Ok(mut manager) = manager_arc.lock() {
+                manager.stop_services();
+            }
+        }
+    }
+
+    /// Check if cache services are running
+    #[cfg(feature = "analysis-cache")]
+    pub fn cache_services_running(&self) -> bool {
+        if let Some(ref manager_arc) = self.cache_service_manager {
+            if let Ok(manager) = manager_arc.lock() {
+                return manager.is_running();
+            }
+        }
+        false
     }
 }

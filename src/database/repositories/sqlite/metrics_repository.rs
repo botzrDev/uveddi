@@ -32,13 +32,13 @@ impl Repository for SqliteMetricsRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Metrics functionality not implemented",
+            "Metrics functionality not implemented".to_string(),
         ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Metrics functionality not implemented",
+            "Metrics functionality not implemented".to_string(),
         ))
     }
 
@@ -63,7 +63,7 @@ impl MetricsRepository for SqliteMetricsRepository {
 
     async fn calculate_averages(&self, _project_id: i64) -> RepositoryResult<PerformanceMetrics> {
         Err(RepositoryError::Runtime(
-            "Metrics functionality not implemented",
+            "Metrics functionality not implemented".to_string(),
         ))
     }
 

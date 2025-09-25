@@ -3,7 +3,7 @@
 //! This module provides efficient connection pooling for SQLite databases to improve
 //! performance and reduce connection overhead in multi-threaded environments.
 
-use super::config::{DatabaseConfig, PoolConfig};
+use super::config::{DatabaseConfig, DatabaseType, PoolConfig};
 use super::providers::DatabaseProvider;
 use crate::error::{Result, UveddiError};
 use rusqlite::Connection;
@@ -86,6 +86,7 @@ pub struct ConnectionPool {
     semaphore: Arc<Semaphore>,
     config: PoolConfig,
     provider: Arc<dyn DatabaseProvider>,
+    database_type: DatabaseType,
 }
 
 impl ConnectionPool {
@@ -96,6 +97,7 @@ impl ConnectionPool {
     ) -> Result<Arc<Self>> {
         let db_path = Some(std::path::PathBuf::from(&db_config.connection_string));
         let semaphore = Arc::new(Semaphore::new(db_config.pool.max_connections));
+        let database_type = db_config.database_type.clone();
 
         Ok(Arc::new(Self {
             db_path,
@@ -103,6 +105,7 @@ impl ConnectionPool {
             semaphore,
             config: db_config.pool,
             provider,
+            database_type,
         }))
     }
 
@@ -176,6 +179,11 @@ impl ConnectionPool {
             available_connections,
             active_connections: self.config.max_connections - available_permits,
         }
+    }
+
+    /// Get the database type
+    pub fn database_type(&self) -> &DatabaseType {
+        &self.database_type
     }
 
     /// Clean up expired connections

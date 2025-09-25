@@ -221,24 +221,38 @@ impl AnalysisDetector for ShotgunSurgeryDetector {
             SourceLanguage::Rust => {
                 // Analyze Rust-specific patterns
                 if self.has_shotgun_surgery_indicators(parsed_file) {
+                    // Create metadata with issue_type and additional information
+                    let mut metadata = serde_json::Map::new();
+                    metadata.insert("issue_type".to_string(), serde_json::Value::String("shotgun_surgery".to_string()));
+                    metadata.insert("rule_id".to_string(), serde_json::Value::String("shotgun_surgery".to_string()));
+                    metadata.insert("confidence_score".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(0.7).unwrap_or(serde_json::Number::from(0))));
+                    metadata.insert("impact_score".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(0.6).unwrap_or(serde_json::Number::from(0))));
+                    metadata.insert("tags".to_string(), serde_json::Value::Array(vec![
+                        serde_json::Value::String("maintainability".to_string()),
+                        serde_json::Value::String("coupling".to_string()),
+                        serde_json::Value::String("separation-of-concerns".to_string()),
+                    ]));
+
+                    let title = "Potential Shotgun Surgery pattern detected".to_string();
+                    let description = "This file may require changes across multiple modules when implementing new features, indicating poor separation of concerns.".to_string();
+
                     let issue = ArchitecturalIssue {
-                        id: uuid::Uuid::new_v4(),
-                        issue_type: AntiPatternType::ShotgunSurgery,
-                        title: "Potential Shotgun Surgery pattern detected".to_string(),
-                        description: "This file may require changes across multiple modules when implementing new features, indicating poor separation of concerns.".to_string(),
-                        severity: "minor".to_string(),
+                        issue_id: None,
+                        analysis_run_id: 0, // TODO: Get from context
+                        anti_pattern_type_id: 1, // TODO: Get from anti-pattern mapping
                         file_path: parsed_file.file_path.to_string_lossy().to_string(),
-                        start_line: 1,
+                        start_line: Some(1),
                         end_line: None,
-                        recommendation: "Consider refactoring to reduce cross-cutting concerns and improve modularity.".to_string(),
-                        detected_at: chrono::Utc::now(),
-                        confidence_score: Some(0.7),
-                        impact_score: Some(0.6),
-                        tags: vec![
-                            "maintainability".to_string(),
-                            "coupling".to_string(),
-                            "separation-of-concerns".to_string(),
-                        ],
+                        line_number: Some(1),
+                        column_number: None,
+                        message: title.clone(),
+                        metadata: serde_json::to_string(&metadata).unwrap_or("{}".to_string()),
+                        detector_name: "ShotgunSurgeryDetector".to_string(),
+                        created_at: chrono::Utc::now(),
+                        severity: "minor".to_string(),
+                        description,
+                        code_snippet: None,
+                        ai_explanation: Some("Consider refactoring to reduce cross-cutting concerns and improve modularity.".to_string()),
                     };
                     issues.push(issue);
                 }

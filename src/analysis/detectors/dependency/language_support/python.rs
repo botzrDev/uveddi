@@ -394,14 +394,14 @@ impl LanguageDependencyParser for PythonDependencyParser {
         match manifest_path.file_name().and_then(|s| s.to_str()) {
             Some("pyproject.toml") => self.parse_pyproject_toml(manifest_path),
             Some("Pipfile") => self.parse_pipfile(manifest_path),
-            Some("requirements.txt") => self.parse_requirements(manifest_path),
+            Some("requirements.txt") => self.parse_requirements_txt(manifest_path),
             _ => Ok(Vec::new()),
         }
     }
 
     fn parse_lockfile(&self, lockfile_path: &Path) -> Result<Vec<DependencyInfo>, DependencyError> {
         match lockfile_path.file_name().and_then(|s| s.to_str()) {
-            Some("requirements.txt") => self.parse_requirements(lockfile_path),
+            Some("requirements.txt") => self.parse_requirements_txt(lockfile_path),
             // TODO: Implement Pipfile.lock parsing when available
             _ => Ok(Vec::new()),
         }

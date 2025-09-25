@@ -56,17 +56,26 @@ pub struct Symbol {
     pub kind: SymbolKind,
     pub line: usize,
     pub column: usize,
+    pub end_line: usize,
+    pub end_column: usize,
+    pub parent: Option<String>,
 }
 
 /// Symbol types
 #[derive(Debug, Clone, PartialEq)]
 pub enum SymbolKind {
     Function,
+    Method,
     Class,
+    Struct,
     Module,
     Variable,
+    Field,
     Constant,
     Type,
+    Interface,
+    Trait,
+    Enum,
 }
 
 /// Relations between code elements

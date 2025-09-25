@@ -32,13 +32,13 @@ impl Repository for SqliteDependencyRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Dependency functionality not implemented",
+            "Dependency functionality not implemented".to_string(),
         ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Dependency functionality not implemented",
+            "Dependency functionality not implemented".to_string(),
         ))
     }
 

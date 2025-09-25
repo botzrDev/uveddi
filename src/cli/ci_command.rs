@@ -55,7 +55,7 @@ impl CiCommand {
             })?;
         }
 
-        let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path)?;
+        let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path).await?;
         #[allow(deprecated)]
         let config = LegacyAnalysisConfig {
             target_path: args.path.clone(),

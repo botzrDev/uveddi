@@ -34,7 +34,7 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<Option<Project>, rusqlite::Error> {
             let mut stmt =
                 conn.prepare("SELECT project_id, path FROM projects WHERE project_id = ?")?;
             let mut rows = stmt.query([id])?;
@@ -353,7 +353,7 @@ impl SqliteProjectRepository {
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
         let path_str_clone = path_str.clone();
 
-        let result = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || -> Result<i64, rusqlite::Error> {
             conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str_clone])?;
             let id = conn.last_insert_rowid();
             Ok(id)

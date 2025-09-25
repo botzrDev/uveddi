@@ -161,7 +161,7 @@ impl ContextDeadCodeDetector {
         usage_count: usize,
         context: &AnalysisContext,
     ) -> f64 {
-        let mut confidence = match usage_count {
+        let mut confidence: f64 = match usage_count {
             0 => 0.9,     // High confidence for truly unused symbols
             1 => 0.6,     // Medium confidence for barely used symbols
             2..=3 => 0.3, // Low confidence for occasionally used symbols
@@ -200,7 +200,7 @@ impl ContextDeadCodeDetector {
             }
         }
 
-        confidence.clamp(0.0, 1.0)
+        confidence.clamp(0.0_f64, 1.0_f64)
     }
 
     /// Determine the reason for dead code classification
@@ -235,33 +235,48 @@ impl Detector for ContextDeadCodeDetector {
 
         // Create issues for each unused symbol
         for unused in unused_symbols {
+            // Create metadata with issue_type and rule_id
+            let mut metadata = serde_json::Map::new();
+            metadata.insert("issue_type".to_string(), serde_json::Value::String("Dead Code".to_string()));
+            metadata.insert("rule_id".to_string(), serde_json::Value::String("dead_code".to_string()));
+            metadata.insert("confidence".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(unused.confidence).unwrap_or(serde_json::Number::from(0))));
+            metadata.insert("usage_count".to_string(), serde_json::Value::Number(serde_json::Number::from(unused.usage_count)));
+            metadata.insert("symbol_kind".to_string(), serde_json::Value::String(unused.symbol.kind.description().to_string()));
+
+            let description = format!(
+                "{} (confidence: {:.1}%, usage count: {})",
+                unused.reason,
+                unused.confidence * 100.0,
+                unused.usage_count
+            );
+
             let issue = ArchitecturalIssue {
                 issue_id: None,
+                analysis_run_id: 0, // TODO: Get from context
+                anti_pattern_type_id: 1, // TODO: Get from anti-pattern mapping
                 file_path: context.file_info.path.to_string_lossy().to_string(),
-                line_number: unused.symbol.line as i32,
+                start_line: Some(unused.symbol.line as i32),
+                end_line: Some(unused.symbol.line as i32),
+                line_number: Some(unused.symbol.line as i32),
                 column_number: Some(unused.symbol.column as i32),
-                issue_type: "Dead Code".to_string(),
-                description: format!(
-                    "{} (confidence: {:.1}%, usage count: {})",
-                    unused.reason,
-                    unused.confidence * 100.0,
-                    unused.usage_count
-                ),
+                message: description.clone(),
+                metadata: serde_json::to_string(&metadata).unwrap_or("{}".to_string()),
+                detector_name: "DeadCodeDetector".to_string(),
+                created_at: chrono::Utc::now(),
                 severity: if unused.confidence > 0.85 {
-                    "High".to_string()
+                    "high".to_string()
                 } else if unused.confidence > 0.6 {
-                    "Medium".to_string()
+                    "medium".to_string()
                 } else {
-                    "Low".to_string()
+                    "low".to_string()
                 },
-                rule_id: Some("dead_code".to_string()),
-                suggestion: Some(format!(
+                description,
+                code_snippet: self.extract_context_snippet(context, &unused.symbol),
+                ai_explanation: Some(format!(
                     "Consider removing {} '{}' if it is truly unused, or mark it with appropriate annotations if it's intentionally unused",
                     unused.symbol.kind.description(),
                     unused.symbol.name
                 )),
-                context_snippet: self.extract_context_snippet(context, &unused.symbol),
-                created_at: chrono::Utc::now(),
             };
 
             issues.push(issue);

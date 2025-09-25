@@ -115,6 +115,25 @@ enum CompatibilityLevel {
     Unknown,
 }
 
+impl LicenseChecker for ConflictDetector {
+    fn check(
+        &self,
+        dependencies: &[DependencyInfo],
+        config: &LicenseConfig,
+    ) -> Result<LicenseCheckOutput, DependencyError> {
+        let result = self.detect_conflicts(dependencies, config)?;
+        Ok(LicenseCheckOutput::Conflicts(result))
+    }
+
+    fn name(&self) -> &str {
+        "ConflictDetector"
+    }
+
+    fn supports_transitive(&self) -> bool {
+        false
+    }
+}
+
 impl ConflictDetector {
     pub fn new() -> Self {
         Self {

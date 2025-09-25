@@ -33,13 +33,13 @@ impl Repository for SqliteIssueRepository {
 
     async fn save(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Issue functionality not implemented",
+            "Issue functionality not implemented".to_string(),
         ))
     }
 
     async fn update(&self, _entity: &Self::Entity) -> RepositoryResult<Self::Entity> {
         Err(RepositoryError::Runtime(
-            "Issue functionality not implemented",
+            "Issue functionality not implemented".to_string(),
         ))
     }
 

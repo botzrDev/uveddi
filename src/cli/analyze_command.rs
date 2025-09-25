@@ -854,6 +854,7 @@ impl AnalyzeCommand {
         }
 
         let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path)
+            .await
             .context("Failed to initialize analysis orchestrator with persistent database")?;
 
         // Memory optimization is enabled by default, unless explicitly disabled
@@ -903,7 +904,7 @@ impl AnalyzeCommand {
             )
             .await
             {
-                Ok(result) => result.map_err(|e| {
+                Ok(result) => result.map_err(|e: crate::error::UveddiError| {
                     let specific_error = match e {
                         ref err if err.to_string().contains("database") => {
                             "Database storage failed - check schema compatibility and disk space"
@@ -977,7 +978,7 @@ impl AnalyzeCommand {
         } else {
             // Execute without timeout
             info!("Analysis running without timeout");
-            analysis_future.await.map_err(|e| {
+            analysis_future.await.map_err(|e: crate::error::UveddiError| {
                 let specific_error = match e {
                     ref err if err.to_string().contains("database") => {
                         "Database storage failed - check schema compatibility and disk space"

@@ -310,33 +310,52 @@ impl AnalysisDetector for FeatureEnvyDetector {
         for pattern in method_patterns.into_iter().chain(class_patterns) {
             let severity = self.determine_severity(&pattern);
             
+            // Create metadata with issue_type and additional information
+            let mut metadata = serde_json::Map::new();
+            metadata.insert("issue_type".to_string(), serde_json::Value::String("feature_envy".to_string()));
+            metadata.insert("rule_id".to_string(), serde_json::Value::String("feature_envy".to_string()));
+            metadata.insert("source_entity".to_string(), serde_json::Value::String(pattern.source_entity.clone()));
+            metadata.insert("target_class".to_string(), serde_json::Value::String(pattern.target_class.clone()));
+            metadata.insert("external_calls".to_string(), serde_json::Value::Number(serde_json::Number::from(pattern.external_calls)));
+            metadata.insert("internal_calls".to_string(), serde_json::Value::Number(serde_json::Number::from(pattern.internal_calls)));
+            metadata.insert("confidence_score".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(pattern.confidence).unwrap_or(serde_json::Number::from(0))));
+            metadata.insert("impact_score".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(self.calculate_impact_score(&pattern)).unwrap_or(serde_json::Number::from(0))));
+            metadata.insert("external_methods".to_string(), serde_json::Value::Array(pattern.external_methods.iter().take(3).map(|m| serde_json::Value::String(m.clone())).collect()));
+            metadata.insert("tags".to_string(), serde_json::Value::Array(vec![
+                serde_json::Value::String("maintainability".to_string()),
+                serde_json::Value::String("encapsulation".to_string()),
+                serde_json::Value::String("cohesion".to_string()),
+                serde_json::Value::String("responsibility".to_string()),
+            ]));
+
+            let title = format!("Feature Envy detected in {}", pattern.source_entity);
+            let description = format!(
+                "The {} '{}' uses methods from '{}' extensively ({} external vs {} internal calls), suggesting it might belong in the target class. External methods used: {}",
+                if pattern.source_entity.chars().next().unwrap_or('a').is_uppercase() { "class" } else { "method" },
+                pattern.source_entity,
+                pattern.target_class,
+                pattern.external_calls,
+                pattern.internal_calls,
+                pattern.external_methods.iter().take(3).cloned().collect::<Vec<_>>().join(", ")
+            );
+
             let issue = ArchitecturalIssue {
-                id: uuid::Uuid::new_v4(),
-                issue_type: "feature_envy".to_string(),
-                title: format!("Feature Envy detected in {}", pattern.source_entity),
-                description: format!(
-                    "The {} '{}' uses methods from '{}' extensively ({} external vs {} internal calls), suggesting it might belong in the target class. External methods used: {}",
-                    if pattern.source_entity.chars().next().unwrap_or('a').is_uppercase() { "class" } else { "method" },
-                    pattern.source_entity,
-                    pattern.target_class,
-                    pattern.external_calls,
-                    pattern.internal_calls,
-                    pattern.external_methods.iter().take(3).cloned().collect::<Vec<_>>().join(", ")
-                ),
-                severity: severity.to_string(),
+                issue_id: None,
+                analysis_run_id: 0, // TODO: Get from context
+                anti_pattern_type_id: 1, // TODO: Get from anti-pattern mapping
                 file_path: file_path.to_string_lossy().to_string(),
-                start_line: 1,
+                start_line: Some(1),
                 end_line: None,
-                recommendation: self.generate_recommendation(&pattern),
-                detected_at: chrono::Utc::now(),
-                confidence_score: Some(pattern.confidence),
-                impact_score: Some(self.calculate_impact_score(&pattern)),
-                tags: vec![
-                    "maintainability".to_string(),
-                    "encapsulation".to_string(),
-                    "cohesion".to_string(),
-                    "responsibility".to_string(),
-                ],
+                line_number: Some(1),
+                column_number: None,
+                message: title,
+                metadata: serde_json::to_string(&metadata).unwrap_or("{}".to_string()),
+                detector_name: "FeatureEnvyDetector".to_string(),
+                created_at: chrono::Utc::now(),
+                severity: severity.to_string().to_lowercase(),
+                description,
+                code_snippet: None,
+                ai_explanation: Some(self.generate_recommendation(&pattern)),
             };
             
             issues.push(issue);

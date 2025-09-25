@@ -163,10 +163,44 @@ impl Detector for ContextCodeDuplicationDetector {
         for duplicate in duplicates {
             let issue = ArchitecturalIssue {
                 issue_id: None,
+                analysis_run_id: 0, // TODO: get from context
+                anti_pattern_type_id: 1, // TODO: get from pattern type registry
                 file_path: context.file_info.path.to_string_lossy().to_string(),
-                line_number: duplicate.block1.start_line as i32,
+                start_line: Some(duplicate.block1.start_line as i32),
+                end_line: Some(duplicate.block1.end_line as i32),
+                line_number: Some(duplicate.block1.start_line as i32),
                 column_number: Some(0),
-                issue_type: "Code Duplication".to_string(),
+                message: format!(
+                    "Duplicate code block found (similarity: {:.1}%). Lines {}-{} are {:.1}% similar to lines {}-{}",
+                    duplicate.similarity * 100.0,
+                    duplicate.block1.start_line,
+                    duplicate.block1.end_line,
+                    duplicate.similarity * 100.0,
+                    duplicate.block2.start_line,
+                    duplicate.block2.end_line
+                ),
+                metadata: serde_json::json!({
+                    "issue_type": "Code Duplication",
+                    "rule_id": "code_duplication",
+                    "similarity": duplicate.similarity,
+                    "block1": {
+                        "start_line": duplicate.block1.start_line,
+                        "end_line": duplicate.block1.end_line
+                    },
+                    "block2": {
+                        "start_line": duplicate.block2.start_line,
+                        "end_line": duplicate.block2.end_line
+                    }
+                }).to_string(),
+                detector_name: "CodeDuplicationDetector".to_string(),
+                created_at: chrono::Utc::now(),
+                severity: if duplicate.similarity > 0.95 {
+                    "High".to_string()
+                } else if duplicate.similarity > 0.85 {
+                    "Medium".to_string()
+                } else {
+                    "Low".to_string()
+                },
                 description: format!(
                     "Duplicate code block found (similarity: {:.1}%). Lines {}-{} are {:.1}% similar to lines {}-{}",
                     duplicate.similarity * 100.0,
@@ -176,23 +210,14 @@ impl Detector for ContextCodeDuplicationDetector {
                     duplicate.block2.start_line,
                     duplicate.block2.end_line
                 ),
-                severity: if duplicate.similarity > 0.95 {
-                    "High".to_string()
-                } else if duplicate.similarity > 0.85 {
-                    "Medium".to_string()
-                } else {
-                    "Low".to_string()
-                },
-                rule_id: Some("code_duplication".to_string()),
-                suggestion: Some(format!(
+                code_snippet: Some(duplicate.block1.content.clone()),
+                ai_explanation: Some(format!(
                     "Consider extracting common code into a shared function or method. Block 1: lines {}-{}, Block 2: lines {}-{}",
                     duplicate.block1.start_line,
                     duplicate.block1.end_line,
                     duplicate.block2.start_line,
                     duplicate.block2.end_line
                 )),
-                context_snippet: Some(duplicate.block1.content.clone()),
-                created_at: chrono::Utc::now(),
             };
 
             issues.push(issue);

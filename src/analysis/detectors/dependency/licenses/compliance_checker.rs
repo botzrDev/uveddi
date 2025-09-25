@@ -138,6 +138,25 @@ struct GlobalRules {
     allow_unknown_licenses: bool,
 }
 
+impl LicenseChecker for ComplianceChecker {
+    fn check(
+        &self,
+        dependencies: &[DependencyInfo],
+        config: &LicenseConfig,
+    ) -> Result<LicenseCheckOutput, DependencyError> {
+        let result = self.check_compliance(dependencies, config)?;
+        Ok(LicenseCheckOutput::Compliance(result))
+    }
+
+    fn name(&self) -> &str {
+        "ComplianceChecker"
+    }
+
+    fn supports_transitive(&self) -> bool {
+        true
+    }
+}
+
 impl ComplianceChecker {
     pub fn new() -> Self {
         Self {

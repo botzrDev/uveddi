@@ -64,26 +64,39 @@ where
         output
             .issues()
             .iter()
-            .map(|issue| ArchitecturalIssue {
-                id: None,
-                analysis_run_id: None,
-                file_path: file_path.to_string_lossy().to_string(),
-                issue_type: detector_name.to_string(),
-                description: issue.message.clone(),
-                severity: match issue.severity {
-                    super::base::types::Severity::Info => "Info".to_string(),
-                    super::base::types::Severity::Low => "Low".to_string(),
-                    super::base::types::Severity::Medium => "Medium".to_string(),
-                    super::base::types::Severity::High => "High".to_string(),
-                    super::base::types::Severity::Critical => "Critical".to_string(),
-                },
-                start_line: issue.line as i32,
-                end_line: issue.line as i32,
-                start_column: Some(issue.start_column as i32),
-                end_column: Some(issue.end_column as i32),
-                suggestion: issue.suggestion.clone(),
-                metadata: serde_json::to_string(&issue.metadata).ok(),
-                created_at: chrono::Utc::now(),
+            .map(|issue| {
+                let mut metadata_map = serde_json::Map::new();
+                metadata_map.insert("issue_type".to_string(), serde_json::Value::String(detector_name.to_string()));
+                if let Ok(existing_metadata) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&serde_json::to_string(&issue.metadata).unwrap_or("{}".to_string())) {
+                    for (k, v) in existing_metadata {
+                        metadata_map.insert(k, v);
+                    }
+                }
+
+                ArchitecturalIssue {
+                    issue_id: None,
+                    analysis_run_id: 0, // TODO: Get from context
+                    anti_pattern_type_id: 1, // TODO: Get from detector mapping
+                    file_path: file_path.to_string_lossy().to_string(),
+                    start_line: Some(issue.start_line as i32),
+                    end_line: Some(issue.end_line as i32),
+                    line_number: Some(issue.start_line as i32),
+                    column_number: Some(issue.start_column as i32),
+                    message: issue.description.clone(),
+                    metadata: serde_json::to_string(&metadata_map).unwrap_or("{}".to_string()),
+                    detector_name: detector_name.to_string(),
+                    created_at: chrono::Utc::now(),
+                    severity: match issue.severity {
+                        super::base::types::Severity::Info => "info".to_string(),
+                        super::base::types::Severity::Low => "low".to_string(),
+                        super::base::types::Severity::Medium => "medium".to_string(),
+                        super::base::types::Severity::High => "high".to_string(),
+                        super::base::types::Severity::Critical => "critical".to_string(),
+                    },
+                    description: issue.description.clone(),
+                    code_snippet: issue.suggestion.clone(),
+                    ai_explanation: None,
+                }
             })
             .collect()
     }
@@ -92,26 +105,29 @@ where
     fn convert_from_architectural_issues(&self, issues: &[ArchitecturalIssue]) -> Vec<Issue> {
         issues
             .iter()
-            .map(|issue| Issue {
-                detector_name: issue.issue_type.clone(),
-                message: issue.description.clone(),
-                severity: match issue.severity.as_str() {
-                    "Critical" => super::base::types::Severity::Critical,
-                    "High" => super::base::types::Severity::High,
-                    "Medium" => super::base::types::Severity::Medium,
-                    "Low" => super::base::types::Severity::Low,
-                    _ => super::base::types::Severity::Info,
-                },
-                file_path: issue.file_path.clone(),
-                line: issue.start_line as u32,
-                start_column: issue.start_column.unwrap_or(0) as u32,
-                end_column: issue.end_column.unwrap_or(0) as u32,
-                suggestion: issue.suggestion.clone(),
-                metadata: issue
-                    .metadata
-                    .as_ref()
-                    .and_then(|m| serde_json::from_str(m).ok())
-                    .unwrap_or_default(),
+            .map(|issue| {
+                let metadata_map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&issue.metadata).unwrap_or_default();
+                let issue_type = metadata_map.get("issue_type").and_then(|v| v.as_str()).unwrap_or(&issue.detector_name).to_string();
+
+                Issue {
+                    id: format!("cached-{}", issue.issue_id.unwrap_or(0)),
+                    title: issue_type,
+                    description: issue.message.clone(),
+                    severity: match issue.severity.as_str() {
+                        "critical" => super::base::types::Severity::Critical,
+                        "high" => super::base::types::Severity::High,
+                        "medium" => super::base::types::Severity::Medium,
+                        "low" => super::base::types::Severity::Low,
+                        _ => super::base::types::Severity::Info,
+                    },
+                    file_path: issue.file_path.clone().into(),
+                    start_line: issue.line_number.unwrap_or(0) as u32,
+                    end_line: issue.line_number.unwrap_or(0) as u32,
+                    start_column: issue.column_number.unwrap_or(0) as u32,
+                    end_column: issue.column_number.unwrap_or(0) as u32,
+                    metadata: serde_json::from_str(&issue.metadata).unwrap_or_default(),
+                    suggestion: issue.code_snippet.clone(),
+                }
             })
             .collect()
     }
@@ -146,7 +162,7 @@ where
         let mut files_to_analyze = Vec::new();
 
         for parsed_file in &context.files {
-            let file_path = &parsed_file.path;
+            let file_path = &parsed_file.path();
 
             // Build detector versions map for cache key
             let mut detector_versions = HashMap::new();
@@ -203,7 +219,7 @@ where
         detector_versions.insert(self.inner.name().to_string(), self.detector_version.clone());
 
         for parsed_file in &files_to_analyze {
-            let file_path = &parsed_file.path;
+            let file_path = &parsed_file.path();
 
             // Convert output to architectural issues for caching
             let issues =
@@ -212,7 +228,7 @@ where
             // Store in cache
             if let Ok(mut cache) = context.analysis_cache.lock() {
                 if let Err(e) = cache.put(
-                    file_path.clone(),
+                    file_path.to_path_buf(),
                     issues,
                     execution_time,
                     detector_versions.clone(),

@@ -98,7 +98,7 @@ pub enum DependencySource {
 
 /// Cache handles for accessing AST and analysis caches
 #[cfg(feature = "analysis-cache")]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CacheHandles {
     /// AST cache for parsed syntax trees
     pub ast_cache: Arc<Mutex<AstCache>>,
