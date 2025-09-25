@@ -8,7 +8,11 @@
 
 pub mod ast;
 pub mod engine_cache;
+pub mod enhanced_engine_cache;
+pub mod eviction;
+pub mod file_watcher;
 pub mod invalidation;
+pub mod telemetry_integration;
 
 #[cfg(feature = "prometheus")]
 pub mod metrics;
@@ -44,3 +48,7 @@ pub mod wrappers {
 }
 
 pub use engine_cache::{EngineCache, EngineCacheConfig, EngineCacheStats};
+pub use enhanced_engine_cache::{EnhancedEngineCache, EnhancedCacheConfig, CacheLayerConfig, EnhancedCacheStats, CacheLayerStats};
+pub use eviction::{EvictionPolicy, EvictionManager, EvictionStats};
+pub use file_watcher::{ConfigurableFileWatcher, FileWatcherConfig, FileWatcherStats, CacheInvalidationCallback, FileChangeEvent, FileEventType};
+pub use telemetry_integration::{CacheTelemetryCollector, CacheTelemetryConfig, CacheTelemetryReport, CacheAlert, CacheAlertType, AlertSeverity};

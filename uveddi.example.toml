@@ -73,6 +73,132 @@ enable_optimization = false  # Keep false for stability
 memory_limit_gb = 8.0       # May be ignored
 cache_size_mb = 512         # Cache implementation is buggy
 
+# ==============================================================================
+# ⚡ CACHE CONFIGURATION
+# These settings control the multi-layered caching system
+# ==============================================================================
+
+[cache]
+# Enable/disable caching system
+enabled = true                     # Set to false to disable all caching
+
+# Memory cache configuration
+[cache.memory]
+# Maximum memory usage for in-memory cache (in MB)
+max_memory_mb = 256               # Adjust based on available system memory
+
+# Maximum number of AST entries to cache in memory
+max_ast_entries = 1000            # Larger values = more memory, better performance
+
+# Maximum number of analysis result entries to cache
+max_result_entries = 1000         # Cache for detector results
+
+# Cache eviction policy when limits are reached
+eviction_policy = "lru"           # Options: "lru", "lfu", "fifo"
+
+# Disk cache configuration
+[cache.disk]
+# Enable persistent disk cache
+enabled = true                    # Set to false for memory-only caching
+
+# Directory for disk cache (relative to project root)
+cache_dir = ".uveddi/cache"       # Cache storage location
+
+# Maximum disk cache size (in MB)
+max_disk_size_mb = 1024          # Adjust based on available disk space
+
+# Enable compression for disk cache
+compression_enabled = true        # Reduces disk usage, slight CPU overhead
+
+# Cache cleanup threshold (percentage full before cleanup)
+cleanup_threshold = 0.8          # Start cleanup when 80% full
+
+# File watching and invalidation
+[cache.invalidation]
+# Enable automatic cache invalidation on file changes
+auto_invalidate = true           # Recommended for development
+
+# File watching polling interval (in milliseconds)
+polling_interval_ms = 1000       # How often to check for file changes
+
+# Patterns for files that should trigger cache invalidation
+watch_patterns = ["**/*.rs", "**/*.py", "**/*.js", "**/*.ts"]
+
+# Ignore patterns (files that won't trigger invalidation)
+ignore_patterns = [
+    "**/target/**",              # Rust build artifacts
+    "**/node_modules/**",        # Node.js dependencies
+    "**/.git/**",               # Git metadata
+    "**/.*",                    # Hidden files
+    "**/build/**",              # General build artifacts
+]
+
+# Performance tuning
+[cache.performance]
+# Enable background cache warming
+background_warming = false       # Experimental: Pre-populate cache
+
+# Number of worker threads for cache operations
+worker_threads = 2               # Adjust based on CPU cores
+
+# Cache hit rate threshold for warnings
+min_hit_rate = 0.5              # Warn if hit rate drops below 50%
+
+# Cache statistics reporting interval (in seconds)
+stats_interval_seconds = 300     # How often to log cache statistics
+
+# Advanced cache configuration
+[cache.advanced]
+# Enable cache metrics collection (for monitoring)
+metrics_enabled = true           # Enable Prometheus metrics if available
+
+# Cache key strategy
+key_strategy = "content_hash"    # Options: "content_hash", "file_path", "hybrid"
+
+# Enable cache validation (verify integrity)
+validation_enabled = false      # Paranoia mode: validate cached data
+
+# Cache serialization format
+serialization_format = "bincode"  # Options: "bincode", "json", "postcard"
+
+# Presets for different deployment scenarios
+[cache.presets]
+# Development preset - optimized for fast iteration
+development = {
+    memory_mb = 512,
+    disk_mb = 2048,
+    auto_invalidate = true,
+    polling_ms = 500,
+    background_warming = false
+}
+
+# Production preset - optimized for performance
+production = {
+    memory_mb = 1024,
+    disk_mb = 4096,
+    auto_invalidate = false,
+    polling_ms = 5000,
+    background_warming = true
+}
+
+# CI/CD preset - minimal memory usage
+ci = {
+    memory_mb = 128,
+    disk_mb = 512,
+    auto_invalidate = false,
+    polling_ms = 0,  # No file watching in CI
+    background_warming = false
+}
+
+# Memory-constrained preset - for resource-limited environments
+minimal = {
+    memory_mb = 64,
+    disk_mb = 256,
+    auto_invalidate = true,
+    polling_ms = 2000,
+    background_warming = false
+}
+
 # Plugin system configuration (alpha quality)
 [plugins]
 # ⚠️ Plugin system is very unstable

@@ -498,6 +498,15 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
+# Binaries
+[[bin]]
+name = "cache-benchmark"
+path = "src/bin/cache_benchmark.rs"
+
+[[bin]]
+name = "cache-memory-profiler"
+path = "src/bin/cache_memory_profiler.rs"
+
 # Examples
 [[example]]
 name = "doctor_demo"
