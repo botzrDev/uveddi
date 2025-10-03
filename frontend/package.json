@@ -1,7 +1,7 @@
 {
   "name": "uveddi-interactive-reports",
   "private": true,
-  "version": "0.9.0-alpha",
+  "version": "1.0.0",
   "type": "module",
   "description": "Interactive reporting frontend for Uveddi architectural analysis",
   "scripts": {
