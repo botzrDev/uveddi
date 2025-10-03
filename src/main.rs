@@ -46,13 +46,81 @@
 // Targeted warning suppressions - only for unused variables, not all warnings
 #![allow(unused_variables, unused_imports)]
 
+use clap::Parser;
 use color_eyre::eyre::Result;
 use tracing::{debug, error, info};
+use uveddi::cli::*;
+use uveddi::error::UveddiError;
 // TODO: Re-enable when monitoring dependencies are properly configured
 // use uveddi::monitoring::dashboard::MonitoringDashboard;
 // use uveddi::config::monitoring::MonitoringConfig;
 
 mod server;
+
+/// CLI structure for Uveddi
+#[derive(Parser)]
+#[command(name = "uveddi")]
+#[command(version = "1.0.0")]
+#[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+/// Available CLI commands
+#[derive(clap::Subcommand)]
+enum Commands {
+    /// Perform comprehensive code analysis
+    #[command(alias = "a")]
+    Analyze(AnalyzeCommand),
+    /// Manage configuration settings
+    #[command(alias = "cfg")]
+    Config(ConfigCommand),
+    /// Run health diagnostics and fix common issues
+    #[command(alias = "dr")]
+    Doctor(DoctorCommand),
+    /// Show help information
+    Help(HelpCommand),
+    /// Git hooks management
+    Hooks(HooksCommand),
+    /// Initialize Uveddi configuration for a project
+    Init(InitCommand),
+    /// Launch the UI dashboard
+    Ui(UiCommand),
+    /// CI/CD integration command
+    Ci(CiCommand),
+    /// Launch the Terminal User Interface for interactive analysis
+    Tui(TuiCommand),
+    /// Manage WASM plugins
+    #[cfg(feature = "wasm-plugins")]
+    Plugin(PluginCommand),
+    /// Start the web dashboard with all required services
+    Serve {
+        /// Port for the API server and dashboard
+        #[arg(short, long, default_value = "8080")]
+        port: u16,
+
+        /// Port for the rendering service
+        #[arg(long, default_value = "3001")]
+        rendering_port: u16,
+
+        /// Port for frontend development server
+        #[arg(long, default_value = "3000")]
+        frontend_port: u16,
+
+        /// Database path
+        #[arg(long, default_value = "./.uveddi/database.db")]
+        database_path: std::path::PathBuf,
+
+        /// Enable development mode (starts frontend dev server)
+        #[arg(long)]
+        development: bool,
+
+        /// Frontend build assets path (for production)
+        #[arg(long)]
+        frontend_assets: Option<std::path::PathBuf>,
+    },
+}
 
 /// Main entry point for Uveddi. All errors are handled and logged consistently.
 ///
@@ -105,25 +173,147 @@ async fn main() -> Result<()> {
     //     monitoring_dashboard.start().await.expect("Failed to start monitoring dashboard");
     // });
 
-    // Run main application
-    info!("Running main application");
-    match uveddi::application::run_app().await {
+    // Parse CLI arguments
+    info!("Parsing CLI arguments");
+    let cli = Cli::parse();
+
+    // Execute the appropriate command
+    info!("Executing command");
+    let result = match cli.command {
+        Commands::Analyze(command) => {
+            info!("Executing analyze command...");
+            command.execute_validated().await
+        }
+        Commands::Config(command) => {
+            info!("Executing config command...");
+            command
+                .execute()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
+        }
+        Commands::Doctor(command) => {
+            info!("Executing doctor command...");
+            command.execute().await
+        }
+        Commands::Help(command) => {
+            info!("Executing help command...");
+            command.execute().await
+        }
+        Commands::Hooks(command) => {
+            info!("Executing hooks command...");
+            command.execute().await
+        }
+        Commands::Init(command) => {
+            info!("Executing init command...");
+            command.execute().await
+        }
+        Commands::Ui(command) => {
+            info!("Executing UI command...");
+            command
+                .execute()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "ui command"))
+        }
+        Commands::Ci(command) => {
+            info!("Executing CI command...");
+            command.execute().await
+        }
+        Commands::Tui(command) => {
+            info!("Launching TUI interface...");
+            command
+                .execute()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "tui command"))
+        }
+        #[cfg(feature = "wasm-plugins")]
+        Commands::Plugin(command) => {
+            info!("Executing plugin command...");
+            command.execute().await
+        }
+        Commands::Serve {
+            port,
+            rendering_port,
+            frontend_port,
+            database_path,
+            development,
+            frontend_assets,
+        } => {
+            info!("🚀 Starting Uveddi web services...");
+
+            // Auto-detect frontend assets path if not provided
+            let frontend_assets_path = frontend_assets.or_else(|| {
+                let default_path = std::path::PathBuf::from("frontend/dist");
+                if default_path.exists() && default_path.join("index.html").exists() {
+                    info!(
+                        "📁 Auto-detected frontend assets at: {}",
+                        default_path.display()
+                    );
+                    Some(default_path)
+                } else {
+                    info!(
+                        "📁 No frontend assets found at default location: {}",
+                        default_path.display()
+                    );
+                    None
+                }
+            });
+
+            #[cfg(feature = "service-orchestration")]
+            {
+                use uveddi::service_orchestration::{OrchestratorConfig, ServiceOrchestrator};
+
+                let config = OrchestratorConfig {
+                    api_port: port,
+                    rendering_port,
+                    frontend_port,
+                    auto_start_services: true,
+                    database_path: database_path.clone(),
+                    frontend_assets_path,
+                    development_mode: development,
+                };
+
+                let mut orchestrator = ServiceOrchestrator::new();
+                orchestrator.start_services(config).await.map_err(|e| {
+                    UveddiError::from(anyhow::anyhow!("Service orchestration failed: {}", e))
+                })?;
+
+                info!("🌐 Dashboard available at: http://localhost:{}", port);
+                info!("🖼️  Rendering service at: http://localhost:{}", rendering_port);
+                if development {
+                    info!("🛠️  Frontend dev server at: http://localhost:{}", frontend_port);
+                }
+                info!("📁 Database path: {}", database_path.display());
+                info!("\n✨ Press Ctrl+C to stop all services\n");
+
+                // Wait for Ctrl+C
+                tokio::signal::ctrl_c()
+                    .await
+                    .map_err(|e| UveddiError::from(anyhow::anyhow!("Failed to listen for ctrl-c: {}", e)))?;
+
+                info!("Shutting down services...");
+                Ok(())
+            }
+
+            #[cfg(not(feature = "service-orchestration"))]
+            {
+                error!("Service orchestration feature is not enabled. Rebuild with --features service-orchestration");
+                Err(UveddiError::config_error(
+                    "Service orchestration feature not enabled",
+                    "serve command",
+                ))
+            }
+        }
+    };
+
+    // Handle result
+    match result {
         Ok(_) => {
-            info!("Application completed successfully");
+            info!("Command completed successfully");
+            Ok(())
         }
         Err(e) => {
-            error!(error = ?e, "Application failed");
-            return Err(color_eyre::eyre::eyre!(e));
+            error!(error = ?e, "Command failed");
+            Err(color_eyre::eyre::eyre!(e))
         }
     }
-
-    // Example of using the new builder pattern for AnalysisEngine
-    // This is for demonstration and can be removed if not needed in main.rs
-    // let _engine = AnalysisEngine::builder()
-    //     .enable_plugins(true)
-    //     .build_async()
-    //     .await?;
-
-    info!("Uveddi application shutting down");
-    Ok(())
 }

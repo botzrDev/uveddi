@@ -167,22 +167,23 @@ impl BenchmarkResults {
 }
 
 /// Find files matching patterns in the target directory
-async fn find_source_files(path: &Path, patterns: &[String]) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let mut files = Vec::new();
+fn find_source_files(path: &Path, patterns: &[String]) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<PathBuf>, Box<dyn std::error::Error>>> + Send + '_>> {
+    Box::pin(async move {
+        let mut files = Vec::new();
 
-    if path.is_file() {
-        files.push(path.to_path_buf());
-        return Ok(files);
-    }
+        if path.is_file() {
+            files.push(path.to_path_buf());
+            return Ok(files);
+        }
 
-    let mut entries = fs::read_dir(path).await?;
-    while let Some(entry) = entries.next_entry().await? {
-        let entry_path = entry.path();
+        let mut entries = fs::read_dir(path).await?;
+        while let Some(entry) = entries.next_entry().await? {
+            let entry_path = entry.path();
 
-        if entry_path.is_dir() {
-            // Recursively search subdirectories
-            let mut sub_files = find_source_files(&entry_path, patterns).await?;
-            files.append(&mut sub_files);
+            if entry_path.is_dir() {
+                // Recursively search subdirectories
+                let mut sub_files = find_source_files(&entry_path, patterns).await?;
+                files.append(&mut sub_files);
         } else if let Some(file_name) = entry_path.file_name().and_then(|n| n.to_str()) {
             // Check if file matches any pattern
             let matches_pattern = patterns.is_empty() || patterns.iter().any(|pattern| {
@@ -209,7 +210,8 @@ async fn find_source_files(path: &Path, patterns: &[String]) -> Result<Vec<PathB
         }
     }
 
-    Ok(files)
+        Ok(files)
+    })
 }
 
 /// Detect language from file extension

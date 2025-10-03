@@ -19,8 +19,12 @@ pub mod ui_command;
 
 // Re-export commonly used types
 pub use analyze_command::AnalyzeCommand;
+pub use ci_command::CiCommand;
+pub use config_command::ConfigCommand;
 pub use doctor_command::DoctorCommand;
 pub use help_command::HelpCommand;
 pub use hooks_command::HooksCommand;
 pub use init_command::InitCommand;
+pub use plugin_command::PluginCommand;
 pub use tui_command::TuiCommand;
+pub use ui_command::UiCommand;
