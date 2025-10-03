@@ -3,7 +3,7 @@
 use super::detector::ComplexityMetrics;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::error::ErrorHelpers;
 use streaming_iterator::StreamingIterator;
 

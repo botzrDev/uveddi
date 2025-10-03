@@ -5,7 +5,7 @@ use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
 };
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;

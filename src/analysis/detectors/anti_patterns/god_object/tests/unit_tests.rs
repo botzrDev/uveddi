@@ -1,7 +1,7 @@
 //! Basic unit tests for God Object detector
 
 use crate::analysis::cache::wrappers::ArchivableSystemTime;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::SystemTime;

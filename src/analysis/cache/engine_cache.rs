@@ -5,7 +5,7 @@
 
 #[cfg(feature = "prometheus")]
 use crate::analysis::cache::metrics::CacheMetrics;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use lru::LruCache;
 use std::collections::HashMap;
@@ -274,7 +274,7 @@ pub struct EngineCacheStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+    use crate::ast::{ParsedFile, SourceLanguage};
     use prometheus::Registry;
     use std::path::PathBuf;
     use std::sync::Arc;

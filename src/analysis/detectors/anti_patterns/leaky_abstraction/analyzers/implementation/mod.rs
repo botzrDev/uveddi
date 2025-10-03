@@ -10,7 +10,7 @@ use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
     ImplementationVisibilityIssue, LeakType, TypeLeakage,
 };
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 
 pub use dependency_analyzer::DependencyAnalyzer;

@@ -5,7 +5,7 @@
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::Node;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::constants::detector_thresholds;
 use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};

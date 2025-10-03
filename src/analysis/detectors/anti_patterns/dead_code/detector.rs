@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use crate::analysis::memory::{PooledObject, DETECTOR_POOLS};
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 

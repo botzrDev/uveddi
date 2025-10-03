@@ -13,7 +13,7 @@ pub use patterns::TypeScriptPatternDetector;
 
 use super::super::config::GodObjectConfig;
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use std::collections::HashSet;
 use tracing::debug;

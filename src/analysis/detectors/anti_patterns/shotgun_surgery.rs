@@ -5,7 +5,7 @@
 //! or modules. This indicates poor separation of concerns and high coupling.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;

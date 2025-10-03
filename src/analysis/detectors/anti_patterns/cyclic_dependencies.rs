@@ -5,7 +5,7 @@
 use async_trait::async_trait;
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct CyclicDependenciesDetector;

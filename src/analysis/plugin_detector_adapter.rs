@@ -5,7 +5,7 @@
 //! detectors alongside built-in detectors.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::plugins::{

@@ -4,7 +4,7 @@ use super::super::super::config::GodObjectConfig;
 use super::queries::TYPESCRIPT_NAMESPACE_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use streaming_iterator::StreamingIterator;
 use tracing::debug;

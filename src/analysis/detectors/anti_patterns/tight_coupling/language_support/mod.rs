@@ -15,7 +15,7 @@ pub use typescript_imports::TypeScriptImportAnalyzer;
 pub use typescript_modules::TypeScriptModuleAnalyzer;
 
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::path::Path;
 
 use super::types::Dependency;

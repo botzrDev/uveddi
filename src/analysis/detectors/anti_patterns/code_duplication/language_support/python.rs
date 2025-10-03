@@ -3,7 +3,7 @@
 use super::{CommentSyntax, FunctionSignature, LanguageSupport};
 use crate::analysis::detectors::anti_patterns::code_duplication::types::CodeBlock;
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// Python language support for code duplication detection
 pub struct PythonLanguageSupport;

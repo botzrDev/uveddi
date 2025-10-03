@@ -5,7 +5,7 @@ use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
     AnalysisContext, ArchitecturalConfig,
 };
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 
 /// Provides comprehensive abstraction quality scoring.
 pub struct AbstractionScorer {

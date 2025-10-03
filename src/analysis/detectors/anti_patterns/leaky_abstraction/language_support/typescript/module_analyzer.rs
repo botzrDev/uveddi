@@ -5,7 +5,7 @@ use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
 };
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 
 #[cfg(feature = "tree-sitter")]

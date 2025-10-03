@@ -6,7 +6,7 @@ pub mod rust;
 
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::Node;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::collections::HashSet;
 
 use super::types::Symbol;

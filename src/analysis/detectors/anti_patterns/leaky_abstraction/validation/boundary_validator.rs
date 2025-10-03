@@ -4,7 +4,7 @@ use crate::analysis::detectors::anti_patterns::leaky_abstraction::types::{
     AnalysisContext, ArchitecturalConfig, ArchitecturalLayer, LeakType,
 };
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 
 /// Validates architectural boundaries and detects boundary violations.

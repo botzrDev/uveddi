@@ -7,7 +7,7 @@ use super::patterns::RustPatternDetector;
 use super::queries::RUST_STRUCT_QUERY;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use std::collections::HashMap;
 use streaming_iterator::StreamingIterator;

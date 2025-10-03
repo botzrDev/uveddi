@@ -3,7 +3,7 @@
 use super::match_processor::MatchProcessor;
 use crate::analysis::detectors::anti_patterns::long_methods::types::MethodMetrics;
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// Extractor for method definitions and their metrics
 pub struct MethodExtractor;

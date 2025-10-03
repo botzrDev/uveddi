@@ -5,7 +5,7 @@ use super::super::super::detector::DetectedPattern;
 use super::queries::{RUST_DERIVE_QUERY, RUST_USE_QUERY};
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::error::ErrorHelpers;
 use std::collections::HashMap;
 use streaming_iterator::StreamingIterator;

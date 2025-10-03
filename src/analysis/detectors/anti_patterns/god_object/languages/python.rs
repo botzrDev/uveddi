@@ -5,7 +5,7 @@ use super::super::detector::{ComplexityMetrics, DetectedPattern};
 use super::super::metrics::MetricsCalculator;
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::ErrorHelpers;
 use std::collections::HashSet;

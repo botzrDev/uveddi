@@ -1,5 +1,5 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use async_trait::async_trait;

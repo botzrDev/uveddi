@@ -10,7 +10,7 @@ pub use typescript::TypeScriptLanguageSupport;
 
 use crate::analysis::detectors::anti_patterns::code_duplication::types::CodeBlock;
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 
 /// Trait for language-specific code duplication analysis
 pub trait LanguageSupport: Send + Sync {

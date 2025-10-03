@@ -2,7 +2,7 @@
 
 use crate::analysis::AnalysisError;
 use crate::ast::tree_sitter::{Node, QueryCursor};
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;

@@ -1,5 +1,5 @@
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use std::path::Path;
 
 use super::super::types::Dependency;

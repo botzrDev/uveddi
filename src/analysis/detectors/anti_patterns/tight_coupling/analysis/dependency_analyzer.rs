@@ -2,7 +2,7 @@ use crate::analysis::graph::dependency::{
     ComponentNode, LocalDependencyGraph, LocalDependencyType,
 };
 use crate::analysis::AnalysisError;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use petgraph::visit::EdgeRef;
 use std::collections::HashMap;
 use std::path::Path;

@@ -46,7 +46,7 @@ pub use analysis::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+    use crate::ast::{ParsedFile, SourceLanguage};
     use std::path::PathBuf;
 
     #[tokio::test]

@@ -10,7 +10,7 @@ use crate::analysis::cache::{
     ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},
 };
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use async_trait::async_trait;

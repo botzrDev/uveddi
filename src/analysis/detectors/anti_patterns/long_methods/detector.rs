@@ -10,7 +10,7 @@ use crate::analysis::detectors::base::{
     AnalysisContext, DetectionMetrics, Detector, DetectorConfig, DetectorOutput, Issue, Severity,
 };
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
