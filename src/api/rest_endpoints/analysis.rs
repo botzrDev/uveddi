@@ -12,7 +12,8 @@ use crate::ast::SourceLanguage;
 use axum::{
     extract::{Path as AxumPath, Query, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
+    response::IntoResponse,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
@@ -188,7 +189,9 @@ pub async fn start_analysis(
     };
 
     // Create graph-aware pipeline
-    let base_pipeline = AnalysisPipeline::new();
+    let ast_builder = Arc::new(crate::engine::parsing::AstBuilder::new()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?);
+    let base_pipeline = AnalysisPipeline::new(ast_builder);
     let mut graph_pipeline = GraphAwarePipeline::new(base_pipeline, pipeline_config);
 
     // Discover and create analysis contexts
@@ -257,7 +260,7 @@ pub async fn get_analysis_status(
     AxumPath(analysis_id): AxumPath<String>,
     Query(query): Query<AnalysisStatusQuery>,
     State(_state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<Json<serde_json::Value>, StatusCode> {
     // TODO: Implement actual status tracking
     // For now, return a placeholder response
 
@@ -288,7 +291,7 @@ pub async fn get_analysis_status(
 pub async fn stream_analysis_progress(
     AxumPath(analysis_id): AxumPath<String>,
     State(_state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<Json<serde_json::Value>, StatusCode> {
     // TODO: Implement WebSocket streaming for real-time progress
     // For now, return endpoint information
 
@@ -311,10 +314,9 @@ pub async fn stream_analysis_progress(
 fn create_cache_config(params: &Option<CacheControlParams>) -> GraphCacheConfig {
     if let Some(cache_params) = params {
         GraphCacheConfig {
-            max_entries: cache_params.max_entries.unwrap_or(1000),
-            ttl: Duration::from_secs(cache_params.ttl_seconds.unwrap_or(3600)),
-            enable_cleanup: true,
-            cleanup_interval: Duration::from_secs(300),
+            max_nodes: cache_params.max_entries.unwrap_or(1000),
+            max_edges: cache_params.max_entries.unwrap_or(1000) * 5,
+            enable_persistence: false,
         }
     } else {
         GraphCacheConfig::default()

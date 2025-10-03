@@ -48,13 +48,14 @@ impl ContextCodeDuplicationDetector {
                 if self.is_significant_block(block_lines) {
                     let content = block_lines.join("\n");
                     let normalized_content = self.normalize_content(&content);
+                    let hash = self.calculate_hash(&normalized_content);
 
                     blocks.push(CodeBlock {
                         start_line: start + 1,
                         end_line: end,
                         content,
                         normalized_content,
-                        hash: self.calculate_hash(&normalized_content),
+                        hash,
                     });
                 }
             }

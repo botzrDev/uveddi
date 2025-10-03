@@ -219,25 +219,26 @@ fn get_test_configurations() -> Vec<CacheConfiguration> {
 }
 
 /// Find source files to test with
-async fn find_test_files(path: &Path, limit: usize) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let mut files = Vec::new();
+fn find_test_files(path: &Path, limit: usize) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<PathBuf>, Box<dyn std::error::Error>>> + Send + '_>> {
+    Box::pin(async move {
+        let mut files = Vec::new();
 
-    if path.is_file() {
-        files.push(path.to_path_buf());
-        return Ok(files);
-    }
-
-    let mut entries = fs::read_dir(path).await?;
-    while let Some(entry) = entries.next_entry().await? {
-        if files.len() >= limit {
-            break;
+        if path.is_file() {
+            files.push(path.to_path_buf());
+            return Ok(files);
         }
 
-        let entry_path = entry.path();
+        let mut entries = fs::read_dir(path).await?;
+        while let Some(entry) = entries.next_entry().await? {
+            if files.len() >= limit {
+                break;
+            }
 
-        if entry_path.is_dir() {
-            let mut sub_files = find_test_files(&entry_path, limit - files.len()).await?;
-            files.append(&mut sub_files);
+            let entry_path = entry.path();
+
+            if entry_path.is_dir() {
+                let mut sub_files = find_test_files(&entry_path, limit - files.len()).await?;
+                files.append(&mut sub_files);
         } else if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
             match ext {
                 "rs" | "py" | "js" | "ts" | "jsx" | "tsx" => {
@@ -249,6 +250,7 @@ async fn find_test_files(path: &Path, limit: usize) -> Result<Vec<PathBuf>, Box<
     }
 
     Ok(files)
+    })
 }
 
 /// Take a memory snapshot

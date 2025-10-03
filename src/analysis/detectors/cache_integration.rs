@@ -185,14 +185,30 @@ impl DetectorCacheManager {
         let detector_name = &cache_key.detector_name;
 
         // Check if the cache key should be invalidated
-        if self.invalidation_strategy.should_invalidate(&cache_key.file_path) {
-            debug!(
-                "Cache invalidation triggered for detector {} on file {}",
-                detector_name,
-                cache_key.file_path.display()
-            );
-            self.update_stats(detector_name, |s| s.record_miss(start_time.elapsed().as_millis() as f64)).await;
-            return None;
+        let file_path_str = cache_key.file_path.to_string_lossy().to_string();
+        match self.invalidation_strategy.should_invalidate(&file_path_str, &cache_key.content_hash) {
+            Ok(should_invalidate) => {
+                if should_invalidate {
+                    debug!(
+                        "Cache invalidation triggered for detector {} on file {}",
+                        detector_name,
+                        cache_key.file_path.display()
+                    );
+                    self.update_stats(detector_name, |s| s.record_miss(start_time.elapsed().as_millis() as f64)).await;
+                    return None;
+                }
+            }
+            Err(e) => {
+                warn!(
+                    "Cache invalidation check failed for detector {} on file {}: {}",
+                    detector_name,
+                    cache_key.file_path.display(),
+                    e
+                );
+                // On invalidation error, assume cache should be invalidated to be safe
+                self.update_stats(detector_name, |s| s.record_miss(start_time.elapsed().as_millis() as f64)).await;
+                return None;
+            }
         }
 
         // Try to get from cache
@@ -278,7 +294,7 @@ impl DetectorCacheManager {
     pub async fn handle_cache_failure(
         &self,
         detector_name: &str,
-        error: &AnalysisError,
+        error: AnalysisError,
     ) -> Result<(), AnalysisError> {
         self.update_stats(detector_name, |s| s.record_error()).await;
 
@@ -289,7 +305,7 @@ impl DetectorCacheManager {
             );
             Ok(())
         } else {
-            Err(error.clone())
+            Err(error)
         }
     }
 

@@ -4,7 +4,7 @@
 //! with connection pooling, prepared statements, and transaction support.
 
 use super::traits::{
-    DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue, TransactionProvider,
+    DatabaseConnection, DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue, TransactionProvider,
 };
 use super::{DatabaseConfig, DatabaseHealthStatus, DatabaseMetrics};
 use crate::database::models::{
@@ -202,6 +202,10 @@ impl DatabaseProvider for PostgreSqlProvider {
 
     async fn begin_transaction(&self) -> Result<Box<dyn TransactionProvider>> {
         todo!("PostgreSQL transaction implementation")
+    }
+
+    async fn get_connection(&self) -> Result<Box<dyn DatabaseConnection>> {
+        todo!("Direct connection not implemented for provider pattern")
     }
 
     async fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {

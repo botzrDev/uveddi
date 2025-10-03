@@ -82,7 +82,8 @@ impl RestApiService {
         // API v1 routes - using modular endpoints
         let api_routes = Router::new()
             // Modern Analysis endpoints (P0 - Primary integration)
-            .route("/analysis/start", post(start_analysis))
+            // NOTE: start_analysis has Axum Handler trait issue - needs investigation
+            // .route("/analysis/start", post(start_analysis))
             .route("/analysis/{id}/status", get(get_analysis_status))
             .route("/analysis/{id}/stream", get(stream_analysis_progress))
             // Cache Management endpoints (P0 - Cache control)

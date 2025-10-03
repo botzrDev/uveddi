@@ -4,7 +4,7 @@
 //! with connection pooling, WAL mode optimization, and performance enhancements.
 
 use super::traits::{
-    DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue, TransactionProvider,
+    DatabaseConnection, DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue, TransactionProvider,
 };
 use super::{DatabaseConfig, DatabaseHealthStatus, DatabaseMetrics};
 use crate::database::models::{
@@ -206,6 +206,10 @@ impl DatabaseProvider for SqliteProvider {
 
     async fn begin_transaction(&self) -> Result<Box<dyn TransactionProvider>> {
         todo!("Transaction implementation")
+    }
+
+    async fn get_connection(&self) -> Result<Box<dyn DatabaseConnection>> {
+        todo!("Direct connection not implemented for provider pattern")
     }
 
     async fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {

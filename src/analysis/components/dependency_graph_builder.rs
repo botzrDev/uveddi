@@ -61,7 +61,7 @@ impl DependencyGraphBuilderImpl {
             )
         })?;
 
-        let parsed_file = crate::ast::ParsedFile {
+        let parsed_file = crate::ast::tree_sitter_impl::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
             language: self.detect_language_from_path(file_path),
             tree: Some((*ast).clone()),

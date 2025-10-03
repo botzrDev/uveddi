@@ -114,7 +114,7 @@ impl ContextBuilder {
         #[cfg(feature = "analysis-cache")]
         if let Some(ref cache_handles) = self.cache_handles {
             if let Ok(mut ast_cache) = cache_handles.ast_cache.lock() {
-                if let Some(cached_entry) = ast_cache.get(file_path) {
+                if let Some(cached_entry) = ast_cache.get(&file_path.to_path_buf()) {
                     // Use cached AST - language detection from file extension
                     let language = crate::ast::SourceLanguage::from_path(file_path)
                         .ok_or_else(|| PipelineError::ContextBuildError(
@@ -267,7 +267,7 @@ impl AnalysisPipeline {
         ));
 
         // Create and start cache services
-        let service_manager = CacheServiceManager::new(cache_handles.clone());
+        let service_manager = CacheServiceManager::new();
         let service_manager_arc = std::sync::Arc::new(std::sync::Mutex::new(service_manager));
 
         Self {

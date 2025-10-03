@@ -29,6 +29,9 @@ pub trait DatabaseProvider: Send + Sync {
     /// Begin a database transaction
     async fn begin_transaction(&self) -> Result<Box<dyn TransactionProvider>>;
 
+    /// Get a database connection
+    async fn get_connection(&self) -> Result<Box<dyn DatabaseConnection>>;
+
     /// Get or create a project ID for the given path
     async fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64>;
 

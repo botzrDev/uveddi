@@ -216,7 +216,8 @@ impl CacheManager for CacheManagerImpl {
             let parsed_file = ast_parser
                 .parse_file(file_path)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
-            Ok(parsed_file)
+            // Convert tree-sitter ParsedFile to ParsedFileCompat
+            Ok(ParsedFile::from_tree_sitter(parsed_file))
         };
 
         match self.engine_cache.get_or_parse_ast(file_path, parser).await {

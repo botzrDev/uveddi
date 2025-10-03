@@ -1,7 +1,7 @@
 //! Main WASM plugin engine that orchestrates the plugin system
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::AntiPatternType;
 use crate::database::models::ArchitecturalIssue;
 use crate::plugins::{

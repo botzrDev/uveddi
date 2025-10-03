@@ -87,6 +87,30 @@ impl QueryBuilder {
         self
     }
 
+    /// Find dependencies of a file/module
+    pub fn find_dependencies(&self, _file_path: &str) -> Option<Vec<String>> {
+        // Placeholder implementation
+        Some(Vec::new())
+    }
+
+    /// Find dependents (reverse dependencies) of a file/module
+    pub fn find_dependents(&self, _file_path: &str) -> Option<Vec<String>> {
+        // Placeholder implementation
+        Some(Vec::new())
+    }
+
+    /// Count incoming relations to a node
+    pub fn count_incoming_relations(&self, _file_path: &str) -> Option<usize> {
+        // Placeholder implementation
+        Some(0)
+    }
+
+    /// Count outgoing relations from a node
+    pub fn count_outgoing_relations(&self, _file_path: &str) -> Option<usize> {
+        // Placeholder implementation
+        Some(0)
+    }
+
     /// Execute the query on a knowledge graph
     pub fn execute(self, graph: &KnowledgeGraph) -> QueryResult {
         let mut visited = HashSet::new();

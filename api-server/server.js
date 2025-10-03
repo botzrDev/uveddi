@@ -76,15 +76,10 @@ app.use(helmet({
   }
 }));
 app.use(cors({
-  origin: [
-    'http://localhost:8001', 'http://127.0.0.1:8001',
-    'http://localhost:8002', 'http://127.0.0.1:8002',
-    'http://localhost:8003', 'http://127.0.0.1:8003',
-    'http://localhost:8080', 'http://127.0.0.1:8080',
-    'http://localhost:8082', 'http://127.0.0.1:8082'
-  ], // Allow frontend ports in 8000 range
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: true, // Allow all origins in development (GitHub Codespaces, local, etc.)
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(morgan('combined'));
 app.use(express.json());

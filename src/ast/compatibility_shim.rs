@@ -41,6 +41,30 @@ pub struct ParsedFileCompat {
 }
 
 impl ParsedFileCompat {
+    /// Create from tree-sitter ParsedFile
+    pub fn from_tree_sitter(parsed: crate::ast::tree_sitter_impl::ParsedFile) -> Self {
+        Self {
+            file_path: Arc::clone(&parsed.file_path),
+            language: parsed.language.clone(),
+            tree: None, // Tree cannot be cloned, must be omitted
+            source: Arc::clone(&parsed.source),
+            custom_ast: Arc::clone(&parsed.custom_ast),
+            modified_at: parsed.modified_at.clone(),
+        }
+    }
+
+    /// Convert to tree-sitter ParsedFile (tree will be None)
+    pub fn to_tree_sitter(&self) -> crate::ast::tree_sitter_impl::ParsedFile {
+        crate::ast::tree_sitter_impl::ParsedFile {
+            file_path: Arc::clone(&self.file_path),
+            language: self.language.clone(),
+            tree: self.tree.clone(),
+            source: Arc::clone(&self.source),
+            custom_ast: Arc::clone(&self.custom_ast),
+            modified_at: self.modified_at.clone(),
+        }
+    }
+
     /// Create a new compatibility wrapper (stub implementation)
     pub fn new(file_path: PathBuf, language: SourceLanguage, source: String) -> Self {
         let custom_ast = Arc::new(None);

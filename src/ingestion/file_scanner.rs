@@ -155,7 +155,7 @@ impl FileScanner {
     ) -> Result<ChangeSet, ScanError> {
         // Detect changes in the given root path
         let changeset = change_detector
-            .detect_changes(root_path)
+            .detect_changes_async(root_path)
             .await
             .map_err(|e| ScanError::IncrementalError(format!("Change detection failed: {}", e)))?;
         Ok(changeset)

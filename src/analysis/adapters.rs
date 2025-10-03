@@ -45,13 +45,16 @@ impl AstParserTrait for AstParserAdapter {
             .lock()
             .map_err(|e| AnalysisError::DetectionError(format!("Parser lock failed: {}", e)))?;
 
-        parser.parse_file(path).map_err(|e| {
+        let parsed = parser.parse_file(path).map_err(|e| {
             AnalysisError::DetectionError(format!(
                 "AST parsing failed for {}: {}",
                 path.display(),
                 e
             ))
-        })
+        })?;
+
+        // Convert tree-sitter ParsedFile to ParsedFileCompat
+        Ok(ParsedFile::from_tree_sitter(parsed))
     }
 
     fn is_initialized(&self) -> bool {
@@ -93,7 +96,9 @@ impl DependencyExtractorAdapter {
 
 impl DependencyExtractorTrait for DependencyExtractorAdapter {
     fn extract_from_ast(&self, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, AnalysisError> {
-        self.extractor.extract_from_ast(parsed_file).map_err(|e| {
+        // Convert ParsedFileCompat to tree-sitter ParsedFile
+        let ts_parsed_file = parsed_file.to_tree_sitter();
+        self.extractor.extract_from_ast(&ts_parsed_file).map_err(|e| {
             AnalysisError::DetectionError(format!("Dependency extraction failed: {}", e))
         })
     }

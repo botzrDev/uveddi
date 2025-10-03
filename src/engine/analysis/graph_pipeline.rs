@@ -58,7 +58,7 @@ impl Default for GraphPipelineConfig {
 }
 
 /// Performance metrics for graph-aware pipeline
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct GraphPipelineMetrics {
     pub total_analyses: u64,
     pub graph_builds: u64,
@@ -126,7 +126,7 @@ impl GraphAwarePipeline {
             let file_path = context.file_info.path.to_string_lossy();
             let file_hash = self.compute_file_hash(context);
 
-            if let Ok(mut cache) = self.graph_cache.lock() {
+            if let Ok(mut cache) = self.graph_cache.write() {
                 // Try to get cached relations
                 if let Some(cached_relations) = cache.get_relations(&file_path, file_hash) {
                     // Use cached data
@@ -140,7 +140,7 @@ impl GraphAwarePipeline {
         }
 
         // Update the main knowledge graph
-        let new_graph = builder.build();
+        let new_graph = builder.get_graph().clone();
         if let Ok(mut graph) = self.knowledge_graph.lock() {
             *graph = new_graph;
         }
@@ -162,7 +162,7 @@ impl GraphAwarePipeline {
             .map_err(|e| GraphAnalysisError::LockError(format!("Knowledge graph lock failed: {}", e)))?;
 
         // Build query engine for graph insights
-        let query_builder = QueryBuilder::new(&graph);
+        let query_builder = QueryBuilder::new();
 
         for (i, result) in results.iter_mut().enumerate() {
             if i < contexts.len() {
@@ -208,7 +208,7 @@ impl GraphAwarePipeline {
         let file_path = context.file_info.path.to_string_lossy();
 
         // Check cache first
-        if let Ok(mut cache) = self.graph_cache.lock() {
+        if let Ok(mut cache) = self.graph_cache.write() {
             let cache_key = format!("deps:{}", file_path);
             if let Some(cached_deps) = cache.get_dependencies(&cache_key) {
                 return Some(cached_deps.nodes.iter()
@@ -221,7 +221,7 @@ impl GraphAwarePipeline {
         let dependencies = query_builder.find_dependencies(&file_path)?;
 
         // Cache the result
-        if let Ok(mut cache) = self.graph_cache.lock() {
+        if let Ok(mut cache) = self.graph_cache.write() {
             let cache_key = format!("deps:{}", file_path);
             cache.cache_dependencies(cache_key, dependencies.clone(), vec![], vec![]);
         }
@@ -271,7 +271,12 @@ impl GraphAwarePipeline {
     /// Get current graph statistics
     async fn get_graph_stats(&self) -> GraphStats {
         if let Ok(graph) = self.knowledge_graph.lock() {
-            graph.stats()
+            let builder_stats = graph.stats();
+            GraphStats {
+                node_count: builder_stats.node_count,
+                edge_count: builder_stats.edge_count,
+                symbol_count: builder_stats.symbol_count,
+            }
         } else {
             GraphStats {
                 node_count: 0,
@@ -283,7 +288,7 @@ impl GraphAwarePipeline {
 
     /// Get cache efficiency metrics
     async fn get_cache_efficiency(&self) -> CacheEfficiency {
-        if let Ok(cache) = self.graph_cache.lock() {
+        if let Ok(cache) = self.graph_cache.read() {
             let cache_stats = cache.get_cache_stats();
             let metrics = cache.get_metrics();
 

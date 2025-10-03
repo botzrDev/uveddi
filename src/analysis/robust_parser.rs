@@ -181,7 +181,8 @@ impl RobustParser {
                             "Successfully parsed file: {}",
                             file_path_for_logging.display()
                         );
-                        Ok(parsed_file)
+                        // Convert tree_sitter_impl::ParsedFile to the compatibility type
+                        Ok(crate::ast::ParsedFileCompat::from_tree_sitter(parsed_file))
                     }
                     Err(parse_error) => {
                         warn!(

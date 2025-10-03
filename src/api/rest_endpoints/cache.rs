@@ -181,7 +181,7 @@ pub async fn get_cache_stats(
     let cache_config = GraphCacheConfig::default();
     let shared_cache = create_shared_graph_cache(cache_config);
 
-    let stats = match shared_cache.lock() {
+    let stats = match shared_cache.write() {
         Ok(cache) => {
             let cache_stats = cache.get_cache_stats();
             let metrics = cache.get_metrics();

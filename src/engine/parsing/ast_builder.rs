@@ -172,7 +172,7 @@ impl AstBuilder {
         #[cfg(feature = "ast-cache")]
         {
             if let Ok(mut cache) = self.ast_cache.lock() {
-                if let Some(cached_entry) = cache.get(file_path) {
+                if let Some(cached_entry) = cache.get(&file_path.to_path_buf()) {
                     debug!("Cache hit for file: {}", file_path.display());
 
                     // Detect language for cached result
@@ -296,7 +296,7 @@ impl AstBuilder {
     #[cfg(feature = "ast-cache")]
     pub fn cache_stats(&self) -> Option<crate::engine::cache::ast_cache::CacheStats> {
         if let Ok(cache) = self.ast_cache.lock() {
-            Some(*cache.stats())
+            Some(cache.stats())
         } else {
             None
         }

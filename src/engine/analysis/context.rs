@@ -46,7 +46,7 @@ pub struct AnalysisContext {
 }
 
 /// File metadata and information
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileInfo {
     /// Path to the file
     pub path: PathBuf,
@@ -65,7 +65,7 @@ pub struct FileInfo {
 }
 
 /// Project-wide context information
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ProjectContext {
     /// Project root directory
     pub project_root: PathBuf,
@@ -81,7 +81,7 @@ pub struct ProjectContext {
 }
 
 /// External project dependency
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ProjectDependency {
     pub name: String,
     pub version: Option<String>,
@@ -89,7 +89,7 @@ pub struct ProjectDependency {
 }
 
 /// Source of a dependency
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DependencySource {
     Registry,
     Git { url: String },
@@ -104,6 +104,21 @@ pub struct CacheHandles {
     pub ast_cache: Arc<Mutex<AstCache>>,
     /// Analysis cache for detector results
     pub analysis_cache: Arc<Mutex<AnalysisCache>>,
+}
+
+impl Clone for AnalysisContext {
+    fn clone(&self) -> Self {
+        Self {
+            file_info: self.file_info.clone(),
+            syntax_tree: None, // Tree cannot be cloned, omit it
+            source: self.source.clone(),
+            symbols: self.symbols.clone(),
+            relations: self.relations.clone(),
+            project_context: self.project_context.clone(),
+            #[cfg(feature = "analysis-cache")]
+            caches: self.caches.clone(),
+        }
+    }
 }
 
 impl AnalysisContext {

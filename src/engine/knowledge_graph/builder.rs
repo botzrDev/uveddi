@@ -16,7 +16,7 @@ use crate::engine::cache::{AnalysisCache, CacheMetricsCollector};
 use std::sync::{Arc, Mutex};
 
 /// Knowledge graph containing all code relationships
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct KnowledgeGraph {
     /// All nodes in the graph (symbols)
     nodes: HashMap<String, GraphNode>,
@@ -147,6 +147,11 @@ impl GraphBuilder {
     /// Build the final knowledge graph
     pub fn build(self) -> KnowledgeGraph {
         self.graph
+    }
+
+    /// Get a reference to the current graph state without consuming the builder
+    pub fn get_graph(&self) -> &KnowledgeGraph {
+        &self.graph
     }
 
     /// Cache-aware graph building support

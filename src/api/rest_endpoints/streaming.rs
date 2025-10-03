@@ -274,12 +274,13 @@ async fn handle_cache_stream(mut socket: WebSocket, subscription: StreamSubscrip
         tokio::select! {
             _ = cache_interval.tick() => {
                 // Generate mock cache statistics
+                use rand::Rng;
                 let cache_msg = StreamMessage::CacheStats {
                     timestamp: chrono::Utc::now(),
-                    hit_rate: 0.87 + (rand::random::<f64>() - 0.5) * 0.1, // Simulate variation
-                    total_entries: 1247 + (rand::random::<usize>() % 100),
-                    memory_usage_mb: 45.7 + (rand::random::<f64>() - 0.5) * 5.0,
-                    recent_operations: 156 + (rand::random::<u64>() % 50),
+                    hit_rate: 0.87 + (rand::thread_rng().gen::<f64>() - 0.5) * 0.1, // Simulate variation
+                    total_entries: 1247 + rand::thread_rng().gen_range(0..100),
+                    memory_usage_mb: 45.7 + (rand::thread_rng().gen::<f64>() - 0.5) * 5.0,
+                    recent_operations: 156 + rand::thread_rng().gen_range(0..50),
                 };
 
                 if send_message(&mut socket, cache_msg).await.is_err() {
@@ -382,7 +383,7 @@ async fn handle_events_stream(mut socket: WebSocket, subscription: StreamSubscri
 async fn send_message(socket: &mut WebSocket, message: StreamMessage) -> Result<(), ()> {
     match serde_json::to_string(&message) {
         Ok(json_string) => {
-            match socket.send(Message::Text(json_string)).await {
+            match socket.send(Message::Text(json_string.into())).await {
                 Ok(_) => Ok(()),
                 Err(e) => {
                     error!("Failed to send WebSocket message: {}", e);

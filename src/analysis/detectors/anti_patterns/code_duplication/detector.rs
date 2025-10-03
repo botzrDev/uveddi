@@ -120,7 +120,7 @@ impl CodeDuplicationDetector {
     /// Extracts code blocks from a single file
     fn extract_code_blocks_from_file(
         &self,
-        file: &crate::ast::tree_sitter_impl::ParsedFile,
+        file: &ParsedFile,
     ) -> Result<Vec<CodeBlock>, AnalysisError> {
         // Check cache first
         let file_path = file.path().to_string_lossy().to_string();
