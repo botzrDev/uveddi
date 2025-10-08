@@ -385,11 +385,11 @@ mod tests {
             enable_prepared_statements: false,
         };
 
-        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let provider = Arc::new(crate::database::SqliteProvider::new());
         let pool = ConnectionPool::new(config, provider).await.unwrap();
         let registry = MigrationRegistry::new();
 
-        (MigrationRunner::new(Arc::new(pool), registry), temp_file)
+        (MigrationRunner::new(pool, registry), temp_file)
     }
 
     #[tokio::test]

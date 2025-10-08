@@ -298,7 +298,7 @@ mod tests {
             enable_logging: false,
             enable_prepared_statements: false,
         };
-        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let provider = Arc::new(crate::database::SqliteProvider::new());
         let db = PooledDatabase::new(db_config, provider).await.unwrap();
         let stats = db.pool_stats();
 
@@ -309,7 +309,7 @@ mod tests {
     #[tokio::test]
     async fn test_connection_execution() {
         let db_config = DatabaseConfig::default();
-        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let provider = Arc::new(crate::database::SqliteProvider::new());
         let db = PooledDatabase::new(db_config, provider).await.unwrap();
 
         let result = db
@@ -326,7 +326,7 @@ mod tests {
     #[tokio::test]
     async fn test_concurrent_connections() {
         let db_config = DatabaseConfig::default();
-        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let provider = Arc::new(crate::database::SqliteProvider::new());
         let db = PooledDatabase::new(db_config, provider).await.unwrap();
         let db_clone = db.clone();
 

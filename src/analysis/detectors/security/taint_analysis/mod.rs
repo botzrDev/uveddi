@@ -259,7 +259,16 @@ mod tests {
             metadata: std::collections::HashMap::new(),
         };
 
-        let result = detector.apply_sanitization(&tainted, &sanitizer_node);
+        let sanitizer_point = SanitizationPoint {
+            id: sanitizer_node.id,
+            sanitizer_type: match sanitizer_node.node_type {
+                DataFlowNodeType::Sanitizer(s) => s,
+                _ => "unknown".to_string(),
+            },
+            effectiveness: 0.9,
+            location: sanitizer_node.location,
+        };
+        let result = detector.apply_sanitization(&sanitizer_point, tainted);
         match result {
             TaintLevel::Sanitized | TaintLevel::Partial(_) => assert!(true),
             _ => assert!(false, "Expected sanitization to reduce taint level"),

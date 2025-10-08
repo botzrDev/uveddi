@@ -488,7 +488,7 @@ mod tests {
             enable_prepared_statements: false,
         };
 
-        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let provider = Arc::new(crate::database::SqliteProvider::new());
         let pool = ConnectionPool::new(config, provider).await.unwrap();
 
         // Create the table
@@ -510,7 +510,7 @@ mod tests {
             .unwrap();
         }
 
-        (SqliteAnalysisRepository::new(Arc::new(pool)), temp_file)
+        (SqliteAnalysisRepository::new(pool), temp_file)
     }
 
     #[tokio::test]

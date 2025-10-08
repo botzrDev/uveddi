@@ -318,8 +318,7 @@ mod tests {
             PathBuf::from("test.js"),
             SourceLanguage::JavaScript,
             "eval(userInput)".to_string(),
-        )
-        .to_tree_sitter();
+        );
 
         std::fs::write("test.js", "eval(userInput)").unwrap();
         let vulnerabilities = analyzer.analyze(&file).await.unwrap();

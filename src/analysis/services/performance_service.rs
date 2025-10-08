@@ -472,10 +472,7 @@ mod tests {
     use super::*;
 
     fn create_test_performance_service() -> PerformanceAnalysisService {
-        let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
-            crate::database::models::PerformanceMetricsConfig::default(),
-            10,
-        ));
+        let metrics_collector = Arc::new(PerformanceMetricsCollector::new("test"));
         PerformanceAnalysisService::new(metrics_collector, MemoryConfig::default())
     }
 

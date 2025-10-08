@@ -276,8 +276,7 @@ mod tests {
             PathBuf::from("test.py"),
             SourceLanguage::Python,
             "eval(user_input)".to_string(),
-        )
-        .to_tree_sitter();
+        );
 
         std::fs::write("test.py", "eval(user_input)").unwrap();
         let vulnerabilities = analyzer.analyze(&file).await.unwrap();

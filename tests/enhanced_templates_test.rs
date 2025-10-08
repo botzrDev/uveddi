@@ -4,6 +4,8 @@
 //! library integration, ensuring template quality, knowledge injection, and
 //! AI integration functionality.
 
+#![cfg(feature = "ai")]
+
 use std::collections::HashMap;
 use std::time::Duration;
 use uveddi::ai::knowledge::context_selection::*;

@@ -203,8 +203,7 @@ mod tests {
             PathBuf::from("test.rs"),
             crate::ast::SourceLanguage::Rust,
             "pub fn test() {}".to_string(),
-        )
-        .to_tree_sitter();
+        );
 
         // Create a temporary test file
         std::fs::write("test.rs", "pub fn test() {}").unwrap();

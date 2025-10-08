@@ -474,10 +474,7 @@ mod tests {
             cache_manager,
         ));
 
-        let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
-            crate::database::models::PerformanceMetricsConfig::default(),
-            10,
-        ));
+        let metrics_collector = Arc::new(PerformanceMetricsCollector::new("test"));
         let performance_service = Arc::new(PerformanceAnalysisService::new(
             metrics_collector,
             MemoryConfig::default(),

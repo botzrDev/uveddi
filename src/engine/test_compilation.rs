@@ -3,12 +3,12 @@
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        analysis::AnalysisContext,
-        cache::{AnalysisCache, AstCache},
-        knowledge_graph::{GraphBuilder, KnowledgeGraph, QueryBuilder},
-        parsing::{AstBuilder, LanguageParser},
-    };
+    use super::*;
+    use crate::engine::analysis::context::AnalysisContext;
+    #[cfg(feature = "analysis-cache")]
+    use crate::engine::cache::{AnalysisCache, AstCache};
+    use crate::engine::knowledge_graph::{GraphBuilder, KnowledgeGraph, QueryBuilder};
+    use crate::engine::parsing::{AstBuilder, LanguageParser};
 
     #[test]
     fn test_engine_modules_compile() {

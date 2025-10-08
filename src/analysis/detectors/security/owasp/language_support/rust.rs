@@ -226,8 +226,7 @@ mod tests {
             PathBuf::from("test.rs"),
             SourceLanguage::Rust,
             "unsafe { *ptr }".to_string(),
-        )
-        .to_tree_sitter();
+        );
 
         std::fs::write("test.rs", "unsafe { *ptr }").unwrap();
         let vulnerabilities = analyzer.analyze(&file).await.unwrap();
