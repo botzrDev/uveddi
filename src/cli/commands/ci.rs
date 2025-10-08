@@ -1,4 +1,4 @@
-use crate::application::{AnalysisOrchestrator, LegacyAnalysisConfig};
+use crate::application::{AnalysisOrchestrator, AnalysisConfig};
 use crate::core::logging::{error, info};
 use crate::error::UveddiError;
 use clap::{Args, Subcommand};

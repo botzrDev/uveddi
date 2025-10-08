@@ -158,6 +158,7 @@ yaml = []
 reqwest = []
 image-rendering = []
 interactive-reports = ["image-rendering"]
+performance-testing = []
 
 [dependencies]
 # Use workspace dependencies for consistency

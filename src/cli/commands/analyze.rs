@@ -36,7 +36,7 @@ use std::path::PathBuf;
 use sysinfo::System;
 use tracing::{info, warn};
 
-use crate::application::{AnalysisOrchestrator, LegacyAnalysisConfig};
+use crate::application::{AnalysisOrchestrator, AnalysisConfig};
 use crate::error::UveddiError;
 use crate::progress::{create_progress_reporter, AnalysisPhase, ProgressTracker};
 use crate::report::DiagramMode;
@@ -939,16 +939,8 @@ impl AnalyzeCommand {
             self.memory_profile.clone()
         };
 
-        // Configure analysis parameters (using legacy config for now)
-        #[allow(deprecated)]
-        let config = LegacyAnalysisConfig {
-            target_path: self.path.clone(),
-            output_format: self.output_format.clone(),
-            output_file: self.output.clone(),
-            enable_ai: self.enable_ai,
-            ollama_api_url: self.ollama_api_url.clone(),
-            ollama_model: self.ollama_model.clone(),
-        };
+        // Configure analysis parameters
+        let config = AnalysisConfig::new(self.path.clone());
 
         // Start parsing phase
         progress_tracker.start_phase(AnalysisPhase::Parsing, None);
@@ -1002,15 +994,7 @@ impl AnalyzeCommand {
                     warn!("Analysis timed out after {} seconds. Attempting graceful degradation...", self.timeout);
 
                     // Try with reduced scope and timeouts
-                    #[allow(deprecated)]
-                    let degraded_config = LegacyAnalysisConfig {
-                        target_path: self.path.clone(),
-                        output_format: self.output_format.clone(),
-                        output_file: self.output.clone(),
-                        enable_ai: false,  // Disable AI for faster analysis
-                        ollama_api_url: None,
-                        ollama_model: None,
-                    };
+                    let degraded_config = AnalysisConfig::new(self.path.clone());
 
                     info!("🔄 Retrying analysis with degraded settings: max 100 files, 15s per detector");
                     let degraded_future = orchestrator.execute_analysis(degraded_config);
