@@ -308,7 +308,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_connection_execution() {
-        let db = PooledDatabase::new(None, None).unwrap();
+        let db_config = DatabaseConfig::default();
+        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let db = PooledDatabase::new(db_config, provider).await.unwrap();
 
         let result = db
             .with_connection(|conn| {
@@ -323,7 +325,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_concurrent_connections() {
-        let db = PooledDatabase::new(None, None).unwrap();
+        let db_config = DatabaseConfig::default();
+        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let db = PooledDatabase::new(db_config, provider).await.unwrap();
         let db_clone = db.clone();
 
         // Create table first

@@ -198,7 +198,7 @@ fn main() {
         // Should detect TestStruct as a god object (7 methods + 10 fields)
         assert!(!issues.is_empty(), "Should detect god object");
         assert!(issues[0].description.contains("TestStruct"));
-        assert!(issues[0].issue_type == "God Object");
+        assert!(issues[0].anti_pattern_type_id == "God Object");
     }
 
     #[test]

@@ -426,7 +426,6 @@ mod tests {
         DetectorScheduler::new(
             config_service,
             ast_provider,
-            None, // No plugin manager for tests
             aggregator,
             detectors,
         )

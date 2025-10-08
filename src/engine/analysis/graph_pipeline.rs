@@ -417,7 +417,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_graph_pipeline_creation() {
-        let base_pipeline = AnalysisPipeline::new();
+        let ast_builder = Arc::new(crate::engine::ast::AstBuilder::new());
+        let base_pipeline = AnalysisPipeline::new(ast_builder);
         let config = GraphPipelineConfig::default();
         let pipeline = GraphAwarePipeline::new(base_pipeline, config);
 
@@ -427,7 +428,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_knowledge_graph_update() {
-        let base_pipeline = AnalysisPipeline::new();
+        let ast_builder = Arc::new(crate::engine::ast::AstBuilder::new());
+        let base_pipeline = AnalysisPipeline::new(ast_builder);
         let config = GraphPipelineConfig::default();
         let mut pipeline = GraphAwarePipeline::new(base_pipeline, config);
 
@@ -440,7 +442,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_efficiency_tracking() {
-        let base_pipeline = AnalysisPipeline::new();
+        let ast_builder = Arc::new(crate::engine::ast::AstBuilder::new());
+        let base_pipeline = AnalysisPipeline::new(ast_builder);
         let config = GraphPipelineConfig::default();
         let pipeline = GraphAwarePipeline::new(base_pipeline, config);
 

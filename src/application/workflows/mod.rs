@@ -21,7 +21,7 @@ pub mod traits {
     /// Trait for workflow execution
     pub trait Workflow<TInput, TOutput>: Send + Sync {
         /// Execute the workflow with the given input
-        async fn execute(&mut self, input: TInput) -> Result<TOutput, UveddiError>;
+        fn execute(&mut self, input: TInput) -> impl std::future::Future<Output = Result<TOutput, UveddiError>> + Send;
 
         /// Get the workflow name
         fn name(&self) -> &str;
@@ -46,7 +46,7 @@ pub mod traits {
     /// Trait for workflows that support cancellation
     pub trait Cancellable {
         /// Cancel the currently running workflow
-        async fn cancel(&mut self) -> Result<(), UveddiError>;
+        fn cancel(&mut self) -> impl std::future::Future<Output = Result<(), UveddiError>> + Send;
 
         /// Check if the workflow is cancelled
         fn is_cancelled(&self) -> bool;
@@ -55,10 +55,10 @@ pub mod traits {
     /// Trait for workflows that can be paused and resumed
     pub trait Pausable {
         /// Pause the workflow execution
-        async fn pause(&mut self) -> Result<(), UveddiError>;
+        fn pause(&mut self) -> impl std::future::Future<Output = Result<(), UveddiError>> + Send;
 
         /// Resume the workflow execution
-        async fn resume(&mut self) -> Result<(), UveddiError>;
+        fn resume(&mut self) -> impl std::future::Future<Output = Result<(), UveddiError>> + Send;
 
         /// Check if the workflow is paused
         fn is_paused(&self) -> bool;

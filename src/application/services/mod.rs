@@ -18,10 +18,10 @@ pub mod traits {
     /// Trait for services that can be started and stopped
     pub trait Service: Send + Sync {
         /// Start the service
-        async fn start(&mut self) -> Result<(), UveddiError>;
+        fn start(&mut self) -> impl std::future::Future<Output = Result<(), UveddiError>> + Send;
 
         /// Stop the service
-        async fn stop(&mut self) -> Result<(), UveddiError>;
+        fn stop(&mut self) -> impl std::future::Future<Output = Result<(), UveddiError>> + Send;
 
         /// Check if the service is running
         fn is_running(&self) -> bool;
@@ -42,7 +42,7 @@ pub mod traits {
     /// Trait for services that provide health checks
     pub trait HealthCheck: Send + Sync {
         /// Check the health of the service
-        async fn health_check(&self) -> Result<ServiceHealth, UveddiError>;
+        fn health_check(&self) -> impl std::future::Future<Output = Result<ServiceHealth, UveddiError>> + Send;
     }
 
     /// Service health status
