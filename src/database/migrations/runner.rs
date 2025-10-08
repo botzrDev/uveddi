@@ -385,7 +385,8 @@ mod tests {
             enable_prepared_statements: false,
         };
 
-        let provider = Arc::new(crate::database::SqliteProvider::new());
+        let db_config = crate::database::connection::config::DatabaseConfig::sqlite(&temp_file);
+        let provider = Arc::new(crate::database::SqliteProvider::new(db_config)?);
         let pool = ConnectionPool::new(config, provider).await.unwrap();
         let registry = MigrationRegistry::new();
 

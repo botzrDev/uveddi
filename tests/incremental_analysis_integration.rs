@@ -13,7 +13,8 @@ use uveddi::analysis::incremental::{
     dependency_tracker::DependencyExtractionConfig, state_manager::StateManagerConfig,
     ChangeDetectionConfig, ChangeDetector, DependencyTracker, IncrementalStateManager,
 };
-use uveddi::analysis::{AnalysisEngine, IncrementalAnalysisConfig, IncrementalConfig};
+use uveddi::analysis::{AnalysisEngine};
+use uveddi::analysis::incremental::{IncrementalAnalysisEngine, IncrementalAnalysisConfig, IncrementalConfig};
 
 /// Test basic incremental analysis functionality
 #[tokio::test]
@@ -24,15 +25,20 @@ async fn test_basic_incremental_analysis() {
     let test_files = create_test_project(&temp_dir, 10);
 
     // Create analysis engine
-    let mut engine = AnalysisEngine::new().unwrap();
+    let base_engine = AnalysisEngine::new().unwrap();
 
     // First run - full analysis
-    let (issues1, _) = engine.analyze(temp_dir.path()).await.unwrap();
+    let (issues1, _) = base_engine.analyze(temp_dir.path()).await.unwrap();
 
     // Second run - incremental analysis (should be faster)
     let config = IncrementalConfig::default();
-    let (issues2, result) = engine
-        .analyze_incremental(temp_dir.path(), config)
+    let mut incremental_engine = IncrementalAnalysisEngine::new(
+        base_engine,
+        config,
+        temp_dir.path().join("incremental_state.json")
+    ).await.unwrap();
+    let (issues2, result) = incremental_engine
+        .analyze_incremental(temp_dir.path())
         .await
         .unwrap();
 
@@ -225,11 +231,11 @@ async fn test_performance_improvement_target() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(&temp_dir, 100); // Larger project for meaningful timing
 
-    let mut engine = AnalysisEngine::new().unwrap();
+    let base_engine = AnalysisEngine::new().unwrap();
 
     // First run - full analysis (establish baseline)
     let full_start = std::time::Instant::now();
-    let (issues1, _) = engine.analyze(temp_dir.path()).await.unwrap();
+    let (issues1, _) = base_engine.analyze(temp_dir.path()).await.unwrap();
     let full_time = full_start.elapsed();
 
     // Make small changes (simulate typical development scenario)
@@ -238,8 +244,13 @@ async fn test_performance_improvement_target() {
     // Second run - incremental analysis
     let incremental_start = std::time::Instant::now();
     let config = IncrementalConfig::default();
-    let (issues2, result) = engine
-        .analyze_incremental(temp_dir.path(), config)
+    let mut incremental_engine = IncrementalAnalysisEngine::new(
+        base_engine,
+        config,
+        temp_dir.path().join("incremental_state.json")
+    ).await.unwrap();
+    let (issues2, result) = incremental_engine
+        .analyze_incremental(temp_dir.path())
         .await
         .unwrap();
     let incremental_time = incremental_start.elapsed();
@@ -289,12 +300,17 @@ async fn test_cache_invalidation() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(&temp_dir, 30);
 
-    let mut engine = AnalysisEngine::new().unwrap();
+    let base_engine = AnalysisEngine::new().unwrap();
     let config = IncrementalConfig::default();
 
     // First run
-    let (issues1, result1) = engine
-        .analyze_incremental(temp_dir.path(), config.clone())
+    let mut incremental_engine = IncrementalAnalysisEngine::new(
+        base_engine,
+        config.clone(),
+        temp_dir.path().join("incremental_state.json")
+    ).await.unwrap();
+    let (issues1, result1) = incremental_engine
+        .analyze_incremental(temp_dir.path())
         .await
         .unwrap();
 
@@ -302,8 +318,8 @@ async fn test_cache_invalidation() {
     let modified_files = modify_random_files(&temp_dir, 3);
 
     // Second run
-    let (issues2, result2) = engine
-        .analyze_incremental(temp_dir.path(), config)
+    let (issues2, result2) = incremental_engine
+        .analyze_incremental(temp_dir.path())
         .await
         .unwrap();
 
