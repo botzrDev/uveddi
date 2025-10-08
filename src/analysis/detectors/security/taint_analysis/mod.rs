@@ -261,10 +261,13 @@ mod tests {
 
         let sanitizer_point = SanitizationPoint {
             id: sanitizer_node.id,
-            sanitizer_type: match sanitizer_node.node_type {
+            pattern: match sanitizer_node.node_type {
                 DataFlowNodeType::Sanitizer(s) => s,
                 _ => "unknown".to_string(),
             },
+            language: None,
+            prevents: vec![],
+            description: String::new(),
             effectiveness: 0.9,
             location: sanitizer_node.location,
         };

@@ -719,15 +719,15 @@ For more information, see the [Uveddi documentation](https://github.com/botzrDev
 
     fn generate_analysis_guide(&self, template: &ProjectTemplate) -> String {
         match template {
-            ProjectTemplate::Rust => include_str!("../templates/guides/rust_analysis_guide.md"),
-            ProjectTemplate::Python => include_str!("../templates/guides/python_analysis_guide.md"),
+            ProjectTemplate::Rust => include_str!("../../templates/guides/rust_analysis_guide.md"),
+            ProjectTemplate::Python => include_str!("../../templates/guides/python_analysis_guide.md"),
             ProjectTemplate::JavaScript => {
-                include_str!("../templates/guides/javascript_analysis_guide.md")
+                include_str!("../../templates/guides/javascript_analysis_guide.md")
             }
             ProjectTemplate::TypeScript => {
-                include_str!("../templates/guides/typescript_analysis_guide.md")
+                include_str!("../../templates/guides/typescript_analysis_guide.md")
             }
-            _ => include_str!("../templates/guides/general_analysis_guide.md"),
+            _ => include_str!("../../templates/guides/general_analysis_guide.md"),
         }
         .to_string()
     }

@@ -157,6 +157,7 @@ graphql-api = []
 yaml = []
 reqwest = []
 image-rendering = []
+interactive-reports = ["image-rendering"]
 
 [dependencies]
 # Use workspace dependencies for consistency

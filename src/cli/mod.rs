@@ -5,24 +5,28 @@
 //!
 //! NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
-pub mod analyze_command;
-pub mod ci_command;
-pub mod config_command;
-pub mod doctor_command;
+pub mod commands {
+    pub mod analyze;
+    pub mod ci;
+    pub mod config;
+    pub mod doctor;
+    pub mod help;
+    pub mod hooks;
+    pub mod init;
+    #[cfg(feature = "wasm-plugins")]
+    pub mod plugin;
+}
+
 pub mod enhanced_help;
-pub mod help_command;
-pub mod hooks_command;
-pub mod init_command;
-#[cfg(feature = "wasm-plugins")]
-pub mod plugin_command;
+pub mod tui_command;
 
 // Re-export commonly used types
-pub use analyze_command::AnalyzeCommand;
-pub use ci_command::CiCommand;
-pub use config_command::ConfigCommand;
-pub use doctor_command::DoctorCommand;
-pub use help_command::HelpCommand;
-pub use hooks_command::HooksCommand;
-pub use init_command::InitCommand;
+pub use commands::analyze::AnalyzeCommand;
+pub use commands::ci::CiCommand;
+pub use commands::config::ConfigCommand;
+pub use commands::doctor::DoctorCommand;
+pub use commands::help::HelpCommand;
+pub use commands::hooks::HooksCommand;
+pub use commands::init::InitCommand;
 #[cfg(feature = "wasm-plugins")]
-pub use plugin_command::PluginCommand;
+pub use commands::plugin::PluginCommand;

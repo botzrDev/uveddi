@@ -489,7 +489,7 @@ mod tests {
         };
 
         let db_config = crate::database::connection::config::DatabaseConfig::sqlite(":memory:");
-        let provider = Arc::new(crate::database::SqliteProvider::new(db_config)?);
+        let provider = Arc::new(crate::database::SqliteProvider::new(db_config).unwrap());
         let pool = ConnectionPool::new(config, provider).await.unwrap();
 
         // Create the table

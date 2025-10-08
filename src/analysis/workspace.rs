@@ -326,7 +326,7 @@ impl WorkspaceDetector {
     ) -> Result<Option<WorkspaceInfo>, AnalysisError> {
         // Use the file discovery to check if there are any supported source files
         let discovered_files =
-            crate::cli::analyze_command::AnalyzeCommand::discover_files_recursive(start_path)
+            crate::cli::commands::analyze::AnalyzeCommand::discover_files_recursive(start_path)
                 .map_err(|e| {
                     AnalysisError::workspace_discovery_error(
                         start_path.display().to_string(),

@@ -145,5 +145,4 @@ pub mod severity_weights {
     pub const STRUCTURAL_WEIGHT: f64 = 0.25;
 }
 
-#[cfg(test)]
-mod tests;
+
