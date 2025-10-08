@@ -8,8 +8,10 @@ use crate::analysis::components::cache_manager::CacheManager;
 use crate::analysis::components::traits::AnalysisAggregator as AnalysisAggregatorTrait;
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
-    DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle,
+    DependencyGraphBuilderImpl, DetectorScheduler,
 };
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::components::PluginManagerHandle;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder;
 use crate::analysis::errors::AnalysisError;
@@ -24,7 +26,8 @@ use crate::analysis::services::{
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::AnalysisDetector;
 use crate::database::models::ArchitecturalIssue;
-use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
+// Import from performance service
+use crate::analysis::services::performance_service::PerformanceMetricsCollector;
 
 // AI service imports (feature-gated)
 #[cfg(feature = "ai")]
@@ -70,6 +73,7 @@ pub struct AnalysisEngine {
     pub cache_manager: Arc<CacheManagerImpl>,
     pub dependency_builder: Arc<DependencyGraphBuilderImpl>,
     pub detector_scheduler: Arc<DetectorScheduler>,
+    #[cfg(feature = "wasm-plugins")]
     pub plugin_manager: Option<PluginManagerHandle>,
     pub aggregator: Arc<AnalysisAggregator>,
 
@@ -127,6 +131,7 @@ impl AnalysisEngine {
         cache_manager: Arc<CacheManagerImpl>,
         dependency_builder: Arc<DependencyGraphBuilderImpl>,
         detector_scheduler: Arc<DetectorScheduler>,
+        #[cfg(feature = "wasm-plugins")]
         plugin_manager: Option<PluginManagerHandle>,
         aggregator: Arc<AnalysisAggregator>,
         detector_factory: Arc<DetectorFactory>,
@@ -138,11 +143,20 @@ impl AnalysisEngine {
         #[cfg(feature = "ai")] ai_engine: Option<Arc<AiAnalysisEngine>>,
     ) -> Result<Self, AnalysisError> {
         // Create services
+        #[cfg(feature = "wasm-plugins")]
         let analysis_service = Arc::new(AnalysisService::new(
             config_service.clone(),
             detector_scheduler.clone(),
             aggregator.clone(),
             plugin_manager.clone().map(Arc::new),
+            detector_factory,
+        ));
+        
+        #[cfg(not(feature = "wasm-plugins"))]
+        let analysis_service = Arc::new(AnalysisService::new(
+            config_service.clone(),
+            detector_scheduler.clone(),
+            aggregator.clone(),
             detector_factory,
         ));
 
@@ -182,6 +196,7 @@ impl AnalysisEngine {
             cache_manager,
             dependency_builder,
             detector_scheduler,
+            #[cfg(feature = "wasm-plugins")]
             plugin_manager,
             aggregator,
             enable_knowledge_enhancement,
@@ -313,7 +328,14 @@ impl AnalysisEngine {
 
     /// Check if plugin support is enabled
     pub fn has_plugin_support(&self) -> bool {
-        self.plugin_manager.is_some()
+        #[cfg(feature = "wasm-plugins")]
+        {
+            self.plugin_manager.is_some()
+        }
+        #[cfg(not(feature = "wasm-plugins"))]
+        {
+            false
+        }
     }
 
     /// Get knowledge enhancement status
@@ -521,6 +543,7 @@ impl AnalysisEngine {
     }
 
     /// Legacy: load plugins after construction
+    #[cfg(feature = "wasm-plugins")]
     pub async fn load_plugins(&mut self) -> Result<usize, AnalysisError> {
         if self.plugin_manager.is_none() {
             // Rebuild engine with plugins enabled (simple fallback)
@@ -536,10 +559,22 @@ impl AnalysisEngine {
         }
         Ok(0)
     }
+    
+    #[cfg(not(feature = "wasm-plugins"))]
+    pub async fn load_plugins(&mut self) -> Result<usize, AnalysisError> {
+        Ok(0)
+    }
 
     /// Legacy: plugin stats (placeholder)
     pub async fn get_stats(&self) -> Option<serde_json::Value> {
-        Some(serde_json::json!({ "plugins": self.plugin_manager.is_some() }))
+        #[cfg(feature = "wasm-plugins")]
+        {
+            Some(serde_json::json!({ "plugins": self.plugin_manager.is_some() }))
+        }
+        #[cfg(not(feature = "wasm-plugins"))]
+        {
+            Some(serde_json::json!({ "plugins": false }))
+        }
     }
 
     /// Legacy: monitor plugin resources (no-op)

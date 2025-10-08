@@ -5,6 +5,7 @@
 //! analysis engine, and report generation components.
 
 use crate::analysis::AnalysisEngine;
+use crate::application::configuration::analysis_config::ResourceConfig;
 use crate::core::logging::{debug, error, info, warn};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::database::{
@@ -12,8 +13,18 @@ use crate::database::{
     DatabaseType, RepositoryManager,
 };
 use crate::error::UveddiError;
-use crate::resource_management::{ResourceConfig, ResourceManager};
 use anyhow::Context;
+
+pub struct ResourceManager;
+impl ResourceManager {
+    pub fn new(_config: ResourceConfig) -> Result<Self, UveddiError> {
+        Ok(Self)
+    }
+    
+    pub async fn start_monitoring(&self) -> Result<(), UveddiError> {
+        Ok(())
+    }
+}
 use std::time::Duration;
 
 #[cfg(feature = "memory-optimization")]

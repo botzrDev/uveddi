@@ -1,6 +1,6 @@
-use crate::analysis::{
-    AnalysisDetector, DetectorConfig, DetectorFactory, WasmPluginAdapterFactory,
-};
+use crate::analysis::{AnalysisDetector, DetectorConfig, DetectorFactory};
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::WasmPluginAdapterFactory;
 use crate::error::UveddiError;
 use std::collections::HashMap;
 
@@ -264,6 +264,7 @@ impl DetectorRegistry {
     /// # Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "wasm-plugins")]
     pub async fn load_plugin_detectors(
         &mut self,
         plugin_engine: std::sync::Arc<tokio::sync::RwLock<crate::plugins::WasmPluginEngine>>,

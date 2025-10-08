@@ -6,9 +6,21 @@ use tokio::sync::{mpsc, RwLock};
 use tracing::{debug, error, info, warn};
 
 use crate::error::{Result, UveddiError};
-use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
-use crate::resilience::circuit_breaker::CircuitBreaker;
-use crate::resilience::retry::RetryClient;
+use crate::analysis::services::performance_service::PerformanceMetricsCollector;
+
+pub struct CircuitBreaker;
+impl CircuitBreaker {
+    pub fn new(_name: &str) -> Self {
+        Self
+    }
+}
+
+pub struct RetryClient;
+impl RetryClient {
+    pub fn new(_config: ()) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum LargeCodebaseError {

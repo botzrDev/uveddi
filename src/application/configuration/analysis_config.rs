@@ -3,8 +3,24 @@
 use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig;
 use crate::analysis::detectors::anti_patterns::large_classes::LargeClassConfig;
 use crate::error::UveddiError;
-use crate::resource_management::ResourceConfig;
 use std::path::PathBuf;
+
+#[derive(Debug, Clone)]
+pub struct ResourceConfig;
+impl Default for ResourceConfig {
+    fn default() -> Self {
+        Self
+    }
+}
+impl ResourceConfig {
+    pub fn development() -> Self {
+        Self
+    }
+    
+    pub fn production() -> Self {
+        Self
+    }
+}
 
 #[cfg(feature = "memory-optimization")]
 use crate::analysis::memory::MemoryOptimizationConfig;

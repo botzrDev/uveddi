@@ -143,6 +143,7 @@ impl EngineCache {
             let mut cache = self.ast_cache.write().await;
             if let Some(cached_ast) = cache.get(&cache_key) {
                 let duration = start_time.elapsed();
+                #[cfg(feature = "prometheus")]
                 self.metrics.record_hit("ast", duration);
                 return Ok(cached_ast.clone());
             }
@@ -159,7 +160,9 @@ impl EngineCache {
         }
 
         let duration = start_time.elapsed();
+        #[cfg(feature = "prometheus")]
         self.metrics.record_miss("ast", duration);
+        #[cfg(feature = "prometheus")]
         self.metrics.record_insertion("ast", 1024); // Estimated size
 
         Ok(parsed_arc)
@@ -180,6 +183,7 @@ impl EngineCache {
             if !cached_result.is_expired(ttl) {
                 cached_result.touch();
                 let duration = start_time.elapsed();
+                #[cfg(feature = "prometheus")]
                 self.metrics.record_hit("results", duration);
                 return Some(cached_result.data.clone());
             } else {
@@ -189,6 +193,7 @@ impl EngineCache {
         }
 
         let duration = start_time.elapsed();
+        #[cfg(feature = "prometheus")]
         self.metrics.record_miss("results", duration);
         None
     }
@@ -209,6 +214,7 @@ impl EngineCache {
                 .map(|(key, result)| (key.clone(), result.timestamp))
             {
                 cache.remove(&lru_key);
+                #[cfg(feature = "prometheus")]
                 self.metrics.record_eviction("results", 1024);
             } else {
                 break;
@@ -216,6 +222,7 @@ impl EngineCache {
         }
 
         cache.insert(cache_key, cached_result);
+        #[cfg(feature = "prometheus")]
         self.metrics.record_insertion("results", 1024);
     }
 
@@ -242,7 +249,10 @@ impl EngineCache {
             ast_capacity: self.config.ast_capacity,
             result_entries: result_cache.len(),
             result_capacity: self.config.result_capacity,
+            #[cfg(feature = "prometheus")]
             hit_rate: self.metrics.hit_rate(),
+            #[cfg(not(feature = "prometheus"))]
+            hit_rate: 0.0,
         }
     }
 

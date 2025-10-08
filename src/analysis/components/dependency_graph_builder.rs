@@ -8,7 +8,7 @@ use crate::analysis::graph::dependency::{
     ComponentNode, LocalDependencyGraph, LocalDependencyType,
 };
 use crate::error::UveddiError;
-use crate::ingestion::AsyncWalker;
+use crate::analysis::file_discovery::FileDiscovery;
 
 use crate::core::logging::{info, warn};
 use async_trait::async_trait;
@@ -394,14 +394,14 @@ impl DependencyGraphBuilder for DependencyGraphBuilderImpl {
         );
 
         let mut all_dependencies = Vec::new();
-        let walker = AsyncWalker::for_source_code();
-        let mut file_stream = walker.walk(root_path);
+        let file_discovery = FileDiscovery::new();
+        let source_files = file_discovery.discover_files(root_path)?;
         let mut files_processed = 0;
 
         // Walk through all source files and extract dependencies
-        while let Some(file_result) = file_stream.next().await {
-            match file_result {
-                Ok(ref file_path) => match self.extract_file_dependencies(file_path).await {
+        for source_file in source_files {
+            let file_path = &source_file.path;
+            match self.extract_file_dependencies(file_path).await {
                     Ok(mut file_dependencies) => {
                         info!(
                             "Extracted {} dependencies from {}",
@@ -411,16 +411,12 @@ impl DependencyGraphBuilder for DependencyGraphBuilderImpl {
                         all_dependencies.append(&mut file_dependencies);
                         files_processed += 1;
                     }
-                    Err(e) => {
-                        warn!(
-                            "Failed to extract dependencies from {}: {}",
-                            file_path.display(),
-                            e
-                        );
-                    }
-                },
                 Err(e) => {
-                    warn!("Error walking directory: {}", e);
+                    warn!(
+                        "Failed to extract dependencies from {}: {}",
+                        file_path.display(),
+                        e
+                    );
                 }
             }
         }

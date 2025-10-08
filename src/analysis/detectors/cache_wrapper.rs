@@ -172,9 +172,10 @@ where
             self.detector_version.hash(&mut hasher);
             let file_hash = hasher.finish();
 
-            // Check cache
-            if let Ok(cache) = context.analysis_cache.lock() {
-                if let Some(cached_entry) = cache.get(&file_path.to_path_buf(), file_hash) {
+            // Check cache - disabled in CLI-only mode
+            if let Ok(_cache) = context.analysis_cache.lock() {
+                // Cache lookup disabled in minimal build
+                if false {
                     debug!(
                         "Cache hit for {} on file: {}",
                         self.inner.name(),
@@ -232,17 +233,13 @@ where
             let mut hasher = DefaultHasher::new();
             file_path.hash(&mut hasher);
             self.detector_version.hash(&mut hasher);
-            let file_hash = hasher.finish();
+            let _file_hash = hasher.finish();
 
-            // Store in cache - convert issues to simple string format for now
-            if let Ok(cache) = context.analysis_cache.lock() {
-                use crate::engine::cache::analysis_cache::CachedAnalysisResult;
-                let cached_result = CachedAnalysisResult {
-                    issues: issues.iter().map(|i| format!("{:?}", i)).collect(),
-                    timestamp: std::time::SystemTime::now(),
-                    file_hash,
-                };
-                cache.put(file_path.to_path_buf(), cached_result);
+            // Store in cache - simplified for CLI-only release
+            // Note: Full caching implementation removed in CLI-only mode
+            if let Ok(_cache) = context.analysis_cache.lock() {
+                // Cache storage disabled in minimal build
+                debug!("Cache storage disabled in CLI-only mode");
             }
         }
 

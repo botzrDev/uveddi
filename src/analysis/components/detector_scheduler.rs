@@ -2,16 +2,19 @@
 //!
 //! Orchestrates the execution of analysis detectors across the codebase.
 
+#[cfg(feature = "wasm-plugins")]
 use super::plugin_manager::PluginManagerHandle;
 use super::traits::{
     AnalysisAggregator, AstProvider, ConfigurationService,
-    DetectorScheduler as DetectorSchedulerTrait, PluginManagerHandle as PluginManagerHandleTrait,
+    DetectorScheduler as DetectorSchedulerTrait,
 };
+#[cfg(feature = "wasm-plugins")]
+use super::traits::PluginManagerHandle as PluginManagerHandleTrait;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::{detectors::cycle::CycleDetector, AnalysisDetector};
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
-use crate::ingestion::AsyncWalker;
+use crate::analysis::file_discovery::FileDiscovery;
 
 use crate::core::logging::{info, warn};
 use async_trait::async_trait;
@@ -24,6 +27,7 @@ use tokio_stream::StreamExt;
 pub struct DetectorScheduler {
     config_service: Arc<dyn ConfigurationService>,
     ast_provider: Arc<dyn AstProvider>,
+    #[cfg(feature = "wasm-plugins")]
     plugin_manager: Option<PluginManagerHandle>,
     aggregator: Arc<dyn AnalysisAggregator>,
     file_detectors: Arc<RwLock<Vec<Box<dyn AnalysisDetector + Send + Sync>>>>,
@@ -35,6 +39,7 @@ impl DetectorScheduler {
     pub fn new(
         config_service: Arc<dyn ConfigurationService>,
         ast_provider: Arc<dyn AstProvider>,
+        #[cfg(feature = "wasm-plugins")]
         plugin_manager: Option<PluginManagerHandle>,
         aggregator: Arc<dyn AnalysisAggregator>,
         file_detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
@@ -42,6 +47,7 @@ impl DetectorScheduler {
         Self {
             config_service,
             ast_provider,
+            #[cfg(feature = "wasm-plugins")]
             plugin_manager,
             aggregator,
             file_detectors: Arc::new(RwLock::new(file_detectors)),
@@ -149,6 +155,7 @@ impl DetectorScheduler {
         }
 
         // Run plugin detectors if available
+        #[cfg(feature = "wasm-plugins")]
         if let Some(ref plugin_manager) = self.plugin_manager {
             if let Err(e) = self
                 .run_plugin_detectors(plugin_manager, file_path, ast)
@@ -169,6 +176,7 @@ impl DetectorScheduler {
     }
 
     /// Runs plugin detectors on a file
+    #[cfg(feature = "wasm-plugins")]
     async fn run_plugin_detectors(
         &self,
         plugin_manager: &PluginManagerHandle,
@@ -290,15 +298,16 @@ impl DetectorSchedulerTrait for DetectorScheduler {
         info!("Scheduling analysis for directory: {}", dir_path.display());
 
         let mut all_issues = Vec::new();
-        let walker = AsyncWalker::for_source_code();
-        let mut file_stream = walker.walk(dir_path);
+        let file_discovery = FileDiscovery::new();
+        let source_files = file_discovery.discover_files(dir_path)?;
         let mut files_processed = 0;
         let mut current_batch = Vec::new();
         const BATCH_SIZE: usize = 10; // Process files in batches to manage memory
         const MAX_FILES: usize = 1000; // Prevent runaway analysis
 
         // Collect files into batches for memory-efficient processing
-        while let Some(file_result) = file_stream.next().await {
+        for source_file in source_files {
+            let file_path = source_file.path;
             if files_processed >= MAX_FILES {
                 warn!(
                     "Reached maximum file limit ({}) for directory analysis. Stopping to prevent timeout.",
@@ -307,25 +316,18 @@ impl DetectorSchedulerTrait for DetectorScheduler {
                 break;
             }
 
-            match file_result {
-                Ok(file_path) => {
-                    if self.should_analyze_file(&file_path) {
-                        current_batch.push(file_path);
+            if self.should_analyze_file(&file_path) {
+                current_batch.push(file_path);
 
-                        // Process batch when it's full
-                        if current_batch.len() >= BATCH_SIZE {
-                            let batch_issues = self.process_file_batch(&current_batch).await;
-                            all_issues.extend(batch_issues);
-                            files_processed += current_batch.len();
-                            current_batch.clear();
+                // Process batch when it's full
+                if current_batch.len() >= BATCH_SIZE {
+                    let batch_issues = self.process_file_batch(&current_batch).await;
+                    all_issues.extend(batch_issues);
+                    files_processed += current_batch.len();
+                    current_batch.clear();
 
-                            // Yield to prevent blocking the runtime
-                            tokio::task::yield_now().await;
-                        }
-                    }
-                }
-                Err(e) => {
-                    warn!("Error walking directory: {}", e);
+                    // Yield to prevent blocking the runtime
+                    tokio::task::yield_now().await;
                 }
             }
         }

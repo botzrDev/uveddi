@@ -1,18 +1,17 @@
-//! # Uveddi - Architectural Analysis Tool
+//! # Uveddi - CLI Architectural Analysis Tool
 //!
-//! Uveddi is a comprehensive architectural analysis tool that combines static code analysis
-//! with AI-powered insights to help developers understand and improve their codebases.
+//! Uveddi is a lightweight command-line architectural analysis tool that combines static code analysis
+//! with optional AI-powered insights to help developers understand and improve their codebases.
 //!
 //! ## Features
 //!
 //! - **Multi-language AST parsing**: Support for analyzing Rust, Python, JavaScript, and TypeScript
-//! - **AI-powered analysis**: Integration with Ollama and other AI providers for intelligent code insights
 //! - **Dependency analysis**: Track and visualize code dependencies with graph-based analysis
 //! - **Quality metrics**: Calculate maintainability and complexity scores with anti-pattern detection
 //! - **Report generation**: Create detailed analysis reports in multiple formats (JSON, HTML, Mermaid)
 //! - **Caching system**: Efficient AST caching for improved performance on large codebases
-//! - **Plugin system**: WebAssembly-based plugin architecture for extensibility
-//! - **Terminal UI**: Interactive terminal interface for analysis and exploration
+//! - **AI-powered analysis** (optional): Integration with Ollama for intelligent code insights
+//! - **Plugin system** (optional): WebAssembly-based plugin architecture for extensibility
 //!
 //! ## Quick Start
 //!
@@ -107,14 +106,15 @@
 //! ```
 //!
 //! Available features:
-//! - `default`: Full feature set including `local-ai`, `image-rendering`, `tree-sitter`
-//! - `analysis`: Core analysis without tree-sitter parsing
+//! - `cli-standard`: (default) Core CLI with all language support - recommended
+//! - `cli-core`: Minimal CLI functionality without language parsing
+//! - `cli-ai`: Standard CLI with AI support (requires Ollama)
+//! - `cli-plugins`: Standard CLI with WASM plugin support
+//! - `cli-full`: Everything for CLI (AI + plugins)
 //! - `tree-sitter`: AST parsing for Rust, Python, JavaScript, TypeScript
 //! - `ai`: Base AI functionality for analysis explanations
 //! - `local-ai`: Ollama integration (includes `ai`)
-//! - `image-rendering`: Diagram generation service integration
 //! - `wasm-plugins`: WebAssembly plugin system for extensibility
-//! - `tui`: Terminal user interface for interactive analysis
 //!
 //! ## Performance Characteristics
 //!
@@ -171,16 +171,15 @@
 //!
 //! The library is organized into several key modules:
 //!
-//! - [`ai`]: AI provider integrations for intelligent analysis and explanations
 //! - [`analysis`]: Core analysis engines, detectors, and algorithms
 //! - [`ast`]: Abstract Syntax Tree parsing and manipulation using tree-sitter
+//! - [`cli`]: Command-line interface implementation
 //! - [`database`]: Data persistence and querying capabilities with SQLite
-//! - [`community`]: Community member management and analytics
 //! - [`report`]: Report generation and formatting utilities
-//! - [`plugins`]: WebAssembly-based plugin system for extensibility
 //! - [`cache`]: Caching system for improved performance
 //! - [`error`]: Comprehensive error handling and reporting
-//! - [`tui`]: Terminal user interface for interactive analysis
+//! - [`ai`]: (optional) AI provider integrations for intelligent analysis
+//! - [`plugins`]: (optional) WebAssembly-based plugin system for extensibility
 //!
 //! ## Common Use Cases
 //!
@@ -243,47 +242,46 @@
 // #![warn(missing_docs)]
 // #![warn(rustdoc::missing_crate_level_docs)]
 
+// Core CLI modules
+#[cfg(feature = "ai")]
 pub mod ai;
 pub mod analysis;
-pub mod api;
 pub mod application;
 pub mod ast;
 pub mod cache;
 pub mod cli;
-pub mod community;
 pub mod config;
 pub mod constants;
 pub mod core;
 pub mod database;
-pub mod deployment;
 #[cfg(feature = "engine-integration")]
 pub mod engine;
 pub mod error;
 pub mod health;
 pub mod hooks;
-pub mod infrastructure;
-pub mod ingestion;
 pub mod models;
-// TODO: Re-enable when monitoring dependencies are properly configured
-pub mod monitoring;
-pub mod observability;
-pub mod performance;
+#[cfg(feature = "wasm-plugins")]
 pub mod plugins;
 pub mod progress;
 pub mod report;
-pub mod resilience;
-pub mod resource_management;
-#[cfg(feature = "security")]
-pub mod security;
-#[cfg(not(feature = "security"))]
-pub mod security_stub;
-#[cfg(not(feature = "security"))]
-pub use security_stub as security;
-pub mod semantic_search;
-pub mod service_orchestration;
-pub mod sla;
-#[cfg(feature = "tui")]
-pub mod tui;
+
+// REMOVED: Enterprise and service modules for CLI-only release
+// pub mod api;
+// pub mod community;
+// pub mod deployment;
+// pub mod infrastructure;
+// pub mod ingestion;
+// pub mod monitoring;
+// pub mod observability;
+// pub mod performance;
+// pub mod resilience;
+// pub mod resource_management;
+// pub mod security;
+// pub mod security_stub;
+// pub mod semantic_search;
+// pub mod service_orchestration;
+// pub mod sla;
+// pub mod tui;
 
 // Re-export the unified Result type for convenience
 pub use error::Result;

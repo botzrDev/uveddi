@@ -6,14 +6,16 @@ use crate::analysis::adapters::ResultCacheAdapter;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
-    DependencyGraphBuilderImpl, DetectorScheduler, PluginManager,
+    DependencyGraphBuilderImpl, DetectorScheduler,
 };
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::components::PluginManager;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
 use crate::analysis::AnalysisDetector;
 use crate::cache::result_cache::ResultCache;
 use crate::error::UveddiError;
-use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
+#[cfg(feature = "wasm-plugins")]
 use crate::plugins::WasmPluginEngine;
 
 // Stub types for when AI features are disabled
@@ -253,10 +255,19 @@ impl AnalysisEngineBuilder {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         };
 
+        #[cfg(feature = "wasm-plugins")]
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider.clone(),
             None, // plugin_manager not initialized in sync build
+            aggregator.clone(),
+            detectors,
+        ));
+        
+        #[cfg(not(feature = "wasm-plugins"))]
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider.clone(),
             aggregator.clone(),
             detectors,
         ));
@@ -321,11 +332,20 @@ impl AnalysisEngineBuilder {
         // Create services for the orchestrator
         let detector_factory = Arc::new(crate::analysis::detector_factory::DetectorFactory::new());
 
+        #[cfg(feature = "wasm-plugins")]
         let analysis_service = Arc::new(crate::analysis::services::AnalysisService::new(
             Arc::clone(&config_service),
             Arc::clone(&detector_scheduler),
             Arc::clone(&aggregator),
             None, // plugin_manager: Option<Arc<PluginManagerHandle>>
+            Arc::clone(&detector_factory),
+        ));
+        
+        #[cfg(not(feature = "wasm-plugins"))]
+        let analysis_service = Arc::new(crate::analysis::services::AnalysisService::new(
+            Arc::clone(&config_service),
+            Arc::clone(&detector_scheduler),
+            Arc::clone(&aggregator),
             Arc::clone(&detector_factory),
         ));
 
@@ -337,10 +357,7 @@ impl AnalysisEngineBuilder {
             ));
 
         let performance_service = Arc::new(crate::analysis::services::PerformanceAnalysisService::new(
-            Arc::new(crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector::new(
-                crate::database::models::PerformanceMetricsConfig::default(),
-                10, // total_components estimate
-            )),
+            Arc::new(crate::analysis::services::performance_service::PerformanceMetricsCollector::new("default")),
             crate::analysis::services::performance_service::MemoryConfig::default(),
         ));
 
@@ -358,6 +375,7 @@ impl AnalysisEngineBuilder {
             cache_manager,
             dependency_builder,
             detector_scheduler,
+            #[cfg(feature = "wasm-plugins")]
             plugin_manager: None, // No plugin manager in sync build
             aggregator,
 
@@ -408,6 +426,7 @@ impl AnalysisEngineBuilder {
         };
 
         // Initialize plugin engine if enabled
+        #[cfg(feature = "wasm-plugins")]
         let plugin_engine = if enable_plugins {
             match WasmPluginEngine::new().await {
                 Ok(engine) => {
@@ -425,6 +444,8 @@ impl AnalysisEngineBuilder {
         } else {
             None
         };
+        #[cfg(not(feature = "wasm-plugins"))]
+        let plugin_engine: Option<()> = None;
 
         // Initialize AST cache with default configuration
         let ast_cache_config = CacheConfig::default();
@@ -443,11 +464,14 @@ impl AnalysisEngineBuilder {
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // PluginManagerHandle needs to be created from WasmPluginEngine
+        #[cfg(feature = "wasm-plugins")]
         let plugin_manager = if let Some(ref _engine) = plugin_engine {
             Some(PluginManager::spawn(config_service.clone()))
         } else {
             None
         };
+        #[cfg(not(feature = "wasm-plugins"))]
+        let plugin_manager: Option<()> = None;
 
         // Components that need dependencies
         let dependency_builder = if let Some(_extractor) = injected_dependency_extractor {
@@ -456,6 +480,7 @@ impl AnalysisEngineBuilder {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         };
 
+        #[cfg(feature = "wasm-plugins")]
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider.clone(),
@@ -463,13 +488,18 @@ impl AnalysisEngineBuilder {
             aggregator.clone(),
             detectors,
         ));
+        
+        #[cfg(not(feature = "wasm-plugins"))]
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider.clone(),
+            aggregator.clone(),
+            detectors,
+        ));
 
         // Create detector factory and performance metrics collector
         let detector_factory = DetectorFactory;
-        let performance_metrics_collector = Arc::new(PerformanceMetricsCollector::new(
-            crate::database::models::PerformanceMetricsConfig::default(),
-            100, // Default total components
-        ));
+        let performance_metrics_collector = Arc::new(crate::analysis::services::performance_service::PerformanceMetricsCollector::new("default"));
 
         // Initialize knowledge library components if enabled
         let knowledge_library_result = if enable_knowledge {
@@ -533,13 +563,42 @@ impl AnalysisEngineBuilder {
             enable_knowledge, enable_ai
         );
 
-        crate::analysis::AnalysisEngine::from_components(
+        #[cfg(feature = "wasm-plugins")]
+        return crate::analysis::AnalysisEngine::from_components(
             config_service,
             ast_provider,
             cache_manager,
             dependency_builder,
             detector_scheduler,
             plugin_manager,
+            aggregator,
+            Arc::new(detector_factory),
+            performance_metrics_collector,
+            enable_knowledge,
+            enable_ai,
+            #[cfg(feature = "ai")]
+            knowledge_library,
+            #[cfg(feature = "ai")]
+            context_selector,
+            #[cfg(feature = "ai")]
+            ai_engine,
+        )
+        .map_err(|e| crate::error::UveddiError::AnalysisError {
+            file: "engine_builder.rs".to_string(),
+            line: 503,
+            message: e.to_string(),
+            context: "Building analysis engine from components".to_string(),
+            suggestion: "Check component configuration and dependencies".to_string(),
+            source: None,
+        });
+        
+        #[cfg(not(feature = "wasm-plugins"))]
+        crate::analysis::AnalysisEngine::from_components(
+            config_service,
+            ast_provider,
+            cache_manager,
+            dependency_builder,
+            detector_scheduler,
             aggregator,
             Arc::new(detector_factory),
             performance_metrics_collector,

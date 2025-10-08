@@ -253,10 +253,7 @@ impl IncrementalCache {
         // Update modification time cache
         {
             let mut mtime_cache = self.mtime_cache.write().await;
-            let mtime_secs = file_state.modified_at
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs();
+            let mtime_secs = file_state.last_modified; // Already u64 (seconds since epoch)
             mtime_cache.insert(file_path.clone(), mtime_secs);
         }
 

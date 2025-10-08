@@ -8,8 +8,10 @@ use crate::analysis::components::traits::{
     AnalysisAggregator as AnalysisAggregatorTrait, DetectorScheduler as DetectorSchedulerTrait,
 };
 use crate::analysis::components::{
-    AnalysisAggregator, ConfigurationService, DetectorScheduler, PluginManagerHandle,
+    AnalysisAggregator, ConfigurationService, DetectorScheduler,
 };
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::components::PluginManagerHandle;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::file_discovery::{FileDiscovery, SourceFile};
 use crate::analysis::symbols::GlobalSymbolTable;
@@ -46,6 +48,7 @@ pub struct AnalysisService {
     config_service: Arc<ConfigurationService>,
     detector_scheduler: Arc<DetectorScheduler>,
     aggregator: Arc<AnalysisAggregator>,
+    #[cfg(feature = "wasm-plugins")]
     plugin_manager: Option<Arc<PluginManagerHandle>>,
     detector_factory: Arc<DetectorFactory>,
     workspace_detector: WorkspaceDetector,
@@ -59,6 +62,7 @@ impl AnalysisService {
         config_service: Arc<ConfigurationService>,
         detector_scheduler: Arc<DetectorScheduler>,
         aggregator: Arc<AnalysisAggregator>,
+        #[cfg(feature = "wasm-plugins")]
         plugin_manager: Option<Arc<PluginManagerHandle>>,
         detector_factory: Arc<DetectorFactory>,
     ) -> Self {
@@ -66,6 +70,7 @@ impl AnalysisService {
             config_service,
             detector_scheduler,
             aggregator,
+            #[cfg(feature = "wasm-plugins")]
             plugin_manager,
             detector_factory,
             workspace_detector: WorkspaceDetector,
@@ -236,12 +241,25 @@ impl AnalysisService {
 
     /// Check if plugins are enabled and available
     pub fn has_plugin_support(&self) -> bool {
-        self.plugin_manager.is_some()
+        #[cfg(feature = "wasm-plugins")]
+        {
+            self.plugin_manager.is_some()
+        }
+        #[cfg(not(feature = "wasm-plugins"))]
+        {
+            false
+        }
     }
 
     /// Get plugin manager handle if available
+    #[cfg(feature = "wasm-plugins")]
     pub fn get_plugin_manager(&self) -> Option<Arc<PluginManagerHandle>> {
         self.plugin_manager.clone()
+    }
+    
+    #[cfg(not(feature = "wasm-plugins"))]
+    pub fn get_plugin_manager(&self) -> Option<()> {
+        None
     }
 
     /// Run analysis with custom detector configuration

@@ -120,6 +120,7 @@ pub struct AggregationStats {
 }
 
 /// Plugin manager actor commands for asynchronous communication
+#[cfg(feature = "wasm-plugins")]
 #[derive(Debug)]
 pub enum PluginCommand {
     /// Execute a plugin on a file
@@ -157,6 +158,7 @@ pub enum PluginCommand {
 }
 
 /// Plugin statistics for monitoring
+#[cfg(feature = "wasm-plugins")]
 #[derive(Debug, Clone)]
 pub struct PluginStats {
     pub loaded_plugins: usize,
@@ -166,6 +168,7 @@ pub struct PluginStats {
 }
 
 /// Handle for communicating with the plugin manager actor
+#[cfg(feature = "wasm-plugins")]
 #[async_trait]
 pub trait PluginManagerHandle: Send + Sync {
     /// Execute a plugin on a file

@@ -124,8 +124,11 @@ pub mod memory;
 pub mod memory_report;
 pub mod mermaid_generator;
 pub mod orchestrator;
+#[cfg(feature = "performance-testing")]
 pub mod performance;
+#[cfg(feature = "wasm-plugins")]
 pub mod plugin_adapter;
+#[cfg(feature = "wasm-plugins")]
 pub mod plugin_detector_adapter;
 pub mod robust_parser;
 pub mod semantic;
@@ -170,6 +173,7 @@ pub use orchestrator::{
     AnalysisOptions, AnalysisOrchestrator, AnalysisOrchestratorBuilder, EnhancedAnalysisResult,
     OrchestratorStatus,
 };
+#[cfg(feature = "wasm-plugins")]
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 pub use services::{AnalysisService, DependencyAnalysisService, PerformanceAnalysisService};
 pub use standardized_config::{

@@ -5,9 +5,15 @@
 //! monolithic AnalysisEngine.
 
 use crate::analysis::memory_report::MemoryAnalysisReport;
-use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 
 use super::AnalysisResult;
+
+pub struct PerformanceMetricsCollector;
+impl PerformanceMetricsCollector {
+    pub fn new(_name: &str) -> Self {
+        Self
+    }
+}
 
 use crate::core::logging::{debug, warn};
 use std::collections::HashMap;

@@ -1,10 +1,29 @@
 use crate::error::rendering::RenderingServiceError;
 use crate::{
     analysis::detectors::dependency::ExtractionError as DependencyExtractionError,
-    analysis::errors::AnalysisError, ast::tree_sitter_impl::AstError, plugins::errors::PluginError,
-    report::errors::ReportGenerationError, security::SecurityError,
+    analysis::errors::AnalysisError, ast::tree_sitter_impl::AstError,
+    report::errors::ReportGenerationError,
 };
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::errors::PluginError;
 use clap::error::Error as ClapError;
+
+#[derive(Debug)]
+pub enum SecurityError {
+    InvalidInput { field: String, reason: String },
+}
+
+impl std::fmt::Display for SecurityError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SecurityError::InvalidInput { field, reason } => {
+                write!(f, "Invalid input for {}: {}", field, reason)
+            }
+        }
+    }
+}
+
+impl std::error::Error for SecurityError {}
 use reqwest::Error as ReqwestError;
 use rusqlite::Error as RusqliteError;
 use serde::{Deserialize, Serialize};
@@ -99,6 +118,7 @@ pub enum UveddiError {
         source: Option<RusqliteError>,
     },
 
+    #[cfg(feature = "wasm-plugins")]
     #[error("Plugin system error: {plugin} - {message}\n  → Type: {plugin_type}\n  → Suggestion: {suggestion}")]
     PluginError {
         plugin: String,
@@ -481,7 +501,6 @@ impl UveddiError {
             | UveddiError::AstError { .. }
             | UveddiError::DependencyExtractionError { .. }
             | UveddiError::DatabaseError { .. }
-            | UveddiError::PluginError { .. }
             | UveddiError::SecurityError { .. }
             | UveddiError::Deserialization { .. } => ErrorSeverity::High,
             UveddiError::RenderingServiceError { .. }
@@ -501,6 +520,7 @@ impl UveddiError {
             UveddiError::Configuration(_) => ErrorCategory::Configuration,
             UveddiError::DatabaseConnection(_) => ErrorCategory::Database,
             UveddiError::ReportError { .. } => ErrorCategory::Reporting,
+            #[cfg(feature = "wasm-plugins")]
             UveddiError::PluginError { .. } => ErrorCategory::Plugin,
             UveddiError::SecurityError { .. } => ErrorCategory::ServiceSpecific,
             UveddiError::NetworkError { .. } => ErrorCategory::Network,
@@ -587,6 +607,7 @@ impl From<DependencyExtractionError> for UveddiError {
     }
 }
 
+#[cfg(feature = "wasm-plugins")]
 impl From<PluginError> for UveddiError {
     fn from(error: PluginError) -> Self {
         Self::PluginError {

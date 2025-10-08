@@ -4,7 +4,9 @@
 //! configuration management, orchestration, services, and workflows.
 
 // Re-export existing modules for backward compatibility
+#[cfg(feature = "wasm-plugins")]
 pub mod plugin_manager;
+#[cfg(feature = "wasm-plugins")]
 pub mod startup;
 
 // New modular structure

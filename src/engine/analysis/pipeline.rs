@@ -267,7 +267,7 @@ impl AnalysisPipeline {
         ));
 
         // Create and start cache services
-        let service_manager = CacheServiceManager::new();
+        let service_manager = CacheServiceManager::new(cache_handles.clone());
         let service_manager_arc = std::sync::Arc::new(std::sync::Mutex::new(service_manager));
 
         Self {

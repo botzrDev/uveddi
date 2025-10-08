@@ -260,7 +260,7 @@ impl ReportGenerator {
         &self,
         issues: &[ArchitecturalIssue],
         components: Option<&[ArchitecturalComponent]>,
-        diagrams: &[crate::report::interactive_models::DiagramDefinition],
+        diagrams: &[crate::report::DiagramDefinition],
     ) -> String {
         let mut section = String::new();
 

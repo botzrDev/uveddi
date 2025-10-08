@@ -3,6 +3,7 @@ use crate::analysis::detectors::dependency::ExtractionError;
 use crate::analysis::mermaid_generator::MermaidGenerationError;
 use crate::ast::tree_sitter_impl::AstError;
 use crate::error::UveddiError;
+#[cfg(feature = "wasm-plugins")]
 use crate::plugins::errors::PluginError;
 use thiserror::Error;
 
@@ -28,6 +29,7 @@ pub enum AnalysisError {
     GraphAnalysisError(String),
     #[error("Tree-sitter query error: {0}")]
     QueryError(String),
+    #[cfg(feature = "wasm-plugins")]
     #[error("Plugin error: {0}")]
     PluginError(#[from] PluginError),
     #[error("Other analysis error: {0}")]

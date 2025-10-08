@@ -6,6 +6,7 @@ use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerato
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
 use crate::report::modern_generator;
+#[cfg(feature = "interactive-reports")]
 use crate::report::svg_generator::SvgGenerator;
 use crate::report::DiagramMode;
 use chrono;
@@ -31,6 +32,7 @@ pub struct ReportGenerator {
     /// Mermaid generator for creating diagrams
     pub mermaid_generator: Option<MermaidGenerator>,
     /// SVG generator for static diagram rendering
+    #[cfg(feature = "interactive-reports")]
     pub svg_generator: Option<SvgGenerator>,
     /// Diagram generation mode (hybrid rendering approach)
     pub diagram_mode: DiagramMode,
@@ -61,6 +63,7 @@ impl ReportGenerator {
             include_severity_summary: true,
             include_remediation_steps: true,
             mermaid_generator: MermaidGenerator::new().ok(),
+            #[cfg(feature = "interactive-reports")]
             svg_generator: SvgGenerator::new().ok(),
             diagram_mode: DiagramMode::default(), // MermaidOnly by default for zero hosting costs
             #[cfg(feature = "image-rendering")]

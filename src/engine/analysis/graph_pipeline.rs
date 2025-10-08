@@ -126,7 +126,7 @@ impl GraphAwarePipeline {
             let file_path = context.file_info.path.to_string_lossy();
             let file_hash = self.compute_file_hash(context);
 
-            if let Ok(mut cache) = self.graph_cache.write() {
+            if let Ok(mut cache) = self.graph_cache.lock() {
                 // Try to get cached relations
                 if let Some(cached_relations) = cache.get_relations(&file_path, file_hash) {
                     // Use cached data
@@ -208,7 +208,7 @@ impl GraphAwarePipeline {
         let file_path = context.file_info.path.to_string_lossy();
 
         // Check cache first
-        if let Ok(mut cache) = self.graph_cache.write() {
+        if let Ok(mut cache) = self.graph_cache.lock() {
             let cache_key = format!("deps:{}", file_path);
             if let Some(cached_deps) = cache.get_dependencies(&cache_key) {
                 return Some(cached_deps.nodes.iter()
@@ -221,7 +221,7 @@ impl GraphAwarePipeline {
         let dependencies = query_builder.find_dependencies(&file_path)?;
 
         // Cache the result
-        if let Ok(mut cache) = self.graph_cache.write() {
+        if let Ok(mut cache) = self.graph_cache.lock() {
             let cache_key = format!("deps:{}", file_path);
             cache.cache_dependencies(cache_key, dependencies.clone(), vec![], vec![]);
         }
@@ -288,7 +288,7 @@ impl GraphAwarePipeline {
 
     /// Get cache efficiency metrics
     async fn get_cache_efficiency(&self) -> CacheEfficiency {
-        if let Ok(cache) = self.graph_cache.read() {
+        if let Ok(cache) = self.graph_cache.lock() {
             let cache_stats = cache.get_cache_stats();
             let metrics = cache.get_metrics();
 

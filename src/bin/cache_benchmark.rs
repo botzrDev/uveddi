@@ -167,7 +167,7 @@ impl BenchmarkResults {
 }
 
 /// Find files matching patterns in the target directory
-fn find_source_files(path: &Path, patterns: &[String]) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<PathBuf>, Box<dyn std::error::Error>>> + Send + '_>> {
+fn find_source_files<'a>(path: &'a Path, patterns: &'a [String]) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<PathBuf>, Box<dyn std::error::Error>>> + Send + 'a>> {
     Box::pin(async move {
         let mut files = Vec::new();
 

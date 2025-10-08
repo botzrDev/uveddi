@@ -47,6 +47,7 @@
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
+#[cfg(feature = "interactive-reports")]
 use crate::report::svg_generator::SvgGenerator;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
@@ -69,14 +70,18 @@ pub mod errors;
 #[cfg(feature = "image-rendering")]
 pub mod image_renderer;
 
+#[cfg(feature = "interactive-reports")]
 pub mod data_transformer;
 pub mod diagrams;
+#[cfg(feature = "interactive-reports")]
 pub mod interactive_generator;
+#[cfg(feature = "interactive-reports")]
 pub mod interactive_models;
 pub mod markdown_generator;
 pub mod metrics;
 pub mod modern_generator;
 pub mod security;
+#[cfg(feature = "interactive-reports")]
 pub mod svg_generator;
 
 // Keep these for now to avoid breaking changes
@@ -97,12 +102,43 @@ pub use errors::*;
 pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 
 // Export interactive report models
+#[cfg(feature = "interactive-reports")]
 pub use interactive_models::{
     AiInsights, AnalysisSummary, DependencyGraph, DiagramDefinition, Finding, GraphEdge, GraphNode,
     InteractiveReport, ProjectMetadata, ReportMetadata, REPORT_SCHEMA_VERSION,
 };
 
+// Stub types when interactive-reports is disabled
+#[cfg(not(feature = "interactive-reports"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagramDefinition {
+    pub id: String,
+    pub kind: String,
+    pub title: String,
+    pub source: String,
+    pub description: Option<String>,
+    pub components: Vec<String>,
+    pub metadata: DiagramRenderMetadata,
+}
+
+#[cfg(not(feature = "interactive-reports"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagramRenderMetadata {
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+}
+
+#[cfg(not(feature = "interactive-reports"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportMetadata {
+    pub generated_at: chrono::DateTime<chrono::Utc>,
+    pub uveddi_version: String,
+    pub configuration: std::collections::HashMap<String, String>,
+    pub performance: Option<serde_json::Value>,
+}
+
 // Export interactive report generator
+#[cfg(feature = "interactive-reports")]
 pub use interactive_generator::{InteractiveReportConfig, InteractiveReportGenerator};
 
 // Export security utilities
@@ -152,6 +188,7 @@ impl DiagramMode {
 pub use crate::error::rendering::RenderingServiceError;
 
 /// Enhanced report data structure for future extensibility
+#[cfg(feature = "interactive-reports")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnhancedReportData {
     pub analysis_run: AnalysisRun,
@@ -160,6 +197,7 @@ pub struct EnhancedReportData {
     pub metadata: ReportMetadata,
 }
 
+#[cfg(feature = "interactive-reports")]
 impl EnhancedReportData {
     pub fn new(
         analysis_run: AnalysisRun,

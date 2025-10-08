@@ -10,6 +10,7 @@ pub mod cache_manager;
 pub mod config_service;
 pub mod dependency_graph_builder;
 pub mod detector_scheduler;
+#[cfg(feature = "wasm-plugins")]
 pub mod plugin_manager;
 pub mod traits;
 
@@ -26,6 +27,7 @@ pub use cache_manager::{CacheManager, CacheManagerImpl, CacheStats};
 pub use config_service::ConfigurationService;
 pub use dependency_graph_builder::DependencyGraphBuilderImpl;
 pub use detector_scheduler::DetectorScheduler;
+#[cfg(feature = "wasm-plugins")]
 pub use plugin_manager::{PluginManager, PluginManagerHandle};
 
 // Aliases for acceptance criteria naming

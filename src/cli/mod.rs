@@ -13,9 +13,8 @@ pub mod enhanced_help;
 pub mod help_command;
 pub mod hooks_command;
 pub mod init_command;
+#[cfg(feature = "wasm-plugins")]
 pub mod plugin_command;
-pub mod tui_command;
-pub mod ui_command;
 
 // Re-export commonly used types
 pub use analyze_command::AnalyzeCommand;
@@ -25,6 +24,5 @@ pub use doctor_command::DoctorCommand;
 pub use help_command::HelpCommand;
 pub use hooks_command::HooksCommand;
 pub use init_command::InitCommand;
+#[cfg(feature = "wasm-plugins")]
 pub use plugin_command::PluginCommand;
-pub use tui_command::TuiCommand;
-pub use ui_command::UiCommand;
