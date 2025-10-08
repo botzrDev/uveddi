@@ -281,12 +281,25 @@ mod tests {
     async fn test_pool_creation() {
         let config = PoolConfig {
             max_connections: 5,
+            min_connections: 1,
             connection_timeout: Duration::from_secs(10),
             idle_timeout: Duration::from_secs(60),
             max_lifetime: Duration::from_secs(300),
+            test_on_checkout: true,
+            pool_timeout: Duration::from_secs(30),
         };
 
-        let db = PooledDatabase::new(None, Some(config)).unwrap();
+        let db_config = DatabaseConfig {
+            database_type: DatabaseType::SQLite,
+            connection_string: ":memory:".to_string(),
+            read_connection_strings: vec![],
+            pool: config,
+            enable_metrics: false,
+            enable_logging: false,
+            enable_prepared_statements: false,
+        };
+        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let db = PooledDatabase::new(db_config, provider).await.unwrap();
         let stats = db.pool_stats();
 
         assert_eq!(stats.max_connections, 5);

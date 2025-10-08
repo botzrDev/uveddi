@@ -156,6 +156,7 @@ pub fn create_basic_config() -> ArchitecturalConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::analysis::AnalysisDetector;
 
     #[test]
     fn test_detector_creation() {

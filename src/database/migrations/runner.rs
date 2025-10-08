@@ -377,16 +377,19 @@ mod tests {
                 connection_timeout: Duration::from_secs(5),
                 idle_timeout: Duration::from_secs(300),
                 max_lifetime: Duration::from_secs(3600),
+                test_on_checkout: true,
+                pool_timeout: Duration::from_secs(30),
             },
             enable_metrics: false,
             enable_logging: false,
             enable_prepared_statements: false,
         };
 
-        let pool = Arc::new(ConnectionPool::new(config).await.unwrap());
+        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let pool = ConnectionPool::new(config, provider).await.unwrap();
         let registry = MigrationRegistry::new();
 
-        (MigrationRunner::new(pool, registry), temp_file)
+        (MigrationRunner::new(Arc::new(pool), registry), temp_file)
     }
 
     #[tokio::test]

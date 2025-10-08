@@ -273,8 +273,10 @@ mod tests {
         let file = ParsedFile {
             file_path: std::sync::Arc::new(PathBuf::from("package.json")),
             language: SourceLanguage::JavaScript,
-            content: content.to_string(),
+            source: content.to_string().into(),
             tree: None,
+            custom_ast: std::sync::Arc::new(None),
+            modified_at: std::time::SystemTime::now().into(),
         };
 
         std::fs::write("package.json", content).unwrap();

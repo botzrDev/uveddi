@@ -35,7 +35,7 @@ pub struct CveVulnerability {
 }
 
 #[derive(Debug, Clone)]
-struct CveDatabase {
+pub struct CveDatabase {
     entries: HashMap<String, Vec<CveEntry>>,
     version: String,
     last_updated: String,

@@ -1,120 +1,99 @@
-# Uveddi
+# Uveddi CLI
 
-A comprehensive architectural analysis tool that combines static code analysis with AI-powered insights to help developers understand and improve their codebases.
+Uveddi is a commercial-grade architectural analysis CLI that combines static code analysis with AI-assisted insights to help engineering teams audit, modernize, and govern large codebases.
 
-**Current Version**: `0.9.0-alpha` - Ready for community testing and feedback
+**Current Version**: `1.0.0` &nbsp;|&nbsp; **Availability**: Commercial release
 
-## Features
+**Pricing**: $9 per week or $300 per year (billed annually)
 
-- **Multi-language Support**: Analyze Rust, Python, JavaScript, and TypeScript codebases
-- **Anti-pattern Detection**: Identify God Objects, Dead Code, Circular Dependencies, and more
-- **AI-Powered Insights**: Optional integration with Ollama for intelligent code explanations
-- **Multiple Output Formats**: Generate HTML, JSON, and Markdown reports with interactive diagrams
-- **WASM Plugin System**: Extend functionality with secure WebAssembly plugins
-- **Web Dashboard**: Interactive analysis exploration through web UI
-- **Performance Optimized**: Memory-efficient caching and parallel processing for large codebases
-- **Security Hardened**: Zero critical vulnerabilities, production-ready security posture
+## What’s included
 
-## Quick Start
+- **Multi-language coverage** – Deep Rust, Python, JavaScript, and TypeScript analysis powered by Tree-sitter
+- **Anti-pattern detection** – Catch God Objects, dead code, circular dependencies, large classes, and dozens of architectural smells
+- **Security scanning** – Optional security mode with SARIF export for CI/CD pipelines
+- **AI insights (optional)** – Integrate with an on-prem Ollama instance to generate remediation guidance and summaries
+- **Comprehensive reporting** – Markdown and JSON outputs with diagram generation, severity scoring, and debt metrics
+- **CI automation** – Threshold-based quality gates for pull requests and release builds
+- **Enterprise-ready reliability** – Persistent SQLite storage, deterministic caching, detailed progress reporting, and structured logging
+
+> Web UI and TUI experiences have been removed for the CLI-only release to streamline support and provide a focused commercial product.
+
+## Quick start
 
 ```bash
-# Clone the repository
+# Clone the source (subscription required for commercial use)
 git clone https://github.com/botzrDev/uveddi.git
 cd uveddi
 
-# Fast development build (recommended)
-cargo build --features standard
+# Build the CLI with the recommended commercial feature set
+cargo build --release --features cli-standard
 
-# Basic analysis
-cargo run -- analyze ./src
+# Run your first analysis
+./target/release/uveddi analyze /path/to/project \
+	--output-format markdown \
+	--output reports/audit.md
 
-# Generate JSON report
-cargo run -- analyze ./src --output-format json
+# Generate security-focused SARIF output (optional)
+./target/release/uveddi analyze /path/to/project \
+	--security --export-sarif \
+	--output-format json
 
-# Generate HTML report
-cargo run -- analyze ./src --output-format html --output report.html
-
-# With AI insights (requires Ollama)
-cargo run -- analyze ./src --enable-ai --ollama-model deepseek-coder:6.7b
-
-# Start web dashboard
-cargo run -- serve --port 8888
+# Enable AI guidance when Ollama is available
+OLLAMA_API_URL=http://localhost:11434 \
+./target/release/uveddi analyze /path/to/project \
+	--enable-ai --ollama-model deepseek-coder:6.7b
 ```
 
-## Installation
+## Installation & subscription
 
-### Development Builds (Faster)
-```bash
-# Quick development build
-cargo build --features standard
+1. **Activate your subscription** – Contact sales (sales@uveddi.com) to provision a weekly or annual license. *Assumed contact channel; replace with your organization’s preferred sales workflow.*
+2. **Install Rust** – Rust 1.70+ is required (`rustup` recommended).
+3. **Build from source or request binaries** – Subscribers may request signed binaries, or build from source using `cargo build --release --features cli-standard`.
+4. **Apply license key (optional)** – If your deployment uses license keys, add `UVEDDI_LICENSE_KEY=<key>` to your environment. *License enforcement tooling ships separately.*
 
-# Run directly
-cargo run --features standard -- analyze ./src
-```
+Optional components:
+- **Ollama** for on-device AI explanations
+- **Rendering service** if you intend to produce image-based diagrams instead of Mermaid output
 
-### Production Builds (Full Features)
-```bash
-# Full feature build (slower but complete)
-cargo build --release --features full
+## CLI highlights
 
-# Install globally
-cargo install --path . --features full
-```
+- `uveddi analyze` – Full codebase audits with configurable detectors, memory profiles, and timeout handling
+- `uveddi config` – Validate and tune analysis defaults for your organization
+- `uveddi doctor` – Environment diagnostics and auto-fix routines for parsers, AI connectivity, and system resources
+- `uveddi hooks` – Git hook automation to enforce analysis before commits or pushes
+- `uveddi ci` – CI-centric quality gates with customizable debt and severity thresholds
+- `uveddi init` – Project bootstrapper that generates tuned configuration files for new repositories
 
-### Prerequisites
-- Rust 1.70+ (required for core functionality)
-- Optional: Ollama for AI features
-- Optional: Node.js 18+ for web dashboard development
+See `docs/CLI_REFERENCE.md` for the full command surface.
 
-### Feature Flags
+## Recommended feature flags
 
-**New Simplified System (v0.9.0+):**
-- `minimal`: Essential functionality, fastest builds
-- `standard`: Recommended development profile (parsing + monitoring)
-- `full`: Production-ready (all capabilities)
+- `cli-standard` *(default)* – Balanced profile with engine integrations, caching, and tree-sitter language packs
+- `cli-ai` – Adds AI workflows on top of `cli-standard`
+- `cli-plugins` – Enables WebAssembly plugin execution when your audit requires bespoke detectors
+- `security` – Activates advanced security scanning modules and SARIF export helpers
 
-**Capability Features:**
-- `security`: Advanced security features and authentication
-- `wasm-plugins`: WebAssembly plugin system support
-- `memory-optimization`: Performance optimizations
-- `tui`: Terminal user interface
-- `web`: Web dashboard and API
+Legacy web/TUI flags remain in the manifest for backwards compatibility but are unsupported in the commercial build.
 
-**Language Packs:**
-- `languages-core`: Rust + Python parsing
-- `languages-web`: JavaScript + TypeScript parsing
-- `languages-all`: All supported languages
+## Support & success
 
-> **Migration Notice:** If upgrading from v0.8.x, see [Feature Migration Guide](docs/migrations/feature-migration-guide.md) for updating deprecated features.
+Commercial subscribers receive:
+- Priority email support: support@uveddi.com *(placeholder – update with production address)*
+- Onboarding guidance and environment validation scripts
+- Early access to detector updates and private roadmap briefings
+- Escalation path for critical audit findings
 
-## Documentation
+If you encounter an issue, open a ticket via the subscriber portal or email support. Public GitHub issues remain available for transparency but may have slower response times for non-subscribers.
 
-- [Getting Started Guide](docs/getting-started/) - Installation and first analysis
-- [User Guide](docs/user-guide/) - Complete usage documentation
-- [CLI Reference](docs/reference/cli-reference.md) - All commands and options
-- [Plugin Development](docs/development/plugins/) - Create custom plugins
-- [API Reference](docs/reference/api-reference.md) - REST API documentation
+## Roadmap snapshot
 
-## Project Status
-
-Current version: **v0.9.0-alpha**
-
-This is an alpha release. Core functionality is stable, but some features are still in development. See [known issues](docs/release-notes/known-issues.md) for details.
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+- Q4 2025: Expanded security rule packs, dependency hygiene scoring, SaaS-based reporting backend (opt-in)
+- Q1 2026: Managed policy library, organization-wide baselines, enhanced plugin marketplace
 
 ## License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
-
-## Support
-
-- [Report Issues](https://github.com/botzrDev/uveddi/issues)
-- [Documentation](https://uveddi.dev/docs)
-- [Community Discord](https://discord.gg/uveddi)
+The source code is distributed under the MIT license (see [LICENSE](LICENSE)). Commercial use of the official Uveddi CLI distribution requires an active subscription agreement.
 
 ---
 
-Built with 🦀 by the Uveddi Team
+© 2025 Uveddi. Crafted for engineering teams that need trustworthy code intelligence.

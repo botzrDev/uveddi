@@ -439,7 +439,7 @@ mod tests {
     use crate::analysis::services::performance_service::{
         MemoryConfig, PerformanceAnalysisService,
     };
-    use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
+    use crate::analysis::services::performance_service::PerformanceMetricsCollector;
 
     fn create_test_orchestrator() -> AnalysisOrchestrator {
         // Create mock services for testing
@@ -451,7 +451,6 @@ mod tests {
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider.clone(),
-            None,
             aggregator.clone(),
             crate::analysis::detector_factory::DetectorFactory::create_default_detectors(),
         ));
@@ -461,7 +460,6 @@ mod tests {
             config_service,
             detector_scheduler,
             aggregator,
-            None,
             detector_factory,
         ));
 

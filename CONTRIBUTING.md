@@ -1,6 +1,6 @@
 # Contributing to Uveddi
 
-We welcome contributions from the community! This guide will help you get started with development.
+> **Commercial release notice**: Uveddi is now distributed as a paid CLI product. We currently accept contributions only from the core engineering team and approved partners under NDA. The guidance below remains available for internal contributors and subscribers participating in the private extension program.
 
 ## Development Environment Setup
 
@@ -46,9 +46,9 @@ We welcome contributions from the community! This guide will help you get starte
    - Reference related issues
    - Ensure all tests pass
 
-## 🚀 Good First Issues
+## 🚀 Good First Issues *(archived)*
 
-New to Uveddi? Start here! We've curated beginner-friendly tasks to help you get familiar with the codebase.
+This section is retained for historical reference. Public "good first issues" are no longer published. Authorized contributors should coordinate with the maintainer team to obtain scoped assignments before opening any pull requests.
 
 ### Finding Your First Task
 1. Browse issues labeled [`good-first-issue`](https://github.com/botzrDev/uveddi/labels/good-first-issue)
@@ -69,10 +69,8 @@ New to Uveddi? Start here! We've curated beginner-friendly tasks to help you get
 - [ ] Ask questions if anything is unclear
 
 ### Need Help?
-- **Questions**: Comment on your chosen issue
-- **Community**: Join our GitHub Discussions
-- **Mentorship**: Request a mentor for guidance
-- **Stuck?**: Don't hesitate to ask for help!
+- **Internal questions**: Reach out via the private engineering Slack or email the maintainer list.
+- **Subscriber escalations**: Submit cases through the support portal referenced in your subscription agreement.
 
 ## Code Style
 

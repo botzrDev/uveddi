@@ -480,13 +480,16 @@ mod tests {
                 connection_timeout: Duration::from_secs(5),
                 idle_timeout: Duration::from_secs(300),
                 max_lifetime: Duration::from_secs(3600),
+                test_on_checkout: true,
+                pool_timeout: Duration::from_secs(30),
             },
             enable_metrics: false,
             enable_logging: false,
             enable_prepared_statements: false,
         };
 
-        let pool = Arc::new(ConnectionPool::new(config).await.unwrap());
+        let provider = Arc::new(crate::database::providers::sqlite::SqliteProvider::new());
+        let pool = ConnectionPool::new(config, provider).await.unwrap();
 
         // Create the table
         {
@@ -507,7 +510,7 @@ mod tests {
             .unwrap();
         }
 
-        (SqliteAnalysisRepository::new(pool), temp_file)
+        (SqliteAnalysisRepository::new(Arc::new(pool)), temp_file)
     }
 
     #[tokio::test]
@@ -520,8 +523,8 @@ mod tests {
             start_time: Utc::now(),
             end_time: None,
             status: "pending".to_string(),
-            total_files_analyzed: 0,
-            total_issues_found: 0,
+            total_files_analyzed: Some(0),
+            total_issues_found: Some(0),
             analysis_config: "{}".to_string(),
         };
 
@@ -546,8 +549,8 @@ mod tests {
             start_time: Utc::now(),
             end_time: None,
             status: "completed".to_string(),
-            total_files_analyzed: 100,
-            total_issues_found: 5,
+            total_files_analyzed: Some(100),
+            total_issues_found: Some(5),
             analysis_config: "{}".to_string(),
         };
 

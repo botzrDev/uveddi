@@ -46,8 +46,9 @@ pub use analysis::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{ParsedFile, SourceLanguage};
+    use crate::ast::{compatibility_shim::ParsedFileCompat, SourceLanguage};
     use std::path::PathBuf;
+    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_dead_code_detection() {
@@ -55,11 +56,13 @@ mod tests {
         let detector = DeadCodeDetector::new(config);
 
         // Create a mock parsed file
-        let parsed_file = ParsedFile {
-            file_path: Box::new(PathBuf::from("test.rs")),
-            source: "fn unused_function() {}\nfn main() { println!(\"Hello\"); }".to_string(),
+        let parsed_file = ParsedFileCompat {
+            file_path: Arc::new(PathBuf::from("test.rs")),
+            source: "fn unused_function() {}\nfn main() { println!(\"Hello\"); }".to_string().into(),
             language: SourceLanguage::Rust,
             tree: None, // Would need actual tree-sitter tree in real test
+            custom_ast: Arc::new(None),
+            modified_at: std::time::SystemTime::now().into(),
         };
 
         // This would fail without an actual AST, but shows the structure

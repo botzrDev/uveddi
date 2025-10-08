@@ -158,8 +158,10 @@ mod tests {
         ParsedFile {
             file_path: Arc::new(PathBuf::from("test")),
             language,
-            content: content.to_string(),
+            source: content.to_string().into(),
             tree: None,
+            custom_ast: std::sync::Arc::new(None),
+            modified_at: std::time::SystemTime::now().into(),
         }
     }
 

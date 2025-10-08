@@ -217,18 +217,26 @@ impl OwaspCategoryDetector for BrokenAuthDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_hardcoded_password_detection() {
         let detector = BrokenAuthDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.rs")),
-            language: SourceLanguage::Rust,
-            content: "let password = \"admin123\";".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.rs",
+            SourceLanguage::Rust,
+            "let password = \"admin123\";",
+        );
 
         std::fs::write("test.rs", "let password = \"admin123\";").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

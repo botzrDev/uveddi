@@ -1,5 +1,7 @@
 # CLI-Only Community Release - Audit Report
 
+> **Status:** Historical reference. This document captured the pre-commercial community release plan and is retained for archival purposes. The paid CLI launch supersedes the processes described below.
+
 **Branch:** `release/cli-only`  
 **Date:** October 6, 2025  
 **Objective:** Strip down Uveddi to core CLI functionality for rapid community release

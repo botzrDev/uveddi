@@ -321,7 +321,6 @@ mod tests {
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider_trait,
-            None,
             aggregator.clone(),
             DetectorFactory::create_default_detectors(),
         ));
@@ -330,8 +329,7 @@ mod tests {
         AnalysisService::new(
             config_service,
             detector_scheduler,
-            aggregator,
-            None, // No plugin manager for tests
+            aggregator, // No plugin manager for tests
             detector_factory,
         )
     }

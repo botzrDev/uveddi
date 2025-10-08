@@ -199,12 +199,12 @@ mod tests {
     async fn test_file_analysis() {
         let detector = OwaspDetector::new().unwrap();
 
-        let file = ParsedFile {
-            file_path: Arc::new(PathBuf::from("test.rs")),
-            language: crate::ast::SourceLanguage::Rust,
-            content: "pub fn test() {}".to_string(),
-            tree: None,
-        };
+        let file = crate::ast::compatibility_shim::ParsedFileCompat::new(
+            PathBuf::from("test.rs"),
+            crate::ast::SourceLanguage::Rust,
+            "pub fn test() {}".to_string(),
+        )
+        .to_tree_sitter();
 
         // Create a temporary test file
         std::fs::write("test.rs", "pub fn test() {}").unwrap();

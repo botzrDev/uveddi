@@ -218,18 +218,26 @@ impl OwaspCategoryDetector for XXEDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_xxe_detection() {
         let detector = XXEDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.py")),
-            language: SourceLanguage::Python,
-            content: "tree = xml.etree.ElementTree.parse('data.xml')".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.py",
+            SourceLanguage::Python,
+            "tree = xml.etree.ElementTree.parse('data.xml')",
+        );
 
         std::fs::write("test.py", "tree = xml.etree.ElementTree.parse('data.xml')").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

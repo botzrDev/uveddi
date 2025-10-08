@@ -281,6 +281,7 @@ mod analysis_aggregator_tests {
 }
 
 #[cfg(test)]
+#[cfg(feature = "wasm-plugins")]
 mod plugin_manager_tests {
     use super::super::config_service::ConfigurationService;
     use super::super::plugin_manager::{PluginManager, PluginManagerHandle};

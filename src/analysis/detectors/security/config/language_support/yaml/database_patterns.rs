@@ -195,7 +195,7 @@ impl DatabasePatternChecker {
 
 #[cfg(test)]
 mod tests {
-    use super::parser::YamlParser;
+    use crate::analysis::detectors::security::config::language_support::yaml::YamlParser;
     use super::*;
 
     #[test]

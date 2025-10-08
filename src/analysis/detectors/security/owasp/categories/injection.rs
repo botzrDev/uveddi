@@ -235,18 +235,26 @@ impl OwaspCategoryDetector for InjectionDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_injection_detection() {
         let detector = InjectionDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.py")),
-            language: SourceLanguage::Python,
-            content: "cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.py",
+            SourceLanguage::Python,
+            "cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")",
+        );
 
         std::fs::write(
             "test.py",

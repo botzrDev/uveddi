@@ -130,7 +130,7 @@ impl ContainerPatternChecker {
 
 #[cfg(test)]
 mod tests {
-    use super::parser::YamlParser;
+    use crate::analysis::detectors::security::config::language_support::yaml::YamlParser;
     use super::*;
 
     #[test]
@@ -158,7 +158,7 @@ kind: Pod
 spec:
   hostNetwork: true
 "#;
-        let parsed = super::parser::YamlParser::parse_content(yaml_content).unwrap();
+        let parsed = YamlParser::parse_content(yaml_content).unwrap();
         let issues = ContainerPatternChecker::check_container_security(&parsed);
         assert!(issues.iter().any(|i| i.title.contains("Host Network")));
     }

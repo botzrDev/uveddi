@@ -232,18 +232,26 @@ impl OwaspCategoryDetector for InsecureDeserializationDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_pickle_detection() {
         let detector = InsecureDeserializationDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.py")),
-            language: SourceLanguage::Python,
-            content: "data = pickle.loads(user_input)".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.py",
+            SourceLanguage::Python,
+            "data = pickle.loads(user_input)",
+        );
 
         std::fs::write("test.py", "data = pickle.loads(user_input)").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

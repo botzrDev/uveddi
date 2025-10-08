@@ -248,18 +248,26 @@ impl OwaspCategoryDetector for VulnerableComponentsDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_vulnerable_component_detection() {
         let detector = VulnerableComponentsDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("package.json")),
-            language: SourceLanguage::JavaScript,
-            content: "\"lodash\": \"4.17.0\"".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "package.json",
+            SourceLanguage::JavaScript,
+            "\"lodash\": \"4.17.0\"",
+        );
 
         std::fs::write("package.json", "\"lodash\": \"4.17.0\"").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

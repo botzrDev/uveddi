@@ -307,18 +307,19 @@ impl Default for JavaScriptOwaspAnalyzer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
 
     #[tokio::test]
     async fn test_javascript_patterns() {
         let analyzer = JavaScriptOwaspAnalyzer::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.js")),
-            language: SourceLanguage::JavaScript,
-            content: "eval(userInput)".to_string(),
-            tree: None,
-        };
+        let file = ParsedFileCompat::new(
+            PathBuf::from("test.js"),
+            SourceLanguage::JavaScript,
+            "eval(userInput)".to_string(),
+        )
+        .to_tree_sitter();
 
         std::fs::write("test.js", "eval(userInput)").unwrap();
         let vulnerabilities = analyzer.analyze(&file).await.unwrap();

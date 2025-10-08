@@ -285,6 +285,7 @@ pub struct EngineCacheStats {
 mod tests {
     use super::*;
     use crate::ast::{ParsedFile, SourceLanguage};
+    #[cfg(feature = "prometheus")]
     use prometheus::Registry;
     use std::path::PathBuf;
     use std::sync::Arc;
@@ -302,10 +303,11 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "prometheus")]
     async fn test_engine_cache_ast_operations() {
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = EngineCache::new(metrics).await.unwrap();
+        let cache = EngineCache::new().await.unwrap();
 
         let test_path = std::path::Path::new("test.rs");
         let parser = || Ok(create_test_parsed_file());
@@ -324,10 +326,11 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "prometheus")]
     async fn test_engine_cache_result_operations() {
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = EngineCache::new(metrics).await.unwrap();
+        let cache = EngineCache::new().await.unwrap();
 
         let test_path = std::path::Path::new("test.rs");
         let test_results = vec![];
@@ -349,10 +352,11 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "prometheus")]
     async fn test_cache_stats() {
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = EngineCache::new(metrics).await.unwrap();
+        let cache = EngineCache::new().await.unwrap();
 
         let stats = cache.stats().await;
         assert_eq!(stats.ast_entries, 0);
@@ -367,6 +371,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "prometheus")]
     async fn test_cache_expiration() {
         let config = EngineCacheConfig {
             ast_capacity: 100,
@@ -376,7 +381,7 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = EngineCache::new_with_config(config, metrics).await.unwrap();
+        let cache = EngineCache::new_with_config(config).await.unwrap();
 
         let test_path = std::path::Path::new("test.rs");
         cache.cache_results(test_path, vec![]).await;

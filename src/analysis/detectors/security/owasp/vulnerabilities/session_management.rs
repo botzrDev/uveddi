@@ -378,8 +378,10 @@ mod tests {
         let file = ParsedFile {
             file_path: Arc::new(PathBuf::from("test.js")),
             language: SourceLanguage::JavaScript,
-            content: content.to_string(),
+            source: content.to_string().into(),
             tree: None,
+            custom_ast: std::sync::Arc::new(None),
+            modified_at: std::time::SystemTime::now().into(),
         };
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
@@ -404,8 +406,10 @@ mod tests {
         let file = ParsedFile {
             file_path: Arc::new(PathBuf::from("test.py")),
             language: SourceLanguage::Python,
-            content: content.to_string(),
+            source: content.to_string().into(),
             tree: None,
+            custom_ast: std::sync::Arc::new(None),
+            modified_at: std::time::SystemTime::now().into(),
         };
 
         let vulnerabilities = detector.detect(&file).await.unwrap();
@@ -430,8 +434,10 @@ mod tests {
         let file = ParsedFile {
             file_path: Arc::new(PathBuf::from("test.rs")),
             language: SourceLanguage::Rust,
-            content: content.to_string(),
+            source: content.to_string().into(),
             tree: None,
+            custom_ast: std::sync::Arc::new(None),
+            modified_at: std::time::SystemTime::now().into(),
         };
 
         let vulnerabilities = detector.detect(&file).await.unwrap();

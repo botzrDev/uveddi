@@ -215,18 +215,26 @@ impl OwaspCategoryDetector for SensitiveDataDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_api_key_detection() {
         let detector = SensitiveDataDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.rs")),
-            language: SourceLanguage::Rust,
-            content: "let api_key = \"sk-1234567890abcdef\";".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.rs",
+            SourceLanguage::Rust,
+            "let api_key = \"sk-1234567890abcdef\";",
+        );
 
         std::fs::write("test.rs", "let api_key = \"sk-1234567890abcdef\";").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

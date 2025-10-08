@@ -215,18 +215,19 @@ impl Default for RustOwaspAnalyzer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
 
     #[tokio::test]
     async fn test_rust_patterns() {
         let analyzer = RustOwaspAnalyzer::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.rs")),
-            language: SourceLanguage::Rust,
-            content: "unsafe { *ptr }".to_string(),
-            tree: None,
-        };
+        let file = ParsedFileCompat::new(
+            PathBuf::from("test.rs"),
+            SourceLanguage::Rust,
+            "unsafe { *ptr }".to_string(),
+        )
+        .to_tree_sitter();
 
         std::fs::write("test.rs", "unsafe { *ptr }").unwrap();
         let vulnerabilities = analyzer.analyze(&file).await.unwrap();

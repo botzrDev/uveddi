@@ -216,18 +216,26 @@ impl OwaspCategoryDetector for BrokenAccessDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_cors_detection() {
         let detector = BrokenAccessDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.js")),
-            language: SourceLanguage::JavaScript,
-            content: "res.header('Access-Control-Allow-Origin: *');".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.js",
+            SourceLanguage::JavaScript,
+            "res.header('Access-Control-Allow-Origin: *');",
+        );
 
         std::fs::write("test.js", "res.header('Access-Control-Allow-Origin: *');").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

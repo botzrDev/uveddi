@@ -229,18 +229,26 @@ impl OwaspCategoryDetector for XSSDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
+
+    fn make_parsed_file(
+        path: &str,
+        language: SourceLanguage,
+        content: &str,
+    ) -> ParsedFileCompat {
+        ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
+    }
 
     #[tokio::test]
     async fn test_xss_detection() {
         let detector = XSSDetector::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.js")),
-            language: SourceLanguage::JavaScript,
-            content: "element.innerHTML = userInput;".to_string(),
-            tree: None,
-        };
+        let file = make_parsed_file(
+            "test.js",
+            SourceLanguage::JavaScript,
+            "element.innerHTML = userInput;",
+        );
 
         std::fs::write("test.js", "element.innerHTML = userInput;").unwrap();
         let vulnerabilities = detector.detect(&file).await.unwrap();

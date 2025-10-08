@@ -1130,87 +1130,20 @@ impl AnalyzeCommand {
             info!("💡 Report generated: {}", output_info);
         }
 
-        // Auto-launch dashboard if requested
+        // Dashboard functionality has been deprecated in the commercial CLI build
         if self.open_dashboard {
-            info!("\n🚀 Launching dashboard...");
-            self.launch_dashboard();
-        } else if report.metadata.issues_found > 0 {
-            // Suggest dashboard for a better experience when issues are found
-            info!("\n💡 Tip: Run with --open-dashboard to visualize results in the web interface");
+            warn!(
+                "\n🚫 The web dashboard is no longer bundled with the commercial CLI release."
+            );
+            info!(
+                "   Review the generated report above or share it with your team through your preferred tools."
+            );
         }
 
         Ok(())
     }
 
-    /// Launch the dashboard in the default browser
-    fn launch_dashboard(&self) {
-        // Check if a server is running on port 8080 or 8081
-        let dashboard_url = if self.is_port_available(8082) {
-            "http://localhost:8082"
-        } else if self.is_port_available(8081) {
-            "http://localhost:8081"
-        } else {
-            "http://localhost:8080"
-        };
-
-        info!("🌐 Opening dashboard at: {}", dashboard_url);
-
-        // Try to open the browser using different methods
-        if let Err(e) = self.open_browser(dashboard_url) {
-            warn!("⚠️  Failed to auto-launch browser: {}", e);
-            info!("📌 Please manually open: {}", dashboard_url);
-        } else {
-            info!("✅ Dashboard launched successfully!");
-        }
-    }
-
-    /// Check if a port is available (server is running)
-    fn is_port_available(&self, port: u16) -> bool {
-        use std::net::{TcpStream, ToSocketAddrs};
-        let addr = format!("localhost:{}", port);
-        if let Ok(mut addrs) = addr.to_socket_addrs() {
-            if let Some(addr) = addrs.next() {
-                return TcpStream::connect_timeout(&addr, std::time::Duration::from_millis(100))
-                    .is_ok();
-            }
-        }
-        false
-    }
-
-    /// Cross-platform browser opening
-    fn open_browser(&self, url: &str) -> Result<(), Box<dyn std::error::Error>> {
-        #[cfg(target_os = "windows")]
-        {
-            std::process::Command::new("cmd")
-                .args(["/c", "start", url])
-                .spawn()?;
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            std::process::Command::new("open").arg(url).spawn()?;
-        }
-
-        #[cfg(target_os = "linux")]
-        {
-            // Try xdg-open first (most common)
-            if std::process::Command::new("xdg-open")
-                .arg(url)
-                .spawn()
-                .is_err()
-            {
-                // Fallback options for Linux
-                for browser in &["firefox", "google-chrome", "chromium", "brave"] {
-                    if std::process::Command::new(browser).arg(url).spawn().is_ok() {
-                        return Ok(());
-                    }
-                }
-                return Err("No suitable browser found".into());
-            }
-        }
-
-        Ok(())
-    }
+    // Dashboard launcher intentionally removed for CLI-only commercial release
 
     /// Recursively discover files in a directory, respecting .gitignore patterns
     /// and handling symlinks safely.

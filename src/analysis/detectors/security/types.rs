@@ -309,6 +309,10 @@ impl VulnerabilityMetadata {
     pub fn add_metadata(&mut self, key: String, value: String) {
         self.extra.insert(key, value);
     }
+
+    pub fn get_metadata(&self, key: &str) -> Option<&String> {
+        self.extra.get(key)
+    }
 }
 
 impl Default for VulnerabilityMetadata {

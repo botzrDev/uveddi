@@ -265,18 +265,19 @@ impl Default for PythonOwaspAnalyzer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
 
     #[tokio::test]
     async fn test_python_patterns() {
         let analyzer = PythonOwaspAnalyzer::new();
 
-        let file = ParsedFile {
-            file_path: std::sync::Arc::new(PathBuf::from("test.py")),
-            language: SourceLanguage::Python,
-            content: "eval(user_input)".to_string(),
-            tree: None,
-        };
+        let file = ParsedFileCompat::new(
+            PathBuf::from("test.py"),
+            SourceLanguage::Python,
+            "eval(user_input)".to_string(),
+        )
+        .to_tree_sitter();
 
         std::fs::write("test.py", "eval(user_input)").unwrap();
         let vulnerabilities = analyzer.analyze(&file).await.unwrap();
