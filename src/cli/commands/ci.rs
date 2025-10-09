@@ -106,8 +106,9 @@ pub fn parse_ci_metrics_from_json(json_content: &str) -> Result<(u32, u32), Stri
     let debt = v
         .get("summary")
         .and_then(|s| s.get("debtScore"))
-        .and_then(|n| n.as_u64())
-        .unwrap_or(0) as u32;
+        .and_then(|n| n.as_f64())
+        .map(|f| f as u32)
+        .unwrap_or(0);
 
     let critical = v
         .get("summary")

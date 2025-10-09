@@ -13,8 +13,9 @@ use std::collections::HashMap;
 impl ReportGenerator {
     /// Generate complete HTML report
     ///
-    /// Enabled for 1.0.0 release (A3 decision 2025-10-09)
-    pub fn generate_html_report(
+    /// Note: HTML output is enabled via the orchestrator's generate_html_report method.
+    /// This function is kept for backward compatibility but not used in 1.0.0.
+    pub fn _generate_html_report_internal(
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
