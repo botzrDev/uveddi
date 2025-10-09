@@ -115,7 +115,7 @@ impl DatabaseProvider for SqliteProvider {
                 PRAGMA foreign_keys = ON;
                 PRAGMA optimize;
             ")?;
-            
+
             // Create tables
             conn.execute_batch("
                 CREATE TABLE IF NOT EXISTS projects (
@@ -123,7 +123,7 @@ impl DatabaseProvider for SqliteProvider {
                     path TEXT NOT NULL UNIQUE,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS analysis_runs (
                     run_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     project_id INTEGER NOT NULL,
@@ -136,7 +136,7 @@ impl DatabaseProvider for SqliteProvider {
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (project_id) REFERENCES projects(project_id)
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS anti_pattern_types (
                     anti_pattern_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL UNIQUE,
@@ -144,7 +144,7 @@ impl DatabaseProvider for SqliteProvider {
                     category TEXT NOT NULL,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS architectural_issues (
                     issue_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     analysis_run_id INTEGER NOT NULL,
@@ -165,7 +165,7 @@ impl DatabaseProvider for SqliteProvider {
                     FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id),
                     FOREIGN KEY (anti_pattern_type_id) REFERENCES anti_pattern_types(anti_pattern_type_id)
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS dependencies (
                     dependency_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     analysis_run_id INTEGER NOT NULL,
@@ -177,7 +177,7 @@ impl DatabaseProvider for SqliteProvider {
                     FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id)
                 );
             ")?;
-            
+
             // Create performance indexes
             conn.execute_batch("
                 CREATE INDEX IF NOT EXISTS idx_analysis_runs_project_time ON analysis_runs(project_id, start_time);
@@ -196,7 +196,7 @@ impl DatabaseProvider for SqliteProvider {
                 CREATE INDEX IF NOT EXISTS idx_dependencies_to_module ON dependencies(to_module);
                 CREATE INDEX IF NOT EXISTS idx_dependencies_composite ON dependencies(analysis_run_id, from_file, to_module);
             ")?;
-            
+
             Ok(())
         }).await?;
 
@@ -341,16 +341,16 @@ impl DatabaseProvider for SqliteProvider {
                 let mut stmt = tx.prepare_cached(
                     "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)"
                 )?;
-                
+
                 for anti_pattern_type in anti_pattern_types.iter_mut() {
                     anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description);
-                    
+
                     stmt.execute(params![
                         anti_pattern_type.name,
                         anti_pattern_type.description,
                         anti_pattern_type.category,
                     ])?;
-                    
+
                     if anti_pattern_type.anti_pattern_type_id.is_none() {
                         let mut id_stmt = tx.prepare_cached(
                             "SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?",
@@ -378,7 +378,7 @@ impl DatabaseProvider for SqliteProvider {
                 let mut stmt = tx.prepare_cached(
                     "INSERT INTO architectural_issues (analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, line_number, column_number, message, metadata, detector_name, created_at, severity, description, code_snippet, ai_explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 )?;
-                
+
                 for issue in issues {
                     // Validate inputs
                     security::validate_code_analysis_data(&issue.description, "description", None)
@@ -387,11 +387,11 @@ impl DatabaseProvider for SqliteProvider {
                         .map_err(UveddiError::from)?;
                     security::validate_input(&issue.severity, "severity")
                         .map_err(UveddiError::from)?;
-                    
+
                     let sanitized_description = security::sanitize_description(&issue.description);
                     let sanitized_ai_explanation = issue.ai_explanation.as_ref()
                         .map(|exp| security::sanitize_description(exp));
-                    
+
                     stmt.execute(params![
                         issue.analysis_run_id,
                         issue.anti_pattern_type_id,
@@ -433,7 +433,7 @@ impl DatabaseProvider for SqliteProvider {
                 let mut stmt = tx.prepare_cached(
                     "INSERT INTO dependencies (analysis_run_id, from_file, to_module, dependency_type, line_number) VALUES (?, ?, ?, ?, ?)"
                 )?;
-                
+
                 for dep in dependencies {
                     stmt.execute(params![
                         run_id,
@@ -461,14 +461,14 @@ impl DatabaseProvider for SqliteProvider {
 
         let result = self.execute_with_metrics(|| {
             let mut stmt = conn.prepare_cached(
-                "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
+                "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config
                  FROM analysis_runs WHERE run_id = ?"
             )?;
-            
+
             let result = stmt.query_row([run_id], |row| {
                 let start_time_str: String = row.get(2)?;
                 let end_time_str: Option<String> = row.get(3)?;
-                
+
                 Ok(AnalysisRun {
                     run_id: Some(row.get(0)?),
                     project_id: row.get(1)?,
@@ -486,7 +486,7 @@ impl DatabaseProvider for SqliteProvider {
                     analysis_config: row.get(7)?,
                 })
             });
-            
+
             match result {
                 Ok(run) => Ok(Some(run)),
                 Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),

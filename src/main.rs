@@ -88,6 +88,8 @@ enum Commands {
     Init(InitCommand),
     /// CI/CD integration command
     Ci(CiCommand),
+    /// Database migration management
+    Migrate(MigrateCommand),
     /// Manage WASM plugins
     #[cfg(feature = "wasm-plugins")]
     Plugin(PluginCommand),
@@ -180,6 +182,10 @@ async fn main() -> Result<()> {
         }
         Commands::Ci(command) => {
             info!("Executing CI command...");
+            command.execute().await
+        }
+        Commands::Migrate(command) => {
+            info!("Executing migrate command...");
             command.execute().await
         }
         #[cfg(feature = "wasm-plugins")]

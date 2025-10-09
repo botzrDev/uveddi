@@ -2,7 +2,9 @@
 //!
 //! Handles executing migrations against SQLite and PostgreSQL databases
 
-use super::{Migration, MigrationRecord, MigrationRegistry, MigrationResult};
+use super::{
+    Migration, MigrationPlan, MigrationRecord, MigrationRegistry, MigrationResult, PlannedMigration,
+};
 use crate::database::connection::{ConnectionPool, DatabaseType};
 use chrono::Utc;
 use std::sync::Arc;
@@ -129,6 +131,44 @@ impl MigrationRunner {
         .map_err(|e| MigrationError::Runtime(format!("Task join error: {}", e)))??;
 
         Ok(records)
+    }
+
+    /// Plan pending migrations without applying them (dry-run)
+    pub async fn plan_migrations(&self) -> Result<MigrationPlan, MigrationError> {
+        info!("Planning pending migrations (dry-run mode)");
+
+        // Ensure migration table exists
+        self.initialize().await?;
+
+        let current_version = self.current_version().await?;
+        let applied_migrations = self.applied_migrations().await?;
+        let pending_migrations = self.registry.get_pending(current_version);
+
+        let mut planned_migrations = Vec::new();
+        for migration in pending_migrations {
+            planned_migrations.push(PlannedMigration {
+                version: migration.version,
+                name: migration.name.clone(),
+                dependencies: migration.dependencies.clone(),
+                checksum: migration.checksum(),
+                up_sql_preview: migration
+                    .up_sql
+                    .lines()
+                    .take(5)
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            });
+        }
+
+        Ok(MigrationPlan {
+            current_version,
+            target_version: planned_migrations
+                .last()
+                .map(|m| m.version)
+                .unwrap_or(current_version),
+            applied_migrations,
+            planned_migrations,
+        })
     }
 
     /// Run all pending migrations

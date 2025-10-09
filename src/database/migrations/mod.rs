@@ -42,6 +42,81 @@ pub enum MigrationResult {
     Failed { version: u32, error: String },
 }
 
+/// Planned migration for dry-run
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlannedMigration {
+    pub version: u32,
+    pub name: String,
+    pub dependencies: Vec<u32>,
+    pub checksum: String,
+    pub up_sql_preview: String,
+}
+
+/// Migration plan showing current state and pending migrations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MigrationPlan {
+    pub current_version: u32,
+    pub target_version: u32,
+    pub applied_migrations: Vec<MigrationRecord>,
+    pub planned_migrations: Vec<PlannedMigration>,
+}
+
+impl MigrationPlan {
+    /// Pretty-print the migration plan
+    pub fn display(&self) -> String {
+        let mut output = String::new();
+        output.push_str("=== Migration Plan (Dry Run) ===\n\n");
+        output.push_str(&format!("Current Version: {}\n", self.current_version));
+        output.push_str(&format!("Target Version:  {}\n\n", self.target_version));
+
+        if self.applied_migrations.is_empty() {
+            output.push_str("No migrations applied yet.\n\n");
+        } else {
+            output.push_str(&format!(
+                "Applied Migrations ({}):\n",
+                self.applied_migrations.len()
+            ));
+            for migration in &self.applied_migrations {
+                output.push_str(&format!(
+                    "  ✓ v{}: {} (applied {})\n",
+                    migration.version,
+                    migration.name,
+                    migration.applied_at.format("%Y-%m-%d %H:%M:%S")
+                ));
+            }
+            output.push_str("\n");
+        }
+
+        if self.planned_migrations.is_empty() {
+            output.push_str("✓ Database is up to date - no pending migrations.\n");
+        } else {
+            output.push_str(&format!(
+                "Pending Migrations ({}):\n",
+                self.planned_migrations.len()
+            ));
+            for migration in &self.planned_migrations {
+                output.push_str(&format!("  → v{}: {}\n", migration.version, migration.name));
+                if !migration.dependencies.is_empty() {
+                    output.push_str(&format!(
+                        "      Dependencies: {:?}\n",
+                        migration.dependencies
+                    ));
+                }
+                output.push_str(&format!("      Checksum: {}\n", migration.checksum));
+                if !migration.up_sql_preview.is_empty() {
+                    output.push_str("      SQL Preview:\n");
+                    for line in migration.up_sql_preview.lines() {
+                        output.push_str(&format!("        {}\n", line));
+                    }
+                }
+                output.push_str("\n");
+            }
+        }
+
+        output
+    }
+}
+
 /// Migration registry containing all available migrations
 #[derive(Debug, Default)]
 pub struct MigrationRegistry {
@@ -88,65 +163,65 @@ impl MigrationRegistry {
 pub fn create_standard_registry() -> MigrationRegistry {
     let mut registry = MigrationRegistry::new();
 
-    // Migration 1: Create cache table
+    // Migration 1: Create cache table (2025-10-01)
     registry.register(Migration {
         version: 1,
-        name: "create_cache_table".to_string(),
-        up_sql: include_str!("001_create_cache_table.sql").to_string(),
+        name: "20251001_create_cache_table".to_string(),
+        up_sql: include_str!("20251001_create_cache_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS cache;".to_string(),
         dependencies: vec![],
     });
 
-    // Migration 2: Create metrics table
+    // Migration 2: Create metrics table (2025-10-02)
     registry.register(Migration {
         version: 2,
-        name: "create_metrics_table".to_string(),
-        up_sql: include_str!("002_create_metrics_table.sql").to_string(),
+        name: "20251002_create_metrics_table".to_string(),
+        up_sql: include_str!("20251002_create_metrics_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS metrics;".to_string(),
         dependencies: vec![],
     });
 
-    // Migration 3: Create events table
+    // Migration 3: Create events table (2025-10-03)
     registry.register(Migration {
         version: 3,
-        name: "create_events_table".to_string(),
-        up_sql: include_str!("003_create_events_table.sql").to_string(),
+        name: "20251003_create_events_table".to_string(),
+        up_sql: include_str!("20251003_create_events_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS events;".to_string(),
         dependencies: vec![],
     });
 
-    // Migration 4: Create issues table
+    // Migration 4: Create issues table (2025-10-04)
     registry.register(Migration {
         version: 4,
-        name: "create_issues_table".to_string(),
-        up_sql: include_str!("004_create_issues_table.sql").to_string(),
+        name: "20251004_create_issues_table".to_string(),
+        up_sql: include_str!("20251004_create_issues_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS issues;".to_string(),
         dependencies: vec![],
     });
 
-    // Migration 5: Create dependencies table
+    // Migration 5: Create dependencies table (2025-10-05)
     registry.register(Migration {
         version: 5,
-        name: "create_dependencies_table".to_string(),
-        up_sql: include_str!("005_create_dependencies_table.sql").to_string(),
+        name: "20251005_create_dependencies_table".to_string(),
+        up_sql: include_str!("20251005_create_dependencies_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS dependencies;".to_string(),
         dependencies: vec![],
     });
 
-    // Migration 6: Create security findings table
+    // Migration 6: Create security findings table (2025-10-06)
     registry.register(Migration {
         version: 6,
-        name: "create_security_findings_table".to_string(),
-        up_sql: include_str!("006_create_security_findings_table.sql").to_string(),
+        name: "20251006_create_security_findings_table".to_string(),
+        up_sql: include_str!("20251006_create_security_findings_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS security_findings;".to_string(),
         dependencies: vec![],
     });
 
-    // Migration 7: Create technical debt table
+    // Migration 7: Create technical debt table (2025-10-07)
     registry.register(Migration {
         version: 7,
-        name: "create_technical_debt_table".to_string(),
-        up_sql: include_str!("007_create_technical_debt_table.sql").to_string(),
+        name: "20251007_create_technical_debt_table".to_string(),
+        up_sql: include_str!("20251007_create_technical_debt_table.sql").to_string(),
         down_sql: "DROP TABLE IF EXISTS technical_debt;".to_string(),
         dependencies: vec![],
     });

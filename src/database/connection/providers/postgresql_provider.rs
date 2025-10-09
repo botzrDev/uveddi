@@ -110,7 +110,7 @@ impl DatabaseProvider for PostgreSqlProvider {
             // Create extensions
             conn.execute_simple("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")?;
             conn.execute_simple("CREATE EXTENSION IF NOT EXISTS \"pg_stat_statements\"")?;
-            
+
             // Create tables with PostgreSQL-specific optimizations
             conn.execute_simple("
                 CREATE TABLE IF NOT EXISTS projects (
@@ -118,7 +118,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                     path TEXT NOT NULL UNIQUE,
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS analysis_runs (
                     run_id BIGSERIAL PRIMARY KEY,
                     project_id BIGINT NOT NULL,
@@ -131,7 +131,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (project_id) REFERENCES projects(project_id)
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS anti_pattern_types (
                     anti_pattern_type_id BIGSERIAL PRIMARY KEY,
                     name TEXT NOT NULL UNIQUE,
@@ -139,7 +139,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                     category TEXT NOT NULL,
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS architectural_issues (
                     issue_id BIGSERIAL PRIMARY KEY,
                     analysis_run_id BIGINT NOT NULL,
@@ -160,7 +160,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                     FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id),
                     FOREIGN KEY (anti_pattern_type_id) REFERENCES anti_pattern_types(anti_pattern_type_id)
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS dependencies (
                     dependency_id BIGSERIAL PRIMARY KEY,
                     analysis_run_id BIGINT NOT NULL,
@@ -172,7 +172,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                     FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id)
                 );
             ")?;
-            
+
             // Create PostgreSQL-specific indexes
             conn.execute_simple("
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analysis_runs_project_time ON analysis_runs(project_id, start_time);
@@ -192,7 +192,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dependencies_to_module ON dependencies(to_module);
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dependencies_composite ON dependencies(analysis_run_id, from_file, to_module);
             ")?;
-            
+
             Ok(())
         }).await?;
 
@@ -242,8 +242,8 @@ impl DatabaseProvider for PostgreSqlProvider {
                 // Use PostgreSQL UPSERT with RETURNING
                 let stmt = conn.prepare_cached(
                     "
-                INSERT INTO projects (path) VALUES ($1) 
-                ON CONFLICT (path) DO UPDATE SET path = EXCLUDED.path 
+                INSERT INTO projects (path) VALUES ($1)
+                ON CONFLICT (path) DO UPDATE SET path = EXCLUDED.path
                 RETURNING project_id
             ",
                 )?;
@@ -277,7 +277,7 @@ impl DatabaseProvider for PostgreSqlProvider {
             .execute_with_metrics(|| {
                 let stmt = conn.prepare_cached(
                     "
-                INSERT INTO analysis_runs (project_id, start_time, status, analysis_config) 
+                INSERT INTO analysis_runs (project_id, start_time, status, analysis_config)
                 VALUES ($1, $2, $3, $4) RETURNING run_id
             ",
                 )?;
@@ -311,8 +311,8 @@ impl DatabaseProvider for PostgreSqlProvider {
         self.execute_with_metrics(|| {
             let stmt = conn.prepare_cached(
                 "
-                UPDATE analysis_runs 
-                SET end_time = $1, status = $2, total_files_analyzed = $3, total_issues_found = $4 
+                UPDATE analysis_runs
+                SET end_time = $1, status = $2, total_files_analyzed = $3, total_issues_found = $4
                 WHERE run_id = $5
             ",
             )?;
@@ -352,9 +352,9 @@ impl DatabaseProvider for PostgreSqlProvider {
 
                 let stmt = tx.prepare_cached(
                     "
-                    INSERT INTO anti_pattern_types (name, description, category) 
-                    VALUES ($1, $2, $3) 
-                    ON CONFLICT (name) DO UPDATE SET 
+                    INSERT INTO anti_pattern_types (name, description, category)
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT (name) DO UPDATE SET
                         description = EXCLUDED.description,
                         category = EXCLUDED.category
                     RETURNING anti_pattern_type_id
@@ -391,8 +391,8 @@ impl DatabaseProvider for PostgreSqlProvider {
 
             // Use PostgreSQL's COPY for bulk insert performance
             let copy_stmt = "COPY architectural_issues (
-                analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, 
-                line_number, column_number, message, metadata, detector_name, created_at, 
+                analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line,
+                line_number, column_number, message, metadata, detector_name, created_at,
                 severity, description, code_snippet, ai_explanation
             ) FROM STDIN WITH (FORMAT csv)";
 
@@ -465,12 +465,12 @@ impl DatabaseProvider for PostgreSqlProvider {
 
         self.execute_with_metrics(|| {
             let mut tx = conn.transaction()?;
-            
+
             let stmt = tx.prepare_cached("
-                INSERT INTO dependencies (analysis_run_id, from_file, to_module, dependency_type, line_number) 
+                INSERT INTO dependencies (analysis_run_id, from_file, to_module, dependency_type, line_number)
                 VALUES ($1, $2, $3, $4, $5)
             ")?;
-            
+
             for dep in dependencies {
                 tx.execute(&stmt, &[
                     &run_id,
@@ -480,7 +480,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                     &dep.line_number.map(|l| l as i32),
                 ])?;
             }
-            
+
             tx.commit()?;
             Ok(())
         }).await?;
@@ -500,8 +500,8 @@ impl DatabaseProvider for PostgreSqlProvider {
             .execute_with_metrics(|| {
                 let stmt = conn.prepare_cached(
                     "
-                SELECT run_id, project_id, start_time, end_time, status, 
-                       total_files_analyzed, total_issues_found, analysis_config 
+                SELECT run_id, project_id, start_time, end_time, status,
+                       total_files_analyzed, total_issues_found, analysis_config
                 FROM analysis_runs WHERE run_id = $1
             ",
                 )?;

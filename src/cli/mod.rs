@@ -13,6 +13,7 @@ pub mod commands {
     pub mod help;
     pub mod hooks;
     pub mod init;
+    pub mod migrate;
     #[cfg(feature = "wasm-plugins")]
     pub mod plugin;
 }
@@ -28,5 +29,6 @@ pub use commands::doctor::DoctorCommand;
 pub use commands::help::HelpCommand;
 pub use commands::hooks::HooksCommand;
 pub use commands::init::InitCommand;
+pub use commands::migrate::MigrateCommand;
 #[cfg(feature = "wasm-plugins")]
 pub use commands::plugin::PluginCommand;

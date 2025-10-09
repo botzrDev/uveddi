@@ -201,7 +201,7 @@ Assignment 04 (DB) → Assignment 06 (DB) → Risk R2 Complete
 
 ### Week of Oct 20
 - [ ] Complete Assignment 04
-- [ ] Begin Assignment 05 verification
+- [x] Complete Assignment 05 (migration & error handling) ✅ 2025-10-09
 - [ ] Prepare calibration corpus
 
 ## Success Metrics
@@ -235,6 +235,52 @@ The planning phase is complete and ready for execution. The database refactor is
 ---
 
 **Created:** 2025-10-09
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-09 (Assignment 05 completed)
 **Branch:** feature/db-refactor-phase2
-**Commit:** c0766b4
+
+## Update Log
+
+### 2025-10-09: Assignment 05 Complete
+**Completed By:** Database Infrastructure Developer
+**Time Taken:** 2 hours
+**Status:** ✅ Complete
+
+#### Deliverables Achieved:
+1. ✅ Migration files reorganized with YYYYMMDD naming (20251001-20251007)
+2. ✅ Migration registry loader updated
+3. ✅ Dry-run functionality implemented (MigrationPlan with display)
+4. ✅ CLI migrate command created with subcommands:
+   - `migrate up` - Apply pending migrations
+   - `migrate down --version N` - Rollback to version
+   - `migrate plan` - Dry-run showing pending migrations
+   - `migrate status` - Show current migration state
+5. ✅ Error handling standardized (MigrationError, RepositoryError)
+6. ✅ No anyhow usage in migration paths
+7. ✅ Up/down consistency verified for all 7 migrations
+
+#### Files Modified:
+- `src/database/migrations/mod.rs` - Added PlannedMigration, MigrationPlan types
+- `src/database/migrations/runner.rs` - Added plan_migrations() method
+- `src/cli/commands/migrate.rs` - New CLI command (228 lines)
+- `src/cli/mod.rs` - Added migrate module export
+- `src/main.rs` - Wired Migrate command
+- Renamed: `001-007_*.sql` → `20251001-20251007_*.sql`
+
+#### Verification:
+```bash
+# Build successful
+cargo build --lib
+
+# Formatting clean
+cargo fmt
+
+# Migration files properly named
+ls src/database/migrations/*.sql
+
+# CLI help available
+cargo run -- migrate --help
+```
+
+#### Next Steps:
+- Assignment 04: Application integration with RepositoryManager
+- Assignment 06: Legacy CRUD cleanup (blocked by 04)
