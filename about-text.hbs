@@ -1,0 +1,29 @@
+THIRD PARTY LICENSES
+====================
+
+This file lists the licenses of all dependencies used in Uveddi.
+
+OVERVIEW OF LICENSES
+--------------------
+{{#each overview}}
+- {{name}}: {{count}} package(s)
+{{/each}}
+
+DETAILED LICENSE INFORMATION
+-----------------------------
+{{#each licenses}}
+
+================================================================================
+LICENSE: {{name}}
+================================================================================
+
+Used by the following packages:
+{{#each used_by}}
+  - {{crate.name}} {{crate.version}}{{#if crate.repository}} ({{crate.repository}}){{/if}}
+{{/each}}
+
+License text:
+--------------------------------------------------------------------------------
+{{text}}
+
+{{/each}}

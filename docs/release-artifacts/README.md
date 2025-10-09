@@ -142,10 +142,32 @@ default = ["cli-standard"]
 - `README.md` links to the new docs, clarifies security scanning behavior, and highlights HTML output availability.  
 - Launch tracker updated with A3 completion, artifact links, and follow-up notes.
 
+## Assignment A4A Deliverables ✅
+
+### Attribution & Privacy Artifacts
+- **Third-Party Licenses** → `../../THIRD_PARTY_LICENSES.txt`
+  Complete license texts for all 441 dependencies (304 Apache-2.0, 103 MIT, 19 Unicode-3.0, and 8 other licenses). Generated using cargo-about.
+
+- **NOTICE File** → `../../NOTICE`
+  Third-party acknowledgements including Rust, Tree-sitter, SQLite, tokio, serde, clap, and Ollama. Includes trademark statements and license summary.
+
+- **Privacy Policy** → `../../PRIVACY.md`
+  Customer-facing privacy statement covering local-only analysis, no telemetry by default, optional AI integration, data retention, GDPR/CCPA compliance, and contact information.
+
+- **PGP Public Key** → `../../pgp/security@uveddi.com.asc`
+  4096-bit RSA PGP key for encrypted security vulnerability reports.
+  **Fingerprint:** `D592 AD0C 4CCC 5125 326F 7A12 B68A 7402 9415 6723`
+  **Key ID:** 94156723
+  **Created:** 2025-10-09
+
+### Documentation Updates
+- **README.md** updated with links to PRIVACY.md, NOTICE, THIRD_PARTY_LICENSES.txt, and PGP key fingerprint in Security & Privacy section.
+- **SECURITY_CONTACT.md** updated with complete PGP key information, fingerprint, and usage instructions.
+
 ## Sign-Off
 
-- **Assignment Status:** ✅ A2 & A3 complete with verification evidence stored.  
-- **Blockers:** None.  
+- **Assignment Status:** ✅ A2, A3, and A4A complete with verification evidence stored.
+- **Blockers:** None.
 - **Open Follow-Ups:** Database refactor plan, detector calibration scheduling, detector selection flag (roadmap).
 
 ---

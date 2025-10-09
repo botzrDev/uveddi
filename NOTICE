@@ -1,0 +1,115 @@
+NOTICE
+
+Uveddi CLI - Architectural Analysis Tool
+Copyright (c) 2025 botzrDev
+Licensed under the MIT License
+
+This software incorporates third-party open source components, each with its own
+copyright and license. Full license texts for all dependencies are available in
+the THIRD_PARTY_LICENSES.txt file distributed with this software.
+
+================================================================================
+MAJOR THIRD-PARTY COMPONENTS
+================================================================================
+
+Rust Programming Language and Standard Library
+  Copyright (c) The Rust Project Developers
+  Licensed under MIT and Apache-2.0
+  https://www.rust-lang.org/
+
+Tree-sitter Parser Generator and Language Grammars
+  Copyright (c) 2018-2024 Max Brunsfeld and contributors
+  Licensed under MIT
+  https://tree-sitter.github.io/tree-sitter/
+
+  This software uses Tree-sitter parsers for:
+  - tree-sitter-rust: Rust language parsing
+  - tree-sitter-python: Python language parsing
+  - tree-sitter-javascript: JavaScript language parsing
+  - tree-sitter-typescript: TypeScript language parsing
+
+SQLite Database Engine
+  Accessed via the rusqlite crate
+  SQLite is in the public domain
+  https://www.sqlite.org/
+
+tokio Asynchronous Runtime
+  Copyright (c) 2023 Tokio Contributors
+  Licensed under MIT
+  https://tokio.rs/
+
+serde Serialization Framework
+  Copyright (c) 2014-2024 The Rust Project Developers
+  Licensed under MIT and Apache-2.0
+  https://serde.rs/
+
+clap Command Line Argument Parser
+  Copyright (c) 2015-2024 Kevin K. and clap contributors
+  Licensed under MIT and Apache-2.0
+  https://github.com/clap-rs/clap
+
+================================================================================
+OLLAMA INTEGRATION
+================================================================================
+
+This software optionally integrates with Ollama, an open-source LLM runtime.
+Ollama is a separate product and is not included in this distribution.
+  Copyright (c) 2023 Ollama LLC
+  Licensed under MIT
+  https://ollama.ai/
+
+When Ollama integration is enabled, Uveddi communicates with a locally-running
+Ollama instance via HTTP API. Users are responsible for their own Ollama
+installation, configuration, and model selection.
+
+================================================================================
+LICENSE SUMMARY
+================================================================================
+
+This software includes dependencies under the following licenses:
+  - Apache License 2.0 (304 packages)
+  - MIT License (103 packages)
+  - Unicode License v3 (19 packages)
+  - ISC License (5 packages)
+  - BSD 3-Clause License (4 packages)
+  - Mozilla Public License 2.0 (2 packages)
+  - BSD 2-Clause License (1 package)
+  - Creative Commons Zero v1.0 Universal (1 package)
+  - Community Data License Agreement Permissive 2.0 (1 package)
+  - zlib License (1 package)
+
+See THIRD_PARTY_LICENSES.txt for complete license texts and package listings.
+
+================================================================================
+TRADEMARKS
+================================================================================
+
+"Uveddi" is a trademark of botzrDev.
+
+Rust and the Rust logo are trademarks of the Mozilla Foundation.
+
+Tree-sitter is a trademark of Max Brunsfeld.
+
+Ollama and the Ollama logo are trademarks of Ollama LLC.
+
+All other trademarks mentioned in this software or documentation are the
+property of their respective owners.
+
+================================================================================
+EXPORT CONTROL
+================================================================================
+
+This software may be subject to export control laws and regulations. Users are
+responsible for complying with all applicable export control requirements.
+
+================================================================================
+SECURITY DISCLOSURE
+================================================================================
+
+For security vulnerabilities, please contact: security@uveddi.com
+PGP key available at: pgp/security@uveddi.com.asc
+
+================================================================================
+
+For questions regarding third-party licenses or attribution, contact:
+  legal@uveddi.com

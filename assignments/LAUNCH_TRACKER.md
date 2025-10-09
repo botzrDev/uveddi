@@ -28,6 +28,7 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-09 | **A2 completed ahead of schedule.** Product surface frozen, all CLI commands verified, feature flags documented. 95% alignment between scope and implementation. Identified 2 high-priority doc gaps for A3. | PM review of scope diff report; decision needed on security feature flag and HTML output format |
 | 2025-10-09 | **A3 completed 10 days early.** CLI/Troubleshooting docs authored, security feature flag removed, HTML output approved. Added config/CI integration tests and documented results. Detector selection deferred to roadmap. | Draft dedicated plan for database refactor + detector calibration (done: see `assignments/DB_CALIBRATION_PLAN.md`); monitor deferred detector-selection decision |
 | 2025-10-09 | **Database Refactor Phase 2 planning initiated.** Created `feature/db-refactor-phase2` branch. Assessment shows Assignments 01-03 largely complete (repositories implemented). Critical path: Assignment 04 (remove direct Database usage) → Assignment 06 (CRUD cleanup). 7-10 hours work remaining. | Begin Assignment 04 week of 2025-10-13; track weekly progress in verification checklist |
+| 2025-10-09 | **A4A completed (Attribution & Privacy Artifacts).** Generated THIRD_PARTY_LICENSES.txt (441 deps), created NOTICE file, PRIVACY.md policy, and PGP key for security@uveddi.com. All docs updated with links and PGP fingerprint. Commercial distribution now includes required licenses and privacy disclosures. | Validate PGP key backup/storage; consider publishing key to keyservers; review privacy policy with legal if available |
 
 ## Verification Summary
 
@@ -53,6 +54,15 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 - **Assignment Summary:** [assignments/ASSIGNMENT-A3-HARDENING.md](./ASSIGNMENT-A3-HARDENING.md)
 - **Decision Log:** [docs/release-artifacts/README.md](../docs/release-artifacts/README.md)
 - **Follow-up Plan:** [assignments/DB_CALIBRATION_PLAN.md](./DB_CALIBRATION_PLAN.md)
+
+### Assignment A4A Artifacts (Complete - 2025-10-09)
+- **Third-Party Licenses:** [THIRD_PARTY_LICENSES.txt](../THIRD_PARTY_LICENSES.txt) - 441 dependencies with complete license texts
+- **NOTICE File:** [NOTICE](../NOTICE) - Third-party acknowledgements and trademarks
+- **Privacy Policy:** [PRIVACY.md](../PRIVACY.md) - Customer-facing privacy statement
+- **PGP Public Key:** [pgp/security@uveddi.com.asc](../pgp/security@uveddi.com.asc) - 4096-bit RSA key (Fingerprint: D592 AD0C 4CCC 5125 326F 7A12 B68A 7402 9415 6723)
+- **Security Contact Updates:** [SECURITY_CONTACT.md](./SECURITY_CONTACT.md) - Updated with PGP key information
+- **README Updates:** [README.md](../README.md) - Added links to all attribution and privacy artifacts
+- **Release Artifacts Summary:** [docs/release-artifacts/README.md](../docs/release-artifacts/README.md) - A4A section added
 
 ### Database Refactor Milestones (Risk R2 Mitigation)
 

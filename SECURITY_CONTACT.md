@@ -26,25 +26,36 @@ If you discover a security vulnerability in Uveddi, please report it to our secu
 
 For sensitive vulnerability reports, use our PGP public key:
 
-```
------BEGIN PGP PUBLIC KEY BLOCK-----
-Version: GnuPG v2
+**Key ID:** 94156723
+**Fingerprint:** `D592 AD0C 4CCC 5125 326F  7A12 B68A 7402 9415 6723`
+**Key Type:** RSA 4096-bit
+**Created:** 2025-10-09
+**Expires:** Never
+**Email:** security@uveddi.com
+**Name:** Uveddi Security Team
 
-[PGP KEY TO BE GENERATED AND INSERTED HERE]
+**Public Key Location:** [`pgp/security@uveddi.com.asc`](./pgp/security@uveddi.com.asc)
 
-Key ID: [TO BE GENERATED]
-Fingerprint: [TO BE GENERATED]
------END PGP PUBLIC KEY BLOCK-----
-```
-
-**Key Generation Status:** ⏳ Pending  
-**Action Required:** Generate GPG keypair before production release  
-**Command:** `gpg --full-generate-key --expert`
-
-**To verify the key:**
+**To verify and import the key:**
 ```bash
-curl https://uveddi.com/security-pgp.asc | gpg --import
+# Download and import from the repository
+curl -O https://raw.githubusercontent.com/botzrDev/uveddi/main/pgp/security@uveddi.com.asc
+gpg --import security@uveddi.com.asc
+
+# Verify the fingerprint matches
 gpg --fingerprint security@uveddi.com
+
+# Expected output:
+# pub   rsa4096 2025-10-09 [SC]
+#       D592 AD0C 4CCC 5125 326F  7A12 B68A 7402 9415 6723
+# uid           [ultimate] Uveddi Security Team <security@uveddi.com>
+# sub   rsa4096 2025-10-09 [E]
+```
+
+**To encrypt a message:**
+```bash
+gpg --encrypt --armor --recipient security@uveddi.com your-report.txt
+# Send the encrypted output (.asc file) to security@uveddi.com
 ```
 
 ---

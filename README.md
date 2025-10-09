@@ -95,8 +95,9 @@ Uveddi follows industry-standard security practices and privacy-first design pri
 
 - **Security Policy:** See [SECURITY_POLICY.md](SECURITY_POLICY.md) for supported versions and vulnerability reporting
 - **Report Vulnerabilities:** Contact security@uveddi.com or use [GitHub Security Advisories](https://github.com/botzrDev/uveddi/security/advisories)
+- **PGP Encryption:** For sensitive reports, use our [PGP public key](pgp/security@uveddi.com.asc) (Fingerprint: `D592 AD0C 4CCC 5125 326F 7A12 B68A 7402 9415 6723`)
 - **Privacy First:** No telemetry or data collection by default; all analysis runs locally unless AI features explicitly enabled
-- **Compliance:** GDPR and CCPA compliant; see our [Privacy Policy](PRIVACY.md) *(to be published)*
+- **Compliance:** GDPR and CCPA compliant; see our [Privacy Policy](PRIVACY.md)
 
 For detailed security contact information and responsible disclosure guidelines, see [SECURITY_CONTACT.md](SECURITY_CONTACT.md).
 
@@ -105,9 +106,17 @@ For detailed security contact information and responsible disclosure guidelines,
 - Q4 2025: Expanded security rule packs, dependency hygiene scoring, SaaS-based reporting backend (opt-in)
 - Q1 2026: Managed policy library, organization-wide baselines, enhanced plugin marketplace
 
-## License
+## License & attribution
 
 The source code is distributed under the MIT license (see [LICENSE](LICENSE)). Commercial use of the official Uveddi CLI distribution requires an active subscription agreement.
+
+### Third-party licenses
+
+Uveddi incorporates open source components from the Rust ecosystem and other projects. See:
+- [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) – Complete license texts for all 441 dependencies
+- [NOTICE](NOTICE) – Third-party acknowledgements and trademarks
+
+These files are included in all distribution packages and document our compliance with open source license obligations.
 
 ---
 
