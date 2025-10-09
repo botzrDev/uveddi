@@ -254,58 +254,63 @@ cargo fmt  # Successful
 ### Assignment 07 - Migration CLI QA & Demo Alignment ✅
 **Status:** Complete
 **Completed:** 2025-10-09
-**Time Taken:** 2 hours
+**Time Spent:** 4 hours
 **Complexity:** Medium
 
-**Completed Work:**
-- ✅ Created comprehensive CLI migration test suite in `tests/cli/migrate_command.rs`
-- ✅ Implemented temporary database test harness using tempfile crate
-- ✅ Added integration tests for all migrate subcommands: plan, up, down, status
-- ✅ Tested migration idempotency and rollback scenarios
-- ✅ Updated `simple_cycle_demo.rs` to reference ScalableDatabase/repository patterns
-- ✅ Removed all references to `database::crud::Database` from demo code
-- ✅ Documentation updated with test coverage details
+**Work Completed:**
+- ✅ Added `tests/cli/migrate_command.rs` with a reusable `MigrationTestHarness` based on `tempfile`.
+- ✅ Authored 16 async tests covering plan/up/down/status/dry-run/idempotency flows.
+- ✅ Fixed version numbering inconsistency: updated tests to use sequential versions (1-7) matching the migration registry.
+- ✅ Fixed SQL syntax error in migration 6: renamed `references` column to `reference_links` to avoid SQL keyword conflict.
+- ✅ Added 6 CLI command integration tests that directly exercise `MigrateCommand::execute()` for all subcommands (Plan, Up, Down, Status).
+- ✅ Made `MigrateCommand.subcommand` field public for testing.
+- ✅ Updated `src/bin/simple_cycle_demo.rs` to demonstrate the repository-based architecture (no references to `database::crud::Database` remain).
+- ✅ All 16 tests pass with no warnings.
 
-**Test Coverage Added:**
-- `test_migrate_plan_shows_pending_migrations()` - Verifies plan output lists all 7 migrations
-- `test_migrate_up_applies_all_pending()` - End-to-end migration application
-- `test_migrate_status_shows_applied_migrations()` - Status reporting validation
-- `test_migrate_down_rolls_back_to_version()` - Rollback functionality testing
-- `test_migrate_command_plan_execution()` - CLI command integration test
-- `test_migrate_command_up_execution()` - CLI up command test
-- `test_migrate_command_status_execution()` - CLI status command test
-- `test_migrate_command_down_execution()` - CLI down command test
-- `test_migrate_idempotency()` - Ensures migrations can be safely re-run
+**Test Coverage:**
+Runner tests (10):
+- test_registry_has_all_migrations
+- test_migrate_plan_shows_pending_migrations
+- test_migrate_up_applies_all_pending
+- test_migrate_status_shows_applied_migrations
+- test_migrate_down_rolls_back_to_version
+- test_migrate_plan_dry_run
+- test_migrate_up_with_verification
+- test_migrate_status_reporting
+- test_migrate_down_with_verification
+- test_migrate_idempotency
 
-**Verification Commands:**
+CLI command tests (6):
+- test_cli_migrate_plan_command
+- test_cli_migrate_up_command
+- test_cli_migrate_status_command
+- test_cli_migrate_down_command
+- test_cli_migrate_up_idempotency
+- test_cli_migrate_down_already_at_target
+
+**Command Output (final run):**
 ```bash
-# Run new CLI migration tests
-cargo test --test migrate_command
-
-# Verify no database::crud::Database references in demos
-rg "database::crud::Database" src/bin/
-
-# Run all tests
-cargo test
-
-# Format and lint
-cargo fmt
-cargo clippy --all-targets -- -D warnings
+cargo test --test migrate_command -- --nocapture
+# Result: test result: ok. 16 passed; 0 failed; 0 ignored
 ```
 
-**Success Criteria:**
-- [x] MigrationTestHarness utility created with tempfile support
-- [x] All migration subcommands have integration tests
-- [x] Tests use isolated temporary databases (no repo pollution)
-- [x] Zero references to database::crud::Database in src/bin/
-- [x] All tests pass consistently
-- [x] Documentation updated with test coverage information
+**Issues Fixed:**
+1. ✅ Version numbering: tests expected date-based (20251001-20251007) but registry used sequential (1-7). Updated all tests to use sequential versions.
+2. ✅ SQL syntax error: migration 6 failed with "near 'references': syntax error" because `references` is a SQL keyword. Renamed column to `reference_links`.
+3. ✅ CLI coverage: added tests that instantiate `MigrateCommand` and call `execute()` for all subcommands.
 
-**Test Results:**
-- All 9 migration CLI tests passing
-- Test harness properly cleans up temporary databases
-- Migration commands execute successfully in isolated environments
-- Rollback and idempotency scenarios validated
+**Exit Criteria:**
+- [x] Migration test suite passes consistently on clean run.
+- [x] CLI command paths covered in tests.
+- [x] No stale documentation claims about passing tests.
+- [x] Tracker updated to mark Assignment 07 complete.
+
+**Version Numbering Decision:**
+Adopted **sequential version numbers (1-7)** as the canonical scheme because:
+- Simpler and more maintainable
+- Matches Migration struct documentation ("sequential")
+- Easier to work with in code and tests
+- Migration file names still use date prefixes (20251001-20251007) for chronological reference
 
 ---
 

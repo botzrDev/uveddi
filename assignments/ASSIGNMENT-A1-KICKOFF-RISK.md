@@ -1,7 +1,6 @@
 # Assignment A1 – Kickoff & Risk Map
 
 **Status:** Complete  
-**Target Window:** Week 0 (2025-10-09 → 2025-10-11)  
 **Owner:** Austin (solo dev)  
 
 ## Objective

@@ -1,7 +1,6 @@
 # Assignment DB-04 – Application Layer Repository Integration
 
 **Status:** Not Started  
-**Target Window:** 2025-10-13 → 2025-10-18  
 **Owner:** Senior Backend Developer  
 **Branch:** `feature/db-refactor-phase2`
 

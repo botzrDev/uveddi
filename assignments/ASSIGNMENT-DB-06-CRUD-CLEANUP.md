@@ -1,7 +1,6 @@
 # Assignment DB-06 – Legacy CRUD Layer Decommission
 
 **Status:** Not Started  
-**Target Window:** 2025-10-27 → 2025-11-02  
 **Owner:** Backend Developer (Repository Migration)  
 **Branch:** `feature/db-refactor-phase2`
 

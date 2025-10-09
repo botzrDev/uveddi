@@ -298,60 +298,64 @@ cargo run -- migrate --help
 5. ✅ 43 database tests passing (6 pre-existing failures documented)
 6. ✅ Build successful with no migration-related warnings
 
-### 2025-10-09: Assignment 07 Complete (DB-07)
-**Completed By:** Senior Backend Developer (Tooling QA)
-**Time Taken:** 2 hours
+### 2025-10-09: Assignment 07 Complete (DB-07, DB-08)
+**Engineer:** Senior Backend Developer (Tooling QA)
+**Time Spent:** 4 hours
 **Status:** ✅ Complete
 
 #### Deliverables Achieved:
-1. ✅ Created comprehensive CLI migration test suite (`tests/cli/migrate_command.rs`)
-2. ✅ Implemented MigrationTestHarness using tempfile crate
-3. ✅ Added 9 integration tests covering all migration workflows:
-   - `test_migrate_plan_shows_pending_migrations()` - Validates plan output
-   - `test_migrate_up_applies_all_pending()` - End-to-end apply test
-   - `test_migrate_status_shows_applied_migrations()` - Status reporting
-   - `test_migrate_down_rolls_back_to_version()` - Rollback functionality
-   - `test_migrate_command_plan_execution()` - CLI plan command
-   - `test_migrate_command_up_execution()` - CLI up command
-   - `test_migrate_command_status_execution()` - CLI status command
-   - `test_migrate_command_down_execution()` - CLI down command
-   - `test_migrate_idempotency()` - Idempotency verification
-4. ✅ Updated `simple_cycle_demo.rs` to reference ScalableDatabase/repository patterns
-5. ✅ Removed all `database::crud::Database` references from demo code
-6. ✅ Documentation updated with test coverage details
+1. ✅ Added `tests/cli/migrate_command.rs` with a `MigrationTestHarness` that provisions isolated SQLite databases via `tempfile`.
+2. ✅ Authored 16 async tests (10 runner tests + 6 CLI command tests) covering all migration paths.
+3. ✅ Fixed version numbering inconsistency: updated all tests to use sequential versions (1-7) matching the migration registry.
+4. ✅ Fixed SQL syntax error in migration 6: renamed `references` column to `reference_links` to avoid SQL reserved keyword conflict.
+5. ✅ Added direct CLI command coverage: tests instantiate `MigrateCommand` with each subcommand (Plan, Up, Down, Status) and call `execute()`.
+6. ✅ Made `MigrateCommand.subcommand` field public for testing purposes.
+7. ✅ Updated `src/bin/simple_cycle_demo.rs` to reference `ScalableDatabase`/repository architecture.
+8. ✅ All 16 tests pass with zero warnings.
 
-#### Files Created:
-- `tests/cli/migrate_command.rs` - 330+ lines of comprehensive CLI tests
+#### Test Coverage:
+**Runner Tests (10):**
+- test_registry_has_all_migrations
+- test_migrate_plan_shows_pending_migrations
+- test_migrate_up_applies_all_pending
+- test_migrate_status_shows_applied_migrations
+- test_migrate_down_rolls_back_to_version
+- test_migrate_plan_dry_run
+- test_migrate_up_with_verification
+- test_migrate_status_reporting
+- test_migrate_down_with_verification
+- test_migrate_idempotency
+
+**CLI Command Tests (6):**
+- test_cli_migrate_plan_command
+- test_cli_migrate_up_command
+- test_cli_migrate_status_command
+- test_cli_migrate_down_command
+- test_cli_migrate_up_idempotency
+- test_cli_migrate_down_already_at_target
 
 #### Files Modified:
-- `src/bin/simple_cycle_demo.rs` - Updated from crud::Database to ScalableDatabase reference
-- `archive/development/database-refactor-verification.md` - Added DB-07 completion section
-- `assignments/IMPLEMENTATION_SUMMARY.md` - This update
-- `assignments/LAUNCH_TRACKER.md` - Added DB-07 milestone tracking
+- Created: `tests/cli/migrate_command.rs` (507 lines)
+- Modified: `src/database/migrations/20251006_create_security_findings_table.sql` (fixed SQL keyword issue)
+- Modified: `src/cli/commands/migrate.rs` (made subcommand field public)
+- Modified: `archive/development/database-refactor-verification.md` (status updates)
+- Modified: `assignments/LAUNCH_TRACKER.md` (completion tracking)
 
-#### Test Results:
-- All 9 CLI migration tests passing
-- Temporary database harness properly isolates tests
-- No repository pollution from test runs
-- Idempotency and rollback scenarios validated
-
-#### Verification Commands:
+#### Final Test Output:
 ```bash
-# Run new CLI migration tests
-cargo test --test migrate_command
-# Expected: 9 passed
-
-# Verify no crud::Database references
-rg "database::crud::Database" src/bin/
-# Expected: No matches
-
-# Full test suite
-cargo test
-# Expected: All passing (except 6 pre-existing failures)
+cargo test --test migrate_command -- --nocapture
+# Result: test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
 ```
 
-#### Next Steps:
-- Database refactor Phase 2 complete (Assignments 01-07 done)
-- Risk R2 mitigation complete
-- Ready to proceed with detector calibration sprint (Nov 3-8)
+#### Issues Resolved:
+1. ✅ **Version Mismatch:** Tests expected date-based versions (20251001-20251007) but registry used sequential (1-7). Updated all test assertions to use sequential versions.
+2. ✅ **SQL Syntax Error:** Migration 6 failed with "near 'references': syntax error" because `references` is a SQL reserved keyword. Renamed column to `reference_links`.
+3. ✅ **Missing CLI Coverage:** Added 6 tests that directly exercise `MigrateCommand::execute()` for all subcommands.
+4. ✅ **Unused Imports:** Removed unused CLI imports that were causing warnings.
 
+#### Version Numbering Decision:
+Adopted **sequential version numbers (1-7)** as the canonical scheme because:
+- Simpler and more maintainable
+- Matches Migration struct documentation ("sequential")
+- Easier to work with in code and tests
+- Migration file names still use date prefixes (20251001-20251007) for chronological reference

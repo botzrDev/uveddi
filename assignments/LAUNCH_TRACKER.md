@@ -4,19 +4,19 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 
 ## Phase Schedule
 
-| Phase | Window | Status | Key Tasks | Verification Artifacts |
-|-------|--------|--------|-----------|------------------------|
-| [A1 – Kickoff & Risk Map](./ASSIGNMENT-A1-KICKOFF-RISK.md) | 2025-10-09 → 2025-10-11 | ✅ Complete | Scope/KPI definition, tracker setup, risk register | Scope doc, tracker link, risk register |
-| [A2 – Product Surface Freeze](./ASSIGNMENT-A2-PRODUCT-FREEZE.md) | 2025-10-12 → 2025-10-18 | ✅ Complete (2025-10-09) | Feature flag mapping, CLI command audit, doc updates | CLI snapshot, feature matrix, scope diff |
-| [A3 – Hardening Sprint](./ASSIGNMENT-A3-HARDENING.md) | 2025-10-19 → 2025-11-08 | ✅ Complete (2025-10-09) | Docs cleanup, CI/config fixes, decision log, calibration planning | Doc links, test logs, decisions memo |
-| [A4 – Security & Compliance](./ASSIGNMENT-A4-COMPLIANCE.md) | 2025-11-09 → 2025-11-15 | Not Started | License enforcement, dependency audit, compliance notes | License scan, checklist |
-| [A5 – QA Execution](./ASSIGNMENT-A5-QA.md) | 2025-11-16 → 2025-11-22 | Not Started | Automated + manual test passes, regression sweeps | QA report, dashboard |
-| [A6 – Packaging & Distribution](./ASSIGNMENT-A6-PACKAGING.md) | 2025-11-23 → 2025-11-29 | Not Started | Build/sign artifacts, validate installers/containers | Artifact manifest, install logs |
-| [A7 – Docs & Enablement](./ASSIGNMENT-A7-DOCS.md) | 2025-11-30 → 2025-12-06 | Not Started | README/CLI reference updates, quickstart assets | Doc review checklist |
-| [A8 – GTM Prep](./ASSIGNMENT-A8-GTM.md) | 2025-12-07 → 2025-12-20 | Not Started | Messaging, pricing FAQ, launch announcements | Asset checklist, copy approvals |
-| [A9 – Support & Ops Ready](./ASSIGNMENT-A9-SUPPORT.md) | 2025-12-21 → 2025-12-27 | Not Started | Support workflows, monitoring setup, escalation drill | Support SOP, drill log |
-| [A10 – Release Execution](./ASSIGNMENT-A10-RELEASE.md) | 2025-12-28 → 2026-01-03 | Not Started | Tag release, publish artifacts, launch-day comms | Launch checklist, comms log |
-| [A11 – Post-Launch Review](./ASSIGNMENT-A11-POSTLAUNCH.md) | 2026-01-04 → 2026-01-17 | Not Started | Metrics gathering, customer feedback, roadmap updates | Metrics dashboard, retro notes |
+| Phase | Cadence | Status | Key Tasks | Verification Artifacts |
+|-------|---------|--------|-----------|------------------------|
+| [A1 – Kickoff & Risk Map](./ASSIGNMENT-A1-KICKOFF-RISK.md) | — | ✅ Complete | Scope/KPI definition, tracker setup, risk register | Scope doc, tracker link, risk register |
+| [A2 – Product Surface Freeze](./ASSIGNMENT-A2-PRODUCT-FREEZE.md) | — | ✅ Complete | Feature flag mapping, CLI command audit, doc updates | CLI snapshot, feature matrix, scope diff |
+| [A3 – Hardening Sprint](./ASSIGNMENT-A3-HARDENING.md) | — | ✅ Complete | Docs cleanup, CI/config fixes, decision log, calibration planning | Doc links, test logs, decisions memo |
+| [A4 – Security & Compliance](./ASSIGNMENT-A4-COMPLIANCE.md) | — | ✅ Complete | License enforcement, dependency audit, compliance notes | License scan, checklist |
+| [A5 – QA Execution](./ASSIGNMENT-A5-QA.md) | — | Not Started | Automated + manual test passes, regression sweeps | QA report, dashboard |
+| [A6 – Packaging & Distribution](./ASSIGNMENT-A6-PACKAGING.md) | — | Not Started | Build/sign artifacts, validate installers/containers | Artifact manifest, install logs |
+| [A7 – Docs & Enablement](./ASSIGNMENT-A7-DOCS.md) | — | Not Started | README/CLI reference updates, quickstart assets | Doc review checklist |
+| [A8 – GTM Prep](./ASSIGNMENT-A8-GTM.md) | — | Not Started | Messaging, pricing FAQ, launch announcements | Asset checklist, copy approvals |
+| [A9 – Support & Ops Ready](./ASSIGNMENT-A9-SUPPORT.md) | — | Not Started | Support workflows, monitoring setup, escalation drill | Support SOP, drill log |
+| [A10 – Release Execution](./ASSIGNMENT-A10-RELEASE.md) | — | Not Started | Tag release, publish artifacts, launch-day comms | Launch checklist, comms log |
+| [A11 – Post-Launch Review](./ASSIGNMENT-A11-POSTLAUNCH.md) | — | Not Started | Metrics gathering, customer feedback, roadmap updates | Metrics dashboard, retro notes |
 
 ## Working Notes
 
@@ -31,7 +31,15 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-09 | **A4A completed (Attribution & Privacy Artifacts).** Generated THIRD_PARTY_LICENSES.txt (441 deps), created NOTICE file, PRIVACY.md policy, and PGP key for security@uveddi.com. All docs updated with links and PGP fingerprint. Commercial distribution now includes required licenses and privacy disclosures. | Validate PGP key backup/storage; consider publishing key to keyservers; review privacy policy with legal if available |
 | 2025-10-09 | **DB-05 complete (migrations).** Added CLI migrate command, dry-run planner, standardized errors, and versioned migration files. | Proceed with DB-04 application refactor followed by DB-06 cleanup. |
 | 2025-10-09 | **DB-06 complete (CRUD decommission).** Removed `crud.rs`, migrated call sites to `ScalableDatabase`, added compatibility shims, database tests passing. Database refactor assignments 01-06 now complete. | Close Risk R2; shift focus to detector calibration sprint per plan. |
-| 2025-10-09 | **DB-07 complete (Migration CLI QA & Demo Alignment).** Created comprehensive CLI migration test suite (9 tests in `tests/cli/migrate_command.rs`), implemented temporary database test harness, validated all migration subcommands (plan/up/down/status), updated `simple_cycle_demo.rs` to remove crud::Database references. Database refactor Phase 2 fully complete (Assignments 01-07). | Risk R2 mitigation complete; proceed with detector calibration sprint per plan (Nov 3-8) |
+| 2025-10-09 | **DB-07 in progress.** Migration CLI test harness drafted; nine tests failing due to version mismatch and missing command coverage. | Align expectations with registry numbering and add `MigrateCommand::execute` coverage (captured in DB-08). |
+| 2025-10-09 | **DB-08 defined (Migration Test Stabilization).** Follow-up assignment created to fix DB-07 failures and cover CLI command paths end-to-end. | Execute DB-08 to unblock DB-07 completion and restore green migration test suite. |
+| 2025-10-09 | **A5 QA Execution assignment drafted.** QA plan now documented covering automation, manual sweeps, regression matrices, and sign-off artifacts. | Prep test environments and automation scripts ahead of execution. |
+| 2025-10-09 | **A6 Packaging & Distribution assignment drafted.** Build, signing, and installer tasks scoped for release packaging. | Stage build infrastructure and confirm certificate availability. |
+| 2025-10-09 | **A7 Docs & Enablement assignment drafted.** Documentation refresh, quickstart, upgrade guide, and enablement assets outlined. | Gather inputs from QA and support to feed updates. |
+| 2025-10-09 | **A8 GTM Prep assignment drafted.** Messaging, pricing, launch content, and runbook defined for go-to-market. | Coordinate with docs/support to refine messaging; begin asset collection. |
+| 2025-10-09 | **A9 Support & Ops assignment drafted.** Support SOP, escalation plan, monitoring, and KB work captured. | Verify tooling access and schedule tabletop exercise post-packaging. |
+| 2025-10-09 | **A10 Release Execution assignment drafted.** Final tagging, artifact publication, and launch communications plan documented. | Ensure dependencies (A5–A9) complete before execution. |
+| 2025-10-09 | **A11 Post-Launch Review assignment drafted.** Metrics gathering, feedback digest, retrospective, and roadmap reset tasks defined. | Set up telemetry/log capture during release execution to support post-launch review. |
 
 ## Verification Summary
 
@@ -75,26 +83,17 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-13 → 10-18 | Assignment 04 | Application layer repository integration | 🎯 Upcoming | Remove Database class, use RepositoryManager directly |
 | 2025-10-20 → 10-25 | Assignment 05 | Migration & error handling verification | ✅ Complete (2025-10-09) | CLI migrate command, dry-run, standardized errors |
 | 2025-10-27 → 11-02 | Assignment 06 | Legacy CRUD cleanup | ✅ Complete (2025-10-09) | Removed crud.rs, compatibility shims, tests passing |
-| 2025-10-09 | Testing & QA | Assignment 07 - Migration CLI QA | ✅ Complete (2025-10-09) | CLI migration tests, test harness, demo cleanup |
+| 2025-10-09 | Testing & QA | Assignments 07 & 08 - Migration Tests | ✅ Complete | 16 tests passing, CLI commands fully covered |
 
-### Assignment DB-07 Artifacts (Complete - 2025-10-09)
-- **Test Suite:** [tests/cli/migrate_command.rs](../tests/cli/migrate_command.rs) - 9 comprehensive migration CLI tests
-- **Test Harness:** MigrationTestHarness utility with tempfile support (embedded in test suite)
-- **Demo Updates:** [src/bin/simple_cycle_demo.rs](../src/bin/simple_cycle_demo.rs) - Removed crud::Database references
-- **Verification Documentation:** [archive/development/database-refactor-verification.md](../archive/development/database-refactor-verification.md) - DB-07 completion section
-- **Implementation Summary:** [assignments/IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) - DB-07 deliverables logged
-- **Test Coverage:**
-  - Migration plan validation (7 migrations detected: 20251001-20251007)
-  - Migration up/apply end-to-end testing
-  - Migration status reporting verification
-  - Migration down/rollback testing (to version 20251003)
-  - CLI command integration tests (plan, up, down, status)
-  - Idempotency verification
-- **Verification Results:**
-  - ✅ All 9 CLI migration tests passing
-  - ✅ Zero `database::crud::Database` references in src/bin
-  - ✅ Temporary database isolation working correctly
-  - ✅ No test pollution in repository
+### Assignment DB-07/DB-08 Notes (2025-10-09)
+- **Work Landed:** [tests/cli/migrate_command.rs](../tests/cli/migrate_command.rs) adds a tempfile-backed `MigrationTestHarness` with 16 async tests covering both `MigrationRunner` and `MigrateCommand::execute()` paths. Fixed version numbering inconsistency and SQL syntax error in migration 6.
+- **Final Status:** All 16 tests passing with zero warnings. Test suite covers: registry validation, plan/up/down/status operations, idempotency, rollback scenarios, and CLI command execution.
+- **Issues Resolved:**
+  1. Version mismatch: Updated tests to use sequential versions (1-7) matching registry
+  2. SQL keyword: Renamed `references` column to `reference_links` in migration 6
+  3. CLI coverage: Added 6 tests for direct `MigrateCommand::execute()` validation
+- **Test Output:** `cargo test --test migrate_command` → `test result: ok. 16 passed; 0 failed`
+- **Decision:** Adopted sequential version numbers (1-7) as canonical scheme; file names retain date prefixes for chronological reference
 
 ---
 **Last Updated:** 2025-10-09

@@ -1,7 +1,6 @@
 # Assignment DB-05 – Migration & Error Handling Verification
 
 **Status:** Not Started  
-**Target Window:** 2025-10-20 → 2025-10-25  
 **Owner:** Backend Infrastructure Developer  
 **Branch:** `feature/db-refactor-phase2`
 

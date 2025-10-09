@@ -2,7 +2,6 @@
 
 **Status:** ✅ Complete  
 **Completion Date:** 2025-10-09  
-**Target Window:** 2025-11-09 → 2025-11-15 *(Completed Early)*  
 **Owner:** Senior Developer (Security/Compliance Focus) / GitHub Copilot  
 
 ## Objective
@@ -68,17 +67,6 @@ Prepare Uveddi 1.0.0 for commercial distribution by validating licensing, depend
 - Coordinate with legal/ops for certificate access.
 - If compliance requires external review, schedule early in the week.
 - Leverage `DB_CALIBRATION_PLAN.md` schedule to avoid conflicts; ensure database/calibration work does not slip into this window.
-
-## Suggested Timeline
-| Day | Focus | Outputs |
-|-----|-------|---------|
-| Mon | License scan & inventory | `license-audit-2025-11.md`, raw scan |
-| Tue | License enforcement review | Decision memo, plan |
-| Wed | Security docs drafted | `SECURITY_CONTACT.md`, policy updates |
-| Thu | Signing checklist & cert confirmation | `signing-checklist.md`, stakeholder notes |
-| Fri | Compliance gap summary & risk register | Risk register updates, final report |
-
----
 
 ## ✅ Completion Summary
 

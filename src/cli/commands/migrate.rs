@@ -14,7 +14,7 @@ use tracing::{error, info};
 #[derive(Args, Debug)]
 pub struct MigrateCommand {
     #[command(subcommand)]
-    subcommand: MigrateSubcommand,
+    pub subcommand: MigrateSubcommand,
 }
 
 /// Migration subcommands

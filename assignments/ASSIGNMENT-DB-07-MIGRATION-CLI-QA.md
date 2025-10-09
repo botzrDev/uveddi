@@ -1,7 +1,6 @@
 # Assignment DB-07 – Migration CLI QA & Demo Alignment
 
-**Status:** Not Started  
-**Target Window:** 2025-10-10 → 2025-10-14  
+**Status:** In Progress (tests failing)  
 **Owner:** Senior Backend Developer (Tooling QA)  
 **Branch:** `feature/db-refactor-phase2`
 

@@ -53,8 +53,8 @@ CREATE TABLE security_findings (
     -- Recommended remediation
     remediation TEXT,
 
-    -- References and links for more information
-    references TEXT,
+    -- References and links for more information (renamed from 'references' to avoid SQL keyword conflict)
+    reference_links TEXT,
 
     -- JSON-encoded taint flow analysis (if applicable)
     taint_flow TEXT,
