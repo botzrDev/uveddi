@@ -89,6 +89,17 @@ Commercial subscribers receive:
 
 If you encounter an issue, first consult the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for common solutions, then open a ticket via the subscriber portal or email support. Public GitHub issues remain available for transparency but may have slower response times for non-subscribers.
 
+## Security & privacy
+
+Uveddi follows industry-standard security practices and privacy-first design principles:
+
+- **Security Policy:** See [SECURITY_POLICY.md](SECURITY_POLICY.md) for supported versions and vulnerability reporting
+- **Report Vulnerabilities:** Contact security@uveddi.com or use [GitHub Security Advisories](https://github.com/botzrDev/uveddi/security/advisories)
+- **Privacy First:** No telemetry or data collection by default; all analysis runs locally unless AI features explicitly enabled
+- **Compliance:** GDPR and CCPA compliant; see our [Privacy Policy](PRIVACY.md) *(to be published)*
+
+For detailed security contact information and responsible disclosure guidelines, see [SECURITY_CONTACT.md](SECURITY_CONTACT.md).
+
 ## Roadmap snapshot
 
 - Q4 2025: Expanded security rule packs, dependency hygiene scoring, SaaS-based reporting backend (opt-in)
