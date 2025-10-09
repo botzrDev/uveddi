@@ -29,6 +29,8 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-09 | **A3 completed 10 days early.** CLI/Troubleshooting docs authored, security feature flag removed, HTML output approved. Added config/CI integration tests and documented results. Detector selection deferred to roadmap. | Draft dedicated plan for database refactor + detector calibration (done: see `assignments/DB_CALIBRATION_PLAN.md`); monitor deferred detector-selection decision |
 | 2025-10-09 | **Database Refactor Phase 2 planning initiated.** Created `feature/db-refactor-phase2` branch. Assessment shows Assignments 01-03 largely complete (repositories implemented). Critical path: Assignment 04 (remove direct Database usage) → Assignment 06 (CRUD cleanup). 7-10 hours work remaining. | Begin Assignment 04 week of 2025-10-13; track weekly progress in verification checklist |
 | 2025-10-09 | **A4A completed (Attribution & Privacy Artifacts).** Generated THIRD_PARTY_LICENSES.txt (441 deps), created NOTICE file, PRIVACY.md policy, and PGP key for security@uveddi.com. All docs updated with links and PGP fingerprint. Commercial distribution now includes required licenses and privacy disclosures. | Validate PGP key backup/storage; consider publishing key to keyservers; review privacy policy with legal if available |
+| 2025-10-09 | **DB-05 complete (migrations).** Added CLI migrate command, dry-run planner, standardized errors, and versioned migration files. | Proceed with DB-04 application refactor followed by DB-06 cleanup. |
+| 2025-10-09 | **DB-06 complete (CRUD decommission).** Removed `crud.rs`, migrated call sites to `ScalableDatabase`, added compatibility shims, database tests passing. Database refactor assignments 01-06 now complete. | Close Risk R2; shift focus to detector calibration sprint per plan. |
 
 ## Verification Summary
 
@@ -70,8 +72,8 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 |------|--------|-----------|--------|--------------|
 | 2025-10-09 | Planning | Phase 2 assessment complete | ✅ Complete | Branch created, verification checklist updated |
 | 2025-10-13 → 10-18 | Assignment 04 | Application layer repository integration | 🎯 Upcoming | Remove Database class, use RepositoryManager directly |
-| 2025-10-20 → 10-25 | Assignment 05 | Migration & error handling verification | Pending | Verify migration versioning, standardize errors |
-| 2025-10-27 → 11-02 | Assignment 06 | Legacy CRUD cleanup | Pending | Remove/minimize crud.rs, verify all tests pass |
+| 2025-10-20 → 10-25 | Assignment 05 | Migration & error handling verification | ✅ Complete (2025-10-09) | CLI migrate command, dry-run, standardized errors |
+| 2025-10-27 → 11-02 | Assignment 06 | Legacy CRUD cleanup | ✅ Complete (2025-10-09) | Removed crud.rs, compatibility shims, tests passing |
 
 ---
 **Last Updated:** 2025-10-09

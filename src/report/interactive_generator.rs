@@ -13,7 +13,7 @@
 //! - Maintains compatibility with existing report generators
 
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, Dependency};
-use crate::database::Database;
+use crate::database::ScalableDatabase;
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata};
 use crate::report::interactive_models::InteractiveReport;
 use crate::report::ReportGenerationError;
@@ -61,7 +61,7 @@ impl Default for InteractiveReportConfig {
 /// Interactive report generator
 pub struct InteractiveReportGenerator {
     config: InteractiveReportConfig,
-    database: Option<Arc<Database>>,
+    database: Option<Arc<ScalableDatabase>>,
 }
 
 impl InteractiveReportGenerator {
@@ -74,7 +74,7 @@ impl InteractiveReportGenerator {
     }
 
     /// Create a new generator with database access
-    pub fn with_database(config: InteractiveReportConfig, database: Arc<Database>) -> Self {
+    pub fn with_database(config: InteractiveReportConfig, database: Arc<ScalableDatabase>) -> Self {
         Self {
             config,
             database: Some(database),
@@ -392,7 +392,7 @@ impl InteractiveReportGenerator {
 
     async fn load_analysis_run(
         &self,
-        _db: &Database,
+        _db: &ScalableDatabase,
         run_id: i64,
     ) -> Result<AnalysisRun, ReportGenerationError> {
         // TODO: Implement actual database query
@@ -411,7 +411,7 @@ impl InteractiveReportGenerator {
 
     async fn load_issues(
         &self,
-        _db: &Database,
+        _db: &ScalableDatabase,
         _run_id: i64,
     ) -> Result<Vec<ArchitecturalIssue>, ReportGenerationError> {
         // TODO: Implement actual database query
@@ -420,7 +420,7 @@ impl InteractiveReportGenerator {
 
     async fn load_anti_pattern_types(
         &self,
-        _db: &Database,
+        _db: &ScalableDatabase,
     ) -> Result<Vec<AntiPatternType>, ReportGenerationError> {
         // TODO: Implement actual database query
         Ok(vec![])
@@ -428,7 +428,7 @@ impl InteractiveReportGenerator {
 
     async fn load_components(
         &self,
-        _db: &Database,
+        _db: &ScalableDatabase,
         _run_id: i64,
     ) -> Result<Vec<ArchitecturalComponent>, ReportGenerationError> {
         // TODO: Implement actual database query
@@ -439,7 +439,7 @@ impl InteractiveReportGenerator {
 
     async fn load_dependencies(
         &self,
-        _db: &Database,
+        _db: &ScalableDatabase,
         _run_id: i64,
     ) -> Result<Vec<Dependency>, ReportGenerationError> {
         // TODO: Implement actual database query
@@ -448,7 +448,7 @@ impl InteractiveReportGenerator {
 
     async fn load_diagrams(
         &self,
-        _db: &Database,
+        _db: &ScalableDatabase,
         _run_id: i64,
     ) -> Result<Vec<DiagramMetadata>, ReportGenerationError> {
         // TODO: Implement actual database query

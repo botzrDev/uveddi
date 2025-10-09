@@ -220,7 +220,6 @@
 //! ```
 
 pub mod connection;
-pub mod crud;
 pub mod migrations;
 pub mod models;
 pub mod repositories;
@@ -231,8 +230,8 @@ pub mod migration_manager;
 pub mod monitoring;
 pub mod scalable_manager;
 
-// Re-export core functionality
-pub use self::crud::Database;
+// Re-export core functionality - ScalableDatabase is the new primary interface
+pub use self::scalable_manager::ScalableDatabase as Database;
 // Re-export new migration system
 pub use self::migrations::{
     create_standard_registry, Migration, MigrationRecord, MigrationRegistry, MigrationResult,

@@ -68,9 +68,10 @@ impl MigrateCommand {
         info!("Running database migrations for: {}", database_path);
 
         let runner = self.create_runner(database_path).await?;
-        let results = runner.run_pending_migrations().await.map_err(|e| {
-            UveddiError::database_error_msg(&format!("Migration failed: {}", e))
-        })?;
+        let results = runner
+            .run_pending_migrations()
+            .await
+            .map_err(|e| UveddiError::database_error_msg(&format!("Migration failed: {}", e)))?;
 
         if results.is_empty() {
             println!("✓ Database is up to date - no migrations to apply.");
@@ -83,9 +84,10 @@ impl MigrateCommand {
                     }
                     crate::database::migrations::MigrationResult::Failed { version, error } => {
                         error!("  ✗ v{}: {}", version, error);
-                        return Err(UveddiError::database_error_msg(
-                            &format!("Migration {} failed: {}", version, error)
-                        ));
+                        return Err(UveddiError::database_error_msg(&format!(
+                            "Migration {} failed: {}",
+                            version, error
+                        )));
                     }
                     crate::database::migrations::MigrationResult::Skipped { version, reason } => {
                         println!("  ⊙ v{}: skipped ({})", version, reason);
@@ -104,9 +106,7 @@ impl MigrateCommand {
 
         let runner = self.create_runner(database_path).await?;
         let current_version = runner.current_version().await.map_err(|e| {
-            UveddiError::database_error_msg(
-                &format!("Failed to get current version: {}", e)
-            )
+            UveddiError::database_error_msg(&format!("Failed to get current version: {}", e))
         })?;
 
         if current_version <= target_version {
@@ -120,11 +120,7 @@ impl MigrateCommand {
         let results = runner
             .rollback_to_version(target_version)
             .await
-            .map_err(|e| {
-                UveddiError::database_error_msg(
-                    &format!("Rollback failed: {}", e)
-                )
-            })?;
+            .map_err(|e| UveddiError::database_error_msg(&format!("Rollback failed: {}", e)))?;
 
         println!("Rolled back {} migration(s):", results.len());
         for result in results {
@@ -134,9 +130,10 @@ impl MigrateCommand {
                 }
                 crate::database::migrations::MigrationResult::Failed { version, error } => {
                     error!("  ✗ v{}: {}", version, error);
-                    return Err(UveddiError::database_error_msg(
-                        &format!("Rollback {} failed: {}", version, error)
-                    ));
+                    return Err(UveddiError::database_error_msg(&format!(
+                        "Rollback {} failed: {}",
+                        version, error
+                    )));
                 }
                 crate::database::migrations::MigrationResult::Skipped { version, reason } => {
                     println!("  ⊙ v{}: skipped ({})", version, reason);
@@ -154,9 +151,7 @@ impl MigrateCommand {
 
         let runner = self.create_runner(database_path).await?;
         let plan = runner.plan_migrations().await.map_err(|e| {
-            UveddiError::database_error_msg(
-                &format!("Failed to plan migrations: {}", e)
-            )
+            UveddiError::database_error_msg(&format!("Failed to plan migrations: {}", e))
         })?;
 
         println!("{}", plan.display());

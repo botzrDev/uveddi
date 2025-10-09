@@ -30,6 +30,17 @@ pub struct ScalableDatabase {
 }
 
 impl ScalableDatabase {
+    /// Compatibility shim for legacy API - delegates to new()
+    pub async fn new_with_repositories(config: Option<DatabaseConfig>) -> Result<Self> {
+        let config = config.unwrap_or_default();
+        Self::new(config).await
+    }
+
+    /// Compatibility shim for legacy API - returns None as ScalableDatabase doesn't expose RepositoryManager
+    pub fn repository_manager(&self) -> Option<Arc<crate::database::RepositoryManager>> {
+        None
+    }
+
     /// Create a new scalable database manager
     pub async fn new(config: DatabaseConfig) -> Result<Self> {
         // Create write provider
@@ -218,6 +229,22 @@ impl ScalableDatabase {
     pub async fn store_issues_batch(&self, issues: &[ArchitecturalIssue]) -> Result<()> {
         self.write_query(|provider| async move { provider.store_issues_batch(issues).await })
             .await
+    }
+
+    /// Compatibility shim for legacy API - delegates to store_anti_pattern_types_batch
+    pub async fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
+        let types = vec![anti_pattern_type.clone()];
+        self.store_anti_pattern_types_batch(&types).await?;
+        // Update the ID if it was set
+        if types[0].anti_pattern_type_id.is_some() {
+            anti_pattern_type.anti_pattern_type_id = types[0].anti_pattern_type_id;
+        }
+        Ok(())
+    }
+
+    /// Compatibility shim for legacy API - delegates to store_issues_batch
+    pub async fn store_issues(&self, issues: &[ArchitecturalIssue]) -> Result<()> {
+        self.store_issues_batch(issues).await
     }
 
     pub async fn store_dependencies_batch(

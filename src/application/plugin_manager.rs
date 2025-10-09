@@ -6,7 +6,7 @@
 //! Uveddi's core analysis workflow.
 
 use crate::analysis::AnalysisEngine;
-use crate::database::crud::Database;
+use crate::database::ScalableDatabase;
 use crate::error::UveddiError;
 use crate::plugins::{
     HostContext, HostContextFactory, PluginId, PluginManifest, SecurityPolicy, WasmPluginEngine,
@@ -77,7 +77,7 @@ pub enum PluginStatus {
 impl ApplicationPluginManager {
     /// Create a new application plugin manager
     pub async fn new(
-        database: Arc<Database>,
+        database: Arc<ScalableDatabase>,
         analysis_engine: Arc<RwLock<AnalysisEngine>>,
         config: Option<PluginManagerConfig>,
     ) -> Result<Self, UveddiError> {

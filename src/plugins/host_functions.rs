@@ -6,8 +6,8 @@
 //! proper capability-based security.
 
 use crate::analysis::AnalysisEngine;
-use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
+use crate::database::ScalableDatabase;
 use crate::error::UveddiError;
 use crate::plugins::errors::PluginError;
 use crate::plugins::security::{Permission, SecurityPolicy};
@@ -22,7 +22,7 @@ use tracing::{debug, error, info, warn};
 #[derive(Clone)]
 pub struct HostContext {
     /// Database connection for storing and retrieving analysis results
-    database: Arc<Database>,
+    database: Arc<ScalableDatabase>,
     /// Analysis engine for AST parsing and code analysis
     analysis_engine: Arc<RwLock<AnalysisEngine>>,
     /// Security policy for the current plugin
@@ -51,7 +51,7 @@ impl std::fmt::Debug for HostContext {
 impl HostContext {
     /// Create a new host context for a plugin
     pub fn new(
-        database: Arc<Database>,
+        database: Arc<ScalableDatabase>,
         analysis_engine: Arc<RwLock<AnalysisEngine>>,
         security_policy: SecurityPolicy,
         plugin_id: PluginId,
@@ -501,13 +501,16 @@ impl HostFunctionLinker for wasmtime::Linker<HostContext> {
 
 /// Factory for creating host contexts
 pub struct HostContextFactory {
-    database: Arc<Database>,
+    database: Arc<ScalableDatabase>,
     analysis_engine: Arc<RwLock<AnalysisEngine>>,
 }
 
 impl HostContextFactory {
     /// Create a new host context factory
-    pub fn new(database: Arc<Database>, analysis_engine: Arc<RwLock<AnalysisEngine>>) -> Self {
+    pub fn new(
+        database: Arc<ScalableDatabase>,
+        analysis_engine: Arc<RwLock<AnalysisEngine>>,
+    ) -> Self {
         Self {
             database,
             analysis_engine,

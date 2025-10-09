@@ -395,6 +395,7 @@ impl AnalysisOrchestrator {
                     // Store via legacy method until repository pattern is fully implemented
                     self.database
                         .store_anti_pattern_type(&mut anti_pattern_type)
+                        .await
                         .context("Failed to store anti-pattern type")?;
                 }
             } else {
@@ -402,6 +403,7 @@ impl AnalysisOrchestrator {
                 for mut anti_pattern_type in anti_pattern_types {
                     self.database
                         .store_anti_pattern_type(&mut anti_pattern_type)
+                        .await
                         .context("Failed to store anti-pattern type")?;
                 }
             }
@@ -481,6 +483,7 @@ impl AnalysisOrchestrator {
 
         self.database
             .store_issues(issues)
+            .await
             .map_err(|e| {
                 error!("Database storage failure - detailed error: {:#}", e);
                 e
