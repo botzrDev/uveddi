@@ -6,8 +6,8 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 
 | Phase | Window | Status | Key Tasks | Verification Artifacts |
 |-------|--------|--------|-----------|------------------------|
-| [A1 – Kickoff & Risk Map](./ASSIGNMENT-A1-KICKOFF-RISK.md) | 2025-10-09 → 2025-10-11 | Complete | Scope/KPI definition, tracker setup, risk register | Scope doc, tracker link, risk register |
-| [A2 – Product Surface Freeze](./ASSIGNMENT-A2-PRODUCT-FREEZE.md) | 2025-10-12 → 2025-10-18 | Not Started | Feature flag mapping, CLI command audit, doc updates | CLI snapshot vs spec diff |
+| [A1 – Kickoff & Risk Map](./ASSIGNMENT-A1-KICKOFF-RISK.md) | 2025-10-09 → 2025-10-11 | ✅ Complete | Scope/KPI definition, tracker setup, risk register | Scope doc, tracker link, risk register |
+| [A2 – Product Surface Freeze](./ASSIGNMENT-A2-PRODUCT-FREEZE.md) | 2025-10-12 → 2025-10-18 | ✅ Complete (2025-10-09) | Feature flag mapping, CLI command audit, doc updates | CLI snapshot, feature matrix, scope diff |
 | [A3 – Hardening Sprint](./ASSIGNMENT-A3-HARDENING.md) | 2025-10-19 → 2025-11-08 | Not Started | Bug triage, detector/database refactors, performance tuning | Test run logs, benchmark deltas |
 | [A4 – Security & Compliance](./ASSIGNMENT-A4-COMPLIANCE.md) | 2025-11-09 → 2025-11-15 | Not Started | License enforcement, dependency audit, compliance notes | License scan, checklist |
 | [A5 – QA Execution](./ASSIGNMENT-A5-QA.md) | 2025-11-16 → 2025-11-22 | Not Started | Automated + manual test passes, regression sweeps | QA report, dashboard |
@@ -25,15 +25,22 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 
 | Date | Summary | Follow-ups |
 |------|---------|------------|
-| _TBD_ |  |  |
+| 2025-10-09 | **A2 completed ahead of schedule.** Product surface frozen, all CLI commands verified, feature flags documented. 95% alignment between scope and implementation. Identified 2 high-priority doc gaps for A3. | PM review of scope diff report; decision needed on security feature flag and HTML output format |
 
 ## Verification Summary
 
-Populated artifacts for Assignment A1:
-
+### Assignment A1 Artifacts (Complete)
 - **Scope Document:** [assignments/COMMERCIAL_SCOPE_1.0.0.md](./COMMERCIAL_SCOPE_1.0.0.md)
 - **Risk Register:** [assignments/RISK_REGISTER.md](./RISK_REGISTER.md)
 - **Tracker Snapshot:** This file (`assignments/LAUNCH_TRACKER.md`)
+
+### Assignment A2 Artifacts (Complete - 2025-10-09)
+- **CLI Command Snapshot:** [docs/release-artifacts/cli-help-2025-10-09.md](../docs/release-artifacts/cli-help-2025-10-09.md)
+- **Feature Flag Matrix:** [docs/release-artifacts/feature-flags-1.0.md](../docs/release-artifacts/feature-flags-1.0.md)
+- **Scope Diff Report:** [docs/release-artifacts/scope-implementation-diff-2025-10-09.md](../docs/release-artifacts/scope-implementation-diff-2025-10-09.md)
+- **Sign-Off Packet:** [docs/release-artifacts/README.md](../docs/release-artifacts/README.md)
+- **Updated Assignment:** [assignments/ASSIGNMENT-A2-PRODUCT-FREEZE.md](./ASSIGNMENT-A2-PRODUCT-FREEZE.md)
+- **README Updates:** Command list reordered, security flag clarified
 
 ---
 **Last Updated:** 2025-10-09

@@ -60,18 +60,19 @@ Optional components:
 - `uveddi analyze` – Full codebase audits with configurable detectors, memory profiles, and timeout handling
 - `uveddi config` – Validate and tune analysis defaults for your organization
 - `uveddi doctor` – Environment diagnostics and auto-fix routines for parsers, AI connectivity, and system resources
+- `uveddi init` – Project bootstrapper that generates tuned configuration files for new repositories
 - `uveddi hooks` – Git hook automation to enforce analysis before commits or pushes
 - `uveddi ci` – CI-centric quality gates with customizable debt and severity thresholds
-- `uveddi init` – Project bootstrapper that generates tuned configuration files for new repositories
 
-See `docs/CLI_REFERENCE.md` for the full command surface.
+Run `uveddi --help` or `uveddi <command> --help` for detailed usage information.
 
 ## Recommended feature flags
 
 - `cli-standard` *(default)* – Balanced profile with engine integrations, caching, and tree-sitter language packs
 - `cli-ai` – Adds AI workflows on top of `cli-standard`
 - `cli-plugins` – Enables WebAssembly plugin execution when your audit requires bespoke detectors
-- `security` – Activates advanced security scanning modules and SARIF export helpers
+
+**Security scanning** is always available via the `--security` CLI flag (no build feature required).
 
 Legacy web/TUI flags remain in the manifest for backwards compatibility but are unsupported in the commercial build.
 
