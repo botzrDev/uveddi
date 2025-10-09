@@ -1,12 +1,12 @@
 # Release Artifacts – Uveddi 1.0.0
 
-**Assignment:** A2 – Product Surface Freeze
-**Generated:** 2025-10-09
+**Assignments:** A2 – Product Surface Freeze, A3 – Hardening Sprint & Cleanup  
+**Last Updated:** 2025-10-09  
 **Status:** Complete
 
 ## Purpose
 
-This directory contains all artifacts generated during the Product Surface Freeze (Assignment A2) for Uveddi's 1.0.0 commercial release. These artifacts lock the public-facing product surface to ensure downstream hardening work proceeds against a stable baseline.
+This directory hosts the artifacts produced during the Product Surface Freeze (Assignment A2) and the follow-on Hardening Sprint & Cleanup (Assignment A3) for Uveddi's 1.0.0 commercial release. Together they lock the public-facing product surface, capture key scope decisions, and document verification evidence ahead of Phase A4.
 
 ## Contents
 
@@ -118,85 +118,42 @@ $ grep '^default = ' Cargo.toml
 default = ["cli-standard"]
 ```
 
-## Phase A3 Completion (2025-10-09)
+## Assignment A3 Deliverables ✅
 
-All action items from Assignment A2 have been completed:
+### Documentation
+- **CLI Reference** → `../CLI_REFERENCE.md`  
+  Comprehensive command reference with usage examples, option documentation, environment variables, and common workflows.
+- **Troubleshooting Guide** → `../TROUBLESHOOTING.md`  
+  Installation, analysis, AI, configuration, performance, cache, and CI/CD troubleshooting guidance plus doctor command playbooks.
 
-### ✅ High Priority (Completed)
-1. **CLI Reference Documentation** → `docs/CLI_REFERENCE.md`
-   - ✅ Created comprehensive command reference
-   - ✅ Added usage examples for all commands
-   - ✅ Included common workflows and patterns
-   - ✅ Documented all options and flags
-   - ✅ Cross-linked with troubleshooting guide
+### Key Decisions
+- **Security Feature Flag Removal** – The empty `security` feature flag was removed from `Cargo.toml`; security detectors ship with the standard CLI. Scope (`assignments/COMMERCIAL_SCOPE_1.0.0.md`) and README updated.  
+- **HTML Output Scope Update** – HTML report generation confirmed for 1.0.0 and added to scope/README alongside markdown and JSON.  
+- **Detector Selection Flag** – Implementation deferred to roadmap; documented in `assignments/ASSIGNMENT-A3-HARDENING.md` and tracker follow-ups.
 
-2. **Troubleshooting Guide** → `docs/TROUBLESHOOTING.md`
-   - ✅ Covered installation, analysis, AI, config, and performance issues
-   - ✅ Documented `uveddi doctor` workflows
-   - ✅ Included cache and database troubleshooting
-   - ✅ Added CI/CD integration troubleshooting
-   - ✅ Provided debugging and diagnostic guidance
+### Testing & Verification
+- **Config Integration Tests** → `../../tests/config.rs` (`test_config_show_set_workflow`, `test_config_persistence_across_operations`, `test_config_show_missing_file_fallback`).  
+- **CI Integration Tests** → `../../tests/ci_integration.rs` (10 test cases covering workflow, thresholds, parsing, determinism).  
+- **JSON Parsing Improvement** → `../../src/cli/commands/ci.rs` now handles floating-point debt scores.  
+- Test output captured in the assignment completion log (`assignments/ASSIGNMENT-A3-HARDENING.md`).
 
-### ✅ Medium Priority (Completed)
-3. **Security Feature Flag Resolution**
-   - ✅ **Decision:** Removed `security = []` feature flag from Cargo.toml
-   - ✅ **Rationale:** Flag was empty/deprecated; security detectors are part of standard CLI
-   - ✅ **Implementation:** Removed line 147 in Cargo.toml with explanatory comment
-   - ✅ **Documentation:** Updated COMMERCIAL_SCOPE_1.0.0.md and README.md
-
-4. **HTML Output Format Decision**
-   - ✅ **Decision:** Enabled HTML output for 1.0.0 release
-   - ✅ **Implementation:** Renamed `_generate_html_report_disabled()` to `generate_html_report()` in html_generator.rs
-   - ✅ **Features:** Interactive diagrams, dark/light themes, Mermaid integration
-   - ✅ **Documentation:** Added to COMMERCIAL_SCOPE_1.0.0.md Section 2, updated README
-
-### ✅ Additional Work (Testing)
-5. **Config Command Integration Tests** → `tests/config.rs`
-   - ✅ Added `test_config_show_set_workflow()` for show/set operations
-   - ✅ Added `test_config_persistence_across_operations()` for data persistence
-   - ✅ Added `test_config_show_missing_file_fallback()` for error handling
-
-6. **CI Check Integration Tests** → `tests/ci_integration.rs`
-   - ✅ Created new test file with 10 comprehensive test cases
-   - ✅ Tests include full analysis runs, gate evaluation, metric parsing
-   - ✅ Tests cover deterministic results, thresholds, and error handling
-
-### ✅ Documentation Updates
-7. **README.md**
-   - ✅ Added HTML output to features list
-   - ✅ Added links to CLI_REFERENCE.md and TROUBLESHOOTING.md
-   - ✅ Updated security flag documentation with A3 cleanup note
-   - ✅ Cross-referenced troubleshooting guide in support section
-
-8. **COMMERCIAL_SCOPE_1.0.0.md**
-   - ✅ Documented security flag removal decision
-   - ✅ Documented HTML output enablement decision
-   - ✅ Added references to new documentation files
+### Documentation & Scope Updates
+- `assignments/COMMERCIAL_SCOPE_1.0.0.md` reflects security HTML decisions and lists the new docs as in-scope deliverables.  
+- `README.md` links to the new docs, clarifies security scanning behavior, and highlights HTML output availability.  
+- Launch tracker updated with A3 completion, artifact links, and follow-up notes.
 
 ## Sign-Off
 
-**Assignment Status:** ✅ **Complete**
-**Blocker Status:** None
-**Critical Issues:** None
-**High Priority Issues:** 2 (documentation gaps, tracked for A3)
-
-**Findings Summary:**
-- Product surface locked and documented
-- Strong alignment between scope and implementation (95%)
-- No unplanned features in 1.0.0 CLI
-- Action items clearly defined for Phase A3
-
-**Prepared By:** Claude Code
-**Completion Date:** 2025-10-09
-**Ready for:** Phase A3 (Documentation Alignment)
+- **Assignment Status:** ✅ A2 & A3 complete with verification evidence stored.  
+- **Blockers:** None.  
+- **Open Follow-Ups:** Database refactor plan, detector calibration scheduling, detector selection flag (roadmap).
 
 ---
 
 **Artifacts Integrity:**
-- All artifacts stored in `docs/release-artifacts/`
-- All artifacts referenced in launch tracker
-- All artifacts version-controlled
-- All artifacts ready for PM review
+- All artifacts stored in this directory or linked relative to it.  
+- Referenced from the launch tracker for Phases A2 and A3.  
+- Version-controlled and ready for PM/QA review.
 
 ## Usage Notes
 
