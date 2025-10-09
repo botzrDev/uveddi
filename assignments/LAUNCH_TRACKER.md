@@ -27,6 +27,7 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 |------|---------|------------|
 | 2025-10-09 | **A2 completed ahead of schedule.** Product surface frozen, all CLI commands verified, feature flags documented. 95% alignment between scope and implementation. Identified 2 high-priority doc gaps for A3. | PM review of scope diff report; decision needed on security feature flag and HTML output format |
 | 2025-10-09 | **A3 completed 10 days early.** CLI/Troubleshooting docs authored, security feature flag removed, HTML output approved. Added config/CI integration tests and documented results. Detector selection deferred to roadmap. | Draft dedicated plan for database refactor + detector calibration (done: see `assignments/DB_CALIBRATION_PLAN.md`); monitor deferred detector-selection decision |
+| 2025-10-09 | **Database Refactor Phase 2 planning initiated.** Created `feature/db-refactor-phase2` branch. Assessment shows Assignments 01-03 largely complete (repositories implemented). Critical path: Assignment 04 (remove direct Database usage) → Assignment 06 (CRUD cleanup). 7-10 hours work remaining. | Begin Assignment 04 week of 2025-10-13; track weekly progress in verification checklist |
 
 ## Verification Summary
 
@@ -52,6 +53,15 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 - **Assignment Summary:** [assignments/ASSIGNMENT-A3-HARDENING.md](./ASSIGNMENT-A3-HARDENING.md)
 - **Decision Log:** [docs/release-artifacts/README.md](../docs/release-artifacts/README.md)
 - **Follow-up Plan:** [assignments/DB_CALIBRATION_PLAN.md](./DB_CALIBRATION_PLAN.md)
+
+### Database Refactor Milestones (Risk R2 Mitigation)
+
+| Week | Target | Milestone | Status | Deliverables |
+|------|--------|-----------|--------|--------------|
+| 2025-10-09 | Planning | Phase 2 assessment complete | ✅ Complete | Branch created, verification checklist updated |
+| 2025-10-13 → 10-18 | Assignment 04 | Application layer repository integration | 🎯 Upcoming | Remove Database class, use RepositoryManager directly |
+| 2025-10-20 → 10-25 | Assignment 05 | Migration & error handling verification | Pending | Verify migration versioning, standardize errors |
+| 2025-10-27 → 11-02 | Assignment 06 | Legacy CRUD cleanup | Pending | Remove/minimize crud.rs, verify all tests pass |
 
 ---
 **Last Updated:** 2025-10-09
