@@ -1,52 +1,43 @@
-# Release Artifacts – Uveddi 1.0.0
+# Uveddi Release Artifacts
 
-**Assignments:** A2 – Product Surface Freeze, A3 – Hardening Sprint & Cleanup  
+**Assignment:** A6 – Packaging & Distribution  
 **Last Updated:** 2025-10-09  
-**Status:** Complete
+**Status:** Ready for Release
 
 ## Purpose
 
-This directory hosts the artifacts produced during the Product Surface Freeze (Assignment A2) and the follow-on Hardening Sprint & Cleanup (Assignment A3) for Uveddi's 1.0.0 commercial release. Together they lock the public-facing product surface, capture key scope decisions, and document verification evidence ahead of Phase A4.
+This directory contains release artifact manifests, checklists, and documentation for Uveddi releases, including packaging, distribution, and verification materials.
 
-## Contents
+## Release Artifacts (v1.0.0)
 
-### 1. CLI Help Snapshot
-**File:** `cli-help-2025-10-09.md`
-**Purpose:** Complete capture of CLI help output for all commands
-**Generated:** 2025-10-09
-**Features:** cli-standard
+### Distribution Documentation
 
-This document provides the authoritative reference for the 1.0.0 CLI command surface, including:
-- Main help output
-- All subcommand help (`analyze`, `config`, `doctor`, `init`, `hooks`, `ci`)
-- Complete option and flag documentation
+1. **[manifest-1.0.0.md](./manifest-1.0.0.md)** - Complete artifact manifest
+   - Binary releases for all platforms (Linux, macOS, Windows)
+   - Container images and registry information
+   - Checksums and GPG signatures
+   - Installation and verification instructions
+   - Upgrade and uninstallation procedures
 
-**Usage:**
-- Compare against future versions to detect unintended changes
-- Source material for CLI reference documentation
-- Verification artifact for QA and release validation
+2. **[distribution-checklist-1.0.0.md](./distribution-checklist-1.0.0.md)** - Release readiness checklist
+   - Build artifact verification steps
+   - Security scanning requirements
+   - Installation testing matrix
+   - Distribution infrastructure setup
+   - Compliance and legal sign-offs
 
----
+### Build and Packaging Scripts
 
-### 2. Feature Flag Matrix
-**File:** `feature-flags-1.0.md`
-**Purpose:** Complete feature flag and build profile documentation
-**Generated:** 2025-10-09
+Located in `scripts/`:
+- **build_release.sh** - Reproducible multi-platform build script
+- **build_container.sh** - Container image builder with security scanning
+- **sign_artifacts.sh** - GPG signing and checksum generation
+- **install.sh** - Unix/Linux/macOS installer
+- **install.ps1** - Windows PowerShell installer
 
-Comprehensive matrix covering:
-- **Active CLI profiles:** cli-standard, cli-ai, cli-plugins, cli-full, cli-core
-- **Language features:** rust-lang, python-lang, javascript-lang, typescript-lang
-- **Optional features:** ast-cache, analysis-cache, ai, local-ai, wasm-plugins
-- **Deprecated features:** Backwards compatibility mappings
-- **Out-of-scope features:** Removed enterprise capabilities
+### Product Surface Documentation
 
-**Key Insights:**
-- `cli-standard` confirmed as default
-- Security scanning available via CLI flag (not build feature)
-- 4 unresolved gaps identified for Phase A3
-- Empty feature flags flagged for cleanup
-
----
+These artifacts capture the 1.0.0 product surface from Assignment A2/A3:
 
 ### 3. Scope vs Implementation Diff Report
 **File:** `scope-implementation-diff-2025-10-09.md`
