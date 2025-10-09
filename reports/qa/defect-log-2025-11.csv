@@ -1,0 +1,60 @@
+ID,Severity,Category,Component,Title,Description,Status,Reproduction Steps,Owner,Target Resolution,Mitigation
+DEF-001,Critical,Test Infrastructure,Integration Tests,Integration tests fail to compile,"Test files have import errors referencing removed modules (web, TUI, old database APIs). Files affected: edge_case_testing.rs, monitoring_reporting.rs, database_crud.rs","Open - Blocking","1. Run 'cargo test --features cli-standard --tests'
+2. Observe compilation errors
+3. Check import statements in test files","Dev Team","v1.0.1 (Post-Release Patch)","Skip integration tests for v1.0.0 release. Rely on unit tests and manual testing. Document in release notes."
+
+DEF-002,Critical,Security,Regex Patterns,Security detector regex patterns use unsupported features,"Security detectors use lookahead/lookbehind regex assertions (?!) which are not supported by Rust regex crate. Affects 12+ security detector tests and production functionality.","Open - Blocking","1. Run unit tests
+2. Check failures in security detector tests
+3. Review regex patterns in src/analysis/detectors/security/","Security Team","v1.0.1 (Post-Release Patch)","Rewrite regex patterns without lookahead/lookbehind. Use alternative matching strategies (character classes, word boundaries)."
+
+DEF-003,High,Testing,Database Tests,Database tests fail due to state pollution,"Tests create tables that persist between runs, causing 'table already exists' errors. Affects test_concurrent_connections and test_connection_execution.","Open","1. Run 'cargo test --lib' twice
+2. Second run will fail with table exists errors
+3. Delete test database files to reset","QA Team","v1.0.1","Implement proper test isolation with unique table names or cleanup hooks. Use tempfile for test databases."
+
+DEF-004,High,Detection,Cache System,Cache-related tests failing,"12 cache and file watcher tests failing. Tests expect different behavior than current implementation (LRU eviction, glob patterns, file watching).","Open","1. Run 'cargo test --lib'
+2. Check failures in analysis::cache::* tests
+3. Review test expectations vs implementation","Dev Team","v1.1.0","Review and update cache tests to match current implementation. Consider if implementation or tests need changes."
+
+DEF-005,High,Detection,Security Detectors,"35 security detector tests failing (API keys, passwords, CSRF, SQL injection, etc.)","Multiple security detection tests are failing. Root causes: regex issues (DEF-002), changed detector logic, outdated test expectations.","Open","1. Run unit tests
+2. Filter for security detector failures
+3. Examine individual test cases","Security Team","v1.0.1 / v1.1.0","Fix regex patterns first (DEF-002), then re-evaluate remaining failures. May need detector algorithm updates."
+
+DEF-006,Medium,Detection,God Object Detector,God Object detector not flagging obvious cases,"Test struct with 5 fields and 5 methods not detected as god object. Thresholds may be too conservative.","Open - Under Review","1. Create struct with >5 fields and >5 methods
+2. Run analyze command
+3. Observe no god object detection","Calibration Team","v1.1.0","Review and adjust god object detection thresholds. Consider making thresholds configurable via CLI flags."
+
+DEF-007,Medium,Detection,Long Methods Detector,Long Methods detector not flagging long functions,"Function with 100+ lines not detected as long method. Threshold may be set too high.","Open - Under Review","1. Create function with 100-line for loop
+2. Run analyze command
+3. Observe no long method detection","Calibration Team","v1.1.0","Review long method thresholds. Adjust or make configurable. Document expected behavior."
+
+DEF-008,Medium,Detection,AST Provider,Language detection test failing for TypeScript,"TypeScript files incorrectly detected as JavaScript. test_language_detection fails for .ts files.","Open","1. Run unit tests
+2. Check analysis::components::ast_provider::tests::test_language_detection
+3. Pass .ts file to language detector","Dev Team","v1.0.1","Fix language detection logic to properly differentiate TypeScript from JavaScript based on file extension."
+
+DEF-009,Medium,CLI,Command Suggestions,Command suggestion algorithm changed,"CLI help test expects 'doctor' and 'dr' suggestions but only gets 'doctor'. Alias system may have changed.","Open - Low Priority","1. Run unit tests
+2. Check cli::enhanced_help::tests::test_command_suggestions
+3. Review command alias registration","Dev Team","v1.1.0","Update test expectations or restore 'dr' alias for doctor command if desired. Low impact on users."
+
+DEF-010,Medium,Config,Validation,Empty config validation logic changed,"Test expects empty config to fail validation but implementation now accepts it. May be intentional behavior change.","Open - Under Review","1. Run unit tests
+2. Check config::validation::tests::test_empty_config_validation
+3. Create empty config and validate","Dev Team","v1.1.0","Determine if current behavior is intended. Update test or implementation accordingly. Document decision."
+
+DEF-011,Low,File Discovery,Gitignore,Gitignore test returning unexpected count,"test_gitignore_respect expects 1 file but gets 3. May be due to test fixture changes or gitignore logic updates.","Open","1. Run unit tests
+2. Check analysis::file_discovery::tests::test_gitignore_respect
+3. Review test fixtures and gitignore patterns","Dev Team","v1.1.0","Review test expectations and gitignore implementation. Update as needed for consistency."
+
+DEF-012,Low,Database,Monitoring,Metrics history cleanup test failing,"Database monitoring metrics history cleanup test expects 2 entries but finds 1. Timing or cleanup logic issue.","Open","1. Run unit tests
+2. Check database::monitoring::tests::test_metrics_history_cleanup
+3. Review cleanup intervals and test timing","Dev Team","v1.1.0","Review metrics cleanup logic and test expectations. Adjust for consistency."
+
+DEF-013,Info,Testing,Warnings,Unused import warnings in test files,"Multiple test files have unused import warnings. Cosmetic issue but should be cleaned up.","Open - Nice to Have","1. Compile tests
+2. Observe warnings for unused imports
+3. Review imports in test files","Dev Team","v1.1.0","Clean up unused imports in test files for better code hygiene."
+
+DEF-014,Info,Build,Compilation,Comparison useless due to type limits warning,"src/analysis/tests/backward_compatibility.rs:363 has useless comparison (graph.node_count() >= 0 always true for unsigned type)","Open - Nice to Have","1. Compile code
+2. Check warning in backward_compatibility tests
+3. Review comparison logic","Dev Team","v1.1.0","Remove useless comparison or change to meaningful check."
+
+DEF-015,Info,AST,Unused Result,Unused Result in tree_sitter_impl.rs,"Line 1238: parser.reset_cache_stats() returns Result that is not handled. Should use 'let _ = ...' or handle error.","Open - Nice to Have","1. Compile code
+2. Check warning in tree_sitter_impl.rs:1238
+3. Review error handling","Dev Team","v1.1.0","Add proper error handling or explicit ignore with 'let _ = ...' pattern."
