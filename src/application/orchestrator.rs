@@ -386,10 +386,25 @@ impl AnalysisOrchestrator {
     /// Initialize database schema with anti-pattern types
     async fn initialize_database_schema(&mut self) -> Result<(), UveddiError> {
         debug!("Initializing database schema");
-        for mut anti_pattern_type in self.analysis_engine.get_anti_pattern_types() {
-            self.database
-                .store_anti_pattern_type(&mut anti_pattern_type)
-                .context("Failed to store anti-pattern type")?;
+        let anti_pattern_types = self.analysis_engine.get_anti_pattern_types();
+        if !anti_pattern_types.is_empty() {
+            // Use repository manager for better performance
+            if let Some(repository_manager) = self.database.repository_manager() {
+                // For now, store individually until batch method is available in repository
+                for mut anti_pattern_type in anti_pattern_types {
+                    // Store via legacy method until repository pattern is fully implemented
+                    self.database
+                        .store_anti_pattern_type(&mut anti_pattern_type)
+                        .context("Failed to store anti-pattern type")?;
+                }
+            } else {
+                // Fallback for legacy database
+                for mut anti_pattern_type in anti_pattern_types {
+                    self.database
+                        .store_anti_pattern_type(&mut anti_pattern_type)
+                        .context("Failed to store anti-pattern type")?;
+                }
+            }
         }
         debug!("Database schema initialized successfully");
         Ok(())

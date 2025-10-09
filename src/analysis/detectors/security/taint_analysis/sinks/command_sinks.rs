@@ -185,7 +185,6 @@ impl CommandSinkDetector {
                 )
                 .with_language(language),
             ],
-            _ => Vec::new(),
         }
     }
 
@@ -252,7 +251,7 @@ impl CommandSinkDetector {
                 )
                 .with_language(language),
             ],
-            _ => Vec::new(),
+            SourceLanguage::Rust => Vec::new(), // No code evaluation sinks for Rust
         }
     }
 
@@ -289,7 +288,7 @@ impl CommandSinkDetector {
                 "Child process fork with user module".to_string(),
             )
             .with_language(language)],
-            _ => Vec::new(),
+            SourceLanguage::Rust => Vec::new(),
         }
     }
 }

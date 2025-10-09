@@ -56,45 +56,29 @@ impl CiCommand {
         }
 
         let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path).await?;
-        #[allow(deprecated)]
-        let config = LegacyAnalysisConfig {
-            target_path: args.path.clone(),
-            output_format: args.output_format.clone(),
-            output_file: None,
-            enable_ai: false,
-            ollama_api_url: None,
-            ollama_model: None,
-        };
+        let config = AnalysisConfig::new(args.path.clone());
 
-        let report = orchestrator.execute_analysis(config).await?;
+        let report = orchestrator.execute_core_analysis(&config).await?;
 
-        // Try parse JSON to extract summary (preferred)
+        // Try parse analysis result to extract summary (preferred)
         if args.output_format.to_lowercase() == "json" {
-            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&report.content) {
-                let debt = v
-                    .get("summary")
-                    .and_then(|s| s.get("debtScore"))
-                    .and_then(|n| n.as_u64())
-                    .unwrap_or(0) as u32;
-                let critical = v
-                    .get("summary")
-                    .and_then(|s| s.get("issuesBySeverity"))
-                    .and_then(|m| m.get("critical"))
-                    .and_then(|n| n.as_u64())
-                    .unwrap_or(0) as u32;
-                if debt > args.max_debt || critical > args.max_critical {
-                    error!(
-                        "CI quality gate failed: debtScore={} (max {}), critical={} (max {})",
-                        debt, args.max_debt, critical, args.max_critical
-                    );
-                    return Err(UveddiError::config_error("Quality gate failed", "ci-check"));
-                }
-                info!(
-                    "CI quality gate passed: debtScore={}, critical={}",
-                    debt, critical
+            // Generate simple metrics from analysis result
+            let debt = report.metadata.issues_found as u32; // Use total issues as debt score
+            let critical = report.issues.iter()
+                .filter(|issue| issue.severity.to_lowercase().contains("critical") || issue.severity.to_lowercase().contains("high"))
+                .count() as u32;
+            if debt > args.max_debt || critical > args.max_critical {
+                error!(
+                    "CI quality gate failed: debtScore={} (max {}), critical={} (max {})",
+                    debt, args.max_debt, critical, args.max_critical
                 );
-                return Ok(());
+                return Err(UveddiError::config_error("Quality gate failed", "ci-check"));
             }
+            info!(
+                "CI quality gate passed: debtScore={}, critical={}",
+                debt, critical
+            );
+            return Ok(());
         }
 
         // Fallback: inspect summary via metadata

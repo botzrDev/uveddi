@@ -158,10 +158,6 @@ impl NetworkSinkDetector {
                 )
                 .with_language(language),
             ],
-            SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
-                // Placeholder for JS/TS SSRF sinks detection; currently none
-            ],
-            _ => Vec::new(),
         }
     }
 
@@ -273,7 +269,7 @@ impl NetworkSinkDetector {
                 )
                 .with_language(language),
             ],
-            _ => Vec::new(),
+            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(), // No network-based code execution sinks for these languages
         }
     }
 
@@ -297,7 +293,6 @@ impl NetworkSinkDetector {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 // Placeholder for JS/TS websocket sinks detection; currently none
             ],
-            _ => Vec::new(),
         }
     }
 }

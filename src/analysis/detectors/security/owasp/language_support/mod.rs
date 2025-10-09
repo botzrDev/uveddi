@@ -67,7 +67,6 @@ impl LanguageSupportCoordinator {
                 "nestjs".to_string(),
                 "next.js".to_string(),
             ],
-            _ => Vec::new(),
         }
     }
 }

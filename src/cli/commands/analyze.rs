@@ -946,7 +946,7 @@ impl AnalyzeCommand {
         progress_tracker.start_phase(AnalysisPhase::Parsing, None);
 
         // Execute analysis through application layer with timeout
-        let analysis_future = orchestrator.execute_analysis(config);
+        let analysis_future = orchestrator.execute_core_analysis(&config);
 
         let report = if self.timeout > 0 {
             // Execute with timeout and graceful degradation
@@ -997,7 +997,7 @@ impl AnalyzeCommand {
                     let degraded_config = AnalysisConfig::new(self.path.clone());
 
                     info!("🔄 Retrying analysis with degraded settings: max 100 files, 15s per detector");
-                    let degraded_future = orchestrator.execute_analysis(degraded_config);
+                    let degraded_future = orchestrator.execute_core_analysis(&degraded_config);
 
                     match tokio::time::timeout(
                         std::time::Duration::from_secs(60),
@@ -1069,8 +1069,15 @@ impl AnalyzeCommand {
 
         // Output results
         if self.output.is_none() {
-            // Print to stdout for user - this is intentional user output, not logging
-            println!("{}", report.content);
+            // Print to stdout for user - generate JSON format from analysis result
+            let content = serde_json::json!({
+                "files_analyzed": report.metadata.files_analyzed,
+                "issues_found": report.metadata.issues_found,
+                "analysis_duration_ms": report.metadata.analysis_duration.as_millis(),
+                "ai_enhanced": report.metadata.ai_enhanced,
+                "issues": report.issues
+            });
+            println!("{}", serde_json::to_string_pretty(&content).unwrap_or_else(|_| "{}".to_string()));
         }
 
         // Log summary
@@ -1222,7 +1229,7 @@ impl AnalyzeCommand {
     }
 
     /// Print security analysis summary with color-coded output
-    async fn print_security_summary(&self, _report: &crate::application::AnalysisReport) {
+    async fn print_security_summary(&self, _report: &crate::application::orchestrator::AnalysisResult) {
         // Note: This is a placeholder implementation until we have the security data
         // properly flowing through the AnalysisReport structure
 

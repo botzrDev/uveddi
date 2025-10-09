@@ -66,7 +66,6 @@ pub fn get_language_analyzer(language: SourceLanguage) -> Option<LanguageAnalyze
         SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
             Some(LanguageAnalyzer::JavaScript(JavaScriptAgentAnalyzer::new()))
         }
-        _ => None,
     }
 }
 

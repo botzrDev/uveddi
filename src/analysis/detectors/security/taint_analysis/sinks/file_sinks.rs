@@ -172,7 +172,6 @@ impl FileSinkDetector {
                 )
                 .with_language(language),
             ],
-            _ => Vec::new(),
         }
     }
 
@@ -248,7 +247,6 @@ impl FileSinkDetector {
                 )
                 .with_language(language),
             ],
-            _ => Vec::new(),
         }
     }
 
@@ -271,7 +269,7 @@ impl FileSinkDetector {
                 )
                 .with_language(language),
             ],
-            _ => Vec::new(),
+            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(), // No specific path sinks for these languages yet
         }
     }
 }

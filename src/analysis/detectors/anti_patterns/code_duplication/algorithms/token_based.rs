@@ -188,7 +188,6 @@ impl TokenBasedDetector {
                         | "export"
                 )
             }
-            _ => false,
         }
     }
 

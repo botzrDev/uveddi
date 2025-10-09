@@ -229,25 +229,11 @@ impl TaintLevel {
             (TaintLevel::Low, TaintLevel::Sanitized) | (TaintLevel::Sanitized, TaintLevel::Low) => {
                 TaintLevel::Low
             }
-            (TaintLevel::Medium, TaintLevel::Sanitized)
-            | (TaintLevel::Sanitized, TaintLevel::Medium) => TaintLevel::Medium,
-            (TaintLevel::High, TaintLevel::Sanitized)
-            | (TaintLevel::Sanitized, TaintLevel::High) => TaintLevel::High,
             // Handle remaining combinations with Partial
             (TaintLevel::Low, TaintLevel::Partial(level))
             | (TaintLevel::Partial(level), TaintLevel::Low) => {
                 TaintLevel::Partial((*level + 0.3).min(1.0))
             }
-            (TaintLevel::Medium, TaintLevel::Partial(level))
-            | (TaintLevel::Partial(level), TaintLevel::Medium) => {
-                TaintLevel::Partial((*level + 0.6).min(1.0))
-            }
-            (TaintLevel::High, TaintLevel::Partial(level))
-            | (TaintLevel::Partial(level), TaintLevel::High) => {
-                TaintLevel::Partial((*level + 0.9).min(1.0))
-            }
-            (TaintLevel::Tainted, TaintLevel::Partial(_))
-            | (TaintLevel::Partial(_), TaintLevel::Tainted) => TaintLevel::Tainted,
         }
     }
 }
