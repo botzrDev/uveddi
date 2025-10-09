@@ -65,7 +65,14 @@ cli-core = [
 ]
 
 # Standard CLI with all language support (RECOMMENDED)
-cli-standard = ["cli-core", "tree-sitter", "engine-integration", "ast-cache", "analysis-cache"]
+cli-standard = [
+    "cli-core",
+    "tree-sitter",
+    "engine-integration",
+    "ast-cache",
+    "analysis-cache",
+    "security",
+]
 
 # CLI with AI support (requires Ollama)
 cli-ai = ["cli-standard", "ai", "local-ai"]
@@ -114,6 +121,9 @@ wasm-plugins = ["dep:wasmtime", "dep:wasmtime-wasi", "dep:cap-std", "dep:wit-bin
 # Engine refactor integration
 engine-integration = ["tree-sitter"]
 
+# Security analysis and reporting features
+security = []
+
 # ==================== LEGACY PROFILES (DEPRECATED - CLI ONLY) ====================
 # DEPRECATED: Use 'cli-core' instead
 minimal = ["cli-core"]
@@ -144,7 +154,7 @@ web-client = []
 web-server = []
 web-full = []
 tui = []
-# REMOVED: security = [] - Security detectors are part of standard CLI (A3 decision 2025-10-09)
+# Legacy security feature flag kept for compatibility; security is now part of cli-standard.
 crypto-minimal = []
 crypto-full = []
 prometheus = []

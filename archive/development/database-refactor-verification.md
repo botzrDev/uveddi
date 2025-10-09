@@ -335,7 +335,7 @@ cargo fmt
 # workspace formatted cleanly
 
 cargo clippy --all-targets -- -D warnings
-# fails: unexpected cfg value `security` in src/analysis/detector_factory.rs (pre-existing)
+# fails: outstanding lint backlog (mixed attribute style in src/application/mod.rs, format! cleanup, large error enums, PI constants, etc.)
 ```
 
 **Representative Test Output (truncated):**

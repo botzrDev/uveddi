@@ -68,8 +68,17 @@ cargo fmt
 # workspace formatted cleanly
 
 cargo clippy --all-targets -- -D warnings
-# fails: unexpected cfg value `security` in src/analysis/detector_factory.rs (pre-existing gating issue)
+# fails: existing lint backlog (e.g., mixed attribute style in src/application/mod.rs, format! cleanup, large error enums)
 ```
+
+### 5. Security Feature Reactivation ✅
+
+**Summary (2025-10-09):**
+- Reintroduced the `security` Cargo feature and wired it into the `cli-standard` profile to restore security detector availability.
+- Added a dedicated feature entry (`security = []`) under optional features to keep gating explicit for future build profiles.
+- Verified `cargo check` succeeds with security enabled; `cargo clippy --all-targets -- -D warnings` now fails on existing style/value lints instead of missing feature metadata.
+
+**Follow-up:** Clippy backlog remains (mixed attribute style, normalization of `format!` usage, large error variant sizes, PI constants, etc.); captured in launch tracker.
 
 ## Implementation Roadmap
 
