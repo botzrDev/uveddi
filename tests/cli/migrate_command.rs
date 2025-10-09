@@ -11,6 +11,17 @@ use uveddi::cli::commands::migrate::{MigrateCommand, MigrateSubcommand};
 use uveddi::database::connection::{config::DatabaseConfig, ConnectionPool};
 use uveddi::database::migrations::{create_standard_registry, runner::MigrationRunner};
 
+/// Expected migration metadata in version order for the standard registry.
+const EXPECTED_MIGRATIONS: &[(u32, &str)] = &[
+    (1, "20251001_create_cache_table"),
+    (2, "20251002_create_metrics_table"),
+    (3, "20251003_create_events_table"),
+    (4, "20251004_create_issues_table"),
+    (5, "20251005_create_dependencies_table"),
+    (6, "20251006_create_security_findings_table"),
+    (7, "20251007_create_technical_debt_table"),
+];
+
 /// Test harness that provides a temporary database for migration testing
 struct MigrationTestHarness {
     _temp_dir: TempDir, // Kept alive to ensure cleanup on drop
@@ -68,20 +79,26 @@ async fn test_registry_has_all_migrations() -> Result<(), Box<dyn std::error::Er
     let registry = create_standard_registry();
     let all_migrations = registry.get_all_sorted();
 
-    println!("Registry contains {} migrations:", all_migrations.len());
-    for migration in &all_migrations {
-        println!("  v{}: {}", migration.version, migration.name);
-    }
-
     assert_eq!(
         all_migrations.len(),
-        7,
-        "Registry should contain 7 migrations"
+        EXPECTED_MIGRATIONS.len(),
+        "Registry should contain {} migrations",
+        EXPECTED_MIGRATIONS.len()
     );
 
-    // Verify each migration is present
-    for i in 1..=7 {
-        assert!(registry.get(i).is_some(), "Migration {} should exist", i);
+    for ((expected_version, expected_name), migration) in
+        EXPECTED_MIGRATIONS.iter().zip(all_migrations.iter())
+    {
+        assert_eq!(
+            migration.version, *expected_version,
+            "Migration should have sequential version {}",
+            expected_version
+        );
+        assert_eq!(
+            migration.name, *expected_name,
+            "Migration {} should be named {}",
+            expected_version, expected_name
+        );
     }
 
     Ok(())
@@ -97,23 +114,32 @@ async fn test_migrate_plan_shows_pending_migrations() -> Result<(), Box<dyn std:
 
     // Verify that we have pending migrations from 1 to 7 (sequential versions)
     assert_eq!(plan.current_version, 0, "Initial version should be 0");
-    assert!(
-        plan.target_version >= 7,
-        "Target version should include all migrations"
+    assert_eq!(
+        plan.target_version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Target version should be the final sequential migration"
     );
     assert_eq!(
         plan.planned_migrations.len(),
-        7,
-        "Should have 7 pending migrations (versions 1-7)"
+        EXPECTED_MIGRATIONS.len(),
+        "Should have {} pending migrations (versions 1-7)",
+        EXPECTED_MIGRATIONS.len()
     );
 
-    // Verify migrations are in order
-    let expected_versions = vec![1, 2, 3, 4, 5, 6, 7];
-    for (i, migration) in plan.planned_migrations.iter().enumerate() {
+    // Verify migrations are in order with matching names
+    for ((expected_version, expected_name), migration) in EXPECTED_MIGRATIONS
+        .iter()
+        .zip(plan.planned_migrations.iter())
+    {
         assert_eq!(
-            migration.version, expected_versions[i],
-            "Migration {} should have version {}",
-            i, expected_versions[i]
+            migration.version, *expected_version,
+            "Migration should have sequential version {}",
+            expected_version
+        );
+        assert_eq!(
+            migration.name, *expected_name,
+            "Migration {} should be named {}",
+            expected_version, expected_name
         );
     }
 
@@ -121,13 +147,13 @@ async fn test_migrate_plan_shows_pending_migrations() -> Result<(), Box<dyn std:
     let display = plan.display();
     assert!(display.contains("Current Version: 0"));
     assert!(display.contains("Pending Migrations"));
-    assert!(display.contains("create_cache_table"));
-    assert!(display.contains("create_metrics_table"));
-    assert!(display.contains("create_events_table"));
-    assert!(display.contains("create_issues_table"));
-    assert!(display.contains("create_dependencies_table"));
-    assert!(display.contains("create_security_findings_table"));
-    assert!(display.contains("create_technical_debt_table"));
+    assert!(display.contains("20251001_create_cache_table"));
+    assert!(display.contains("20251002_create_metrics_table"));
+    assert!(display.contains("20251003_create_events_table"));
+    assert!(display.contains("20251004_create_issues_table"));
+    assert!(display.contains("20251005_create_dependencies_table"));
+    assert!(display.contains("20251006_create_security_findings_table"));
+    assert!(display.contains("20251007_create_technical_debt_table"));
 
     Ok(())
 }
@@ -147,13 +173,28 @@ async fn test_migrate_up_applies_all_pending() -> Result<(), Box<dyn std::error:
     let results = runner.run_pending_migrations().await?;
 
     // Verify all migrations were applied
-    assert_eq!(results.len(), 7, "Should have applied 7 migrations");
+    assert_eq!(
+        results.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Should have applied {} migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
 
     // Check that all results are successful applications
-    for result in &results {
+    for ((expected_version, expected_name), result) in
+        EXPECTED_MIGRATIONS.iter().zip(results.iter())
+    {
         match result {
             uveddi::database::migrations::MigrationResult::Applied { version, name } => {
-                println!("✓ Applied migration v{}: {}", version, name);
+                assert_eq!(
+                    *version, *expected_version,
+                    "Applied migration version should be sequential"
+                );
+                assert_eq!(
+                    name, expected_name,
+                    "Applied migration {} should be named {}",
+                    expected_version, expected_name
+                );
             }
             uveddi::database::migrations::MigrationResult::Failed { version, error } => {
                 panic!("Migration {} failed: {}", version, error);
@@ -167,8 +208,9 @@ async fn test_migrate_up_applies_all_pending() -> Result<(), Box<dyn std::error:
     // Verify current version is updated
     let current_version = runner.current_version().await?;
     assert_eq!(
-        current_version, 7,
-        "Current version should be 7 after all migrations"
+        current_version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Current version should match the final sequential migration"
     );
 
     // Verify no pending migrations remain
@@ -207,26 +249,37 @@ async fn test_migrate_status_shows_applied_migrations() -> Result<(), Box<dyn st
 
     // Check status after migrations
     let current_version = runner.current_version().await?;
-    assert_eq!(current_version, 7, "Current version should be 7");
+    assert_eq!(
+        current_version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Current version should match the final sequential migration"
+    );
 
     let applied = runner.applied_migrations().await?;
-    assert_eq!(applied.len(), 7, "7 migrations should be applied");
+    assert_eq!(
+        applied.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Should have {} applied migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
 
     // Verify all expected migrations are in the applied list
-    let expected_versions = vec![1, 2, 3, 4, 5, 6, 7];
-    for (i, record) in applied.iter().enumerate() {
-        assert_eq!(record.version, expected_versions[i]);
-        assert!(
-            !record.name.is_empty(),
-            "Migration name should not be empty"
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "Applied migration should have sequential version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "Applied migration {} should be named {}",
+            expected_version, expected_name
         );
         assert!(
             !record.checksum.is_empty(),
             "Migration checksum should not be empty"
-        );
-        println!(
-            "✓ Migration v{}: {} applied at {}",
-            record.version, record.name, record.applied_at
         );
     }
 
@@ -242,7 +295,11 @@ async fn test_migrate_down_rolls_back_to_version() -> Result<(), Box<dyn std::er
     runner.run_pending_migrations().await?;
 
     let version_before = runner.current_version().await?;
-    assert_eq!(version_before, 7, "Should be at version 7 before rollback");
+    assert_eq!(
+        version_before,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Should be at the final version before rollback"
+    );
 
     // Rollback to version 3
     let target_version = 3;
@@ -264,20 +321,61 @@ async fn test_migrate_down_rolls_back_to_version() -> Result<(), Box<dyn std::er
 
     // Verify applied migrations list is correct
     let applied = runner.applied_migrations().await?;
-    assert_eq!(applied.len(), 3, "Only 3 migrations should remain applied");
+    let expected_applied_count = target_version as usize;
+    assert_eq!(
+        applied.len(),
+        expected_applied_count,
+        "Only {} migrations should remain applied",
+        expected_applied_count
+    );
+    for ((expected_version, expected_name), record) in EXPECTED_MIGRATIONS
+        .iter()
+        .take(expected_applied_count)
+        .zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "After rollback, applied migration should have version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "After rollback, migration {} should be named {}",
+            expected_version, expected_name
+        );
+    }
 
     // Verify that plan shows the rolled-back migrations as pending
     let plan = runner.plan_migrations().await?;
     assert_eq!(plan.current_version, target_version);
+    let expected_pending: Vec<_> = EXPECTED_MIGRATIONS
+        .iter()
+        .skip(expected_applied_count)
+        .collect();
     assert_eq!(
         plan.planned_migrations.len(),
-        4,
-        "4 migrations should be pending after rollback to version 3"
+        expected_pending.len(),
+        "{} migrations should be pending after rollback to version {}",
+        expected_pending.len(),
+        target_version
     );
 
     // Verify the pending migrations are the ones we rolled back
-    let pending_versions: Vec<u32> = plan.planned_migrations.iter().map(|m| m.version).collect();
-    assert_eq!(pending_versions, vec![4, 5, 6, 7]);
+    for ((expected_version, expected_name), migration) in expected_pending
+        .into_iter()
+        .zip(plan.planned_migrations.iter())
+    {
+        assert_eq!(
+            migration.version, *expected_version,
+            "Pending migration should have version {}",
+            expected_version
+        );
+        assert_eq!(
+            migration.name, *expected_name,
+            "Pending migration {} should be named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }
@@ -292,8 +390,31 @@ async fn test_migrate_plan_dry_run() -> Result<(), Box<dyn std::error::Error>> {
 
     // Verify plan contains expected information
     assert_eq!(plan.current_version, 0);
-    assert!(plan.target_version >= 7);
-    assert_eq!(plan.planned_migrations.len(), 7);
+    assert_eq!(
+        plan.target_version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Dry-run target version should match final migration"
+    );
+    assert_eq!(
+        plan.planned_migrations.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Dry-run should list all pending migrations"
+    );
+    for ((expected_version, expected_name), migration) in EXPECTED_MIGRATIONS
+        .iter()
+        .zip(plan.planned_migrations.iter())
+    {
+        assert_eq!(
+            migration.version, *expected_version,
+            "Dry-run should list migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            migration.name, *expected_name,
+            "Dry-run migration {} should be named {}",
+            expected_version, expected_name
+        );
+    }
 
     // Verify display output is well-formed
     let display = plan.display();
@@ -310,19 +431,41 @@ async fn test_migrate_up_with_verification() -> Result<(), Box<dyn std::error::E
 
     // Execute migrations
     let results = runner.run_pending_migrations().await?;
-    assert_eq!(results.len(), 7, "Should apply all 7 migrations");
+    assert_eq!(
+        results.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Should apply all {} migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
 
     // Verify all migrations succeeded
-    for result in &results {
-        assert!(matches!(
-            result,
-            uveddi::database::migrations::MigrationResult::Applied { .. }
-        ));
+    for ((expected_version, expected_name), result) in
+        EXPECTED_MIGRATIONS.iter().zip(results.iter())
+    {
+        match result {
+            uveddi::database::migrations::MigrationResult::Applied { version, name } => {
+                assert_eq!(
+                    *version, *expected_version,
+                    "Applied migration should have sequential version {}",
+                    expected_version
+                );
+                assert_eq!(
+                    name, expected_name,
+                    "Applied migration {} should be named {}",
+                    expected_version, expected_name
+                );
+            }
+            _ => panic!("Unexpected migration result: {:?}", result),
+        }
     }
 
     // Verify database state
     let current_version = runner.current_version().await?;
-    assert_eq!(current_version, 7, "All migrations should be applied");
+    assert_eq!(
+        current_version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "All migrations should be applied"
+    );
 
     // Verify database file size
     let size = harness.db_size().await?;
@@ -344,15 +487,34 @@ async fn test_migrate_status_reporting() -> Result<(), Box<dyn std::error::Error
 
     // Get and verify migration status
     let current_version = runner.current_version().await?;
-    assert_eq!(current_version, 7);
+    assert_eq!(
+        current_version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Current version should match the final migration"
+    );
 
     let applied = runner.applied_migrations().await?;
-    assert_eq!(applied.len(), 7);
+    assert_eq!(
+        applied.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Should report {} applied migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
 
     // Verify each migration record has required fields
-    for record in &applied {
-        assert!(record.version > 0, "Version should be set");
-        assert!(!record.name.is_empty(), "Name should be set");
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "Status should report migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "Status should report migration {} as {}",
+            expected_version, expected_name
+        );
         assert!(!record.checksum.is_empty(), "Checksum should be set");
     }
 
@@ -373,6 +535,41 @@ async fn test_migrate_down_with_verification() -> Result<(), Box<dyn std::error:
         rollback_results.len() > 0,
         "Should have rolled back some migrations"
     );
+    let expected_rolled_back: Vec<_> = EXPECTED_MIGRATIONS
+        .iter()
+        .rev()
+        .take(EXPECTED_MIGRATIONS.len() - 3)
+        .collect();
+    assert_eq!(
+        rollback_results.len(),
+        expected_rolled_back.len(),
+        "Should roll back {} migrations",
+        expected_rolled_back.len()
+    );
+    for ((expected_version, expected_name), result) in expected_rolled_back
+        .into_iter()
+        .zip(rollback_results.iter())
+    {
+        match result {
+            uveddi::database::migrations::MigrationResult::Applied { version, name } => {
+                assert_eq!(
+                    *version, *expected_version,
+                    "Rolled back migration should have version {}",
+                    expected_version
+                );
+                let expected_rollback_name = format!("Rollback: {}", expected_name);
+                assert_eq!(
+                    name, &expected_rollback_name,
+                    "Rolled back migration {} should report name {}",
+                    expected_version, expected_rollback_name
+                );
+            }
+            other => panic!(
+                "Expected rollback to report Applied result, got {:?} for migration {} ({})",
+                other, expected_version, expected_name
+            ),
+        }
+    }
 
     // Verify rollback occurred
     let current_version = runner.current_version().await?;
@@ -385,6 +582,20 @@ async fn test_migrate_down_with_verification() -> Result<(), Box<dyn std::error:
         3,
         "Only 3 migrations should remain after rollback"
     );
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().take(3).zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "After rollback, applied migration should have version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "After rollback, migration {} should be named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }
@@ -399,7 +610,34 @@ async fn test_migrate_idempotency() -> Result<(), Box<dyn std::error::Error>> {
     let results2 = runner.run_pending_migrations().await?;
 
     // First run should apply migrations
-    assert_eq!(results1.len(), 7, "First run should apply 7 migrations");
+    assert_eq!(
+        results1.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "First run should apply {} migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
+    for ((expected_version, expected_name), result) in
+        EXPECTED_MIGRATIONS.iter().zip(results1.iter())
+    {
+        match result {
+            uveddi::database::migrations::MigrationResult::Applied { version, name } => {
+                assert_eq!(
+                    *version, *expected_version,
+                    "First run should apply migration version {}",
+                    expected_version
+                );
+                assert_eq!(
+                    name, expected_name,
+                    "First run should apply migration {} named {}",
+                    expected_version, expected_name
+                );
+            }
+            other => panic!(
+                "Expected Applied result for migration {} ({}), got {:?}",
+                expected_version, expected_name, other
+            ),
+        }
+    }
 
     // Second run should find nothing to apply
     assert_eq!(
@@ -434,6 +672,27 @@ async fn test_cli_migrate_plan_command() -> Result<(), Box<dyn std::error::Error
     let runner = harness.create_runner().await?;
     let version = runner.current_version().await?;
     assert_eq!(version, 0, "Plan command should not apply migrations");
+    let plan = runner.plan_migrations().await?;
+    assert_eq!(
+        plan.planned_migrations.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Plan command should report all pending migrations"
+    );
+    for ((expected_version, expected_name), migration) in EXPECTED_MIGRATIONS
+        .iter()
+        .zip(plan.planned_migrations.iter())
+    {
+        assert_eq!(
+            migration.version, *expected_version,
+            "Plan command should list migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            migration.name, *expected_name,
+            "Plan command should list migration {} named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }
@@ -455,10 +714,33 @@ async fn test_cli_migrate_up_command() -> Result<(), Box<dyn std::error::Error>>
     // Verify all migrations were applied
     let runner = harness.create_runner().await?;
     let version = runner.current_version().await?;
-    assert_eq!(version, 7, "Up command should apply all 7 migrations");
+    assert_eq!(
+        version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Up command should apply all migrations"
+    );
 
     let applied = runner.applied_migrations().await?;
-    assert_eq!(applied.len(), 7, "7 migrations should be applied");
+    assert_eq!(
+        applied.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Up command should apply {} migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "Up command should apply migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "Up command should apply migration {} named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }
@@ -481,6 +763,30 @@ async fn test_cli_migrate_status_command() -> Result<(), Box<dyn std::error::Err
     // Execute the command - should not error
     command.execute().await?;
 
+    // Verify status reflects applied migrations
+    let status_runner = harness.create_runner().await?;
+    let applied = status_runner.applied_migrations().await?;
+    assert_eq!(
+        applied.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Status command should report {} applied migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "Status command should report migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "Status command should report migration {} named {}",
+            expected_version, expected_name
+        );
+    }
+
     Ok(())
 }
 
@@ -494,7 +800,11 @@ async fn test_cli_migrate_down_command() -> Result<(), Box<dyn std::error::Error
 
     // Verify we're at version 7
     let version_before = runner.current_version().await?;
-    assert_eq!(version_before, 7);
+    assert_eq!(
+        version_before,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Should start at the final migration version"
+    );
 
     // Create command with Down subcommand to rollback to version 3
     let command = MigrateCommand {
@@ -520,6 +830,20 @@ async fn test_cli_migrate_down_command() -> Result<(), Box<dyn std::error::Error
         3,
         "Only 3 migrations should remain after rollback"
     );
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().take(3).zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "After CLI rollback, applied migration should have version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "After CLI rollback, migration {} should be named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }
@@ -542,7 +866,32 @@ async fn test_cli_migrate_up_idempotency() -> Result<(), Box<dyn std::error::Err
     // Verify still at version 7 (second run should be no-op)
     let runner = harness.create_runner().await?;
     let version = runner.current_version().await?;
-    assert_eq!(version, 7, "Multiple up commands should be idempotent");
+    assert_eq!(
+        version,
+        EXPECTED_MIGRATIONS.last().unwrap().0,
+        "Multiple up commands should leave database at final version"
+    );
+    let applied = runner.applied_migrations().await?;
+    assert_eq!(
+        applied.len(),
+        EXPECTED_MIGRATIONS.len(),
+        "Idempotent runs should still report {} applied migrations",
+        EXPECTED_MIGRATIONS.len()
+    );
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "Idempotent run should retain migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "Idempotent run should retain migration {} named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }
@@ -573,6 +922,26 @@ async fn test_cli_migrate_down_already_at_target() -> Result<(), Box<dyn std::er
         version, 3,
         "Down command should be no-op when target is higher"
     );
+    let applied = runner.applied_migrations().await?;
+    assert_eq!(
+        applied.len(),
+        3,
+        "No-op down command should retain previously applied migrations"
+    );
+    for ((expected_version, expected_name), record) in
+        EXPECTED_MIGRATIONS.iter().take(3).zip(applied.iter())
+    {
+        assert_eq!(
+            record.version, *expected_version,
+            "No-op down command should retain migration version {}",
+            expected_version
+        );
+        assert_eq!(
+            record.name, *expected_name,
+            "No-op down command should retain migration {} named {}",
+            expected_version, expected_name
+        );
+    }
 
     Ok(())
 }

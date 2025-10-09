@@ -86,14 +86,28 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-09 | Testing & QA | Assignments 07 & 08 - Migration Tests | ✅ Complete | 16 tests passing, CLI commands fully covered |
 
 ### Assignment DB-07/DB-08 Notes (2025-10-09)
-- **Work Landed:** [tests/cli/migrate_command.rs](../tests/cli/migrate_command.rs) adds a tempfile-backed `MigrationTestHarness` with 16 async tests covering both `MigrationRunner` and `MigrateCommand::execute()` paths. Fixed version numbering inconsistency and SQL syntax error in migration 6.
-- **Final Status:** All 16 tests passing with zero warnings. Test suite covers: registry validation, plan/up/down/status operations, idempotency, rollback scenarios, and CLI command execution.
-- **Issues Resolved:**
-  1. Version mismatch: Updated tests to use sequential versions (1-7) matching registry
-  2. SQL keyword: Renamed `references` column to `reference_links` in migration 6
-  3. CLI coverage: Added 6 tests for direct `MigrateCommand::execute()` validation
-- **Test Output:** `cargo test --test migrate_command` → `test result: ok. 16 passed; 0 failed`
-- **Decision:** Adopted sequential version numbers (1-7) as canonical scheme; file names retain date prefixes for chronological reference
+- **Work Landed:** Refined [tests/cli/migrate_command.rs](../tests/cli/migrate_command.rs) with an `EXPECTED_MIGRATIONS` table so every assertion validates sequential versions 1–7 and their canonical date-prefixed names. CLI tests now inspect database state after Plan/Up/Down/Status runs executed via `MigrateCommand::execute()`.
+- **Verification Commands:**
+  ```bash
+  cargo test --test migrate_command -- --nocapture
+  # 16 passed; 0 failed; CLI output included
+
+  cargo fmt
+
+  cargo clippy --all-targets -- -D warnings
+  # fails: unexpected cfg value `security` in src/analysis/detector_factory.rs (known gating issue)
+  ```
+- **Representative Output (truncated):**
+  ```text
+  === Migration Plan (Dry Run) ===
+  Current Version: 0
+  Target Version:  7
+  Pending Migrations (7):
+    → v1: 20251001_create_cache_table
+    ...
+  test result: ok. 16 passed; 0 failed; finished in 0.71s
+  ```
+- **Status:** Assignment DB-07/08 test suite green; sequential numbering adopted as canonical; pending follow-up is resolving legacy `security` feature guards flagged by clippy (outside this assignment scope).
 
 ---
 **Last Updated:** 2025-10-09

@@ -314,6 +314,57 @@ Adopted **sequential version numbers (1-7)** as the canonical scheme because:
 
 ---
 
+### Assignment 08 - Migration Test Recovery & Refinement ✅
+**Status:** Complete  
+**Completed:** 2025-10-09  
+**Time Spent:** 1.5 hours  
+**Complexity:** Low
+
+**Work Completed (2025-10-09):**
+- ✅ Introduced a shared `EXPECTED_MIGRATIONS` table so every assertion validates sequential versions 1–7 alongside the canonical date-prefixed names.
+- ✅ Refactored all migration runner tests to compare both version and name ordering, including rollback and idempotency scenarios.
+- ✅ Strengthened CLI coverage by asserting database state after executing Plan/Up/Down/Status subcommands against the temp harness.
+- ✅ Regenerated evidence with `--nocapture` to document CLI output for DB-07/08 sign-off.
+
+**Verification Commands & Results:**
+```bash
+cargo test --test migrate_command -- --nocapture
+# 16 passed; 0 failed; includes plan/up/down/status output traces
+
+cargo fmt
+# workspace formatted cleanly
+
+cargo clippy --all-targets -- -D warnings
+# fails: unexpected cfg value `security` in src/analysis/detector_factory.rs (pre-existing)
+```
+
+**Representative Test Output (truncated):**
+```text
+=== Migration Plan (Dry Run) ===
+
+Current Version: 0
+Target Version:  7
+
+Pending Migrations (7):
+  → v1: 20251001_create_cache_table
+  ...
+test result: ok. 16 passed; 0 failed; 0 ignored; finished in 0.71s
+```
+
+**Exit Criteria:**
+- [x] All assertions enforce sequential migration versions 1–7 with matching names.
+- [x] CLI tests validate `MigrateCommand::execute()` for Plan/Up/Down/Status.
+- [x] `cargo test` green with captured output stored here for audit.
+- [x] Formatting clean (`cargo fmt`).
+- [ ] `cargo clippy --all-targets -- -D warnings` still blocked on legacy `security` feature guards (outside DB-08 scope).
+- [x] Documentation updated (this file, IMPLEMENTATION_SUMMARY.md, LAUNCH_TRACKER.md).
+
+**Files Modified:**
+- `tests/cli/migrate_command.rs` — added `EXPECTED_MIGRATIONS` metadata, rewrote assertions to verify version/name pairs, and expanded CLI state checks.
+- ✅ Status subcommand: `test_cli_migrate_status_command`
+
+---
+
 ## Overall Project Health Checks
 
 ### Pre-Assignment Checks

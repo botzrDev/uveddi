@@ -52,6 +52,25 @@ This document summarizes the implementation planning for the DB_CALIBRATION_PLAN
 - `assignments/LAUNCH_TRACKER.md` - Added DB refactor milestone tracking
 - Created implementation branch: `feature/db-refactor-phase2`
 
+### 4. DB-08 Migration Test Stabilization ✅
+
+**Highlights (2025-10-09):**
+- Added a shared `EXPECTED_MIGRATIONS` table in `tests/cli/migrate_command.rs` so every assertion checks sequential versions 1–7 and their named counterparts.
+- Hardened migration runner tests (plan/up/down/status/idempotency/rollback) to assert both version ordering and registry names.
+- Expanded CLI coverage to validate `MigrateCommand::execute()` for Plan/Up/Down/Status by inspecting the temp database state after each run.
+
+**Verification Evidence:**
+```bash
+cargo test --test migrate_command -- --nocapture
+# 16 passed; 0 failed; CLI output captured for audit
+
+cargo fmt
+# workspace formatted cleanly
+
+cargo clippy --all-targets -- -D warnings
+# fails: unexpected cfg value `security` in src/analysis/detector_factory.rs (pre-existing gating issue)
+```
+
 ## Implementation Roadmap
 
 ### Phase 1: Database Refactor (Oct 13 - Nov 2)
@@ -298,7 +317,7 @@ cargo run -- migrate --help
 5. ✅ 43 database tests passing (6 pre-existing failures documented)
 6. ✅ Build successful with no migration-related warnings
 
-### 2025-10-09: Assignment 07 Complete (DB-07, DB-08)
+### 2025-10-09: Assignment 07 Complete (DB-07)
 **Engineer:** Senior Backend Developer (Tooling QA)
 **Time Spent:** 4 hours
 **Status:** ✅ Complete
@@ -359,3 +378,70 @@ Adopted **sequential version numbers (1-7)** as the canonical scheme because:
 - Matches Migration struct documentation ("sequential")
 - Easier to work with in code and tests
 - Migration file names still use date prefixes (20251001-20251007) for chronological reference
+
+---
+
+### 2025-10-09: Assignment 08 Complete (DB-08)
+**Engineer:** Senior Backend Developer (Tooling QA)
+**Time Spent:** 1 hour
+**Status:** ✅ Complete
+
+#### Deliverables Achieved:
+1. ✅ Aligned test expectations with actual registry migration names (using full date-prefixed format).
+2. ✅ Removed all debugging `println!` statements from test file for clean, professional output.
+3. ✅ Verified comprehensive coverage of `MigrateCommand::execute()` for all subcommands (Plan, Up, Down, Status).
+4. ✅ Ran `cargo fmt` on test file (clean).
+5. ✅ Verified no clippy warnings on migration test file.
+6. ✅ All 16 tests pass consistently with 0 failures.
+
+#### Test Refinements:
+1. **Updated Assertions:** Modified `test_migrate_plan_shows_pending_migrations` to check for complete migration names:
+   - Changed from substring matches (e.g., "create_cache_table")
+   - To full name matches (e.g., "20251001_create_cache_table")
+   - This makes assertions more precise and catches potential naming regressions
+2. **Removed Debug Output:** Removed `println!` statements from:
+   - `test_registry_has_all_migrations` (lines 71-74)
+   - `test_migrate_up_applies_all_pending` (line 156)
+   - `test_migrate_status_shows_applied_migrations` (lines 227-230)
+3. **Code Cleanup:** Replaced verbose pattern matching with streamlined code and comments
+
+#### Files Modified:
+- `tests/cli/migrate_command.rs`:
+  - Lines 124-130: Updated assertions to use full migration names (20251001_* format)
+  - Lines 71-74: Removed println! debug output
+  - Lines 147-159: Removed println! from match arm, added comment
+  - Lines 210-222: Removed println! debug output
+
+#### Command Output (DB-08 completion run):
+```bash
+cargo test --test migrate_command -- --nocapture
+# running 16 tests
+# test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+```
+
+#### Verification:
+```bash
+# Format check
+cargo fmt
+
+# Clippy check on test file
+cargo clippy --test migrate_command
+# No warnings emitted for migrate_command.rs
+
+# Full test run
+cargo test --test migrate_command -- --nocapture
+# All tests green, output is clean without debug statements
+```
+
+#### Coverage Confirmation:
+All MigrateCommand subcommands have direct execute() coverage:
+- ✅ Plan subcommand: `test_cli_migrate_plan_command`
+- ✅ Up subcommand: `test_cli_migrate_up_command` + `test_cli_migrate_up_idempotency`
+- ✅ Down subcommand: `test_cli_migrate_down_command` + `test_cli_migrate_down_already_at_target`
+- ✅ Status subcommand: `test_cli_migrate_status_command`
+
+#### Impact:
+- Migration test suite is now production-ready with clear, maintainable assertions
+- Test output is clean and professional (no debug noise)
+- All test expectations match actual implementation (date-prefixed migration names)
+- Comprehensive coverage of CLI command execution paths ensures reliability
