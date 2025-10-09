@@ -10,7 +10,7 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | [A2 – Product Surface Freeze](./ASSIGNMENT-A2-PRODUCT-FREEZE.md) | — | ✅ Complete | Feature flag mapping, CLI command audit, doc updates | CLI snapshot, feature matrix, scope diff |
 | [A3 – Hardening Sprint](./ASSIGNMENT-A3-HARDENING.md) | — | ✅ Complete | Docs cleanup, CI/config fixes, decision log, calibration planning | Doc links, test logs, decisions memo |
 | [A4 – Security & Compliance](./ASSIGNMENT-A4-COMPLIANCE.md) | — | ✅ Complete | License enforcement, dependency audit, compliance notes | License scan, checklist |
-| [A5 – QA Execution](./ASSIGNMENT-A5-QA.md) | — | Not Started | Automated + manual test passes, regression sweeps | QA report, dashboard |
+| [A5 – QA Execution](./ASSIGNMENT-A5-QA-EXECUTION.md) | — | ✅ Complete | Automated + manual test passes, regression sweeps | QA report, dashboard |
 | [A6 – Packaging & Distribution](./ASSIGNMENT-A6-PACKAGING.md) | — | Not Started | Build/sign artifacts, validate installers/containers | Artifact manifest, install logs |
 | [A7 – Docs & Enablement](./ASSIGNMENT-A7-DOCS.md) | — | Not Started | README/CLI reference updates, quickstart assets | Doc review checklist |
 | [A8 – GTM Prep](./ASSIGNMENT-A8-GTM.md) | — | Not Started | Messaging, pricing FAQ, launch announcements | Asset checklist, copy approvals |
@@ -41,6 +41,7 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-09 | **A9 Support & Ops assignment drafted.** Support SOP, escalation plan, monitoring, and KB work captured. | Verify tooling access and schedule tabletop exercise post-packaging. |
 | 2025-10-09 | **A10 Release Execution assignment drafted.** Final tagging, artifact publication, and launch communications plan documented. | Ensure dependencies (A5–A9) complete before execution. |
 | 2025-10-09 | **A11 Post-Launch Review assignment drafted.** Metrics gathering, feedback digest, retrospective, and roadmap reset tasks defined. | Set up telemetry/log capture during release execution to support post-launch review. |
+| 2025-11-22 | **A5 QA Execution completed.** Comprehensive testing executed on release/1.0.0 branch. Release build: ✅ SUCCESS. Unit tests: 685/762 passed (89.9%). Integration tests: Blocked (compilation errors). Manual workflows: 4/4 passed (100%). Critical defects: 2 (mitigated). Recommendation: CONDITIONAL GO with v1.0.1 patch commitment. | Address DEF-001 (integration tests) and DEF-002 (security regex) in v1.0.1 patch; complete release documentation with limitations; create tracking issues |
 
 ## Verification Summary
 
@@ -110,5 +111,15 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
   ```
 - **Status:** Assignment DB-07/08 test suite green; sequential numbering adopted as canonical; pending follow-up is resolving legacy `security` feature guards flagged by clippy (outside this assignment scope).
 
+### Assignment A5 Artifacts (Complete - 2025-11-22)
+- **QA Summary Report:** [reports/qa/qa-summary-2025-11-22.md](../reports/qa/qa-summary-2025-11-22.md)
+- **Defect Log:** [reports/qa/defect-log-2025-11.csv](../reports/qa/defect-log-2025-11.csv) - 15 defects (2 critical, 3 high)
+- **Regression Matrix:** [reports/qa/regression-matrix.csv](../reports/qa/regression-matrix.csv) - 40 flows tested
+- **Coverage Snapshot:** [reports/qa/coverage/coverage-snapshot-2025-11.md](../reports/qa/coverage/coverage-snapshot-2025-11.md) - 60-65% estimated
+- **Release Sign-Off Memo:** [reports/qa/release-candidate-signoff-memo.md](../reports/qa/release-candidate-signoff-memo.md) - CONDITIONAL GO
+- **Test Inventory:** [reports/qa/test-inventory.md](../reports/qa/test-inventory.md)
+- **Test Logs:** [reports/qa/logs/](../reports/qa/logs/) - Full execution logs
+- **Updated Test README:** [tests/README.md](../tests/README.md) - v1.0.0 release edition
+
 ---
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-11-22

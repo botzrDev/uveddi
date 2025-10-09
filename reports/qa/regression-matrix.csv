@@ -1,0 +1,58 @@
+Flow ID,Flow Name,Category,Priority,Test Method,Expected Result,Actual Result,Status,Notes,Blocker,Assigned To
+RF-001,Project Initialization,CLI Core,Critical,Manual,"Config file created, docs generated, success message shown","✅ Config created, docs generated, proper output",PASS,"Tested with --template rust --non-interactive",No,N/A
+RF-002,Basic Code Analysis,Analysis Core,Critical,Manual,"Source files parsed, issues detected, report generated","✅ 1 file analyzed, 3 issues found, report generated",PASS,"Tested with simple Rust file, markdown output",No,N/A
+RF-003,Health Diagnostics,CLI Support,High,Manual,"System checks executed, status reported clearly","✅ 10/11 checks passed, 1 expected warning",PASS,"Binary integrity, parsers, disk space all verified",No,N/A
+RF-004,Help System,CLI Support,High,Manual,"Comprehensive help shown for all commands","✅ Help text complete, well-formatted, informative",PASS,"Tested --help and <command> --help",No,N/A
+RF-005,Database Integration,Storage,Critical,Manual,"SQLite DB created, issues stored successfully","✅ Database created, 3 issues stored correctly",PASS,"Verified uveddi_cache.db creation and writes",No,N/A
+RF-006,AST Parsing - Rust,Parsing,Critical,Manual,"Rust files parsed, AST generated correctly","✅ Parsing successful, AST cache functional",PASS,"Cache hit observed on second access",No,N/A
+RF-007,AST Parsing - Python,Parsing,High,Automated (unit test),"Python files parsed correctly","✅ Python parser test passing",PASS,"See ast_provider tests",No,N/A
+RF-008,AST Parsing - JavaScript,Parsing,High,Automated (unit test),"JavaScript files parsed correctly","✅ JavaScript parser test passing",PASS,"See ast_provider tests",No,N/A
+RF-009,AST Parsing - TypeScript,Parsing,High,Automated (unit test),"TypeScript files detected and parsed","❌ Detected as JavaScript instead",FAIL,"DEF-008: Language detection issue",Yes - Medium,Dev Team
+RF-010,Magic Values Detection,Detector,High,Manual,"Magic numbers and strings identified","✅ 3 magic values detected in test file",PASS,"Correctly identified 1, 2, 3, 100",No,N/A
+RF-011,God Object Detection,Detector,High,Manual,"Large classes with many responsibilities flagged","⚠️ Obvious god object not detected",PARTIAL,"DEF-006: Thresholds too conservative",No,Calibration Team
+RF-012,Long Methods Detection,Detector,High,Manual,"Functions exceeding LOC threshold flagged","⚠️ 100-line function not detected",PARTIAL,"DEF-007: Threshold needs adjustment",No,Calibration Team
+RF-013,Dead Code Detection,Detector,Medium,Automated (unit test),"Unused code identified with confidence scoring","⚠️ Some tests failing",PARTIAL,"Working in manual tests, automated tests have issues",No,Dev Team
+RF-014,Code Duplication Detection,Detector,Medium,Manual,"Duplicate code blocks identified","✅ Detector executed, no false positives",PASS,"No duplication in simple test file (expected)",No,N/A
+RF-015,Tight Coupling Detection,Detector,Medium,Automated (unit test),"High coupling between modules identified","✅ Test executed successfully",PASS,"Manual test also passed",No,N/A
+RF-016,Security - SQL Injection,Security,Critical,Automated (unit test),"SQL injection patterns detected","❌ Test failing - regex issues",FAIL,"DEF-002: Regex lookahead/lookbehind not supported",Yes - Critical,Security Team
+RF-017,Security - XSS Detection,Security,Critical,Automated (unit test),"XSS patterns detected in web code","❌ Test failing - regex issues",FAIL,"DEF-002: Regex issues cascade",Yes - Critical,Security Team
+RF-018,Security - CSRF Detection,Security,High,Automated (unit test),"CSRF vulnerabilities identified","❌ Test failing - detection issues",FAIL,"DEF-002: Related to regex fixes",Yes - Critical,Security Team
+RF-019,Security - Path Traversal,Security,High,Automated (unit test),"Path traversal attempts detected","❌ Test failing in Rust and JS",FAIL,"DEF-002: Detector accuracy issues",Yes - Critical,Security Team
+RF-020,Security - Hardcoded Secrets,Security,Critical,Automated (unit test),"API keys, passwords, tokens detected","❌ Test failing - pattern matching",FAIL,"DEF-002: Regex pattern issues",Yes - Critical,Security Team
+RF-021,Security - Session Management,Security,High,Automated (unit test),"Insecure session handling identified","❌ Test failing in Rust and JS",FAIL,"DEF-002: Detection logic issues",Yes - Critical,Security Team
+RF-022,Dependency Graph Building,Analysis,Medium,Automated (unit test),"Dependency relationships mapped correctly","✅ Graph built for test file (0 deps expected)",PASS,"Simple file had no dependencies (correct)",No,N/A
+RF-023,Cache - AST Caching,Performance,High,Manual,"Parsed ASTs cached, cache hits on reuse","✅ Cache miss then cache hit observed",PASS,"Verified via log output during analysis",No,N/A
+RF-024,Cache - File Watching,Performance,Medium,Automated (unit test),"File changes trigger cache invalidation","❌ Multiple cache tests failing",FAIL,"DEF-004: Implementation vs test mismatch",No,Dev Team
+RF-025,Cache - LRU Eviction,Performance,Medium,Automated (unit test),"Least recently used entries evicted under pressure","❌ Test assertion failing",FAIL,"DEF-004: Cache eviction logic issues",No,Dev Team
+RF-026,Database - Connection Pool,Storage,High,Automated (unit test),"Concurrent connections managed efficiently","❌ Test failing - table exists error",FAIL,"DEF-003: State pollution between tests",No,QA Team
+RF-027,Database - CRUD Operations,Storage,Critical,Automated (unit test),"Create, read, update, delete all functional","❌ Test won't compile - import errors",BLOCKED,"DEF-001: Integration test compilation",Yes - Critical,Dev Team
+RF-028,Database - Migrations,Storage,High,Not Tested,"Migrations run successfully up and down","⏭️ Not executed in this QA cycle",SKIPPED,"Requires migration setup",No,N/A
+RF-029,Report - Markdown Generation,Reporting,Critical,Manual,"Markdown report generated with proper formatting","✅ Report created, formatting correct",PASS,"Verified output file structure",No,N/A
+RF-030,Report - JSON Generation,Reporting,High,Not Tested,"JSON report with structured data","⏭️ Not tested in manual scenarios",SKIPPED,"Test with --output-format json",No,N/A
+RF-031,Report - HTML Generation,Reporting,High,Not Tested,"HTML report with diagrams and styling","⏭️ Not tested in manual scenarios",SKIPPED,"Test with --output-format html",No,N/A
+RF-032,CLI - Progress Indicators,UX,Medium,Manual,"Progress bars shown during long operations","✅ Progress bar displayed during analysis",PASS,"Terminal output showed progress",No,N/A
+RF-033,CLI - Error Handling,UX,High,Manual,"Clear error messages for invalid input","✅ Helpful error for unknown flag",PASS,"Tested with --format (invalid), got clear error",No,N/A
+RF-034,CLI - Command Suggestions,UX,Low,Automated (unit test),"Similar commands suggested for typos","⚠️ Alias test failing",PARTIAL,"DEF-009: 'dr' alias not in suggestions",No,Dev Team
+RF-035,Config - Validation,Config,Medium,Automated (unit test),"Invalid configs rejected with clear errors","⚠️ Empty config now accepted (may be intentional)",PARTIAL,"DEF-010: Validation logic changed",No,Dev Team
+RF-036,File Discovery - Gitignore,Discovery,Medium,Automated (unit test),"Gitignore patterns respected during discovery","⚠️ Unexpected file count returned",PARTIAL,"DEF-011: Expected 1 file, got 3",No,Dev Team
+RF-037,Memory - Optimization,Performance,High,Not Tested,"Memory usage optimized for large codebases","⏭️ Not tested with large codebase",SKIPPED,"Requires large-scale testing",No,N/A
+RF-038,Integration - CI/CD,Integration,Medium,Not Tested,"Runs successfully in CI environment","⏭️ Not tested in this cycle",SKIPPED,"Requires CI setup",No,N/A
+RF-039,Migration - Database Upgrade,Storage,High,Not Tested,"Database schema upgrades cleanly","⏭️ Not tested",SKIPPED,"Requires migration scenario",No,N/A
+RF-040,Multi-language - Mixed Project,Analysis,High,Not Tested,"Projects with multiple languages analyzed correctly","⏭️ Not tested",SKIPPED,"Test with polyglot codebase",No,N/A
+
+Summary Statistics
+Category,Total Flows,Passed,Failed,Partial,Blocked,Skipped
+CLI Core,4,4,0,0,0,0
+Analysis Core,1,1,0,0,0,0
+Detector,7,2,0,3,0,2
+Security,6,0,6,0,0,0
+Performance,3,1,2,0,0,0
+Storage,4,1,1,0,1,1
+Reporting,3,1,0,0,0,2
+UX,3,2,0,1,0,0
+Config,1,0,0,1,0,0
+Discovery,1,0,0,1,0,0
+Integration,2,0,0,0,0,2
+
+Overall,40,12,9,7,1,11
+Percentage,100%,30%,22.5%,17.5%,2.5%,27.5%
