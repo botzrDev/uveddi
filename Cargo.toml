@@ -386,6 +386,10 @@ name = "cli_analyze"
 path = "tests/cli_analyze.rs"
 
 [[test]]
+name = "migrate_command"
+path = "tests/cli/migrate_command.rs"
+
+[[test]]
 name = "database_crud"
 path = "tests/database_crud.rs"
 

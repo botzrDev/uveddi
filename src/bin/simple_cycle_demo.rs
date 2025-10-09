@@ -33,9 +33,9 @@ fn demonstrate_circular_dependency_problem() {
     // Example of problematic circular dependency (conceptual)
     println!("   Example circular imports:");
     println!("   // analysis/engine.rs");
-    println!("   use crate::database::crud::Database;  // Direct database dependency");
+    println!("   use crate::database::ScalableDatabase;  // Direct database dependency");
     println!();
-    println!("   // database/crud.rs");
+    println!("   // database/repository.rs");
     println!("   use crate::analysis::engine::AnalysisEngine;  // Back-reference to analysis");
     println!();
     println!("   This creates a cycle: analysis → database → analysis");

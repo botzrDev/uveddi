@@ -232,7 +232,10 @@ impl ScalableDatabase {
     }
 
     /// Compatibility shim for legacy API - delegates to store_anti_pattern_types_batch
-    pub async fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
+    pub async fn store_anti_pattern_type(
+        &self,
+        anti_pattern_type: &mut AntiPatternType,
+    ) -> Result<()> {
         let types = vec![anti_pattern_type.clone()];
         self.store_anti_pattern_types_batch(&types).await?;
         // Update the ID if it was set
