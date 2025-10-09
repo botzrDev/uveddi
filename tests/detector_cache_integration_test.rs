@@ -8,8 +8,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::fs;
 use tokio::time::sleep;
-use uveddi::analysis::cache::{EnhancedEngineCache, EnhancedCacheConfig, ContentHashInvalidator};
-use uveddi::analysis::detectors::cache_integration::{DetectorCacheManager, DetectorCacheKey};
+use uveddi::analysis::cache::{ContentHashInvalidator, EnhancedCacheConfig, EnhancedEngineCache};
+use uveddi::analysis::detectors::cache_integration::{DetectorCacheKey, DetectorCacheManager};
 use uveddi::analysis::AnalysisError;
 
 /// Test data generator for different codebase sizes
@@ -664,13 +664,12 @@ impl DetectorCacheIntegrationTest {
                 EnhancedCacheConfig::default(),
                 Arc::new(crate::analysis::cache::metrics::CacheMetrics::new()),
             )
-            .await?
+            .await?,
         );
 
         #[cfg(not(feature = "prometheus"))]
-        let cache = Arc::new(
-            EnhancedEngineCache::new_with_config(EnhancedCacheConfig::default()).await?
-        );
+        let cache =
+            Arc::new(EnhancedEngineCache::new_with_config(EnhancedCacheConfig::default()).await?);
 
         let invalidator = Box::new(ContentHashInvalidator::new());
         let cache_manager = Arc::new(DetectorCacheManager::new(cache, invalidator).await);
@@ -689,14 +688,18 @@ impl DetectorCacheIntegrationTest {
 
         // Warmup iterations
         for _ in 0..config.warmup_iterations {
-            let _ = self.simulate_detector_run(&test_files, config.cache_enabled).await?;
+            let _ = self
+                .simulate_detector_run(&test_files, config.cache_enabled)
+                .await?;
         }
 
         // Actual test iterations
         let test_start = Instant::now();
         for iteration in 0..config.iterations {
             let iteration_start = Instant::now();
-            let _ = self.simulate_detector_run(&test_files, config.cache_enabled).await?;
+            let _ = self
+                .simulate_detector_run(&test_files, config.cache_enabled)
+                .await?;
             let iteration_duration = iteration_start.elapsed();
             durations.push(iteration_duration);
 
@@ -712,7 +715,7 @@ impl DetectorCacheIntegrationTest {
 
         // Calculate statistics
         let average_duration = Duration::from_nanos(
-            durations.iter().map(|d| d.as_nanos()).sum::<u128>() / durations.len() as u128
+            durations.iter().map(|d| d.as_nanos()).sum::<u128>() / durations.len() as u128,
         );
         let min_duration = *durations.iter().min().unwrap();
         let max_duration = *durations.iter().max().unwrap();
@@ -720,11 +723,7 @@ impl DetectorCacheIntegrationTest {
         // Get cache statistics if caching is enabled
         let cache_hit_rate = if config.cache_enabled {
             let stats = self.cache_manager.get_all_stats().await;
-            Some(
-                stats.values()
-                    .map(|s| s.hit_rate())
-                    .sum::<f64>() / stats.len() as f64
-            )
+            Some(stats.values().map(|s| s.hit_rate()).sum::<f64>() / stats.len() as f64)
         } else {
             None
         };
@@ -769,8 +768,14 @@ impl DetectorCacheIntegrationTest {
                     let analysis_result = self.simulate_analysis(content).await;
 
                     // Cache the result
-                    if let Err(e) = self.cache_manager.cache_result(&cache_key, analysis_result).await {
-                        self.cache_manager.handle_cache_failure("test_detector", &e).await?;
+                    if let Err(e) = self
+                        .cache_manager
+                        .cache_result(&cache_key, analysis_result)
+                        .await
+                    {
+                        self.cache_manager
+                            .handle_cache_failure("test_detector", &e)
+                            .await?;
                     }
                 }
             } else {
@@ -858,7 +863,11 @@ async fn test_small_codebase_performance() -> Result<(), Box<dyn std::error::Err
 
     // Test without cache
     let no_cache_result = test
-        .run_performance_comparison("small_codebase_no_cache", test_files.clone(), config.clone())
+        .run_performance_comparison(
+            "small_codebase_no_cache",
+            test_files.clone(),
+            config.clone(),
+        )
         .await?;
 
     // Test with cache
@@ -873,10 +882,7 @@ async fn test_small_codebase_performance() -> Result<(), Box<dyn std::error::Err
 
     // Validate performance improvement
     let speedup = cache_result.speedup_factor(&no_cache_result);
-    println!(
-        "Small codebase speedup with cache: {:.2}x",
-        speedup
-    );
+    println!("Small codebase speedup with cache: {:.2}x", speedup);
 
     // On subsequent runs (cache hits), we should see significant speedup
     assert!(speedup >= 1.0, "Cache should not slow down analysis");
@@ -885,7 +891,8 @@ async fn test_small_codebase_performance() -> Result<(), Box<dyn std::error::Err
 }
 
 #[tokio::test]
-async fn test_medium_codebase_performance() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn test_medium_codebase_performance() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+{
     let test = DetectorCacheIntegrationTest::new().await?;
     let test_files = TestCodebaseGenerator::generate_medium_codebase();
 
@@ -896,7 +903,11 @@ async fn test_medium_codebase_performance() -> Result<(), Box<dyn std::error::Er
     };
 
     let no_cache_result = test
-        .run_performance_comparison("medium_codebase_no_cache", test_files.clone(), config.clone())
+        .run_performance_comparison(
+            "medium_codebase_no_cache",
+            test_files.clone(),
+            config.clone(),
+        )
         .await?;
 
     let cache_config = PerformanceTestConfig {
@@ -932,7 +943,11 @@ async fn test_large_codebase_performance() -> Result<(), Box<dyn std::error::Err
     };
 
     let no_cache_result = test
-        .run_performance_comparison("large_codebase_no_cache", test_files.clone(), config.clone())
+        .run_performance_comparison(
+            "large_codebase_no_cache",
+            test_files.clone(),
+            config.clone(),
+        )
         .await?;
 
     let cache_config = PerformanceTestConfig {
@@ -986,19 +1001,22 @@ async fn test_memory_usage_validation() -> Result<(), Box<dyn std::error::Error 
     let cache_stats = test.cache_manager.cache.stats().await;
 
     // Basic validation that cache is functioning
-    assert!(cache_stats.ast_stats.entries > 0, "Cache should contain entries");
+    assert!(
+        cache_stats.ast_stats.entries > 0,
+        "Cache should contain entries"
+    );
 
     println!(
         "Cache memory usage: AST={} bytes, Results={} bytes",
-        cache_stats.ast_stats.memory_usage_bytes,
-        cache_stats.results_stats.memory_usage_bytes
+        cache_stats.ast_stats.memory_usage_bytes, cache_stats.results_stats.memory_usage_bytes
     );
 
     Ok(())
 }
 
 #[tokio::test]
-async fn test_cache_effectiveness_patterns() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn test_cache_effectiveness_patterns() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+{
     let test = DetectorCacheIntegrationTest::new().await?;
     let test_files = TestCodebaseGenerator::generate_small_codebase();
 
@@ -1027,12 +1045,19 @@ async fn test_cache_effectiveness_patterns() -> Result<(), Box<dyn std::error::E
     // Test pattern 3: Mixed file analysis
     println!("Testing mixed file analysis pattern...");
     let mut mixed_files = test_files.clone();
-    mixed_files.extend(TestCodebaseGenerator::generate_small_codebase().into_iter().take(3));
+    mixed_files.extend(
+        TestCodebaseGenerator::generate_small_codebase()
+            .into_iter()
+            .take(3),
+    );
     let _result = test.simulate_detector_run(&mixed_files, true).await?;
 
     // Generate final report
     let report = test.cache_manager.generate_cache_report().await;
-    println!("Final Cache Effectiveness Report:\n{}", report.to_markdown());
+    println!(
+        "Final Cache Effectiveness Report:\n{}",
+        report.to_markdown()
+    );
 
     // Validate that cache is effective
     assert!(report.overall_hit_rate > 0.0, "Cache should have some hits");

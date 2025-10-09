@@ -436,10 +436,10 @@ mod tests {
         dependency_graph_builder::DependencyGraphBuilderImpl,
         detector_scheduler::DetectorScheduler,
     };
+    use crate::analysis::services::performance_service::PerformanceMetricsCollector;
     use crate::analysis::services::performance_service::{
         MemoryConfig, PerformanceAnalysisService,
     };
-    use crate::analysis::services::performance_service::PerformanceMetricsCollector;
 
     fn create_test_orchestrator() -> AnalysisOrchestrator {
         // Create mock services for testing

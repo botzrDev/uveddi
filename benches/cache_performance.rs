@@ -14,9 +14,9 @@ use uveddi::analysis::components::cache_manager::{CacheManager, CacheManagerImpl
 use uveddi::analysis::detector_factory::DetectorFactory;
 use uveddi::analysis::engine::{AnalysisEngine, AnalysisEngineBuilder};
 use uveddi::ast::tree_sitter_impl::{AstParser, ParsedFile};
-use uveddi::database::models::ArchitecturalIssue;
-use uveddi::engine::analysis::context::{FileInfo, ProjectContext, AnalysisContext};
 use uveddi::ast::SourceLanguage;
+use uveddi::database::models::ArchitecturalIssue;
+use uveddi::engine::analysis::context::{AnalysisContext, FileInfo, ProjectContext};
 
 /// Test code samples for benchmarking different complexity levels
 struct TestCodeSamples;
@@ -345,16 +345,12 @@ fn benchmark_ast_parsing_cache(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(content.len() as u64));
 
         // Benchmark without cache (direct parsing)
-        group.bench_with_input(
-            BenchmarkId::new("no_cache", size),
-            &file_path,
-            |b, path| {
-                b.iter(|| {
-                    let mut parser = AstParser::new().expect("Failed to create parser");
-                    black_box(parser.parse_file(path).expect("Failed to parse file"));
-                })
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("no_cache", size), &file_path, |b, path| {
+            b.iter(|| {
+                let mut parser = AstParser::new().expect("Failed to create parser");
+                black_box(parser.parse_file(path).expect("Failed to parse file"));
+            })
+        });
 
         // Benchmark with cache manager
         group.bench_with_input(
@@ -362,7 +358,9 @@ fn benchmark_ast_parsing_cache(c: &mut Criterion) {
             &file_path,
             |b, path| {
                 let cache_manager = rt.block_on(async {
-                    CacheManagerImpl::new().await.expect("Failed to create cache manager")
+                    CacheManagerImpl::new()
+                        .await
+                        .expect("Failed to create cache manager")
                 });
 
                 b.iter(|| {
@@ -371,7 +369,7 @@ fn benchmark_ast_parsing_cache(c: &mut Criterion) {
                             cache_manager
                                 .get_or_parse_ast(path)
                                 .await
-                                .expect("Failed to get or parse AST")
+                                .expect("Failed to get or parse AST"),
                         );
                     })
                 })
@@ -384,12 +382,17 @@ fn benchmark_ast_parsing_cache(c: &mut Criterion) {
             &file_path,
             |b, path| {
                 let cache_manager = rt.block_on(async {
-                    CacheManagerImpl::new().await.expect("Failed to create cache manager")
+                    CacheManagerImpl::new()
+                        .await
+                        .expect("Failed to create cache manager")
                 });
 
                 // Prime the cache
                 rt.block_on(async {
-                    cache_manager.get_or_parse_ast(path).await.expect("Failed to prime cache");
+                    cache_manager
+                        .get_or_parse_ast(path)
+                        .await
+                        .expect("Failed to prime cache");
                 });
 
                 b.iter(|| {
@@ -398,7 +401,7 @@ fn benchmark_ast_parsing_cache(c: &mut Criterion) {
                             cache_manager
                                 .get_or_parse_ast(path)
                                 .await
-                                .expect("Failed to get cached AST")
+                                .expect("Failed to get cached AST"),
                         );
                     })
                 })
@@ -460,7 +463,9 @@ fn benchmark_analysis_result_cache(c: &mut Criterion) {
         &sample_results,
         |b, results| {
             let cache_manager = rt.block_on(async {
-                CacheManagerImpl::new().await.expect("Failed to create cache manager")
+                CacheManagerImpl::new()
+                    .await
+                    .expect("Failed to create cache manager")
             });
 
             b.iter(|| {
@@ -479,12 +484,16 @@ fn benchmark_analysis_result_cache(c: &mut Criterion) {
         &sample_results,
         |b, results| {
             let cache_manager = rt.block_on(async {
-                CacheManagerImpl::new().await.expect("Failed to create cache manager")
+                CacheManagerImpl::new()
+                    .await
+                    .expect("Failed to create cache manager")
             });
 
             // Prime the cache
             rt.block_on(async {
-                cache_manager.cache_results(&file_path, results.clone()).await;
+                cache_manager
+                    .cache_results(&file_path, results.clone())
+                    .await;
             });
 
             b.iter(|| {
@@ -518,12 +527,7 @@ fn benchmark_full_analysis_pipeline(c: &mut Criterion) {
                         .build()
                         .expect("Failed to create engine");
 
-                    black_box(
-                        engine
-                            .analyze(path)
-                            .await
-                            .expect("Failed to analyze file")
-                    );
+                    black_box(engine.analyze(path).await.expect("Failed to analyze file"));
                 })
             })
         },
@@ -548,12 +552,7 @@ fn benchmark_full_analysis_pipeline(c: &mut Criterion) {
 
             b.iter(|| {
                 rt.block_on(async {
-                    black_box(
-                        engine
-                            .analyze(path)
-                            .await
-                            .expect("Failed to analyze file")
-                    );
+                    black_box(engine.analyze(path).await.expect("Failed to analyze file"));
                 })
             })
         },
@@ -565,7 +564,9 @@ fn benchmark_full_analysis_pipeline(c: &mut Criterion) {
         &file_path,
         |b, path| {
             let cache_manager = rt.block_on(async {
-                CacheManagerImpl::new().await.expect("Failed to create cache manager")
+                CacheManagerImpl::new()
+                    .await
+                    .expect("Failed to create cache manager")
             });
 
             b.iter(|| {
@@ -624,7 +625,7 @@ fn benchmark_cache_memory_scaling(c: &mut Criterion) {
                                 cache_manager
                                     .get_or_parse_ast(file_path)
                                     .await
-                                    .expect("Failed to parse file")
+                                    .expect("Failed to parse file"),
                             );
                         }
 

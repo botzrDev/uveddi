@@ -42,7 +42,9 @@ pub mod traits {
     /// Trait for services that provide health checks
     pub trait HealthCheck: Send + Sync {
         /// Check the health of the service
-        fn health_check(&self) -> impl std::future::Future<Output = Result<ServiceHealth, UveddiError>> + Send;
+        fn health_check(
+            &self,
+        ) -> impl std::future::Future<Output = Result<ServiceHealth, UveddiError>> + Send;
     }
 
     /// Service health status

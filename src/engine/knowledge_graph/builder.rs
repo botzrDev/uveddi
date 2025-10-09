@@ -156,7 +156,11 @@ impl GraphBuilder {
 
     /// Cache-aware graph building support
     #[cfg(feature = "analysis-cache")]
-    fn build_with_cache_support(&mut self, file_path: &str, context: &AnalysisContext) -> Result<(), GraphBuildError> {
+    fn build_with_cache_support(
+        &mut self,
+        file_path: &str,
+        context: &AnalysisContext,
+    ) -> Result<(), GraphBuildError> {
         if let Some(ref cache_manager) = self.cache_manager {
             let cache_key = self.generate_cache_key(file_path, &context.file_info.modified_at);
 
@@ -165,7 +169,8 @@ impl GraphBuilder {
                 if let Some(cached_relations) = cache.get_cached_relations(&cache_key) {
                     // Use cached data if available
                     for relation in cached_relations {
-                        self.graph.edges
+                        self.graph
+                            .edges
                             .entry(relation.from.clone())
                             .or_insert_with(Vec::new)
                             .push(relation.clone());
@@ -196,8 +201,14 @@ impl GraphBuilder {
 
     /// Build relations and cache them
     #[cfg(feature = "analysis-cache")]
-    fn build_and_cache_relations(&mut self, file_path: &str, cache_key: &str) -> Result<(), GraphBuildError> {
-        let relations_to_cache: Vec<GraphRelation> = self.graph.edges
+    fn build_and_cache_relations(
+        &mut self,
+        file_path: &str,
+        cache_key: &str,
+    ) -> Result<(), GraphBuildError> {
+        let relations_to_cache: Vec<GraphRelation> = self
+            .graph
+            .edges
             .values()
             .flat_map(|relations| relations.iter().cloned())
             .collect();
@@ -292,7 +303,9 @@ impl std::fmt::Display for GraphBuildError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             GraphBuildError::CacheError(msg) => write!(f, "Cache error: {}", msg),
-            GraphBuildError::SymbolResolutionError(msg) => write!(f, "Symbol resolution error: {}", msg),
+            GraphBuildError::SymbolResolutionError(msg) => {
+                write!(f, "Symbol resolution error: {}", msg)
+            }
             GraphBuildError::InvalidGraph(msg) => write!(f, "Invalid graph: {}", msg),
         }
     }

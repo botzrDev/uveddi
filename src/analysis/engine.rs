@@ -6,12 +6,12 @@
 
 use crate::analysis::components::cache_manager::CacheManager;
 use crate::analysis::components::traits::AnalysisAggregator as AnalysisAggregatorTrait;
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::components::PluginManagerHandle;
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
     DependencyGraphBuilderImpl, DetectorScheduler,
 };
-#[cfg(feature = "wasm-plugins")]
-use crate::analysis::components::PluginManagerHandle;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder;
 use crate::analysis::errors::AnalysisError;
@@ -131,8 +131,7 @@ impl AnalysisEngine {
         cache_manager: Arc<CacheManagerImpl>,
         dependency_builder: Arc<DependencyGraphBuilderImpl>,
         detector_scheduler: Arc<DetectorScheduler>,
-        #[cfg(feature = "wasm-plugins")]
-        plugin_manager: Option<PluginManagerHandle>,
+        #[cfg(feature = "wasm-plugins")] plugin_manager: Option<PluginManagerHandle>,
         aggregator: Arc<AnalysisAggregator>,
         detector_factory: Arc<DetectorFactory>,
         performance_metrics_collector: Arc<PerformanceMetricsCollector>,
@@ -151,7 +150,7 @@ impl AnalysisEngine {
             plugin_manager.clone().map(Arc::new),
             detector_factory,
         ));
-        
+
         #[cfg(not(feature = "wasm-plugins"))]
         let analysis_service = Arc::new(AnalysisService::new(
             config_service.clone(),
@@ -559,7 +558,7 @@ impl AnalysisEngine {
         }
         Ok(0)
     }
-    
+
     #[cfg(not(feature = "wasm-plugins"))]
     pub async fn load_plugins(&mut self) -> Result<usize, AnalysisError> {
         Ok(0)

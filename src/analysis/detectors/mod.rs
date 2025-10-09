@@ -8,9 +8,9 @@ pub mod anti_patterns;
 pub mod base;
 #[cfg(feature = "analysis-cache")]
 pub mod cache_factory;
+pub mod cache_integration;
 #[cfg(feature = "analysis-cache")]
 pub mod cache_wrapper;
-pub mod cache_integration;
 pub mod cycle;
 pub mod dependency;
 pub mod registry;
@@ -25,9 +25,9 @@ pub use cache_factory::{
     CacheAwareDetectorFactory, CacheConfiguration, DetectorCacheSettings, DetectorMigrationHelper,
     MixedDetectorCollection,
 };
+pub use cache_integration::{CacheReport, DetectorCacheKey, DetectorCacheManager};
 #[cfg(feature = "analysis-cache")]
 pub use cache_wrapper::CachedDetector;
-pub use cache_integration::{DetectorCacheManager, DetectorCacheKey, CacheReport};
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};
 pub use registry::{DetectorRegistry, DetectorRegistryFactory, RegistryConfig, RegistryResults};

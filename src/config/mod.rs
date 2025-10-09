@@ -82,15 +82,18 @@ impl From<SecurityError> for crate::error::UveddiError {
 mod security {
     use super::SecurityError;
     use std::path::Path;
-    
+
     pub fn validate_model_name(_model: &str) -> Result<(), SecurityError> {
         Ok(())
     }
-    
-    pub fn validate_config_file_path(_path: &Path, _allowed: Option<&[&Path]>) -> Result<(), SecurityError> {
+
+    pub fn validate_config_file_path(
+        _path: &Path,
+        _allowed: Option<&[&Path]>,
+    ) -> Result<(), SecurityError> {
         Ok(())
     }
-    
+
     pub fn validate_input(_value: &str, _name: &str) -> Result<(), SecurityError> {
         Ok(())
     }

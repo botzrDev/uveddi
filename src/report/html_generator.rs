@@ -12,7 +12,9 @@ use std::collections::HashMap;
 
 impl ReportGenerator {
     /// Generate complete HTML report
-    pub fn _generate_html_report_disabled(
+    ///
+    /// Enabled for 1.0.0 release (A3 decision 2025-10-09)
+    pub fn generate_html_report(
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],

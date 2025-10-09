@@ -1,11 +1,11 @@
 use crate::error::rendering::RenderingServiceError;
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::errors::PluginError;
 use crate::{
     analysis::detectors::dependency::ExtractionError as DependencyExtractionError,
     analysis::errors::AnalysisError, ast::tree_sitter_impl::AstError,
     report::errors::ReportGenerationError,
 };
-#[cfg(feature = "wasm-plugins")]
-use crate::plugins::errors::PluginError;
 use clap::error::Error as ClapError;
 
 #[derive(Debug)]

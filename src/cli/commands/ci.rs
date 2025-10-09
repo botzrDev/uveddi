@@ -1,4 +1,4 @@
-use crate::application::{AnalysisOrchestrator, AnalysisConfig};
+use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::core::logging::{error, info};
 use crate::error::UveddiError;
 use clap::{Args, Subcommand};
@@ -64,8 +64,13 @@ impl CiCommand {
         if args.output_format.to_lowercase() == "json" {
             // Generate simple metrics from analysis result
             let debt = report.metadata.issues_found as u32; // Use total issues as debt score
-            let critical = report.issues.iter()
-                .filter(|issue| issue.severity.to_lowercase().contains("critical") || issue.severity.to_lowercase().contains("high"))
+            let critical = report
+                .issues
+                .iter()
+                .filter(|issue| {
+                    issue.severity.to_lowercase().contains("critical")
+                        || issue.severity.to_lowercase().contains("high")
+                })
                 .count() as u32;
             if debt > args.max_debt || critical > args.max_critical {
                 error!(

@@ -4,7 +4,8 @@
 //! with connection pooling, WAL mode optimization, and performance enhancements.
 
 use super::traits::{
-    DatabaseConnection, DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue, TransactionProvider,
+    DatabaseConnection, DatabaseProvider, PoolStats, QueryResult, QueryRow, QueryValue,
+    TransactionProvider,
 };
 use super::{DatabaseConfig, DatabaseHealthStatus, DatabaseMetrics};
 use crate::database::models::{
@@ -15,19 +16,23 @@ use async_trait::async_trait;
 
 mod security {
     use crate::error::UveddiError;
-    
+
     pub fn sanitize_description(s: &str) -> String {
         s.to_string()
     }
-    
-    pub fn validate_code_analysis_data(_value: &str, _name: &str, _max_len: Option<usize>) -> Result<(), UveddiError> {
+
+    pub fn validate_code_analysis_data(
+        _value: &str,
+        _name: &str,
+        _max_len: Option<usize>,
+    ) -> Result<(), UveddiError> {
         Ok(())
     }
-    
+
     pub fn validate_file_path_for_storage(_path: &str, _name: &str) -> Result<(), UveddiError> {
         Ok(())
     }
-    
+
     pub fn validate_input(_value: &str, _name: &str) -> Result<(), UveddiError> {
         Ok(())
     }

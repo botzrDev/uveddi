@@ -70,12 +70,30 @@ impl ContextGodObjectDetector {
 
         // Create metadata with issue_type and rule_id
         let mut metadata = serde_json::Map::new();
-        metadata.insert("issue_type".to_string(), serde_json::Value::String("God Object".to_string()));
-        metadata.insert("rule_id".to_string(), serde_json::Value::String("god_object".to_string()));
-        metadata.insert("method_count".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.method_count)));
-        metadata.insert("field_count".to_string(), serde_json::Value::Number(serde_json::Number::from(metrics.field_count)));
-        metadata.insert("method_threshold".to_string(), serde_json::Value::Number(serde_json::Number::from(method_threshold)));
-        metadata.insert("field_threshold".to_string(), serde_json::Value::Number(serde_json::Number::from(field_threshold)));
+        metadata.insert(
+            "issue_type".to_string(),
+            serde_json::Value::String("God Object".to_string()),
+        );
+        metadata.insert(
+            "rule_id".to_string(),
+            serde_json::Value::String("god_object".to_string()),
+        );
+        metadata.insert(
+            "method_count".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.method_count)),
+        );
+        metadata.insert(
+            "field_count".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(metrics.field_count)),
+        );
+        metadata.insert(
+            "method_threshold".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(method_threshold)),
+        );
+        metadata.insert(
+            "field_threshold".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(field_threshold)),
+        );
 
         let description = format!(
             "Class '{}' has {} methods and {} fields, exceeding thresholds (methods: {}, fields: {})",

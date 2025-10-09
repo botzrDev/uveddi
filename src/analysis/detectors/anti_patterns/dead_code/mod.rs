@@ -58,7 +58,9 @@ mod tests {
         // Create a mock parsed file
         let parsed_file = ParsedFileCompat {
             file_path: Arc::new(PathBuf::from("test.rs")),
-            source: "fn unused_function() {}\nfn main() { println!(\"Hello\"); }".to_string().into(),
+            source: "fn unused_function() {}\nfn main() { println!(\"Hello\"); }"
+                .to_string()
+                .into(),
             language: SourceLanguage::Rust,
             tree: None, // Would need actual tree-sitter tree in real test
             custom_ast: Arc::new(None),

@@ -9,13 +9,15 @@ Deliver the Uveddi CLI 1.0.0 commercial package focused on deterministic archite
 
 ## 2. In-Scope Capabilities
 - **CLI commands:** `analyze`, `config`, `doctor`, `init`, `hooks`, `ci`, standard `help`.
-- **Feature flags / build profiles:** `cli-standard` default; optional `cli-ai`, `cli-plugins`, `security`.
+- **Feature flags / build profiles:** `cli-standard` default; optional `cli-ai`, `cli-plugins`.
+  - **REMOVED (A3):** `security` feature flag removed as empty/deprecated; security detectors are part of standard CLI.
 - **Analysis engine:** Tree-sitter-backed multi-language parsing, anti-pattern detection, security scanning, debt scoring.
-- **Outputs:** Markdown and JSON reports, SARIF export, progress logging, Mermaid diagrams.
+- **Outputs:** Markdown, JSON, and HTML reports; SARIF export; progress logging; Mermaid diagrams.
+  - **ENABLED (A3):** HTML output format with interactive diagrams and dark/light themes included in 1.0.0.
 - **Persistence:** SQLite-based caching and result storage, deterministic caching for repeat runs.
 - **AI integration:** Optional Ollama support with configurable models and prompts.
 - **Automation:** Git hook helpers, CI gate integration, environment diagnostics via `doctor`.
-- **Documentation & enablement:** Updated README, CLI reference, onboarding quickstart, troubleshooting appendix.
+- **Documentation & enablement:** Updated README, CLI reference (`docs/CLI_REFERENCE.md`), troubleshooting guide (`docs/TROUBLESHOOTING.md`), onboarding quickstart.
 - **Distribution:** Signed binaries for Linux/macOS/Windows, Docker image (production), cargo-based source build instructions.
 - **Support readiness:** Email support channel, escalation path, launch-day war room guidelines.
 

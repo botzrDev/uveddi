@@ -58,7 +58,10 @@ impl std::fmt::Debug for AnalysisWorkflowInput {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AnalysisWorkflowInput")
             .field("config", &self.config)
-            .field("progress_callback", &self.progress_callback.as_ref().map(|_| "Some(callback)"))
+            .field(
+                "progress_callback",
+                &self.progress_callback.as_ref().map(|_| "Some(callback)"),
+            )
             .finish()
     }
 }

@@ -80,8 +80,12 @@ async fn test_analysis_endpoints() {
 
     // Test 2: Analysis Status Endpoint Structure
     let expected_status_fields = vec![
-        "analysis_id", "status", "progress", "performance",
-        "cache_efficiency", "graph_stats"
+        "analysis_id",
+        "status",
+        "progress",
+        "performance",
+        "cache_efficiency",
+        "graph_stats",
     ];
 
     // Validate expected response structure
@@ -147,9 +151,8 @@ async fn test_cache_management_endpoints() {
     println!("✅ Cache warmup request structure validated");
 
     // Test 4: Expected Response Structures
-    let expected_cache_response_fields = vec![
-        "status", "layers", "performance", "memory", "activity"
-    ];
+    let expected_cache_response_fields =
+        vec!["status", "layers", "performance", "memory", "activity"];
 
     for field in expected_cache_response_fields {
         println!("   Expected cache response field: {}", field);
@@ -190,9 +193,7 @@ async fn test_knowledge_graph_endpoints() {
     println!("✅ Graph visualization request structure validated");
 
     // Test 3: Expected Graph Response Structure
-    let expected_graph_fields = vec![
-        "query_meta", "results", "performance", "cache_info"
-    ];
+    let expected_graph_fields = vec!["query_meta", "results", "performance", "cache_info"];
 
     for field in expected_graph_fields {
         println!("   Expected graph response field: {}", field);
@@ -200,7 +201,11 @@ async fn test_knowledge_graph_endpoints() {
 
     // Test 4: Graph Analytics Structure
     let expected_analytics_sections = vec![
-        "overview", "centrality", "hotspots", "trends", "recommendations"
+        "overview",
+        "centrality",
+        "hotspots",
+        "trends",
+        "recommendations",
     ];
 
     for section in expected_analytics_sections {
@@ -217,8 +222,13 @@ async fn test_streaming_endpoints() {
 
     // Test 1: Streaming Message Types
     let expected_message_types = vec![
-        "analysis_progress", "cache_stats", "graph_update",
-        "partial_results", "analysis_complete", "error", "heartbeat"
+        "analysis_progress",
+        "cache_stats",
+        "graph_update",
+        "partial_results",
+        "analysis_complete",
+        "error",
+        "heartbeat",
     ];
 
     for msg_type in expected_message_types {
@@ -300,8 +310,18 @@ async fn test_api_integration_performance() {
         "memory_efficiency_minimum": 0.8
     });
 
-    assert!(cache_performance_targets["hit_rate_minimum"].as_f64().unwrap() >= 0.75);
-    assert!(cache_performance_targets["speedup_factor_minimum"].as_f64().unwrap() >= 2.0);
+    assert!(
+        cache_performance_targets["hit_rate_minimum"]
+            .as_f64()
+            .unwrap()
+            >= 0.75
+    );
+    assert!(
+        cache_performance_targets["speedup_factor_minimum"]
+            .as_f64()
+            .unwrap()
+            >= 2.0
+    );
 
     println!("✅ Cache performance targets validated");
 
@@ -388,7 +408,7 @@ async fn test_backward_compatibility() {
         "/api/v1/reports/demo",
         "/api/v1/security/issues",
         "/api/v1/projects",
-        "/health"
+        "/health",
     ];
 
     for endpoint in existing_endpoints {
@@ -426,9 +446,15 @@ async fn run_comprehensive_api_validation() {
         ("Cache Management", test_cache_management_endpoints().await),
         ("Knowledge Graph", test_knowledge_graph_endpoints().await),
         ("Streaming", test_streaming_endpoints().await),
-        ("Integration & Performance", test_api_integration_performance().await),
+        (
+            "Integration & Performance",
+            test_api_integration_performance().await,
+        ),
         ("Error Handling", test_error_handling().await),
-        ("Backward Compatibility", test_backward_compatibility().await),
+        (
+            "Backward Compatibility",
+            test_backward_compatibility().await,
+        ),
     ];
 
     // All tests completed successfully if we reach here

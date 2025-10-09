@@ -66,8 +66,15 @@ where
             .iter()
             .map(|issue| {
                 let mut metadata_map = serde_json::Map::new();
-                metadata_map.insert("issue_type".to_string(), serde_json::Value::String(detector_name.to_string()));
-                if let Ok(existing_metadata) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&serde_json::to_string(&issue.metadata).unwrap_or("{}".to_string())) {
+                metadata_map.insert(
+                    "issue_type".to_string(),
+                    serde_json::Value::String(detector_name.to_string()),
+                );
+                if let Ok(existing_metadata) =
+                    serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(
+                        &serde_json::to_string(&issue.metadata).unwrap_or("{}".to_string()),
+                    )
+                {
                     for (k, v) in existing_metadata {
                         metadata_map.insert(k, v);
                     }
@@ -75,7 +82,7 @@ where
 
                 ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id: 0, // TODO: Get from context
+                    analysis_run_id: 0,      // TODO: Get from context
                     anti_pattern_type_id: 1, // TODO: Get from detector mapping
                     file_path: file_path.to_string_lossy().to_string(),
                     start_line: Some(issue.start_line as i32),
@@ -106,8 +113,13 @@ where
         issues
             .iter()
             .map(|issue| {
-                let metadata_map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&issue.metadata).unwrap_or_default();
-                let issue_type = metadata_map.get("issue_type").and_then(|v| v.as_str()).unwrap_or(&issue.detector_name).to_string();
+                let metadata_map: serde_json::Map<String, serde_json::Value> =
+                    serde_json::from_str(&issue.metadata).unwrap_or_default();
+                let issue_type = metadata_map
+                    .get("issue_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(&issue.detector_name)
+                    .to_string();
 
                 Issue {
                     id: format!("cached-{}", issue.issue_id.unwrap_or(0)),

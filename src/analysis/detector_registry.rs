@@ -1,6 +1,6 @@
-use crate::analysis::{AnalysisDetector, DetectorConfig, DetectorFactory};
 #[cfg(feature = "wasm-plugins")]
 use crate::analysis::WasmPluginAdapterFactory;
+use crate::analysis::{AnalysisDetector, DetectorConfig, DetectorFactory};
 use crate::error::UveddiError;
 use std::collections::HashMap;
 

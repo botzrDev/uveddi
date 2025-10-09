@@ -98,9 +98,11 @@ impl DependencyExtractorTrait for DependencyExtractorAdapter {
     fn extract_from_ast(&self, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, AnalysisError> {
         // Convert ParsedFileCompat to tree-sitter ParsedFile
         let ts_parsed_file = parsed_file.to_tree_sitter();
-        self.extractor.extract_from_ast(&ts_parsed_file).map_err(|e| {
-            AnalysisError::DetectionError(format!("Dependency extraction failed: {}", e))
-        })
+        self.extractor
+            .extract_from_ast(&ts_parsed_file)
+            .map_err(|e| {
+                AnalysisError::DetectionError(format!("Dependency extraction failed: {}", e))
+            })
     }
 
     fn supports_language(&self, language: &SourceLanguage) -> bool {

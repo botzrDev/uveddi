@@ -4,11 +4,11 @@
 
 use super::traits::{AstProvider, DependencyGraphBuilder};
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
+use crate::analysis::file_discovery::FileDiscovery;
 use crate::analysis::graph::dependency::{
     ComponentNode, LocalDependencyGraph, LocalDependencyType,
 };
 use crate::error::UveddiError;
-use crate::analysis::file_discovery::FileDiscovery;
 
 use crate::core::logging::{info, warn};
 use async_trait::async_trait;
@@ -402,15 +402,15 @@ impl DependencyGraphBuilder for DependencyGraphBuilderImpl {
         for source_file in source_files {
             let file_path = &source_file.path;
             match self.extract_file_dependencies(file_path).await {
-                    Ok(mut file_dependencies) => {
-                        info!(
-                            "Extracted {} dependencies from {}",
-                            file_dependencies.len(),
-                            file_path.display()
-                        );
-                        all_dependencies.append(&mut file_dependencies);
-                        files_processed += 1;
-                    }
+                Ok(mut file_dependencies) => {
+                    info!(
+                        "Extracted {} dependencies from {}",
+                        file_dependencies.len(),
+                        file_path.display()
+                    );
+                    all_dependencies.append(&mut file_dependencies);
+                    files_processed += 1;
+                }
                 Err(e) => {
                     warn!(
                         "Failed to extract dependencies from {}: {}",

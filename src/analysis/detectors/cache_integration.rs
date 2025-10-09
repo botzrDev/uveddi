@@ -163,13 +163,18 @@ impl DetectorCacheManager {
     /// Get or create stats for a detector
     async fn get_or_create_stats(&self, detector_name: &str) -> DetectorCacheStats {
         let mut stats = self.stats.write().await;
-        stats.entry(detector_name.to_string())
+        stats
+            .entry(detector_name.to_string())
             .or_insert_with(|| DetectorCacheStats::new(detector_name.to_string()))
             .clone()
     }
 
     /// Update stats for a detector
-    async fn update_stats(&self, detector_name: &str, updater: impl FnOnce(&mut DetectorCacheStats)) {
+    async fn update_stats(
+        &self,
+        detector_name: &str,
+        updater: impl FnOnce(&mut DetectorCacheStats),
+    ) {
         let mut stats = self.stats.write().await;
         if let Some(detector_stats) = stats.get_mut(detector_name) {
             updater(detector_stats);
@@ -186,7 +191,10 @@ impl DetectorCacheManager {
 
         // Check if the cache key should be invalidated
         let file_path_str = cache_key.file_path.to_string_lossy().to_string();
-        match self.invalidation_strategy.should_invalidate(&file_path_str, &cache_key.content_hash) {
+        match self
+            .invalidation_strategy
+            .should_invalidate(&file_path_str, &cache_key.content_hash)
+        {
             Ok(should_invalidate) => {
                 if should_invalidate {
                     debug!(
@@ -194,7 +202,10 @@ impl DetectorCacheManager {
                         detector_name,
                         cache_key.file_path.display()
                     );
-                    self.update_stats(detector_name, |s| s.record_miss(start_time.elapsed().as_millis() as f64)).await;
+                    self.update_stats(detector_name, |s| {
+                        s.record_miss(start_time.elapsed().as_millis() as f64)
+                    })
+                    .await;
                     return None;
                 }
             }
@@ -206,7 +217,10 @@ impl DetectorCacheManager {
                     e
                 );
                 // On invalidation error, assume cache should be invalidated to be safe
-                self.update_stats(detector_name, |s| s.record_miss(start_time.elapsed().as_millis() as f64)).await;
+                self.update_stats(detector_name, |s| {
+                    s.record_miss(start_time.elapsed().as_millis() as f64)
+                })
+                .await;
                 return None;
             }
         }
@@ -215,7 +229,8 @@ impl DetectorCacheManager {
         match self.cache.get_cached_results(&cache_key.file_path).await {
             Some(issues) => {
                 let duration_ms = start_time.elapsed().as_millis() as f64;
-                self.update_stats(detector_name, |s| s.record_hit(duration_ms)).await;
+                self.update_stats(detector_name, |s| s.record_hit(duration_ms))
+                    .await;
 
                 info!(
                     "Cache hit for detector {} on file {} ({}ms)",
@@ -230,7 +245,8 @@ impl DetectorCacheManager {
             }
             None => {
                 let duration_ms = start_time.elapsed().as_millis() as f64;
-                self.update_stats(detector_name, |s| s.record_miss(duration_ms)).await;
+                self.update_stats(detector_name, |s| s.record_miss(duration_ms))
+                    .await;
 
                 debug!(
                     "Cache miss for detector {} on file {}",
@@ -251,30 +267,28 @@ impl DetectorCacheManager {
         let start_time = Instant::now();
 
         // Convert output to architectural issues for caching
-        let issues: Vec<crate::database::models::ArchitecturalIssue> =
-            output.issues()
-                .iter()
-                .map(|issue| {
-                    crate::database::models::ArchitecturalIssue {
-                        issue_id: None,
-                        analysis_run_id: 0,
-                        anti_pattern_type_id: 1,
-                        file_path: cache_key.file_path.to_string_lossy().to_string(),
-                        start_line: Some(issue.start_line as i32),
-                        end_line: Some(issue.end_line as i32),
-                        line_number: Some(issue.start_line as i32),
-                        column_number: Some(issue.start_column as i32),
-                        message: issue.description.clone(),
-                        metadata: serde_json::to_string(&issue.metadata).unwrap_or_default(),
-                        detector_name: cache_key.detector_name.clone(),
-                        created_at: chrono::Utc::now(),
-                        severity: issue.severity.to_string(),
-                        description: issue.description.clone(),
-                        code_snippet: issue.suggestion.clone(),
-                        ai_explanation: None,
-                    }
-                })
-                .collect();
+        let issues: Vec<crate::database::models::ArchitecturalIssue> = output
+            .issues()
+            .iter()
+            .map(|issue| crate::database::models::ArchitecturalIssue {
+                issue_id: None,
+                analysis_run_id: 0,
+                anti_pattern_type_id: 1,
+                file_path: cache_key.file_path.to_string_lossy().to_string(),
+                start_line: Some(issue.start_line as i32),
+                end_line: Some(issue.end_line as i32),
+                line_number: Some(issue.start_line as i32),
+                column_number: Some(issue.start_column as i32),
+                message: issue.description.clone(),
+                metadata: serde_json::to_string(&issue.metadata).unwrap_or_default(),
+                detector_name: cache_key.detector_name.clone(),
+                created_at: chrono::Utc::now(),
+                severity: issue.severity.to_string(),
+                description: issue.description.clone(),
+                code_snippet: issue.suggestion.clone(),
+                ai_explanation: None,
+            })
+            .collect();
 
         // Store in cache
         self.cache.cache_results(&cache_key.file_path, issues).await;
@@ -352,7 +366,8 @@ impl DetectorCacheManager {
                 cache_errors: s.cache_errors,
                 average_hit_time_ms: s.average_hit_time_ms,
                 average_miss_time_ms: s.average_miss_time_ms,
-                time_saved_ms: s.cache_hits as f64 * (s.average_miss_time_ms - s.average_hit_time_ms),
+                time_saved_ms: s.cache_hits as f64
+                    * (s.average_miss_time_ms - s.average_hit_time_ms),
             })
             .collect();
 
@@ -406,10 +421,19 @@ impl CacheReport {
         markdown.push_str(&format!("Generated: {}\n\n", self.generated_at));
 
         markdown.push_str("## Overall Statistics\n\n");
-        markdown.push_str(&format!("- **Hit Rate**: {:.2}%\n", self.overall_hit_rate * 100.0));
+        markdown.push_str(&format!(
+            "- **Hit Rate**: {:.2}%\n",
+            self.overall_hit_rate * 100.0
+        ));
         markdown.push_str(&format!("- **Total Hits**: {}\n", self.total_cache_hits));
-        markdown.push_str(&format!("- **Total Misses**: {}\n", self.total_cache_misses));
-        markdown.push_str(&format!("- **Total Errors**: {}\n\n", self.total_cache_errors));
+        markdown.push_str(&format!(
+            "- **Total Misses**: {}\n",
+            self.total_cache_misses
+        ));
+        markdown.push_str(&format!(
+            "- **Total Errors**: {}\n\n",
+            self.total_cache_errors
+        ));
 
         markdown.push_str("## Per-Detector Performance\n\n");
         markdown.push_str("| Detector | Hit Rate | Hits | Misses | Avg Hit (ms) | Avg Miss (ms) | Time Saved (ms) |\n");
@@ -501,7 +525,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_report_generation() {
-        use crate::analysis::cache::{EnhancedCacheConfig, ContentHashInvalidator};
+        use crate::analysis::cache::{ContentHashInvalidator, EnhancedCacheConfig};
 
         #[cfg(feature = "prometheus")]
         let cache = Arc::new(
@@ -510,33 +534,35 @@ mod tests {
                 Arc::new(crate::analysis::cache::metrics::CacheMetrics::new()),
             )
             .await
-            .unwrap()
+            .unwrap(),
         );
 
         #[cfg(not(feature = "prometheus"))]
         let cache = Arc::new(
-            EnhancedEngineCache::new_with_config(
-                EnhancedCacheConfig::default(),
-            )
-            .await
-            .unwrap()
+            EnhancedEngineCache::new_with_config(EnhancedCacheConfig::default())
+                .await
+                .unwrap(),
         );
 
         let invalidator = Box::new(ContentHashInvalidator::new());
         let manager = DetectorCacheManager::new(cache, invalidator).await;
 
         // Simulate some cache operations
-        manager.update_stats("detector1", |s| {
-            s.record_hit(5.0);
-            s.record_hit(7.0);
-            s.record_miss(50.0);
-        }).await;
+        manager
+            .update_stats("detector1", |s| {
+                s.record_hit(5.0);
+                s.record_hit(7.0);
+                s.record_miss(50.0);
+            })
+            .await;
 
-        manager.update_stats("detector2", |s| {
-            s.record_miss(100.0);
-            s.record_miss(120.0);
-            s.record_error();
-        }).await;
+        manager
+            .update_stats("detector2", |s| {
+                s.record_miss(100.0);
+                s.record_miss(120.0);
+                s.record_error();
+            })
+            .await;
 
         let report = manager.generate_cache_report().await;
 

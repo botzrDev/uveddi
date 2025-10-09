@@ -238,11 +238,7 @@ mod tests {
     use crate::ast::compatibility_shim::ParsedFileCompat;
     use std::path::PathBuf;
 
-    fn make_parsed_file(
-        path: &str,
-        language: SourceLanguage,
-        content: &str,
-    ) -> ParsedFileCompat {
+    fn make_parsed_file(path: &str, language: SourceLanguage, content: &str) -> ParsedFileCompat {
         ParsedFileCompat::new(PathBuf::from(path), language, content.to_string())
     }
 

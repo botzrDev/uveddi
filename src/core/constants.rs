@@ -144,5 +144,3 @@ pub mod severity_weights {
     /// Weight for structural metrics (LCOM, coupling)
     pub const STRUCTURAL_WEIGHT: f64 = 0.25;
 }
-
-

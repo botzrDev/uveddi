@@ -34,9 +34,7 @@ pub mod compatibility_shim;
 pub mod tree_sitter;
 pub mod tree_sitter_impl;
 
-pub use tree_sitter_impl::{
-    AstError, AstParser, CacheStats, CustomAst, SourceLanguage,
-};
+pub use tree_sitter_impl::{AstError, AstParser, CacheStats, CustomAst, SourceLanguage};
 
 // Re-export compatibility shim for migration
 pub use compatibility_shim::{AstParserCompat, ParsedFileCompat};

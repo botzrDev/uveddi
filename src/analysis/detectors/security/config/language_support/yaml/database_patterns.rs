@@ -195,8 +195,8 @@ impl DatabasePatternChecker {
 
 #[cfg(test)]
 mod tests {
-    use crate::analysis::detectors::security::config::language_support::yaml::YamlParser;
     use super::*;
+    use crate::analysis::detectors::security::config::language_support::yaml::YamlParser;
 
     #[test]
     fn test_ssl_disabled_detection() {

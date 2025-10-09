@@ -88,7 +88,7 @@ impl ConnectionManager {
             #[cfg(not(feature = "full"))]
             DatabaseType::PostgreSQL => {
                 return Err(UveddiError::DatabaseConnection(
-                    "PostgreSQL support not enabled. Enable with 'full' feature.".to_string()
+                    "PostgreSQL support not enabled. Enable with 'full' feature.".to_string(),
                 ))
             }
         };

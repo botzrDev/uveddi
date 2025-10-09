@@ -5,10 +5,12 @@
 
 use crate::engine::analysis::context::AnalysisContext;
 use crate::engine::analysis::pipeline::AnalysisPipeline;
-use crate::engine::cache::{GraphCache, SharedGraphCache, create_shared_graph_cache, GraphCacheConfig};
-use crate::engine::knowledge_graph::{GraphBuilder, KnowledgeGraph};
+use crate::engine::cache::{
+    create_shared_graph_cache, GraphCache, GraphCacheConfig, SharedGraphCache,
+};
 use crate::engine::knowledge_graph::builder::GraphBuildError;
 use crate::engine::knowledge_graph::query::QueryBuilder;
+use crate::engine::knowledge_graph::{GraphBuilder, KnowledgeGraph};
 // Note: DetectionResult import removed as it's not available in current architecture
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -89,7 +91,10 @@ impl GraphAwarePipeline {
     }
 
     /// Analyze files with graph-aware enhancements
-    pub async fn analyze_with_graph(&mut self, contexts: Vec<AnalysisContext>) -> Result<GraphAnalysisResult, GraphAnalysisError> {
+    pub async fn analyze_with_graph(
+        &mut self,
+        contexts: Vec<AnalysisContext>,
+    ) -> Result<GraphAnalysisResult, GraphAnalysisError> {
         let start_time = Instant::now();
 
         // Build/update knowledge graph from contexts
@@ -103,7 +108,9 @@ impl GraphAwarePipeline {
         let analysis_time = analysis_start.elapsed();
 
         // Enhance results with graph insights
-        let enhanced_results = self.enhance_with_graph_insights(base_results, &contexts).await?;
+        let enhanced_results = self
+            .enhance_with_graph_insights(base_results, &contexts)
+            .await?;
 
         // Update metrics
         self.update_metrics(graph_build_time, analysis_time, contexts.len());
@@ -117,9 +124,13 @@ impl GraphAwarePipeline {
     }
 
     /// Update knowledge graph with new contexts
-    async fn update_knowledge_graph(&mut self, contexts: &[AnalysisContext]) -> Result<(), GraphAnalysisError> {
-        let mut builder = self.graph_builder.lock()
-            .map_err(|e| GraphAnalysisError::LockError(format!("Graph builder lock failed: {}", e)))?;
+    async fn update_knowledge_graph(
+        &mut self,
+        contexts: &[AnalysisContext],
+    ) -> Result<(), GraphAnalysisError> {
+        let mut builder = self.graph_builder.lock().map_err(|e| {
+            GraphAnalysisError::LockError(format!("Graph builder lock failed: {}", e))
+        })?;
 
         for context in contexts {
             // Check if we can use cached graph data
@@ -135,7 +146,8 @@ impl GraphAwarePipeline {
             }
 
             // Build fresh graph data
-            builder.build_from_context(context)
+            builder
+                .build_from_context(context)
                 .map_err(|e| GraphAnalysisError::GraphBuildError(e))?;
         }
 
@@ -158,8 +170,9 @@ impl GraphAwarePipeline {
             return Ok(results);
         }
 
-        let graph = self.knowledge_graph.lock()
-            .map_err(|e| GraphAnalysisError::LockError(format!("Knowledge graph lock failed: {}", e)))?;
+        let graph = self.knowledge_graph.lock().map_err(|e| {
+            GraphAnalysisError::LockError(format!("Knowledge graph lock failed: {}", e))
+        })?;
 
         // Build query engine for graph insights
         let query_builder = QueryBuilder::new();
@@ -172,26 +185,36 @@ impl GraphAwarePipeline {
                 let mut metadata = serde_json::Map::new();
 
                 // Add dependency analysis
-                if let Some(dependencies) = self.analyze_dependencies(&query_builder, context).await {
-                    metadata.insert("dependencies".to_string(),
-                                   serde_json::Value::Array(dependencies));
+                if let Some(dependencies) = self.analyze_dependencies(&query_builder, context).await
+                {
+                    metadata.insert(
+                        "dependencies".to_string(),
+                        serde_json::Value::Array(dependencies),
+                    );
                 }
 
                 // Add coupling analysis
                 if let Some(coupling_score) = self.analyze_coupling(&query_builder, context).await {
-                    metadata.insert("coupling_score".to_string(),
-                                   serde_json::Value::from(coupling_score));
+                    metadata.insert(
+                        "coupling_score".to_string(),
+                        serde_json::Value::from(coupling_score),
+                    );
                 }
 
                 // Add impact analysis
                 if let Some(impact) = self.analyze_impact(&query_builder, context).await {
-                    metadata.insert("change_impact".to_string(),
-                                   serde_json::Value::Array(impact));
+                    metadata.insert(
+                        "change_impact".to_string(),
+                        serde_json::Value::Array(impact),
+                    );
                 }
 
                 // Enhance the result with metadata
                 if let Some(obj) = result.as_object_mut() {
-                    obj.insert("graph_metadata".to_string(), serde_json::Value::Object(metadata));
+                    obj.insert(
+                        "graph_metadata".to_string(),
+                        serde_json::Value::Object(metadata),
+                    );
                 }
             }
         }
@@ -211,9 +234,13 @@ impl GraphAwarePipeline {
         if let Ok(mut cache) = self.graph_cache.lock() {
             let cache_key = format!("deps:{}", file_path);
             if let Some(cached_deps) = cache.get_dependencies(&cache_key) {
-                return Some(cached_deps.nodes.iter()
-                    .map(|dep| serde_json::Value::String(dep.clone()))
-                    .collect());
+                return Some(
+                    cached_deps
+                        .nodes
+                        .iter()
+                        .map(|dep| serde_json::Value::String(dep.clone()))
+                        .collect(),
+                );
             }
         }
 
@@ -226,9 +253,12 @@ impl GraphAwarePipeline {
             cache.cache_dependencies(cache_key, dependencies.clone(), vec![], vec![]);
         }
 
-        Some(dependencies.iter()
-            .map(|dep| serde_json::Value::String(dep.clone()))
-            .collect())
+        Some(
+            dependencies
+                .iter()
+                .map(|dep| serde_json::Value::String(dep.clone()))
+                .collect(),
+        )
     }
 
     /// Analyze coupling for a file
@@ -240,8 +270,12 @@ impl GraphAwarePipeline {
         let file_path = context.file_info.path.to_string_lossy();
 
         // Compute coupling metrics
-        let incoming = query_builder.count_incoming_relations(&file_path).unwrap_or(0);
-        let outgoing = query_builder.count_outgoing_relations(&file_path).unwrap_or(0);
+        let incoming = query_builder
+            .count_incoming_relations(&file_path)
+            .unwrap_or(0);
+        let outgoing = query_builder
+            .count_outgoing_relations(&file_path)
+            .unwrap_or(0);
 
         if incoming + outgoing == 0 {
             return Some(0.0);
@@ -263,9 +297,12 @@ impl GraphAwarePipeline {
         // Find all files that depend on this file
         let dependents = query_builder.find_dependents(&file_path)?;
 
-        Some(dependents.iter()
-            .map(|dep| serde_json::Value::String(dep.clone()))
-            .collect())
+        Some(
+            dependents
+                .iter()
+                .map(|dep| serde_json::Value::String(dep.clone()))
+                .collect(),
+        )
     }
 
     /// Get current graph statistics
@@ -303,7 +340,12 @@ impl GraphAwarePipeline {
     }
 
     /// Update performance metrics
-    fn update_metrics(&mut self, graph_build_time: std::time::Duration, analysis_time: std::time::Duration, context_count: usize) {
+    fn update_metrics(
+        &mut self,
+        graph_build_time: std::time::Duration,
+        analysis_time: std::time::Duration,
+        context_count: usize,
+    ) {
         self.metrics.total_analyses += context_count as u64;
         self.metrics.graph_builds += 1;
 
@@ -311,8 +353,14 @@ impl GraphAwarePipeline {
         let analysis_time_ms = analysis_time.as_millis() as f64;
 
         // Update running averages
-        self.metrics.avg_build_time_ms = (self.metrics.avg_build_time_ms * (self.metrics.graph_builds - 1) as f64 + build_time_ms) / self.metrics.graph_builds as f64;
-        self.metrics.avg_analysis_time_ms = (self.metrics.avg_analysis_time_ms * (self.metrics.total_analyses - context_count as u64) as f64 + analysis_time_ms) / self.metrics.total_analyses as f64;
+        self.metrics.avg_build_time_ms = (self.metrics.avg_build_time_ms
+            * (self.metrics.graph_builds - 1) as f64
+            + build_time_ms)
+            / self.metrics.graph_builds as f64;
+        self.metrics.avg_analysis_time_ms = (self.metrics.avg_analysis_time_ms
+            * (self.metrics.total_analyses - context_count as u64) as f64
+            + analysis_time_ms)
+            / self.metrics.total_analyses as f64;
     }
 
     /// Compute file hash for cache keys
@@ -389,8 +437,8 @@ impl std::error::Error for GraphAnalysisError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::analysis::context::{FileInfo, ProjectContext};
     use crate::ast::SourceLanguage;
+    use crate::engine::analysis::context::{FileInfo, ProjectContext};
     use std::path::PathBuf;
 
     fn create_test_context() -> AnalysisContext {

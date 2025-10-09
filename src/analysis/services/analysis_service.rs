@@ -7,11 +7,9 @@
 use crate::analysis::components::traits::{
     AnalysisAggregator as AnalysisAggregatorTrait, DetectorScheduler as DetectorSchedulerTrait,
 };
-use crate::analysis::components::{
-    AnalysisAggregator, ConfigurationService, DetectorScheduler,
-};
 #[cfg(feature = "wasm-plugins")]
 use crate::analysis::components::PluginManagerHandle;
+use crate::analysis::components::{AnalysisAggregator, ConfigurationService, DetectorScheduler};
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::file_discovery::{FileDiscovery, SourceFile};
 use crate::analysis::symbols::GlobalSymbolTable;
@@ -62,8 +60,7 @@ impl AnalysisService {
         config_service: Arc<ConfigurationService>,
         detector_scheduler: Arc<DetectorScheduler>,
         aggregator: Arc<AnalysisAggregator>,
-        #[cfg(feature = "wasm-plugins")]
-        plugin_manager: Option<Arc<PluginManagerHandle>>,
+        #[cfg(feature = "wasm-plugins")] plugin_manager: Option<Arc<PluginManagerHandle>>,
         detector_factory: Arc<DetectorFactory>,
     ) -> Self {
         Self {
@@ -256,7 +253,7 @@ impl AnalysisService {
     pub fn get_plugin_manager(&self) -> Option<Arc<PluginManagerHandle>> {
         self.plugin_manager.clone()
     }
-    
+
     #[cfg(not(feature = "wasm-plugins"))]
     pub fn get_plugin_manager(&self) -> Option<()> {
         None

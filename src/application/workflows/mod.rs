@@ -21,7 +21,10 @@ pub mod traits {
     /// Trait for workflow execution
     pub trait Workflow<TInput, TOutput>: Send + Sync {
         /// Execute the workflow with the given input
-        fn execute(&mut self, input: TInput) -> impl std::future::Future<Output = Result<TOutput, UveddiError>> + Send;
+        fn execute(
+            &mut self,
+            input: TInput,
+        ) -> impl std::future::Future<Output = Result<TOutput, UveddiError>> + Send;
 
         /// Get the workflow name
         fn name(&self) -> &str;

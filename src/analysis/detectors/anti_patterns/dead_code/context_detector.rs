@@ -237,11 +237,29 @@ impl Detector for ContextDeadCodeDetector {
         for unused in unused_symbols {
             // Create metadata with issue_type and rule_id
             let mut metadata = serde_json::Map::new();
-            metadata.insert("issue_type".to_string(), serde_json::Value::String("Dead Code".to_string()));
-            metadata.insert("rule_id".to_string(), serde_json::Value::String("dead_code".to_string()));
-            metadata.insert("confidence".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(unused.confidence).unwrap_or(serde_json::Number::from(0))));
-            metadata.insert("usage_count".to_string(), serde_json::Value::Number(serde_json::Number::from(unused.usage_count)));
-            metadata.insert("symbol_kind".to_string(), serde_json::Value::String(unused.symbol.kind.description().to_string()));
+            metadata.insert(
+                "issue_type".to_string(),
+                serde_json::Value::String("Dead Code".to_string()),
+            );
+            metadata.insert(
+                "rule_id".to_string(),
+                serde_json::Value::String("dead_code".to_string()),
+            );
+            metadata.insert(
+                "confidence".to_string(),
+                serde_json::Value::Number(
+                    serde_json::Number::from_f64(unused.confidence)
+                        .unwrap_or(serde_json::Number::from(0)),
+                ),
+            );
+            metadata.insert(
+                "usage_count".to_string(),
+                serde_json::Value::Number(serde_json::Number::from(unused.usage_count)),
+            );
+            metadata.insert(
+                "symbol_kind".to_string(),
+                serde_json::Value::String(unused.symbol.kind.description().to_string()),
+            );
 
             let description = format!(
                 "{} (confidence: {:.1}%, usage count: {})",

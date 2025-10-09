@@ -130,8 +130,8 @@ impl ContainerPatternChecker {
 
 #[cfg(test)]
 mod tests {
-    use crate::analysis::detectors::security::config::language_support::yaml::YamlParser;
     use super::*;
+    use crate::analysis::detectors::security::config::language_support::yaml::YamlParser;
 
     #[test]
     fn test_privileged_container_detection() {

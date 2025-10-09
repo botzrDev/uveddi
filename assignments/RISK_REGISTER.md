@@ -12,6 +12,7 @@
 | R8 | Support workflows (inbox, escalation, monitoring) not yet configured. | Plan Phase A9 | High | Medium | Define SOP and rehearsal during Phase A9; verify ticket flow and monitoring alerts before release week. | Austin | 2025-12-27 |
 | R9 | Solo bandwidth may cause phase overruns, impacting target release window. | assignments/COMMERCIAL_SCOPE_1.0.0.md | High | Medium | Re-estimate weekly during tracker updates; prioritize critical defects; escalate slip risk in tracker notes immediately. | Austin | Ongoing |
 | R10 | Signing certificates/distribution credentials availability not confirmed ahead of Phase A6. | assignments/COMMERCIAL_SCOPE_1.0.0.md | High | Low | Contact ops/legal partners during Phase A4 to confirm availability; secure credentials before Phase A6 start. | Austin | 2025-11-15 |
+| R11 | Required docs (`docs/CLI_REFERENCE.md`, `docs/TROUBLESHOOTING.md`) missing; could slip past Phase A3 and leave launch docs incomplete. | docs/release-artifacts/scope-implementation-diff-2025-10-09.md | Medium | Medium | Schedule documentation work at start of Phase A3, track in launch tracker, and gate Phase A5 on completion. | Austin | 2025-11-08 |
 
 **Severity Legend:** High = release blocker, Medium = material customer impact, Low = minor inconvenience  
 **Probability Legend:** High >60%, Medium 30-60%, Low <30%

@@ -13,8 +13,10 @@ use uveddi::analysis::incremental::{
     dependency_tracker::DependencyExtractionConfig, state_manager::StateManagerConfig,
     ChangeDetectionConfig, ChangeDetector, DependencyTracker, IncrementalStateManager,
 };
-use uveddi::analysis::{AnalysisEngine};
-use uveddi::analysis::incremental::{IncrementalAnalysisEngine, IncrementalAnalysisConfig, IncrementalConfig};
+use uveddi::analysis::incremental::{
+    IncrementalAnalysisConfig, IncrementalAnalysisEngine, IncrementalConfig,
+};
+use uveddi::analysis::AnalysisEngine;
 
 /// Test basic incremental analysis functionality
 #[tokio::test]
@@ -35,8 +37,10 @@ async fn test_basic_incremental_analysis() {
     let mut incremental_engine = IncrementalAnalysisEngine::new(
         base_engine,
         config,
-        temp_dir.path().join("incremental_state.json")
-    ).await.unwrap();
+        temp_dir.path().join("incremental_state.json"),
+    )
+    .await
+    .unwrap();
     let (issues2, result) = incremental_engine
         .analyze_incremental(temp_dir.path())
         .await
@@ -247,8 +251,10 @@ async fn test_performance_improvement_target() {
     let mut incremental_engine = IncrementalAnalysisEngine::new(
         base_engine,
         config,
-        temp_dir.path().join("incremental_state.json")
-    ).await.unwrap();
+        temp_dir.path().join("incremental_state.json"),
+    )
+    .await
+    .unwrap();
     let (issues2, result) = incremental_engine
         .analyze_incremental(temp_dir.path())
         .await
@@ -307,8 +313,10 @@ async fn test_cache_invalidation() {
     let mut incremental_engine = IncrementalAnalysisEngine::new(
         base_engine,
         config.clone(),
-        temp_dir.path().join("incremental_state.json")
-    ).await.unwrap();
+        temp_dir.path().join("incremental_state.json"),
+    )
+    .await
+    .unwrap();
     let (issues1, result1) = incremental_engine
         .analyze_incremental(temp_dir.path())
         .await

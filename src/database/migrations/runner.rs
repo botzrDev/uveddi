@@ -67,7 +67,6 @@ impl MigrationRunner {
         let conn = self.pool.get_connection().await?;
 
         let version = tokio::task::spawn_blocking(move || {
-
             let mut stmt = conn.prepare("SELECT MAX(version) FROM migration_history")?;
             let rows: Result<Option<u32>, rusqlite::Error> =
                 stmt.query_row([], |row| Ok(row.get::<_, Option<u32>>(0)?));
@@ -95,7 +94,6 @@ impl MigrationRunner {
         let conn = self.pool.get_connection().await?;
 
         let records = tokio::task::spawn_blocking(move || {
-
             let mut stmt = conn.prepare(
                 "SELECT version, name, applied_at, checksum FROM migration_history ORDER BY version"
             )?;
@@ -385,7 +383,8 @@ mod tests {
             enable_prepared_statements: false,
         };
 
-        let db_config = crate::database::connection::config::DatabaseConfig::sqlite(temp_file.path());
+        let db_config =
+            crate::database::connection::config::DatabaseConfig::sqlite(temp_file.path());
         let provider = Arc::new(crate::database::SqliteProvider::new(db_config).unwrap());
         let pool = ConnectionPool::new(config, provider).await.unwrap();
         let registry = MigrationRegistry::new();

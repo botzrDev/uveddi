@@ -268,8 +268,8 @@ impl YamlPatternMatcher {
 
 #[cfg(test)]
 mod tests {
-    use crate::analysis::detectors::security::config::ConfigSecurityConfig;
     use super::*;
+    use crate::analysis::detectors::security::config::ConfigSecurityConfig;
 
     #[test]
     fn test_pattern_detection() {

@@ -16,7 +16,7 @@ impl ResourceConfig {
     pub fn development() -> Self {
         Self
     }
-    
+
     pub fn production() -> Self {
         Self
     }

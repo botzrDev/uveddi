@@ -116,10 +116,13 @@ impl ContextBuilder {
             if let Ok(mut ast_cache) = cache_handles.ast_cache.lock() {
                 if let Some(cached_entry) = ast_cache.get(&file_path.to_path_buf()) {
                     // Use cached AST - language detection from file extension
-                    let language = crate::ast::SourceLanguage::from_path(file_path)
-                        .ok_or_else(|| PipelineError::ContextBuildError(
-                            format!("Unsupported file extension for '{}'", file_path.display())
-                        ))?;
+                    let language =
+                        crate::ast::SourceLanguage::from_path(file_path).ok_or_else(|| {
+                            PipelineError::ContextBuildError(format!(
+                                "Unsupported file extension for '{}'",
+                                file_path.display()
+                            ))
+                        })?;
 
                     let file_info = FileInfo {
                         path: file_path.to_path_buf(),
@@ -356,11 +359,18 @@ impl AnalysisPipeline {
 
     /// Start cache services (file watcher and metrics collector)
     #[cfg(feature = "analysis-cache")]
-    pub fn start_cache_services(&self, watch_paths: Vec<std::path::PathBuf>) -> Result<(), PipelineError> {
+    pub fn start_cache_services(
+        &self,
+        watch_paths: Vec<std::path::PathBuf>,
+    ) -> Result<(), PipelineError> {
         if let Some(ref manager_arc) = self.cache_service_manager {
             if let Ok(mut manager) = manager_arc.lock() {
-                manager.start_services(watch_paths)
-                    .map_err(|e| PipelineError::ContextBuildError(format!("Failed to start cache services: {}", e)))?;
+                manager.start_services(watch_paths).map_err(|e| {
+                    PipelineError::ContextBuildError(format!(
+                        "Failed to start cache services: {}",
+                        e
+                    ))
+                })?;
             }
         }
         Ok(())

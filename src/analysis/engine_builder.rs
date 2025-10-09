@@ -4,12 +4,12 @@ use std::sync::Arc;
 
 use crate::analysis::adapters::ResultCacheAdapter;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::components::PluginManager;
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
     DependencyGraphBuilderImpl, DetectorScheduler,
 };
-#[cfg(feature = "wasm-plugins")]
-use crate::analysis::components::PluginManager;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
 use crate::analysis::AnalysisDetector;
@@ -263,7 +263,7 @@ impl AnalysisEngineBuilder {
             aggregator.clone(),
             detectors,
         ));
-        
+
         #[cfg(not(feature = "wasm-plugins"))]
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
@@ -340,7 +340,7 @@ impl AnalysisEngineBuilder {
             None, // plugin_manager: Option<Arc<PluginManagerHandle>>
             Arc::clone(&detector_factory),
         ));
-        
+
         #[cfg(not(feature = "wasm-plugins"))]
         let analysis_service = Arc::new(crate::analysis::services::AnalysisService::new(
             Arc::clone(&config_service),
@@ -488,7 +488,7 @@ impl AnalysisEngineBuilder {
             aggregator.clone(),
             detectors,
         ));
-        
+
         #[cfg(not(feature = "wasm-plugins"))]
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
@@ -499,7 +499,11 @@ impl AnalysisEngineBuilder {
 
         // Create detector factory and performance metrics collector
         let detector_factory = DetectorFactory;
-        let performance_metrics_collector = Arc::new(crate::analysis::services::performance_service::PerformanceMetricsCollector::new("default"));
+        let performance_metrics_collector = Arc::new(
+            crate::analysis::services::performance_service::PerformanceMetricsCollector::new(
+                "default",
+            ),
+        );
 
         // Initialize knowledge library components if enabled
         let knowledge_library_result = if enable_knowledge {
@@ -591,7 +595,7 @@ impl AnalysisEngineBuilder {
             suggestion: "Check component configuration and dependencies".to_string(),
             source: None,
         });
-        
+
         #[cfg(not(feature = "wasm-plugins"))]
         crate::analysis::AnalysisEngine::from_components(
             config_service,

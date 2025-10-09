@@ -5,8 +5,8 @@ use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, RwLock};
 use tracing::{debug, error, info, warn};
 
-use crate::error::{Result, UveddiError};
 use crate::analysis::services::performance_service::PerformanceMetricsCollector;
+use crate::error::{Result, UveddiError};
 
 pub struct CircuitBreaker;
 impl CircuitBreaker {

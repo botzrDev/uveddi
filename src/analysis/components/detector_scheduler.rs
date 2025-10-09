@@ -4,17 +4,17 @@
 
 #[cfg(feature = "wasm-plugins")]
 use super::plugin_manager::PluginManagerHandle;
+#[cfg(feature = "wasm-plugins")]
+use super::traits::PluginManagerHandle as PluginManagerHandleTrait;
 use super::traits::{
     AnalysisAggregator, AstProvider, ConfigurationService,
     DetectorScheduler as DetectorSchedulerTrait,
 };
-#[cfg(feature = "wasm-plugins")]
-use super::traits::PluginManagerHandle as PluginManagerHandleTrait;
+use crate::analysis::file_discovery::FileDiscovery;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::{detectors::cycle::CycleDetector, AnalysisDetector};
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
-use crate::analysis::file_discovery::FileDiscovery;
 
 use crate::core::logging::{info, warn};
 use async_trait::async_trait;
@@ -39,8 +39,7 @@ impl DetectorScheduler {
     pub fn new(
         config_service: Arc<dyn ConfigurationService>,
         ast_provider: Arc<dyn AstProvider>,
-        #[cfg(feature = "wasm-plugins")]
-        plugin_manager: Option<PluginManagerHandle>,
+        #[cfg(feature = "wasm-plugins")] plugin_manager: Option<PluginManagerHandle>,
         aggregator: Arc<dyn AnalysisAggregator>,
         file_detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
     ) -> Self {
@@ -423,12 +422,7 @@ mod tests {
         let detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> =
             vec![Box::new(GodObjectDetector::new(10, 15))];
 
-        DetectorScheduler::new(
-            config_service,
-            ast_provider,
-            aggregator,
-            detectors,
-        )
+        DetectorScheduler::new(config_service, ast_provider, aggregator, detectors)
     }
 
     #[tokio::test]

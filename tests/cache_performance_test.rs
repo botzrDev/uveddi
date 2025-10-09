@@ -3,11 +3,11 @@
 //! This test module validates cache performance and measures hit rates
 //! to ensure our cache system provides measurable performance improvements.
 
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 use tempfile::{tempdir, NamedTempFile};
-use std::io::Write;
 
 use uveddi::analysis::components::cache_manager::{CacheManager, CacheManagerImpl};
 use uveddi::database::models::ArchitecturalIssue;
@@ -168,20 +168,25 @@ pub fn main() {
 
 #[tokio::test]
 async fn test_ast_cache_performance() {
-    let cache_manager = CacheManagerImpl::new().await
+    let cache_manager = CacheManagerImpl::new()
+        .await
         .expect("Failed to create cache manager");
 
     let (_temp_dir, file_path) = create_test_file(TestSamples::large_rust_code());
 
     // Measure first parse (cache miss)
     let start = Instant::now();
-    let first_parse = cache_manager.get_or_parse_ast(&file_path).await
+    let first_parse = cache_manager
+        .get_or_parse_ast(&file_path)
+        .await
         .expect("Failed to parse AST first time");
     let first_duration = start.elapsed();
 
     // Measure second parse (cache hit)
     let start = Instant::now();
-    let second_parse = cache_manager.get_or_parse_ast(&file_path).await
+    let second_parse = cache_manager
+        .get_or_parse_ast(&file_path)
+        .await
         .expect("Failed to parse AST second time");
     let second_duration = start.elapsed();
 
@@ -194,42 +199,46 @@ async fn test_ast_cache_performance() {
 
     // The second parse should be at least 10x faster than the first
     // This is a reasonable expectation for cache performance
-    assert!(second_duration.as_nanos() * 10 < first_duration.as_nanos(),
-        "Cache hit should be significantly faster than cache miss");
+    assert!(
+        second_duration.as_nanos() * 10 < first_duration.as_nanos(),
+        "Cache hit should be significantly faster than cache miss"
+    );
 
     // Validate cache statistics
     let stats = cache_manager.get_cache_stats().await;
     assert!(stats.ast_cache_size > 0, "AST cache should contain entries");
-    assert!(stats.ast_hit_rate > 0.0, "AST cache should have recorded hits");
+    assert!(
+        stats.ast_hit_rate > 0.0,
+        "AST cache should have recorded hits"
+    );
 }
 
 #[tokio::test]
 async fn test_result_cache_performance() {
-    let cache_manager = CacheManagerImpl::new().await
+    let cache_manager = CacheManagerImpl::new()
+        .await
         .expect("Failed to create cache manager");
 
     let (_temp_dir, file_path) = create_test_file(TestSamples::small_rust_code());
 
     // Create sample analysis results
-    let sample_results = vec![
-        ArchitecturalIssue {
-            id: None,
-            detector_name: "test_detector".to_string(),
-            issue_type: "test_issue".to_string(),
-            file_path: file_path.to_string_lossy().to_string(),
-            start_line: 1,
-            end_line: 10,
-            start_column: 0,
-            end_column: 20,
-            message: "Test issue detected".to_string(),
-            description: Some("This is a test issue for benchmarking".to_string()),
-            severity: "medium".to_string(),
-            confidence: 0.8,
-            suggestion: Some("Fix the test issue".to_string()),
-            metadata: None,
-            created_at: None,
-        },
-    ];
+    let sample_results = vec![ArchitecturalIssue {
+        id: None,
+        detector_name: "test_detector".to_string(),
+        issue_type: "test_issue".to_string(),
+        file_path: file_path.to_string_lossy().to_string(),
+        start_line: 1,
+        end_line: 10,
+        start_column: 0,
+        end_column: 20,
+        message: "Test issue detected".to_string(),
+        description: Some("This is a test issue for benchmarking".to_string()),
+        severity: "medium".to_string(),
+        confidence: 0.8,
+        suggestion: Some("Fix the test issue".to_string()),
+        metadata: None,
+        created_at: None,
+    }];
 
     // Test cache miss scenario
     let start = Instant::now();
@@ -239,7 +248,9 @@ async fn test_result_cache_performance() {
 
     // Cache the results
     let start = Instant::now();
-    cache_manager.cache_results(&file_path, sample_results.clone()).await;
+    cache_manager
+        .cache_results(&file_path, sample_results.clone())
+        .await;
     let cache_duration = start.elapsed();
 
     // Test cache hit scenario
@@ -248,25 +259,39 @@ async fn test_result_cache_performance() {
     let hit_duration = start.elapsed();
 
     // Validate results
-    assert!(cached_results.is_some(), "Should be cache hit after caching");
+    assert!(
+        cached_results.is_some(),
+        "Should be cache hit after caching"
+    );
     let cached = cached_results.unwrap();
-    assert_eq!(cached.len(), sample_results.len(), "Cached results should match original");
+    assert_eq!(
+        cached.len(),
+        sample_results.len(),
+        "Cached results should match original"
+    );
 
     // Cache hit should be faster than caching operation
     println!("Cache miss: {:?}", miss_duration);
     println!("Cache store: {:?}", cache_duration);
     println!("Cache hit: {:?}", hit_duration);
 
-    assert!(hit_duration < cache_duration, "Cache hit should be faster than cache store");
+    assert!(
+        hit_duration < cache_duration,
+        "Cache hit should be faster than cache store"
+    );
 
     // Validate cache statistics
     let stats = cache_manager.get_cache_stats().await;
-    assert!(stats.result_cache_size > 0, "Result cache should contain entries");
+    assert!(
+        stats.result_cache_size > 0,
+        "Result cache should contain entries"
+    );
 }
 
 #[tokio::test]
 async fn test_cache_memory_scaling() {
-    let cache_manager = CacheManagerImpl::new().await
+    let cache_manager = CacheManagerImpl::new()
+        .await
         .expect("Failed to create cache manager");
 
     let mut temp_files = Vec::new();
@@ -283,7 +308,9 @@ async fn test_cache_memory_scaling() {
         let (_temp_dir, file_path) = create_test_file(content);
 
         let start = Instant::now();
-        let _parsed = cache_manager.get_or_parse_ast(&file_path).await
+        let _parsed = cache_manager
+            .get_or_parse_ast(&file_path)
+            .await
             .expect("Failed to parse file");
         let duration = start.elapsed();
 
@@ -293,63 +320,85 @@ async fn test_cache_memory_scaling() {
 
     // Validate cache scaling
     let stats = cache_manager.get_cache_stats().await;
-    assert_eq!(stats.ast_cache_size, test_cases.len(), "Cache should contain all parsed files");
-    assert!(stats.total_memory_usage > 0, "Cache should report memory usage");
+    assert_eq!(
+        stats.ast_cache_size,
+        test_cases.len(),
+        "Cache should contain all parsed files"
+    );
+    assert!(
+        stats.total_memory_usage > 0,
+        "Cache should report memory usage"
+    );
 
     // Test cache hit performance on all files
     let start = Instant::now();
     for (_temp_dir, file_path) in &temp_files {
-        let _parsed = cache_manager.get_or_parse_ast(file_path).await
+        let _parsed = cache_manager
+            .get_or_parse_ast(file_path)
+            .await
             .expect("Failed to get cached AST");
     }
     let total_hit_duration = start.elapsed();
 
-    println!("Total cache hit duration for {} files: {:?}", test_cases.len(), total_hit_duration);
+    println!(
+        "Total cache hit duration for {} files: {:?}",
+        test_cases.len(),
+        total_hit_duration
+    );
 
     // Average hit time should be very low
     let avg_hit_time = total_hit_duration / test_cases.len() as u32;
     println!("Average cache hit time: {:?}", avg_hit_time);
 
     // Cache hits should average less than 1ms per file
-    assert!(avg_hit_time.as_millis() < 1, "Cache hits should be very fast");
+    assert!(
+        avg_hit_time.as_millis() < 1,
+        "Cache hits should be very fast"
+    );
 }
 
 #[tokio::test]
 async fn test_cache_invalidation_performance() {
-    let cache_manager = CacheManagerImpl::new().await
+    let cache_manager = CacheManagerImpl::new()
+        .await
         .expect("Failed to create cache manager");
 
     let (_temp_dir, file_path) = create_test_file(TestSamples::large_rust_code());
 
     // Populate cache
-    let _parsed = cache_manager.get_or_parse_ast(&file_path).await
+    let _parsed = cache_manager
+        .get_or_parse_ast(&file_path)
+        .await
         .expect("Failed to parse file");
 
-    let sample_results = vec![
-        ArchitecturalIssue {
-            id: None,
-            detector_name: "test_detector".to_string(),
-            issue_type: "test_issue".to_string(),
-            file_path: file_path.to_string_lossy().to_string(),
-            start_line: 1,
-            end_line: 10,
-            start_column: 0,
-            end_column: 20,
-            message: "Test issue".to_string(),
-            description: None,
-            severity: "low".to_string(),
-            confidence: 0.5,
-            suggestion: None,
-            metadata: None,
-            created_at: None,
-        },
-    ];
-    cache_manager.cache_results(&file_path, sample_results).await;
+    let sample_results = vec![ArchitecturalIssue {
+        id: None,
+        detector_name: "test_detector".to_string(),
+        issue_type: "test_issue".to_string(),
+        file_path: file_path.to_string_lossy().to_string(),
+        start_line: 1,
+        end_line: 10,
+        start_column: 0,
+        end_column: 20,
+        message: "Test issue".to_string(),
+        description: None,
+        severity: "low".to_string(),
+        confidence: 0.5,
+        suggestion: None,
+        metadata: None,
+        created_at: None,
+    }];
+    cache_manager
+        .cache_results(&file_path, sample_results)
+        .await;
 
     // Verify cache is populated
     let stats_before = cache_manager.get_cache_stats().await;
     assert!(stats_before.ast_cache_size > 0, "Cache should be populated");
-    assert!(stats_before.result_cache_size > 0, "Result cache should be populated");
+    assert!(
+        stats_before.result_cache_size > 0,
+        "Result cache should be populated"
+    );
 
     // Measure cache invalidation performance
     let start = Instant::now();
@@ -360,16 +409,26 @@ async fn test_cache_invalidation_performance() {
 
     // Verify cache is cleared
     let stats_after = cache_manager.get_cache_stats().await;
-    assert_eq!(stats_after.ast_cache_size, 0, "AST cache should be empty after clear");
-    assert_eq!(stats_after.result_cache_size, 0, "Result cache should be empty after clear");
+    assert_eq!(
+        stats_after.ast_cache_size, 0,
+        "AST cache should be empty after clear"
+    );
+    assert_eq!(
+        stats_after.result_cache_size, 0,
+        "Result cache should be empty after clear"
+    );
 
     // Cache clear should be fast (less than 100ms even for large caches)
-    assert!(clear_duration.as_millis() < 100, "Cache clear should be fast");
+    assert!(
+        clear_duration.as_millis() < 100,
+        "Cache clear should be fast"
+    );
 }
 
 #[tokio::test]
 async fn test_cache_hit_rate_measurement() {
-    let cache_manager = CacheManagerImpl::new().await
+    let cache_manager = CacheManagerImpl::new()
+        .await
         .expect("Failed to create cache manager");
 
     let (_temp_dir, file_path) = create_test_file(TestSamples::small_rust_code());
@@ -379,7 +438,9 @@ async fn test_cache_hit_rate_measurement() {
 
     for i in 0..5 {
         let start = Instant::now();
-        let _parsed = cache_manager.get_or_parse_ast(&file_path).await
+        let _parsed = cache_manager
+            .get_or_parse_ast(&file_path)
+            .await
             .expect("Failed to parse file");
         let duration = start.elapsed();
 
@@ -389,14 +450,26 @@ async fn test_cache_hit_rate_measurement() {
 
     // First parse should be slowest (cache miss)
     // Subsequent parses should be faster (cache hits)
-    assert!(parse_times[0] > parse_times[1], "First parse should be slower than second");
-    assert!(parse_times[1] <= parse_times[2], "Cache hits should be consistently fast");
-    assert!(parse_times[2] <= parse_times[3], "Cache hits should be consistently fast");
+    assert!(
+        parse_times[0] > parse_times[1],
+        "First parse should be slower than second"
+    );
+    assert!(
+        parse_times[1] <= parse_times[2],
+        "Cache hits should be consistently fast"
+    );
+    assert!(
+        parse_times[2] <= parse_times[3],
+        "Cache hits should be consistently fast"
+    );
 
     // Get final statistics
     let stats = cache_manager.get_cache_stats().await;
     println!("Final AST hit rate: {:.2}%", stats.ast_hit_rate * 100.0);
 
     // Hit rate should be > 80% (4 hits out of 5 accesses)
-    assert!(stats.ast_hit_rate >= 0.8, "Hit rate should be high with repeated accesses");
+    assert!(
+        stats.ast_hit_rate >= 0.8,
+        "Hit rate should be high with repeated accesses"
+    );
 }

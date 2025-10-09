@@ -151,7 +151,9 @@ impl From<rusqlite::Error> for RepositoryError {
                     timeout_seconds: 30,
                 },
                 rusqlite::ErrorCode::ConstraintViolation => Self::Conflict {
-                    message: msg.clone().unwrap_or_else(|| "Constraint violation".to_string()),
+                    message: msg
+                        .clone()
+                        .unwrap_or_else(|| "Constraint violation".to_string()),
                 },
                 _ => Self::Database {
                     message: format!("SQLite error: {:?}", sqlite_err),
@@ -208,25 +210,22 @@ impl From<crate::error::UveddiError> for RepositoryError {
     fn from(err: crate::error::UveddiError) -> Self {
         use crate::error::UveddiError;
         match err {
-            UveddiError::DatabaseError { message, .. } => {
-                Self::Database { message, source: None }
-            }
-            UveddiError::DatabaseConnection(msg) => {
-                Self::Pool(msg)
-            }
-            UveddiError::ConfigError { message, .. } => {
-                Self::Validation { field: "config".to_string(), message }
-            }
-            UveddiError::Configuration(msg) => {
-                Self::Validation { field: "config".to_string(), message: msg }
-            }
-            UveddiError::IoError { message, .. } => {
-                Self::Runtime(format!("IO error: {}", message))
-            }
-            UveddiError::SerializationError { message, .. } => {
-                Self::Serialization(message)
-            }
-            _ => Self::Runtime(err.to_string())
+            UveddiError::DatabaseError { message, .. } => Self::Database {
+                message,
+                source: None,
+            },
+            UveddiError::DatabaseConnection(msg) => Self::Pool(msg),
+            UveddiError::ConfigError { message, .. } => Self::Validation {
+                field: "config".to_string(),
+                message,
+            },
+            UveddiError::Configuration(msg) => Self::Validation {
+                field: "config".to_string(),
+                message: msg,
+            },
+            UveddiError::IoError { message, .. } => Self::Runtime(format!("IO error: {}", message)),
+            UveddiError::SerializationError { message, .. } => Self::Serialization(message),
+            _ => Self::Runtime(err.to_string()),
         }
     }
 }

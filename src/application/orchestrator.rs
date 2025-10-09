@@ -20,7 +20,7 @@ impl ResourceManager {
     pub fn new(_config: ResourceConfig) -> Result<Self, UveddiError> {
         Ok(Self)
     }
-    
+
     pub async fn start_monitoring(&self) -> Result<(), UveddiError> {
         Ok(())
     }

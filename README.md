@@ -12,9 +12,10 @@ Uveddi is a commercial-grade architectural analysis CLI that combines static cod
 - **Anti-pattern detection** – Catch God Objects, dead code, circular dependencies, large classes, and dozens of architectural smells
 - **Security scanning** – Optional security mode with SARIF export for CI/CD pipelines
 - **AI insights (optional)** – Integrate with an on-prem Ollama instance to generate remediation guidance and summaries
-- **Comprehensive reporting** – Markdown and JSON outputs with diagram generation, severity scoring, and debt metrics
+- **Comprehensive reporting** – Markdown, JSON, and HTML outputs with interactive diagrams, dark/light themes, severity scoring, and debt metrics
 - **CI automation** – Threshold-based quality gates for pull requests and release builds
 - **Enterprise-ready reliability** – Persistent SQLite storage, deterministic caching, detailed progress reporting, and structured logging
+- **Complete documentation** – [CLI Reference](docs/CLI_REFERENCE.md) and [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for self-service success
 
 > Web UI and TUI experiences have been removed for the CLI-only release to streamline support and provide a focused commercial product.
 
@@ -64,7 +65,7 @@ Optional components:
 - `uveddi hooks` – Git hook automation to enforce analysis before commits or pushes
 - `uveddi ci` – CI-centric quality gates with customizable debt and severity thresholds
 
-Run `uveddi --help` or `uveddi <command> --help` for detailed usage information.
+Run `uveddi --help` or `uveddi <command> --help` for detailed usage information. See the [CLI Reference](docs/CLI_REFERENCE.md) for comprehensive command documentation and usage examples.
 
 ## Recommended feature flags
 
@@ -73,6 +74,8 @@ Run `uveddi --help` or `uveddi <command> --help` for detailed usage information.
 - `cli-plugins` – Enables WebAssembly plugin execution when your audit requires bespoke detectors
 
 **Security scanning** is always available via the `--security` CLI flag (no build feature required).
+
+> **Note (A3 cleanup):** The `security` feature flag has been removed as it was empty/deprecated. Security detectors are now part of the standard CLI build.
 
 Legacy web/TUI flags remain in the manifest for backwards compatibility but are unsupported in the commercial build.
 
@@ -84,7 +87,7 @@ Commercial subscribers receive:
 - Early access to detector updates and private roadmap briefings
 - Escalation path for critical audit findings
 
-If you encounter an issue, open a ticket via the subscriber portal or email support. Public GitHub issues remain available for transparency but may have slower response times for non-subscribers.
+If you encounter an issue, first consult the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for common solutions, then open a ticket via the subscriber portal or email support. Public GitHub issues remain available for transparency but may have slower response times for non-subscribers.
 
 ## Roadmap snapshot
 

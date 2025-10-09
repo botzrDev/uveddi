@@ -34,24 +34,25 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || -> Result<Option<Project>, RepositoryError> {
-            let mut stmt =
-                conn.prepare("SELECT project_id, path FROM projects WHERE project_id = ?")?;
-            let mut rows = stmt.query([id])?;
+        let result =
+            tokio::task::spawn_blocking(move || -> Result<Option<Project>, RepositoryError> {
+                let mut stmt =
+                    conn.prepare("SELECT project_id, path FROM projects WHERE project_id = ?")?;
+                let mut rows = stmt.query([id])?;
 
-            if let Some(row) = rows.next()? {
-                let project = Project {
-                    id: Some(row.get(0)?),
-                    path: PathBuf::from(row.get::<_, String>(1)?),
-                    config: ProjectConfig::default(),
-                    created_at: Utc::now(),
-                };
-                Ok(Some(project))
-            } else {
-                Ok(None)
-            }
-        })
-        .await??;
+                if let Some(row) = rows.next()? {
+                    let project = Project {
+                        id: Some(row.get(0)?),
+                        path: PathBuf::from(row.get::<_, String>(1)?),
+                        config: ProjectConfig::default(),
+                        created_at: Utc::now(),
+                    };
+                    Ok(Some(project))
+                } else {
+                    Ok(None)
+                }
+            })
+            .await??;
 
         Ok(result)
     }
@@ -63,26 +64,27 @@ impl Repository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || -> Result<Vec<Project>, RepositoryError> {
-            let mut stmt =
-                conn.prepare("SELECT project_id, path FROM projects ORDER BY project_id DESC")?;
-            let rows = stmt.query_map([], |row| {
-                Ok(Project {
-                    id: Some(row.get(0)?),
-                    path: PathBuf::from(row.get::<_, String>(1)?),
-                    config: ProjectConfig::default(),
-                    created_at: Utc::now(),
-                })
-            })?;
+        let result =
+            tokio::task::spawn_blocking(move || -> Result<Vec<Project>, RepositoryError> {
+                let mut stmt =
+                    conn.prepare("SELECT project_id, path FROM projects ORDER BY project_id DESC")?;
+                let rows = stmt.query_map([], |row| {
+                    Ok(Project {
+                        id: Some(row.get(0)?),
+                        path: PathBuf::from(row.get::<_, String>(1)?),
+                        config: ProjectConfig::default(),
+                        created_at: Utc::now(),
+                    })
+                })?;
 
-            let mut projects = Vec::new();
-            for project in rows {
-                projects.push(project?);
-            }
+                let mut projects = Vec::new();
+                for project in rows {
+                    projects.push(project?);
+                }
 
-            Ok(projects)
-        })
-        .await??;
+                Ok(projects)
+            })
+            .await??;
 
         Ok(result)
     }
@@ -254,23 +256,25 @@ impl ProjectRepository for SqliteProjectRepository {
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
         let path = path.to_string();
 
-        let result = tokio::task::spawn_blocking(move || -> Result<Option<Project>, RepositoryError> {
-            let mut stmt = conn.prepare("SELECT project_id, path FROM projects WHERE path = ?")?;
-            let mut rows = stmt.query([&path])?;
+        let result =
+            tokio::task::spawn_blocking(move || -> Result<Option<Project>, RepositoryError> {
+                let mut stmt =
+                    conn.prepare("SELECT project_id, path FROM projects WHERE path = ?")?;
+                let mut rows = stmt.query([&path])?;
 
-            if let Some(row) = rows.next()? {
-                let project = Project {
-                    id: Some(row.get(0)?),
-                    path: PathBuf::from(row.get::<_, String>(1)?),
-                    config: ProjectConfig::default(),
-                    created_at: Utc::now(),
-                };
-                Ok(Some(project))
-            } else {
-                Ok(None)
-            }
-        })
-        .await??;
+                if let Some(row) = rows.next()? {
+                    let project = Project {
+                        id: Some(row.get(0)?),
+                        path: PathBuf::from(row.get::<_, String>(1)?),
+                        config: ProjectConfig::default(),
+                        created_at: Utc::now(),
+                    };
+                    Ok(Some(project))
+                } else {
+                    Ok(None)
+                }
+            })
+            .await??;
 
         Ok(result)
     }
@@ -288,27 +292,28 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
             .map_err(|e| RepositoryError::Pool(e.to_string()))?;
 
-        let result = tokio::task::spawn_blocking(move || -> Result<Vec<Project>, RepositoryError> {
-            let mut stmt = conn.prepare(
-                "SELECT project_id, path FROM projects ORDER BY project_id DESC LIMIT ?",
-            )?;
-            let rows = stmt.query_map([limit], |row| {
-                Ok(Project {
-                    id: Some(row.get(0)?),
-                    path: PathBuf::from(row.get::<_, String>(1)?),
-                    config: ProjectConfig::default(),
-                    created_at: Utc::now(),
-                })
-            })?;
+        let result =
+            tokio::task::spawn_blocking(move || -> Result<Vec<Project>, RepositoryError> {
+                let mut stmt = conn.prepare(
+                    "SELECT project_id, path FROM projects ORDER BY project_id DESC LIMIT ?",
+                )?;
+                let rows = stmt.query_map([limit], |row| {
+                    Ok(Project {
+                        id: Some(row.get(0)?),
+                        path: PathBuf::from(row.get::<_, String>(1)?),
+                        config: ProjectConfig::default(),
+                        created_at: Utc::now(),
+                    })
+                })?;
 
-            let mut projects = Vec::new();
-            for project in rows {
-                projects.push(project?);
-            }
+                let mut projects = Vec::new();
+                for project in rows {
+                    projects.push(project?);
+                }
 
-            Ok(projects)
-        })
-        .await??;
+                Ok(projects)
+            })
+            .await??;
 
         Ok(result)
     }

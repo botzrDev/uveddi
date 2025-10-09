@@ -36,7 +36,7 @@ use std::path::PathBuf;
 use sysinfo::System;
 use tracing::{info, warn};
 
-use crate::application::{AnalysisOrchestrator, AnalysisConfig};
+use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
 use crate::progress::{create_progress_reporter, AnalysisPhase, ProgressTracker};
 use crate::report::DiagramMode;
@@ -88,20 +88,25 @@ pub fn validate_cli_argument(
 
 mod security {
     use super::SecurityError;
-    
+
     pub fn validate_input(_value: &str, _name: &str) -> Result<(), SecurityError> {
         Ok(())
     }
-    
+
     pub fn validate_model_name(_model: &str) -> Result<(), SecurityError> {
         Ok(())
     }
-    
+
     pub fn validate_url(_url: &str) -> Result<(), SecurityError> {
         Ok(())
     }
-    
-    pub fn validate_numeric_range(_value: f64, _min: i32, _max: i32, _name: &str) -> Result<(), SecurityError> {
+
+    pub fn validate_numeric_range(
+        _value: f64,
+        _min: i32,
+        _max: i32,
+        _name: &str,
+    ) -> Result<(), SecurityError> {
         Ok(())
     }
 }
@@ -1026,8 +1031,10 @@ impl AnalyzeCommand {
         } else {
             // Execute without timeout
             info!("Analysis running without timeout");
-            analysis_future.await.map_err(|e: crate::error::UveddiError| {
-                let specific_error = match e {
+            analysis_future
+                .await
+                .map_err(|e: crate::error::UveddiError| {
+                    let specific_error = match e {
                     ref err if err.to_string().contains("database") => {
                         "Database storage failed - check schema compatibility and disk space"
                     }
@@ -1048,20 +1055,20 @@ impl AnalyzeCommand {
                     _ => "Analysis failed",
                 };
 
-                progress_tracker.error(specific_error);
-                if self.verbose {
-                    tracing::error!("🔍 {}: {:#}", specific_error, e);
-                    if let Some(backtrace) = e.source() {
-                        tracing::error!("🔧 Stack trace: {:?}", backtrace);
+                    progress_tracker.error(specific_error);
+                    if self.verbose {
+                        tracing::error!("🔍 {}: {:#}", specific_error, e);
+                        if let Some(backtrace) = e.source() {
+                            tracing::error!("🔧 Stack trace: {:?}", backtrace);
+                        }
+                    } else {
+                        tracing::error!(
+                            "{}. Use --verbose for detailed error information.",
+                            specific_error
+                        );
                     }
-                } else {
-                    tracing::error!(
-                        "{}. Use --verbose for detailed error information.",
-                        specific_error
-                    );
-                }
-                e
-            })?
+                    e
+                })?
         };
 
         // Complete progress tracking
@@ -1077,7 +1084,10 @@ impl AnalyzeCommand {
                 "ai_enhanced": report.metadata.ai_enhanced,
                 "issues": report.issues
             });
-            println!("{}", serde_json::to_string_pretty(&content).unwrap_or_else(|_| "{}".to_string()));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&content).unwrap_or_else(|_| "{}".to_string())
+            );
         }
 
         // Log summary
@@ -1123,9 +1133,7 @@ impl AnalyzeCommand {
 
         // Dashboard functionality has been deprecated in the commercial CLI build
         if self.open_dashboard {
-            warn!(
-                "\n🚫 The web dashboard is no longer bundled with the commercial CLI release."
-            );
+            warn!("\n🚫 The web dashboard is no longer bundled with the commercial CLI release.");
             info!(
                 "   Review the generated report above or share it with your team through your preferred tools."
             );
@@ -1229,7 +1237,10 @@ impl AnalyzeCommand {
     }
 
     /// Print security analysis summary with color-coded output
-    async fn print_security_summary(&self, _report: &crate::application::orchestrator::AnalysisResult) {
+    async fn print_security_summary(
+        &self,
+        _report: &crate::application::orchestrator::AnalysisResult,
+    ) {
         // Note: This is a placeholder implementation until we have the security data
         // properly flowing through the AnalysisReport structure
 

@@ -48,7 +48,15 @@ pub mod wrappers {
 }
 
 pub use engine_cache::{EngineCache, EngineCacheConfig, EngineCacheStats};
-pub use enhanced_engine_cache::{EnhancedEngineCache, EnhancedCacheConfig, CacheLayerConfig, EnhancedCacheStats, CacheLayerStats};
-pub use eviction::{EvictionPolicy, EvictionManager, EvictionStats};
-pub use file_watcher::{ConfigurableFileWatcher, FileWatcherConfig, FileWatcherStats, CacheInvalidationCallback, FileChangeEvent, FileEventType};
-pub use telemetry_integration::{CacheTelemetryCollector, CacheTelemetryConfig, CacheTelemetryReport, CacheAlert, CacheAlertType, AlertSeverity};
+pub use enhanced_engine_cache::{
+    CacheLayerConfig, CacheLayerStats, EnhancedCacheConfig, EnhancedCacheStats, EnhancedEngineCache,
+};
+pub use eviction::{EvictionManager, EvictionPolicy, EvictionStats};
+pub use file_watcher::{
+    CacheInvalidationCallback, ConfigurableFileWatcher, FileChangeEvent, FileEventType,
+    FileWatcherConfig, FileWatcherStats,
+};
+pub use telemetry_integration::{
+    AlertSeverity, CacheAlert, CacheAlertType, CacheTelemetryCollector, CacheTelemetryConfig,
+    CacheTelemetryReport,
+};

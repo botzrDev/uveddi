@@ -36,7 +36,10 @@ impl std::fmt::Debug for GraphQuery {
             .field("start_nodes", &self.start_nodes)
             .field("relation_types", &self.relation_types)
             .field("max_depth", &self.max_depth)
-            .field("node_filter", &self.node_filter.as_ref().map(|_| "<closure>"))
+            .field(
+                "node_filter",
+                &self.node_filter.as_ref().map(|_| "<closure>"),
+            )
             .finish()
     }
 }
