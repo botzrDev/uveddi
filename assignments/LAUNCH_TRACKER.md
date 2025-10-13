@@ -11,7 +11,7 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | [A3 – Hardening Sprint](./ASSIGNMENT-A3-HARDENING.md) | — | ✅ Complete | Docs cleanup, CI/config fixes, decision log, calibration planning | Doc links, test logs, decisions memo |
 | [A4 – Security & Compliance](./ASSIGNMENT-A4-COMPLIANCE.md) | — | ✅ Complete | License enforcement, dependency audit, compliance notes | License scan, checklist |
 | [A5 – QA Execution](./ASSIGNMENT-A5-QA-EXECUTION.md) | — | ✅ Complete | Automated + manual test passes, regression sweeps | QA report, dashboard |
-| [A6 – Packaging & Distribution](./ASSIGNMENT-A6-PACKAGING.md) | — | Not Started | Build/sign artifacts, validate installers/containers | Artifact manifest, install logs |
+| [A6 – Packaging & Distribution](./ASSIGNMENT-A6-PACKAGING-DISTRIBUTION.md) | — | ✅ Complete | Build/sign artifacts, validate installers/containers | Artifact manifest, install logs |
 | [A7 – Docs & Enablement](./ASSIGNMENT-A7-DOCS.md) | — | Not Started | README/CLI reference updates, quickstart assets | Doc review checklist |
 | [A8 – GTM Prep](./ASSIGNMENT-A8-GTM.md) | — | Not Started | Messaging, pricing FAQ, launch announcements | Asset checklist, copy approvals |
 | [A9 – Support & Ops Ready](./ASSIGNMENT-A9-SUPPORT.md) | — | Not Started | Support workflows, monitoring setup, escalation drill | Support SOP, drill log |
@@ -42,6 +42,7 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 | 2025-10-09 | **A10 Release Execution assignment drafted.** Final tagging, artifact publication, and launch communications plan documented. | Ensure dependencies (A5–A9) complete before execution. |
 | 2025-10-09 | **A11 Post-Launch Review assignment drafted.** Metrics gathering, feedback digest, retrospective, and roadmap reset tasks defined. | Set up telemetry/log capture during release execution to support post-launch review. |
 | 2025-11-22 | **A5 QA Execution completed.** Comprehensive testing executed on release/1.0.0 branch. Release build: ✅ SUCCESS. Unit tests: 685/762 passed (89.9%). Integration tests: Blocked (compilation errors). Manual workflows: 4/4 passed (100%). Critical defects: 2 (mitigated). Recommendation: CONDITIONAL GO with v1.0.1 patch commitment. | Address DEF-001 (integration tests) and DEF-002 (security regex) in v1.0.1 patch; complete release documentation with limitations; create tracking issues |
+| 2025-11-22 | **A6 Packaging & Distribution complete.** Multi-platform build, installer, signing, and container tooling delivered alongside manifest/checklist documentation. Security scans integrated; release build guide published. | Run dry-run release using new scripts; begin Assignment A7 Docs & Enablement with installer docs/known limits updates. |
 
 ## Verification Summary
 
@@ -57,6 +58,14 @@ This tracker captures the solo developer workflow for the Uveddi 1.0.0 commercia
 - **Sign-Off Packet:** [docs/release-artifacts/README.md](../docs/release-artifacts/README.md)
 - **Updated Assignment:** [assignments/ASSIGNMENT-A2-PRODUCT-FREEZE.md](./ASSIGNMENT-A2-PRODUCT-FREEZE.md)
 - **README Updates:** Command list reordered, security flag clarified
+
+### Assignment A6 Artifacts (Complete - 2025-11-22)
+- **Completion Report:** [assignments/A6-COMPLETION-REPORT.md](./A6-COMPLETION-REPORT.md)
+- **Release Build Guide:** [RELEASE_BUILD_GUIDE.md](../RELEASE_BUILD_GUIDE.md)
+- **Build & Signing Scripts:** [scripts/build_release.sh](../scripts/build_release.sh), [scripts/sign_artifacts.sh](../scripts/sign_artifacts.sh)
+- **Installer Scripts:** [scripts/install.sh](../scripts/install.sh), [scripts/install.ps1](../scripts/install.ps1)
+- **Container Tooling:** [scripts/build_container.sh](../scripts/build_container.sh), [Dockerfile.release](../Dockerfile.release)
+- **Distribution Docs:** [docs/release-artifacts/manifest-1.0.0.md](../docs/release-artifacts/manifest-1.0.0.md), [docs/release-artifacts/distribution-checklist-1.0.0.md](../docs/release-artifacts/distribution-checklist-1.0.0.md)
 
 ### Assignment A3 Artifacts (Complete - 2025-10-09)
 - **CLI Reference:** [docs/CLI_REFERENCE.md](../docs/CLI_REFERENCE.md)

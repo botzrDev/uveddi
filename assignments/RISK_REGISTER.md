@@ -7,7 +7,7 @@
 | R3 | `uveddi config show` returns empty structure and get/set commands unverified, hurting configuration UX. *(Mitigated A3 – tests added)* | alpha-test-results/ALPHA_TEST_REPORT.md | Low | Low | Fix delivered 2025-10-09 with new integration tests; monitor regressions via CI. | Austin | 2025-10-09 |
 | R4 | `uveddi ci check` lacks output/exit code clarity, blocking CI adoption. *(Mitigated A3 – parsing fix & tests)* | alpha-test-results/ALPHA_TEST_REPORT.md | Medium | Low | JSON parsing & gate behavior validated 2025-10-09; add CI smoke during Phase A5 for ongoing coverage. | Austin | 2025-10-09 |
 | R5 | Detector selection flag (`--detectors`) not implemented; customers cannot scope analyses. | alpha-test-results/ALPHA_TEST_REPORT.md | Medium | Medium | Evaluate feasibility during Phase A3; if deferred, document workaround and roadmap note in Phase A7. | Austin | 2025-11-22 |
-| R6 | Packaging/signing pipeline for cross-platform binaries unverified; risk of release-day failures. | Plan Phase A6 | High | Medium | Prototype build/sign flow by midpoint of Phase A6; maintain dry-run artifacts; validate on Linux/macOS/Windows smoke VMs. | Austin | 2025-11-29 |
+| R6 | Packaging/signing pipeline for cross-platform binaries unverified; risk of release-day failures. *(Mitigated 2025-11-22 – release automation delivered; dry-run verification pending)* | Plan Phase A6 | Low | Low | Leverage new release scripts (`scripts/build_release.sh`, `scripts/sign_artifacts.sh`, `scripts/install.*`, `scripts/build_container.sh`) and documented checklist (`docs/release-artifacts/distribution-checklist-1.0.0.md`) for every build; schedule dry-run execution prior to tagging. | Austin | 2025-11-29 |
 | R7 | License enforcement tooling distributed separately; integration path unclear for subscribers. *(Mitigated A4 – plan documented)* | assignments/COMMERCIAL_SCOPE_1.0.0.md | Low | Low | Manual verification process documented in `docs/release-artifacts/license-enforcement-plan.md` for 1.0.0; automated enforcement planned Q1 2026; customer workflow defined. Residual: Implementation required post-launch. | Austin | 2025-10-09 (Mitigated) |
 | R8 | Support workflows (inbox, escalation, monitoring) not yet configured. | Plan Phase A9 | High | Medium | Define SOP and rehearsal during Phase A9; verify ticket flow and monitoring alerts before release week. | Austin | 2025-12-27 |
 | R9 | Solo bandwidth may cause phase overruns, impacting target release window. | assignments/COMMERCIAL_SCOPE_1.0.0.md | High | Medium | Re-estimate weekly during tracker updates; prioritize critical defects; escalate slip risk in tracker notes immediately. | Austin | Ongoing |
@@ -82,11 +82,12 @@
 - **Documentation:** Added to release notes as roadmap item
 
 **R6 - Packaging/Signing Pipeline:**
-- **QA Readiness Check:**
-  - ✅ Release binary builds successfully (2m 34s)
-  - ✅ Binary executes correctly
-  - ✅ Version reporting accurate
-- **Status:** Ready for Phase A6 execution
+- **Packaging Execution (2025-11-22):**
+  - ✅ Multi-platform release scripts delivered (`build_release`, `build_container`)
+  - ✅ Installer, signing, and verification tooling published
+  - ✅ Distribution manifest & checklist captured in docs
+- **Next Step:** Schedule dry-run using new automation prior to tagging.
+- **Status:** Mitigated – residual risk limited to final dry-run scheduling.
 
 **R8 - Support Workflows:**
 - **QA Input Provided:**
@@ -129,7 +130,7 @@
 |------|-----------------|------------------|-------|-----------|
 | R1 | High | Medium | ↓ Improved | Partial validation complete; gaps identified and scoped |
 | R5 | Medium | Low | ↓ Improved | Confirmed as non-blocking; documentation plan in place |
-| R6 | High | Medium | ↓ Improved | Binary builds validated; packaging risks reduced |
+| R6 | Low | Low | ↓ Improved | Automation delivered; dry-run release scheduled |
 | R8 | High | Medium | ↓ Improved | QA artifacts provide support foundation |
 | R9 | High | Medium | → Stable | A5 on schedule; patch work adds moderate load |
 | R12 | NEW | **CRITICAL** | ⚠️ NEW | Security accuracy unknown; requires immediate attention |

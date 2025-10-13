@@ -1088,7 +1088,7 @@ mod tests {
         args.insert("precision".to_string(), Value::Number(1.into()));
         let filter = tera.get_filter("safe_round").unwrap();
         let result = filter.filter(
-            &Value::Number(serde_json::Number::from_f64(3.14159).unwrap()),
+            &Value::Number(serde_json::Number::from_f64(std::f64::consts::PI).unwrap()),
             &args,
         );
         assert!(result.is_ok());
@@ -1109,7 +1109,7 @@ mod tests {
         // Test normal number formatting
         let filter = tera.get_filter("safe_format_number").unwrap();
         let result = filter.filter(
-            &Value::Number(serde_json::Number::from_f64(3.14159).unwrap()),
+            &Value::Number(serde_json::Number::from_f64(std::f64::consts::PI).unwrap()),
             &HashMap::new(),
         );
         assert!(result.is_ok());

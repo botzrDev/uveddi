@@ -1235,7 +1235,7 @@ mod tests {
         assert!(stats.misses > 0);
 
         // Reset stats
-        parser.reset_cache_stats();
+        let _ = parser.reset_cache_stats();
 
         let stats_after_reset = parser.get_cache_stats().unwrap();
         assert_eq!(stats_after_reset.hits, 0);

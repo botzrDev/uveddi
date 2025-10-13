@@ -359,10 +359,7 @@ async fn test_analysis_results_structure() {
     }
 
     // Test graph structure
-    assert!(
-        graph.node_count() >= 0,
-        "Graph should have valid node count"
-    );
+    let _ = graph.node_count(); // Validates graph is a LocalDependencyGraph
 }
 
 #[tokio::test]
