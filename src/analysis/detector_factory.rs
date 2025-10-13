@@ -123,7 +123,8 @@ impl DetectorFactory {
             // Box::new(FeatureEnvyDetector::new()),
             // Box::new(DataClumpsDetector::new()),
             Box::new(LongMethodsDetector::default()),
-            Box::new(MagicValuesDetector::default()),
+            // Disabled for alpha: Too noisy, flags error messages and feature flags
+            // Box::new(MagicValuesDetector::default()),
         ];
 
         // Add SecurityDetector if security feature is enabled
