@@ -139,6 +139,7 @@ pub trait ProgressReporter: Send + Sync {
 pub struct TerminalProgressReporter {
     show_details: bool,
     last_update: Arc<Mutex<Instant>>,
+    spinner_index: Arc<Mutex<usize>>,
 }
 
 impl TerminalProgressReporter {
@@ -147,6 +148,7 @@ impl TerminalProgressReporter {
         Self {
             show_details,
             last_update: Arc::new(Mutex::new(Instant::now())),
+            spinner_index: Arc::new(Mutex::new(0)),
         }
     }
 
@@ -182,73 +184,29 @@ impl TerminalProgressReporter {
 
 impl ProgressReporter for TerminalProgressReporter {
     fn report_phase(&self, progress: &PhaseProgress) {
-        if !self.should_update() {
-            return;
-        }
+        // Simple spinner animation
+        let spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-        let progress_bar = Self::format_progress_bar(progress.progress, 30);
-        let percentage = (progress.progress * 100.0) as u8;
+        let mut idx = self.spinner_index.lock().unwrap();
+        *idx = (*idx + 1) % spinner_frames.len();
+        let spinner = spinner_frames[*idx];
 
-        let elapsed = Self::format_duration(progress.elapsed_time);
+        eprint!("\r  {} {} {}...", progress.phase.emoji(), spinner, progress.phase.description());
 
-        let eta = if let Some(remaining) = progress.estimated_remaining {
-            format!(" ETA: {}", Self::format_duration(remaining))
-        } else {
-            String::new()
-        };
-
-        let items_info = if let Some(total) = progress.total_items {
-            format!(" ({}/{})", progress.items_processed, total)
-        } else if progress.items_processed > 0 {
-            format!(" ({})", progress.items_processed)
-        } else {
-            String::new()
-        };
-
-        print!(
-            "\r{} {} {} {:>3}%{} [{}]{}",
-            progress.phase.emoji(),
-            progress.phase.description(),
-            progress_bar,
-            percentage,
-            items_info,
-            elapsed,
-            eta
-        );
-
-        if self.show_details {
-            if let Some(item) = &progress.current_item {
-                print!("\n  📁 {}", item);
-            }
-        }
-
-        // Flush to ensure immediate display
         use std::io::{self, Write};
-        let _ = io::stdout().flush();
+        let _ = io::stderr().flush();
     }
 
-    fn report_overall(&self, phase: &AnalysisPhase, overall_progress: f32) {
-        let progress_bar = Self::format_progress_bar(overall_progress, 50);
-        let percentage = (overall_progress * 100.0) as u8;
-
-        println!(
-            "\n📊 Overall Progress: {} {:>3}% - {} {}",
-            progress_bar,
-            percentage,
-            phase.emoji(),
-            phase.description()
-        );
+    fn report_overall(&self, _phase: &AnalysisPhase, _overall_progress: f32) {
+        // Skip overall progress to keep it simple
     }
 
-    fn report_complete(&self, total_time: Duration) {
-        println!(
-            "\n\n✅ Analysis completed in {}",
-            Self::format_duration(total_time)
-        );
+    fn report_complete(&self, _total_time: Duration) {
+        eprintln!("\r  ✅ Analysis complete!                                             ");
     }
 
     fn report_error(&self, phase: &AnalysisPhase, error: &str) {
-        println!("\n❌ Error in {}: {}", phase.description(), error);
+        eprintln!("\r  ❌ Error in {}: {}                    ", phase.description(), error);
     }
 }
 
@@ -338,7 +296,7 @@ impl ProgressTracker {
 
     /// Starts tracking progress for a new analysis phase
     pub fn start_phase(&mut self, phase: AnalysisPhase, total_items: Option<usize>) {
-        self.current_phase = phase;
+        self.current_phase = phase.clone();
         self.phase_start_time = Instant::now();
 
         let mut progress = PhaseProgress::new(self.current_phase.clone());

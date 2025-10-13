@@ -1074,21 +1074,16 @@ impl AnalyzeCommand {
         // Complete progress tracking
         progress_tracker.complete();
 
-        // Output results
-        if self.output.is_none() {
-            // Print to stdout for user - generate JSON format from analysis result
-            let content = serde_json::json!({
-                "files_analyzed": report.metadata.files_analyzed,
-                "issues_found": report.metadata.issues_found,
-                "analysis_duration_ms": report.metadata.analysis_duration.as_millis(),
-                "ai_enhanced": report.metadata.ai_enhanced,
-                "issues": report.issues
-            });
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&content).unwrap_or_else(|_| "{}".to_string())
-            );
-        }
+        // Output results - default to markdown file
+        let output_path = if let Some(ref path) = self.output {
+            path.clone()
+        } else {
+            // Default to analysis-report.md in current directory
+            PathBuf::from("analysis-report.md")
+        };
+
+        // Generate markdown report
+        self.generate_markdown_report(&report, &output_path).await?;
 
         // Log summary
         info!(
@@ -1101,35 +1096,11 @@ impl AnalyzeCommand {
         // TODO: Notify dashboard of new analysis results
         // self.notify_dashboard_of_new_results(&report).await;
 
-        // Print colorful summary to stdout for user
-        let output_info = self
-            .output
-            .as_ref()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_else(|| "stdout".to_string());
-
-        if report.metadata.issues_found > 0 {
-            info!("\n📊 Analysis Summary:");
-            info!("  • Files analyzed: {}", report.metadata.files_analyzed);
-            info!("  • Issues found: {}", report.metadata.issues_found);
-            if report.metadata.ai_enhanced {
-                info!("  • AI enhanced: ✅");
-            }
-
-            // Add security-specific summary if security analysis was enabled
-            if self.security {
-                self.print_security_summary(&report).await;
-            }
-
-            info!("\n💡 Report generated: {}", output_info);
-        } else {
-            info!("\n✅ Analysis complete: No issues found! 🎉");
-            info!("📊 Files analyzed: {}", report.metadata.files_analyzed);
-            if self.security {
-                info!("🔒 Security analysis: No vulnerabilities detected");
-            }
-            info!("💡 Report generated: {}", output_info);
-        }
+        // Print summary to stderr (visible to user)
+        eprintln!("\n✅ Analysis complete!");
+        eprintln!("📊 Files analyzed: {}", report.metadata.files_analyzed);
+        eprintln!("🔍 Issues found: {}", report.metadata.issues_found);
+        eprintln!("📄 Report saved to: {}", output_path.display());
 
         // Dashboard functionality has been deprecated in the commercial CLI build
         if self.open_dashboard {
@@ -1143,6 +1114,109 @@ impl AnalyzeCommand {
     }
 
     // Dashboard launcher intentionally removed for CLI-only commercial release
+
+    /// Generate a markdown report and save it to a file
+    async fn generate_markdown_report(
+        &self,
+        report: &crate::application::orchestrator::AnalysisResult,
+        output_path: &std::path::Path,
+    ) -> Result<(), UveddiError> {
+        use std::fs::File;
+        use std::io::Write;
+
+        let mut content = String::new();
+
+        // Header
+        content.push_str("# Code Analysis Report\n\n");
+        content.push_str(&format!("**Generated:** {}\n\n", chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")));
+
+        // Summary
+        content.push_str("## Summary\n\n");
+        content.push_str(&format!("- **Files Analyzed:** {}\n", report.metadata.files_analyzed));
+        content.push_str(&format!("- **Issues Found:** {}\n", report.metadata.issues_found));
+        content.push_str(&format!("- **Analysis Duration:** {:.2}s\n", report.metadata.analysis_duration.as_secs_f64()));
+        content.push_str("\n---\n\n");
+
+        // Issues grouped by severity
+        content.push_str("## Issues by Severity\n\n");
+
+        let mut critical = Vec::new();
+        let mut high = Vec::new();
+        let mut medium = Vec::new();
+        let mut low = Vec::new();
+
+        for issue in &report.issues {
+            let severity = issue.severity.to_lowercase();
+            if severity.contains("critical") {
+                critical.push(issue);
+            } else if severity.contains("high") {
+                high.push(issue);
+            } else if severity.contains("medium") {
+                medium.push(issue);
+            } else {
+                low.push(issue);
+            }
+        }
+
+        if !critical.is_empty() {
+            content.push_str(&format!("### 🔴 Critical ({} issues)\n\n", critical.len()));
+            for issue in critical {
+                Self::format_issue(&mut content, issue);
+            }
+        }
+
+        if !high.is_empty() {
+            content.push_str(&format!("### 🟠 High ({} issues)\n\n", high.len()));
+            for issue in high {
+                Self::format_issue(&mut content, issue);
+            }
+        }
+
+        if !medium.is_empty() {
+            content.push_str(&format!("### 🟡 Medium ({} issues)\n\n", medium.len()));
+            for issue in medium {
+                Self::format_issue(&mut content, issue);
+            }
+        }
+
+        if !low.is_empty() {
+            content.push_str(&format!("### ⚪ Low ({} issues)\n\n", low.len()));
+            for issue in low {
+                Self::format_issue(&mut content, issue);
+            }
+        }
+
+        // Write to file
+        let mut file = File::create(output_path)
+            .map_err(|e| UveddiError::config_error(&format!("Failed to create report file: {}", e), "file creation"))?;
+
+        file.write_all(content.as_bytes())
+            .map_err(|e| UveddiError::config_error(&format!("Failed to write report: {}", e), "file write"))?;
+
+        Ok(())
+    }
+
+    /// Format a single issue for markdown output
+    fn format_issue(content: &mut String, issue: &crate::database::models::ArchitecturalIssue) {
+        content.push_str(&format!("#### {}\n\n", issue.description));
+        content.push_str(&format!("- **File:** `{}`\n", issue.file_path));
+        if let Some(line) = issue.line_number {
+            content.push_str(&format!("- **Line:** {}\n", line));
+        }
+        if let Some(ref snippet) = issue.code_snippet {
+            if !snippet.is_empty() {
+                content.push_str("\n**Code:**\n```\n");
+                content.push_str(snippet);
+                content.push_str("\n```\n");
+            }
+        }
+        if let Some(ref explanation) = issue.ai_explanation {
+            if !explanation.is_empty() {
+                content.push_str(&format!("\n**Recommendation:** {}\n", explanation));
+            }
+        }
+        content.push_str("\n---\n\n");
+    }
 
     /// Recursively discover files in a directory, respecting .gitignore patterns
     /// and handling symlinks safely.

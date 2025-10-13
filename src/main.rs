@@ -64,6 +64,10 @@ use uveddi::error::UveddiError;
 #[command(version = "1.0.0")]
 #[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
 struct Cli {
+    /// Enable verbose logging (info level) for debugging
+    #[arg(short, long, global = true)]
+    verbose: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -104,9 +108,14 @@ async fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
 
+    // Parse CLI early to check for verbose flag
+    let cli = Cli::parse();
+
     // Initialize enhanced logging system
-    // Use RUST_LOG environment variable or default to "info"
-    let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+    // Default to "error" for clean output, "info" if --verbose is set
+    // RUST_LOG environment variable can still override
+    let default_level = if cli.verbose { "info" } else { "error" };
+    let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| default_level.to_string());
     let log_format = std::env::var("LOG_FORMAT").unwrap_or_else(|_| "compact".to_string());
 
     uveddi::core::logging::unified::init_logging_with_config(&log_level, log_format == "json")
@@ -145,10 +154,6 @@ async fn main() -> Result<()> {
     //     let monitoring_dashboard = MonitoringDashboard::new(monitoring_config).await.expect("Failed to init monitoring dashboard");
     //     monitoring_dashboard.start().await.expect("Failed to start monitoring dashboard");
     // });
-
-    // Parse CLI arguments
-    info!("Parsing CLI arguments");
-    let cli = Cli::parse();
 
     // Execute the appropriate command
     info!("Executing command");

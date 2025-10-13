@@ -112,8 +112,8 @@ impl DetectorFactory {
     /// ```
     pub fn create_default_detectors() -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
         let mut detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> = vec![
-            // Original detectors
-            Box::new(GodObjectDetector::new(5, 8)),
+            // Original detectors - using default() for language-specific thresholds
+            Box::new(GodObjectDetector::default()),  // Uses proper config: Rust:30/20, Python:25/15, JS:20/12, TS:15/10
             Box::new(CodeDuplicationDetector::new()),
             Box::new(DeadCodeDetector::with_default_config()),
             Box::new(LargeClassDetector::with_default_config()),
