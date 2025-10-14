@@ -13,6 +13,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=assets/");
     println!("cargo:rerun-if-changed=src/templates/");
 
+    // Add build timestamp
+    let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
+    println!("cargo:rustc-env=BUILD_TIMESTAMP={}", timestamp);
+
     let out_dir = env::var("OUT_DIR")?;
     let out_path = Path::new(&out_dir);
 

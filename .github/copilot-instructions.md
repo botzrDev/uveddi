@@ -4,6 +4,23 @@
 
 This is a Rust project called Uveddi. When generating code:
 
+## 🔧 Building and Installing Binary
+
+**CRITICAL**: Always copy binaries to `~/.local/bin/uveddi` (NOT `/usr/local/bin`)
+
+```bash
+# Build and install (one command)
+cargo build --release --bin uveddi && cp target/release/uveddi ~/.local/bin/uveddi
+
+# Verify version (includes build timestamp)
+uveddi --version
+
+# If "Text file busy" error, remove first:
+rm ~/.local/bin/uveddi && cp target/release/uveddi ~/.local/bin/uveddi
+```
+
+See `CLAUDE.md` in the project root for complete development guide.
+
 ## General Guidelines
 - Follow Rust best practices and idioms
 - Use proper error handling with `Result<T, E>` types
