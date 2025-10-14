@@ -135,7 +135,7 @@ impl MagicValuesDetector {
             return true;
         }
 
-        // Powers of 2 heuristic (common in bitwise operations)
+        // Powers of 2 heuristic (common in bitwise operations, buffer sizes, etc.)
         if self.config.ignore_powers_of_two && value > 0 && (value & (value - 1)) == 0 {
             return true;
         }
@@ -149,6 +149,30 @@ impl MagicValuesDetector {
         if self.config.ignore_const_declarations
             && matches!(context, MagicValueContext::ConstDeclaration)
         {
+            return true;
+        }
+
+        // **Enhanced numeric heuristics**
+
+        // 1. Common small numbers used for configuration/sizes (up to 10)
+        if value >= -10 && value <= 10 {
+            return true;
+        }
+
+        // 2. Common timeout/delay values (multiples of 100 up to 10000)
+        if value > 0 && value <= 10000 && value % 100 == 0 {
+            return true;
+        }
+
+        // 3. Common percentage values
+        if value == 25 || value == 50 || value == 75 || value == 100 {
+            return true;
+        }
+
+        // 4. Common HTTP status codes
+        if (200..=299).contains(&value) ||
+           (400..=499).contains(&value) ||
+           (500..=599).contains(&value) {
             return true;
         }
 
@@ -205,6 +229,73 @@ impl MagicValuesDetector {
 
         // Empty or very short strings are usually not magic
         if value.len() <= 1 {
+            return true;
+        }
+
+        // **Enhanced heuristics to reduce false positives**
+
+        // 1. Ignore error messages and log messages (contain spaces or common formatting)
+        if value.contains(' ') || value.contains("{}") || value.contains("%s") || value.contains("%d") {
+            return true;
+        }
+
+        // 2. Ignore environment variable names (uppercase with underscores)
+        if value.chars().all(|c| c.is_uppercase() || c == '_' || c.is_numeric()) && value.contains('_') {
+            return true;
+        }
+
+        // 3. Ignore common configuration/log level keywords
+        let common_config_keywords = [
+            "debug", "info", "warn", "error", "trace", "fatal",
+            "production", "development", "test", "staging",
+            "enabled", "disabled", "true", "false",
+            "json", "xml", "yaml", "toml", "csv",
+            "utf-8", "utf8", "ascii",
+            "localhost", "127.0.0.1",
+        ];
+        if common_config_keywords.contains(&value.to_lowercase().as_str()) {
+            return true;
+        }
+
+        // 4. Ignore common file extensions
+        if value.starts_with('.') && value.len() <= 5 {
+            return true;
+        }
+
+        // 5. Ignore HTTP/URL-related strings
+        if value.starts_with("http://") || value.starts_with("https://") ||
+           value.starts_with("ws://") || value.starts_with("wss://") ||
+           value.starts_with('/') || value.starts_with("./") {
+            return true;
+        }
+
+        // 6. Ignore strings that look like keys/IDs (short alphanumeric)
+        if value.len() <= 3 && value.chars().all(|c| c.is_alphanumeric()) {
+            return true;
+        }
+
+        // 7. Ignore regex-like patterns
+        if value.contains('[') || value.contains(']') || value.contains('(') || value.contains(')') {
+            return true;
+        }
+
+        // 8. Ignore format specifiers and templates
+        if value.contains("${") || value.contains("{{") || value.starts_with(':') {
+            return true;
+        }
+
+        // 9. Ignore escape sequences and control characters
+        if value == "\\n" || value == "\\t" || value == "\\r" || value == "\n" || value == "\t" || value == "\r" {
+            return true;
+        }
+
+        // 10. Ignore feature flag names (contain hyphens, common in Cargo features)
+        if value.contains('-') && value.chars().all(|c| c.is_alphanumeric() || c == '-') {
+            return true;
+        }
+
+        // 11. Field initialization context - these are often legitimate field names
+        if matches!(context, MagicValueContext::FieldInitialization) {
             return true;
         }
 
