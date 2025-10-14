@@ -124,26 +124,23 @@ async fn main() -> Result<()> {
     info!("Starting Uveddi application");
     debug!("Log level: {}, Format: {}", log_level, log_format);
 
-    // TEMPORARILY DISABLED: Health monitoring server to debug hanging issue
-    // TODO: Re-enable after fixing hanging issue
-
     // Create health monitor instance
-    // let health_monitor = Arc::new(Mutex::new(HealthMonitor::new()));
+    let health_monitor = Arc::new(Mutex::new(HealthMonitor::new()));
 
     // Start health monitoring server in a separate thread (non-blocking)
-    // let health_monitor_clone = Arc::clone(&health_monitor);
-    // std::thread::spawn(move || {
-    //     let rt = tokio::runtime::Runtime::new()
-    //         .expect("FATAL [UV-150]: Failed to initialize async runtime. This indicates a critical system resource issue. See error handling policy.");
-    //
-    //     // Start the server asynchronously - this will block the thread but not the main process
-    //     if let Err(e) = rt.block_on(server::run_server(health_monitor_clone)) {
-    //         error!("Health monitoring server error: {}", e);
-    //     }
-    // });
-    //
-    // // Give the server a moment to start
-    // std::thread::sleep(std::time::Duration::from_millis(100));
+    let health_monitor_clone = Arc::clone(&health_monitor);
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new()
+            .expect("FATAL [UV-150]: Failed to initialize async runtime. This indicates a critical system resource issue. See error handling policy.");
+
+        // Start the server asynchronously - this will block the thread but not the main process
+        if let Err(e) = rt.block_on(server::run_server(health_monitor_clone)) {
+            error!("Health monitoring server error: {}", e);
+        }
+    });
+
+    // Give the server a moment to start
+    std::thread::sleep(std::time::Duration::from_millis(100));
 
     // TODO: Re-enable when monitoring dependencies are properly configured
     // // Initialize monitoring system (UV-219)
