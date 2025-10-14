@@ -428,10 +428,65 @@ impl DetectorOutput for DuplicationResults {
 impl AnalysisDetector for CodeDuplicationDetector {
     async fn detect_issues(
         &self,
-        _parsed_file: &ParsedFile,
+        parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        // TODO: Integrate duplication analysis results into architectural issues (UV-412)
-        Ok(Vec::new())
+        // Extract code blocks from the single file
+        let blocks = self.extract_code_blocks_from_file(parsed_file)?;
+
+        if blocks.len() < 2 {
+            // Need at least 2 blocks to find duplicates
+            return Ok(Vec::new());
+        }
+
+        // Detect clones within this file
+        let clone_pairs = self.detect_clones_comprehensive(&blocks).await?;
+
+        // Convert to architectural issues
+        let issues = clone_pairs
+            .iter()
+            .map(|pair| {
+                let message = format!(
+                    "Duplicate code detected: {:.1}% similarity between lines {}-{} and {}-{}",
+                    pair.similarity * 100.0,
+                    pair.block1.start_line,
+                    pair.block1.end_line,
+                    pair.block2.start_line,
+                    pair.block2.end_line
+                );
+
+                let description = format!(
+                    "Consider extracting the duplicated code into a shared function or module. {} clone with {:.1}% similarity.",
+                    pair.clone_type,
+                    pair.similarity * 100.0
+                );
+
+                let mut issue = ArchitecturalIssue::new(
+                    0, // analysis_run_id - will be set by storage layer
+                    7, // anti_pattern_type_id for Code Duplication
+                    parsed_file.path().to_string_lossy().to_string(),
+                    Some(pair.block1.start_line as i32),
+                    message,
+                    "CodeDuplicationDetector".to_string(),
+                    pair.clone_type.severity().to_string(),
+                    description,
+                );
+
+                // Set additional fields
+                issue.end_line = Some(pair.block1.end_line as i32);
+                issue.code_snippet = Some(pair.block1.source.clone());
+                issue.metadata = format!(
+                    r#"{{"similarity":{:.2},"block2_start":{},"block2_end":{},"clone_type":"{}"}}"#,
+                    pair.similarity,
+                    pair.block2.start_line,
+                    pair.block2.end_line,
+                    pair.clone_type
+                );
+
+                issue
+            })
+            .collect();
+
+        Ok(issues)
     }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {

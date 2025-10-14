@@ -58,13 +58,10 @@ use uveddi::error::UveddiError;
 // Server module removed for CLI-only release
 // mod server;
 
-// Build timestamp set by build.rs
-const BUILD_TIMESTAMP: &str = env!("BUILD_TIMESTAMP");
-
 /// CLI structure for Uveddi
 #[derive(Parser)]
 #[command(name = "uveddi")]
-#[command(version = concat!(env!("CARGO_PKG_VERSION"), " (", BUILD_TIMESTAMP, ")"))]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
 struct Cli {
     /// Enable verbose logging (info level) for debugging
