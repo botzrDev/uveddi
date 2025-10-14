@@ -12,10 +12,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=src/ai/knowledge/");
     println!("cargo:rerun-if-changed=assets/");
     println!("cargo:rerun-if-changed=src/templates/");
+    println!("cargo:rerun-if-changed=.git/HEAD");
+    println!("cargo:rerun-if-changed=.git/refs/heads/");
 
     // Add build timestamp
     let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
     println!("cargo:rustc-env=BUILD_TIMESTAMP={}", timestamp);
+
+    // Capture git information
+    capture_git_info();
+
+    // Capture enabled features
+    capture_feature_flags();
 
     let out_dir = env::var("OUT_DIR")?;
     let out_path = Path::new(&out_dir);
@@ -275,4 +283,104 @@ fn generate_feature_flags(out_path: &Path) -> Result<(), Box<dyn std::error::Err
 
     fs::write(dest_path, content)?;
     Ok(())
+}
+
+/// Capture git commit information for build metadata
+fn capture_git_info() {
+    use std::process::Command;
+
+    // Get git commit hash
+    let git_hash = Command::new("git")
+        .args(["rev-parse", "--short=8", "HEAD"])
+        .output()
+        .ok()
+        .and_then(|output| {
+            if output.status.success() {
+                String::from_utf8(output.stdout).ok()
+            } else {
+                None
+            }
+        })
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
+    println!("cargo:rustc-env=GIT_HASH={}", git_hash);
+
+    // Get git branch
+    let git_branch = Command::new("git")
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        .output()
+        .ok()
+        .and_then(|output| {
+            if output.status.success() {
+                String::from_utf8(output.stdout).ok()
+            } else {
+                None
+            }
+        })
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
+    println!("cargo:rustc-env=GIT_BRANCH={}", git_branch);
+
+    // Check if working directory is clean
+    let git_dirty = Command::new("git")
+        .args(["status", "--porcelain"])
+        .output()
+        .ok()
+        .map(|output| !output.stdout.is_empty())
+        .unwrap_or(false);
+
+    println!(
+        "cargo:rustc-env=GIT_DIRTY={}",
+        if git_dirty { "modified" } else { "clean" }
+    );
+}
+
+/// Capture enabled feature flags for build metadata
+fn capture_feature_flags() {
+    let mut features = Vec::new();
+
+    // Check for major features
+    #[cfg(feature = "tree-sitter")]
+    features.push("tree-sitter");
+
+    #[cfg(feature = "security")]
+    features.push("security");
+
+    #[cfg(feature = "ai")]
+    features.push("ai");
+
+    #[cfg(feature = "local-ai")]
+    features.push("local-ai");
+
+    #[cfg(feature = "wasm-plugins")]
+    features.push("wasm-plugins");
+
+    #[cfg(feature = "ast-cache")]
+    features.push("ast-cache");
+
+    #[cfg(feature = "analysis-cache")]
+    features.push("analysis-cache");
+
+    // Language features
+    #[cfg(feature = "rust-lang")]
+    features.push("rust");
+
+    #[cfg(feature = "python-lang")]
+    features.push("python");
+
+    #[cfg(feature = "javascript-lang")]
+    features.push("javascript");
+
+    #[cfg(feature = "typescript-lang")]
+    features.push("typescript");
+
+    let features_str = if features.is_empty() {
+        "none".to_string()
+    } else {
+        features.join(",")
+    };
+
+    println!("cargo:rustc-env=BUILD_FEATURES={}", features_str);
 }

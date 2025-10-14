@@ -58,11 +58,35 @@ use uveddi::error::UveddiError;
 // Server module removed for CLI-only release
 // mod server;
 
+/// Get the short version string for -V
+fn get_version_string() -> &'static str {
+    concat!(
+        env!("CARGO_PKG_VERSION"),
+        " (", env!("GIT_HASH"), "-", env!("GIT_DIRTY"), ")"
+    )
+}
+
+/// Get the detailed version string for --version
+fn get_long_version() -> &'static str {
+    concat!(
+        "Uveddi ", env!("CARGO_PKG_VERSION"), "\n",
+        "\n",
+        "Build Information:\n",
+        "  Built:    ", env!("BUILD_TIMESTAMP"), "\n",
+        "  Commit:   ", env!("GIT_HASH"), " (", env!("GIT_BRANCH"), ")\n",
+        "  Status:   ", env!("GIT_DIRTY"), "\n",
+        "  Features: ", env!("BUILD_FEATURES"), "\n",
+        "\n",
+        "Repository: https://github.com/botzrDev/uveddi"
+    )
+}
+
 /// CLI structure for Uveddi
 #[derive(Parser)]
 #[command(name = "uveddi")]
-#[command(version = env!("CARGO_PKG_VERSION"))]
+#[command(version = get_version_string())]
 #[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
+#[command(long_version = get_long_version())]
 struct Cli {
     /// Enable verbose logging (info level) for debugging
     #[arg(short, long, global = true)]
