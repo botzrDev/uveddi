@@ -239,6 +239,11 @@ impl MagicValuesDetector {
             return true;
         }
 
+        // Enhanced format string detection (Rust debug formatting)
+        if value.contains("{:") || value.contains("{#") || value.contains("{<") || value.contains("{>") {
+            return true;
+        }
+
         // 2. Ignore environment variable names (uppercase with underscores)
         if value.chars().all(|c| c.is_uppercase() || c == '_' || c.is_numeric()) && value.contains('_') {
             return true;
@@ -252,12 +257,29 @@ impl MagicValuesDetector {
             "json", "xml", "yaml", "toml", "csv",
             "utf-8", "utf8", "ascii",
             "localhost", "127.0.0.1",
+            // Severity levels (common in analysis tools)
+            "high", "medium", "low", "critical", "warning",
+            // Programming language names
+            "rust", "python", "javascript", "typescript", "java", "cpp", "c",
+            "go", "ruby", "php", "swift", "kotlin", "csharp",
         ];
         if common_config_keywords.contains(&value.to_lowercase().as_str()) {
             return true;
         }
 
-        // 4. Ignore common file extensions
+        // 4. Ignore file names and paths with extensions
+        if value.contains('.') && value.split('.').last().map_or(false, |ext| {
+            let common_extensions = [
+                "rs", "py", "js", "ts", "java", "cpp", "c", "go", "rb",
+                "json", "toml", "yaml", "yml", "xml", "csv", "md", "txt",
+                "lock", "config", "conf", "ini", "env",
+            ];
+            common_extensions.contains(&ext.to_lowercase().as_str())
+        }) {
+            return true;
+        }
+
+        // Also ignore just extensions
         if value.starts_with('.') && value.len() <= 5 {
             return true;
         }
