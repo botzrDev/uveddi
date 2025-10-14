@@ -184,14 +184,18 @@ impl TerminalProgressReporter {
 
 impl ProgressReporter for TerminalProgressReporter {
     fn report_phase(&self, progress: &PhaseProgress) {
-        // Simple spinner animation
+        // Simple spinner animation - always animate
         let spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
         let mut idx = self.spinner_index.lock().unwrap();
         *idx = (*idx + 1) % spinner_frames.len();
         let spinner = spinner_frames[*idx];
 
-        eprint!("\r  {} {} {}...", progress.phase.emoji(), spinner, progress.phase.description());
+        // Build progress message
+        let message = format!("  {} {} {}", progress.phase.emoji(), spinner, progress.phase.description());
+        
+        // Clear to end of line and print
+        eprint!("\r{}\x1b[K", message);
 
         use std::io::{self, Write};
         let _ = io::stderr().flush();
@@ -201,12 +205,13 @@ impl ProgressReporter for TerminalProgressReporter {
         // Skip overall progress to keep it simple
     }
 
-    fn report_complete(&self, _total_time: Duration) {
-        eprintln!("\r  ✅ Analysis complete!                                             ");
+    fn report_complete(&self, total_time: Duration) {
+        let formatted_time = Self::format_duration(total_time);
+        eprintln!("\r  ✅ Analysis complete in {}\x1b[K", formatted_time);
     }
 
     fn report_error(&self, phase: &AnalysisPhase, error: &str) {
-        eprintln!("\r  ❌ Error in {}: {}                    ", phase.description(), error);
+        eprintln!("\r  ❌ Error in {}: {}\x1b[K", phase.description(), error);
     }
 }
 
@@ -267,23 +272,60 @@ impl ProgressReporter for JsonProgressReporter {
 
 /// Progress tracker that manages phase progression and reporting
 pub struct ProgressTracker {
-    current_phase: AnalysisPhase,
+    current_phase: Arc<Mutex<AnalysisPhase>>,
     phase_start_time: Instant,
     analysis_start_time: Instant,
     reporter: Box<dyn ProgressReporter>,
     sender: Option<watch::Sender<PhaseProgress>>,
+    spinner_thread: Option<std::thread::JoinHandle<()>>,
+    stop_signal: Arc<Mutex<bool>>,
 }
 
 impl ProgressTracker {
     /// Creates a new progress tracker with the given reporter
     pub fn new(reporter: Box<dyn ProgressReporter>) -> Self {
         let now = Instant::now();
+        let current_phase = Arc::new(Mutex::new(AnalysisPhase::Discovery));
+        let stop_signal = Arc::new(Mutex::new(false));
+        
+        // Start background thread for continuous spinner animation
+        let phase_clone = Arc::clone(&current_phase);
+        let stop_clone = Arc::clone(&stop_signal);
+        
+        let spinner_thread = std::thread::spawn(move || {
+            let spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+            let mut idx = 0;
+            
+            loop {
+                // Check if we should stop
+                if *stop_clone.lock().unwrap() {
+                    break;
+                }
+                
+                // Get current phase
+                let phase = phase_clone.lock().unwrap().clone();
+                let spinner = spinner_frames[idx % spinner_frames.len()];
+                
+                // Print spinner animation
+                eprint!("\r  {} {} {}\x1b[K", phase.emoji(), spinner, phase.description());
+                use std::io::{self, Write};
+                let _ = io::stderr().flush();
+                
+                idx += 1;
+                
+                // Sleep to control animation speed
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        });
+        
         Self {
-            current_phase: AnalysisPhase::Discovery,
+            current_phase,
             phase_start_time: now,
             analysis_start_time: now,
             reporter,
             sender: None,
+            spinner_thread: Some(spinner_thread),
+            stop_signal,
         }
     }
 
@@ -296,15 +338,13 @@ impl ProgressTracker {
 
     /// Starts tracking progress for a new analysis phase
     pub fn start_phase(&mut self, phase: AnalysisPhase, total_items: Option<usize>) {
-        self.current_phase = phase.clone();
+        *self.current_phase.lock().unwrap() = phase.clone();
         self.phase_start_time = Instant::now();
 
-        let mut progress = PhaseProgress::new(self.current_phase.clone());
+        let mut progress = PhaseProgress::new(phase);
         if let Some(total) = total_items {
             progress = progress.with_total_items(total);
         }
-
-        self.reporter.report_phase(&progress);
 
         if let Some(sender) = &self.sender {
             let _ = sender.send(progress);
@@ -313,10 +353,9 @@ impl ProgressTracker {
 
     /// Updates progress for the current phase
     pub fn update_progress(&mut self, processed: usize, current_item: Option<String>) {
-        let mut progress = PhaseProgress::new(self.current_phase.clone());
+        let phase = self.current_phase.lock().unwrap().clone();
+        let mut progress = PhaseProgress::new(phase);
         progress.update_progress(processed, current_item, self.phase_start_time);
-
-        self.reporter.report_phase(&progress);
 
         if let Some(sender) = &self.sender {
             let _ = sender.send(progress);
@@ -329,13 +368,15 @@ impl ProgressTracker {
 
         // Update overall progress across phases
         let overall_progress = self.calculate_overall_progress(current, total);
-        self.reporter
-            .report_overall(&self.current_phase, overall_progress);
+        let phase = self.current_phase.lock().unwrap().clone();
+        self.reporter.report_overall(&phase, overall_progress);
     }
 
     fn calculate_overall_progress(&self, current: usize, total: usize) -> f32 {
+        let phase = self.current_phase.lock().unwrap().clone();
+        
         // Weight different phases based on typical time distribution
-        let phase_weights = match self.current_phase {
+        let phase_weights = match phase {
             AnalysisPhase::Discovery => 0.05,
             AnalysisPhase::Parsing => 0.25,
             AnalysisPhase::DependencyAnalysis => 0.15,
@@ -352,7 +393,7 @@ impl ProgressTracker {
         };
 
         // Calculate cumulative progress based on completed phases
-        let completed_phases_weight = match self.current_phase {
+        let completed_phases_weight = match phase {
             AnalysisPhase::Discovery => 0.0,
             AnalysisPhase::Parsing => 0.05,
             AnalysisPhase::DependencyAnalysis => 0.30,
@@ -366,7 +407,13 @@ impl ProgressTracker {
     }
 
     /// Marks the analysis as complete
-    pub fn complete(&self) {
+    pub fn complete(&mut self) {
+        // Stop the spinner thread
+        *self.stop_signal.lock().unwrap() = true;
+        if let Some(thread) = self.spinner_thread.take() {
+            let _ = thread.join();
+        }
+        
         let total_time = self.analysis_start_time.elapsed();
         self.reporter.report_complete(total_time);
 
@@ -386,7 +433,15 @@ impl ProgressTracker {
 
     /// Reports an error during analysis
     pub fn error(&self, error: &str) {
-        self.reporter.report_error(&self.current_phase, error);
+        let phase = self.current_phase.lock().unwrap().clone();
+        self.reporter.report_error(&phase, error);
+    }
+}
+
+impl Drop for ProgressTracker {
+    fn drop(&mut self) {
+        // Make sure to stop the spinner thread when dropped
+        *self.stop_signal.lock().unwrap() = true;
     }
 }
 

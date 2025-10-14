@@ -1,18 +1,18 @@
 # Code Analysis Report
 
-**Generated:** 2025-10-14 20:22:19 UTC
+**Generated:** 2025-10-14 20:12:20 UTC
 
 ## Summary
 
-- **Files Analyzed:** 812
-- **Issues Found:** 427
-- **Analysis Duration:** 26.63s
+- **Files Analyzed:** 995
+- **Issues Found:** 492
+- **Analysis Duration:** 34.15s
 
 ---
 
 ## Issues by Severity
 
-### 🔴 Critical (21 issues)
+### 🔴 Critical (22 issues)
 
 #### Long method 'tree_to_custom_ast' detected: 246 lines, 253 statements, complexity 53
 
@@ -706,6 +706,21 @@ fn validate(&self) -> std::result::Result<(), SecurityError> {
 
 ---
 
+#### God Object detected: 'VerificationRunner' has 55 methods and 2 fields. (Thresholds: methods>30, fields>20) LCOM4 score: 1 (>1 indicates low cohesion)
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 203
+
+**Code:**
+```
+pub struct VerificationRunner {
+    project_root: PathBuf,
+    checklist: VerificationChecklist,
+}
+```
+
+---
+
 ### 🟠 High (22 issues)
 
 #### Long method 'analyze_rust_interface' detected: 124 lines, 92 statements, complexity 20
@@ -1146,7 +1161,7 @@ fn validate_dead_code_config(
 
 ---
 
-### 🟡 Medium (37 issues)
+### 🟡 Medium (39 issues)
 
 #### Long method 'parse_file' detected: 103 lines, 153 statements, complexity 13
 
@@ -1919,7 +1934,43 @@ pub async fn run_app() -> Result<(), UveddiError> {
 
 ---
 
-### ⚪ Low (347 issues)
+#### Long method 'demo_terminal_progress' detected: 115 lines, 64 statements, complexity 6
+
+- **File:** `./examples/progress_demo.rs`
+- **Line:** 68
+
+**Code:**
+```
+fn demo_terminal_progress() {
+    println!("🔥 Enhanced Progress Reporting Demo");
+    println!("==================================\n");
+
+    let phases = vec![
+...
+```
+
+**Recommendation:** Consider breaking down 'demo_terminal_progress' into smaller, more focused methods. Current metrics: LOC=115, Statements=64, Complexity=6, Nesting=8
+
+---
+
+#### God Object detected: 'EnterpriseTestGenerator' has 32 methods and 4 fields. (Thresholds: methods>30, fields>20) LCOM4 score: 1 (>1 indicates low cohesion)
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 139
+
+**Code:**
+```
+pub struct EnterpriseTestGenerator {
+    config: EnterpriseTestConfig,
+    dependency_graph: HashMap<String, HashSet<String>>,
+    generated_files: Vec<GeneratedFile>,
+    rng: ThreadRng,
+}
+```
+
+---
+
+### ⚪ Low (409 issues)
 
 #### Large class 'RepositoryManager' detected: 0 LOC, 11 methods, 4 fields
 
@@ -6861,6 +6912,1014 @@ fn validate_large_classes_config(
 ```
 
 **Recommendation:** Consider breaking down 'validate_large_classes_config' into smaller, more focused methods. Current metrics: LOC=84, Statements=54, Complexity=14, Nesting=11
+
+---
+
+#### Large class 'MockAnalyzeFormData' detected: 0 LOC, 2 methods, 17 fields
+
+- **File:** `./tests/tui_form_validation.rs`
+- **Line:** 11
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'TestExecutor' detected: 0 LOC, 23 methods, 2 fields
+
+- **File:** `./tests/test_execution_and_coverage.rs`
+- **Line:** 171
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'CoverageAnalyzer' detected: 0 LOC, 16 methods, 4 fields
+
+- **File:** `./tests/coverage/comprehensive_coverage.rs`
+- **Line:** 94
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'RegressionTestSuite' detected: 0 LOC, 11 methods, 4 fields
+
+- **File:** `./tests/qa_automation/regression_tests.rs`
+- **Line:** 68
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'UveddiAiLinter' detected: 0 LOC, 12 methods, 3 fields
+
+- **File:** `./plugins/uveddi-ai-linter/src/lib.rs`
+- **Line:** 16
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'analyze' detected: 70 lines, 95 statements, complexity 10
+
+- **File:** `./plugins/uveddi-ai-linter/src/lib.rs`
+- **Line:** 96
+
+**Code:**
+```
+pub fn analyze(&self, code: &str, language: &str, file_path: &str) -> Result<JsValue, JsValue> {
+        let mut issues = Vec::new();
+        let mut metrics = Metrics::default();
+
+        // Basic metrics calculation
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze' into smaller, more focused methods. Current metrics: LOC=70, Statements=95, Complexity=10, Nesting=10
+
+---
+
+#### Long method 'analyze' detected: 70 lines, 95 statements, complexity 10
+
+- **File:** `./plugins/uveddi-ai-linter/src/lib.rs`
+- **Line:** 96
+
+**Code:**
+```
+pub fn analyze(&self, code: &str, language: &str, file_path: &str) -> Result<JsValue, JsValue> {
+        let mut issues = Vec::new();
+        let mut metrics = Metrics::default();
+
+        // Basic metrics calculation
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze' into smaller, more focused methods. Current metrics: LOC=70, Statements=95, Complexity=10, Nesting=10
+
+---
+
+#### Large class 'AiAnalyzer' detected: 0 LOC, 19 methods, 3 fields
+
+- **File:** `./plugins/uveddi-ai-linter/src/ai_analysis.rs`
+- **Line:** 283
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'MetricsAnalyzer' detected: 0 LOC, 17 methods, 1 fields
+
+- **File:** `./plugins/uveddi-metrics-analyzer/src/metrics.rs`
+- **Line:** 402
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'UveddiRuleEngine' detected: 0 LOC, 13 methods, 3 fields
+
+- **File:** `./plugins/uveddi-rule-engine/src/lib.rs`
+- **Line:** 15
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'RuleEngine' detected: 0 LOC, 15 methods, 3 fields
+
+- **File:** `./plugins/uveddi-rule-engine/src/rule_engine.rs`
+- **Line:** 183
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'MegaController' detected: 0 LOC, 25 methods, 9 fields
+
+- **File:** `./archive/testing/test_analysis/god_object_example.rs`
+- **Line:** 2
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'display_report' detected: 71 lines, 85 statements, complexity 18
+
+- **File:** `./examples/doctor_demo.rs`
+- **Line:** 230
+
+**Code:**
+```
+fn display_report(report: &HealthReport) {
+    println!("🔍 Uveddi Health Diagnostics Demo\n");
+    println!("📊 Health Check Results\n");
+    println!("Overall Status: {}", report.overall_status);
+    println!("Timestamp: {}\n", report.timestamp);
+...
+```
+
+**Recommendation:** Consider breaking down 'display_report' into smaller, more focused methods. Current metrics: LOC=71, Statements=85, Complexity=18, Nesting=6
+
+---
+
+#### Large class 'DependencyTracker' detected: 0 LOC, 25 methods, 6 fields
+
+- **File:** `./examples/plugins/dependency-tracker/src/lib.rs`
+- **Line:** 18
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'analyze_file' detected: 93 lines, 111 statements, complexity 7
+
+- **File:** `./examples/plugins/dependency-tracker/src/lib.rs`
+- **Line:** 136
+
+**Code:**
+```
+fn analyze_file(&mut self, file: SourceFile) -> Result<AnalysisResult, String> {
+        self.scan_count += 1;
+        
+        let start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze_file' into smaller, more focused methods. Current metrics: LOC=93, Statements=111, Complexity=7, Nesting=5
+
+---
+
+#### Long method 'analyze_file' detected: 93 lines, 111 statements, complexity 7
+
+- **File:** `./examples/plugins/dependency-tracker/src/lib.rs`
+- **Line:** 136
+
+**Code:**
+```
+fn analyze_file(&mut self, file: SourceFile) -> Result<AnalysisResult, String> {
+        self.scan_count += 1;
+        
+        let start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze_file' into smaller, more focused methods. Current metrics: LOC=93, Statements=111, Complexity=7, Nesting=5
+
+---
+
+#### Long method 'parse_package_json' detected: 43 lines, 55 statements, complexity 13
+
+- **File:** `./examples/plugins/dependency-tracker/src/lib.rs`
+- **Line:** 336
+
+**Code:**
+```
+fn parse_package_json(&self, content: &str) -> Result<Vec<ParsedDependency>, String> {
+        let mut dependencies = Vec::new();
+        let mut in_dependencies = false;
+        let mut brace_count = 0;
+        
+...
+```
+
+**Recommendation:** Consider breaking down 'parse_package_json' into smaller, more focused methods. Current metrics: LOC=43, Statements=55, Complexity=13, Nesting=12
+
+---
+
+#### Long method 'parse_package_json' detected: 43 lines, 55 statements, complexity 13
+
+- **File:** `./examples/plugins/dependency-tracker/src/lib.rs`
+- **Line:** 336
+
+**Code:**
+```
+fn parse_package_json(&self, content: &str) -> Result<Vec<ParsedDependency>, String> {
+        let mut dependencies = Vec::new();
+        let mut in_dependencies = false;
+        let mut brace_count = 0;
+        
+...
+```
+
+**Recommendation:** Consider breaking down 'parse_package_json' into smaller, more focused methods. Current metrics: LOC=43, Statements=55, Complexity=13, Nesting=12
+
+---
+
+#### Large class 'SecurityScanner' detected: 0 LOC, 13 methods, 4 fields
+
+- **File:** `./examples/plugins/security-scanner/src/lib.rs`
+- **Line:** 18
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Large class 'DocumentationAnalyzer' detected: 0 LOC, 24 methods, 5 fields
+
+- **File:** `./examples/plugins/documentation-analyzer/src/lib.rs`
+- **Line:** 18
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'analyze_ast_documentation' detected: 74 lines, 65 statements, complexity 15
+
+- **File:** `./examples/plugins/documentation-analyzer/src/lib.rs`
+- **Line:** 357
+
+**Code:**
+```
+fn analyze_ast_documentation(&self, ast: &AstNode, metrics: &mut DocumentationMetrics, lang_config: &LanguageDocConfig) -> Result<(), String> {
+        // Query for functions
+        let function_queries = vec![
+            "(function_item) @function",
+            "(function_declaration) @function", 
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze_ast_documentation' into smaller, more focused methods. Current metrics: LOC=74, Statements=65, Complexity=15, Nesting=10
+
+---
+
+#### Long method 'analyze_ast_documentation' detected: 74 lines, 65 statements, complexity 15
+
+- **File:** `./examples/plugins/documentation-analyzer/src/lib.rs`
+- **Line:** 357
+
+**Code:**
+```
+fn analyze_ast_documentation(&self, ast: &AstNode, metrics: &mut DocumentationMetrics, lang_config: &LanguageDocConfig) -> Result<(), String> {
+        // Query for functions
+        let function_queries = vec![
+            "(function_item) @function",
+            "(function_declaration) @function", 
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze_ast_documentation' into smaller, more focused methods. Current metrics: LOC=74, Statements=65, Complexity=15, Nesting=10
+
+---
+
+#### Long method 'analyze_text_documentation' detected: 50 lines, 56 statements, complexity 14
+
+- **File:** `./examples/plugins/documentation-analyzer/src/lib.rs`
+- **Line:** 444
+
+**Code:**
+```
+fn analyze_text_documentation(&self, lines: &[&str], metrics: &mut DocumentationMetrics, lang_config: &LanguageDocConfig) -> Result<(), String> {
+        let mut i = 0;
+        while i < lines.len() {
+            let line = lines[i].trim();
+            
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze_text_documentation' into smaller, more focused methods. Current metrics: LOC=50, Statements=56, Complexity=14, Nesting=13
+
+---
+
+#### Long method 'analyze_text_documentation' detected: 50 lines, 56 statements, complexity 14
+
+- **File:** `./examples/plugins/documentation-analyzer/src/lib.rs`
+- **Line:** 444
+
+**Code:**
+```
+fn analyze_text_documentation(&self, lines: &[&str], metrics: &mut DocumentationMetrics, lang_config: &LanguageDocConfig) -> Result<(), String> {
+        let mut i = 0;
+        while i < lines.len() {
+            let line = lines[i].trim();
+            
+...
+```
+
+**Recommendation:** Consider breaking down 'analyze_text_documentation' into smaller, more focused methods. Current metrics: LOC=50, Statements=56, Complexity=14, Nesting=13
+
+---
+
+#### Large class 'ComplexityAnalyzer' detected: 0 LOC, 19 methods, 4 fields
+
+- **File:** `./examples/plugins/complexity-analyzer/src/lib.rs`
+- **Line:** 18
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'generate_complexity_issues' detected: 98 lines, 63 statements, complexity 7
+
+- **File:** `./examples/plugins/complexity-analyzer/src/lib.rs`
+- **Line:** 352
+
+**Code:**
+```
+fn generate_complexity_issues(
+        &self,
+        func_complexity: &FunctionComplexity,
+        file: &SourceFile,
+        span: &Span,
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_complexity_issues' into smaller, more focused methods. Current metrics: LOC=98, Statements=63, Complexity=7, Nesting=6
+
+---
+
+#### Long method 'generate_complexity_issues' detected: 98 lines, 63 statements, complexity 7
+
+- **File:** `./examples/plugins/complexity-analyzer/src/lib.rs`
+- **Line:** 352
+
+**Code:**
+```
+fn generate_complexity_issues(
+        &self,
+        func_complexity: &FunctionComplexity,
+        file: &SourceFile,
+        span: &Span,
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_complexity_issues' into smaller, more focused methods. Current metrics: LOC=98, Statements=63, Complexity=7, Nesting=6
+
+---
+
+#### Long method 'display_report' detected: 71 lines, 85 statements, complexity 18
+
+- **File:** `./examples/simple_doctor_demo.rs`
+- **Line:** 230
+
+**Code:**
+```
+fn display_report(report: &HealthReport) {
+    println!("🔍 Uveddi Health Diagnostics Demo\n");
+    println!("📊 Health Check Results\n");
+    println!("Overall Status: {}", report.overall_status);
+    println!("Timestamp: {}\n", report.timestamp);
+...
+```
+
+**Recommendation:** Consider breaking down 'display_report' into smaller, more focused methods. Current metrics: LOC=71, Statements=85, Complexity=18, Nesting=6
+
+---
+
+#### Long method 'large_rust_file' detected: 162 lines, 0 statements, complexity 1
+
+- **File:** `./benches/cache_performance.rs`
+- **Line:** 123
+
+**Code:**
+```
+fn large_rust_file() -> &'static str {
+        r#"
+use std::collections::{HashMap, HashSet, BTreeMap};
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread;
+...
+```
+
+**Recommendation:** Consider breaking down 'large_rust_file' into smaller, more focused methods. Current metrics: LOC=162, Statements=0, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'large_rust_file' detected: 162 lines, 0 statements, complexity 1
+
+- **File:** `./benches/cache_performance.rs`
+- **Line:** 123
+
+**Code:**
+```
+fn large_rust_file() -> &'static str {
+        r#"
+use std::collections::{HashMap, HashSet, BTreeMap};
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread;
+...
+```
+
+**Recommendation:** Consider breaking down 'large_rust_file' into smaller, more focused methods. Current metrics: LOC=162, Statements=0, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'create_analysis_context' detected: 130 lines, 18 statements, complexity 1
+
+- **File:** `./benches/detector_migration.rs`
+- **Line:** 87
+
+**Code:**
+```
+fn create_analysis_context() -> AnalysisContext {
+    let source = create_sample_rust_code();
+
+    let symbols = vec![
+        Symbol {
+...
+```
+
+**Recommendation:** Consider breaking down 'create_analysis_context' into smaller, more focused methods. Current metrics: LOC=130, Statements=18, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'benchmark_context_detectors' detected: 86 lines, 92 statements, complexity 4
+
+- **File:** `./benches/detector_migration.rs`
+- **Line:** 233
+
+**Code:**
+```
+fn benchmark_context_detectors(c: &mut Criterion) {
+    let mut group = c.benchmark_group("detector_migration");
+
+    // Create test data
+    let context = create_analysis_context();
+...
+```
+
+**Recommendation:** Consider breaking down 'benchmark_context_detectors' into smaller, more focused methods. Current metrics: LOC=86, Statements=92, Complexity=4, Nesting=9
+
+---
+
+#### Large class 'RegressionDetector' detected: 0 LOC, 19 methods, 5 fields
+
+- **File:** `./scripts/regression_detector.rs`
+- **Line:** 18
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'parse_benchmark_results' detected: 34 lines, 42 statements, complexity 16
+
+- **File:** `./scripts/regression_detector.rs`
+- **Line:** 383
+
+**Code:**
+```
+fn parse_benchmark_results(&self, output: &str) -> Result<PerformanceMetrics> {
+        // This is a simplified parser - in production, implement robust parsing
+        // based on your actual benchmark output format
+        
+        let mut metrics = PerformanceMetrics {
+...
+```
+
+**Recommendation:** Consider breaking down 'parse_benchmark_results' into smaller, more focused methods. Current metrics: LOC=34, Statements=42, Complexity=16, Nesting=15
+
+---
+
+#### Long method 'parse_benchmark_results' detected: 34 lines, 42 statements, complexity 16
+
+- **File:** `./scripts/regression_detector.rs`
+- **Line:** 383
+
+**Code:**
+```
+fn parse_benchmark_results(&self, output: &str) -> Result<PerformanceMetrics> {
+        // This is a simplified parser - in production, implement robust parsing
+        // based on your actual benchmark output format
+        
+        let mut metrics = PerformanceMetrics {
+...
+```
+
+**Recommendation:** Consider breaking down 'parse_benchmark_results' into smaller, more focused methods. Current metrics: LOC=34, Statements=42, Complexity=16, Nesting=15
+
+---
+
+#### Long method 'generate_markdown_report' detected: 41 lines, 76 statements, complexity 8
+
+- **File:** `./scripts/regression_detector.rs`
+- **Line:** 1082
+
+**Code:**
+```
+fn generate_markdown_report(&self, result: &RegressionResult) -> String {
+        let mut report = String::new();
+        
+        report.push_str(&format!("# Performance Regression Report\n\n"));
+        report.push_str(&format!("**Generated:** {}\n", result.timestamp.format("%Y-%m-%d %H:%M:%S UTC")));
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_markdown_report' into smaller, more focused methods. Current metrics: LOC=41, Statements=76, Complexity=8, Nesting=10
+
+---
+
+#### Long method 'generate_markdown_report' detected: 41 lines, 76 statements, complexity 8
+
+- **File:** `./scripts/regression_detector.rs`
+- **Line:** 1082
+
+**Code:**
+```
+fn generate_markdown_report(&self, result: &RegressionResult) -> String {
+        let mut report = String::new();
+        
+        report.push_str(&format!("# Performance Regression Report\n\n"));
+        report.push_str(&format!("**Generated:** {}\n", result.timestamp.format("%Y-%m-%d %H:%M:%S UTC")));
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_markdown_report' into smaller, more focused methods. Current metrics: LOC=41, Statements=76, Complexity=8, Nesting=10
+
+---
+
+#### Large class 'EnterpriseTestGenerator' detected: 0 LOC, 32 methods, 4 fields
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 139
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'create_directory_structure' detected: 49 lines, 80 statements, complexity 11
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 213
+
+**Code:**
+```
+fn create_directory_structure(&self) -> io::Result<()> {
+        fs::create_dir_all(&self.config.output_directory)?;
+
+        // Create main enterprise modules
+        for module in &self.config.project_structure.enterprise_modules {
+...
+```
+
+**Recommendation:** Consider breaking down 'create_directory_structure' into smaller, more focused methods. Current metrics: LOC=49, Statements=80, Complexity=11, Nesting=7
+
+---
+
+#### Long method 'create_directory_structure' detected: 49 lines, 80 statements, complexity 11
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 213
+
+**Code:**
+```
+fn create_directory_structure(&self) -> io::Result<()> {
+        fs::create_dir_all(&self.config.output_directory)?;
+
+        // Create main enterprise modules
+        for module in &self.config.project_structure.enterprise_modules {
+...
+```
+
+**Recommendation:** Consider breaking down 'create_directory_structure' into smaller, more focused methods. Current metrics: LOC=49, Statements=80, Complexity=11, Nesting=7
+
+---
+
+#### Long method 'generate_rust_complex_content' detected: 170 lines, 4 statements, complexity 3
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 705
+
+**Code:**
+```
+fn generate_rust_complex_content(&self, scenario: &EnterpriseScenario) -> String {
+        let service_name = if scenario.name.contains("microservices") {
+            "MicroserviceHandler"
+        } else {
+            "ComplexService"
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_rust_complex_content' into smaller, more focused methods. Current metrics: LOC=170, Statements=4, Complexity=3, Nesting=4
+
+---
+
+#### Long method 'generate_rust_complex_content' detected: 170 lines, 4 statements, complexity 3
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 705
+
+**Code:**
+```
+fn generate_rust_complex_content(&self, scenario: &EnterpriseScenario) -> String {
+        let service_name = if scenario.name.contains("microservices") {
+            "MicroserviceHandler"
+        } else {
+            "ComplexService"
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_rust_complex_content' into smaller, more focused methods. Current metrics: LOC=170, Statements=4, Complexity=3, Nesting=4
+
+---
+
+#### Long method 'generate_rust_very_complex_content' detected: 331 lines, 1 statements, complexity 1
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 930
+
+**Code:**
+```
+fn generate_rust_very_complex_content(&self, scenario: &EnterpriseScenario) -> String {
+        // Generate extremely complex Rust code with multiple design patterns
+        format!(r#"
+use std::pin::Pin;
+use std::future::Future;
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_rust_very_complex_content' into smaller, more focused methods. Current metrics: LOC=331, Statements=1, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'generate_rust_very_complex_content' detected: 331 lines, 1 statements, complexity 1
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 930
+
+**Code:**
+```
+fn generate_rust_very_complex_content(&self, scenario: &EnterpriseScenario) -> String {
+        // Generate extremely complex Rust code with multiple design patterns
+        format!(r#"
+use std::pin::Pin;
+use std::future::Future;
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_rust_very_complex_content' into smaller, more focused methods. Current metrics: LOC=331, Statements=1, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'generate_javascript_content' detected: 103 lines, 4 statements, complexity 4
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1452
+
+**Code:**
+```
+fn generate_javascript_content(&self, complexity: &FileComplexity, _scenario: &EnterpriseScenario) -> String {
+        match complexity {
+            FileComplexity::Simple => "function simpleFunction() {\n    return 42;\n}\n\nmodule.exports = { simpleFunction };".to_string(),
+            _ => format!(r#"
+const uuid = require('uuid');
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_javascript_content' into smaller, more focused methods. Current metrics: LOC=103, Statements=4, Complexity=4, Nesting=3
+
+---
+
+#### Long method 'generate_javascript_content' detected: 103 lines, 4 statements, complexity 4
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1452
+
+**Code:**
+```
+fn generate_javascript_content(&self, complexity: &FileComplexity, _scenario: &EnterpriseScenario) -> String {
+        match complexity {
+            FileComplexity::Simple => "function simpleFunction() {\n    return 42;\n}\n\nmodule.exports = { simpleFunction };".to_string(),
+            _ => format!(r#"
+const uuid = require('uuid');
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_javascript_content' into smaller, more focused methods. Current metrics: LOC=103, Statements=4, Complexity=4, Nesting=3
+
+---
+
+#### Long method 'generate_typescript_content' detected: 128 lines, 4 statements, complexity 4
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1573
+
+**Code:**
+```
+fn generate_typescript_content(&self, complexity: &FileComplexity, _scenario: &EnterpriseScenario) -> String {
+        match complexity {
+            FileComplexity::Simple => "export function simpleFunction(): number {\n    return 42;\n}".to_string(),
+            _ => format!(r#"
+import {{ v4 as uuidv4 }} from 'uuid';
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_typescript_content' into smaller, more focused methods. Current metrics: LOC=128, Statements=4, Complexity=4, Nesting=3
+
+---
+
+#### Long method 'generate_typescript_content' detected: 128 lines, 4 statements, complexity 4
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1573
+
+**Code:**
+```
+fn generate_typescript_content(&self, complexity: &FileComplexity, _scenario: &EnterpriseScenario) -> String {
+        match complexity {
+            FileComplexity::Simple => "export function simpleFunction(): number {\n    return 42;\n}".to_string(),
+            _ => format!(r#"
+import {{ v4 as uuidv4 }} from 'uuid';
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_typescript_content' into smaller, more focused methods. Current metrics: LOC=128, Statements=4, Complexity=4, Nesting=3
+
+---
+
+#### Long method 'generate_java_content' detected: 116 lines, 4 statements, complexity 4
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1725
+
+**Code:**
+```
+fn generate_java_content(&self, complexity: &FileComplexity, _scenario: &EnterpriseScenario) -> String {
+        match complexity {
+            FileComplexity::Simple => "public class SimpleClass {\n    public static int simpleFunction() {\n        return 42;\n    }\n}".to_string(),
+            _ => format!(r#"
+import java.util.*;
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_java_content' into smaller, more focused methods. Current metrics: LOC=116, Statements=4, Complexity=4, Nesting=3
+
+---
+
+#### Long method 'generate_java_content' detected: 116 lines, 4 statements, complexity 4
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1725
+
+**Code:**
+```
+fn generate_java_content(&self, complexity: &FileComplexity, _scenario: &EnterpriseScenario) -> String {
+        match complexity {
+            FileComplexity::Simple => "public class SimpleClass {\n    public static int simpleFunction() {\n        return 42;\n    }\n}".to_string(),
+            _ => format!(r#"
+import java.util.*;
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_java_content' into smaller, more focused methods. Current metrics: LOC=116, Statements=4, Complexity=4, Nesting=3
+
+---
+
+#### Long method 'default' detected: 141 lines, 7 statements, complexity 1
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1985
+
+**Code:**
+```
+fn default() -> Self {
+        Self {
+            output_directory: PathBuf::from("./enterprise_test_data"),
+            total_files: 1000,
+            languages: vec![
+...
+```
+
+**Recommendation:** Consider breaking down 'default' into smaller, more focused methods. Current metrics: LOC=141, Statements=7, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'default' detected: 141 lines, 7 statements, complexity 1
+
+- **File:** `./scripts/generate_enterprise_test_data.rs`
+- **Line:** 1985
+
+**Code:**
+```
+fn default() -> Self {
+        Self {
+            output_directory: PathBuf::from("./enterprise_test_data"),
+            total_files: 1000,
+            languages: vec![
+...
+```
+
+**Recommendation:** Consider breaking down 'default' into smaller, more focused methods. Current metrics: LOC=141, Statements=7, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'generate_rust_project' detected: 177 lines, 48 statements, complexity 1
+
+- **File:** `./scripts/generate_benchmark_data.rs`
+- **Line:** 21
+
+**Code:**
+```
+fn generate_rust_project(dir: impl AsRef<Path>) {
+    let dir = dir.as_ref();
+    fs::create_dir_all(dir.join("src")).unwrap();
+    
+    // Create Cargo.toml
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_rust_project' into smaller, more focused methods. Current metrics: LOC=177, Statements=48, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'generate_python_project' detected: 99 lines, 45 statements, complexity 1
+
+- **File:** `./scripts/generate_benchmark_data.rs`
+- **Line:** 248
+
+**Code:**
+```
+fn generate_python_project(dir: impl AsRef<Path>) {
+    let dir = dir.as_ref();
+    fs::create_dir_all(dir.join("src")).unwrap();
+    
+    // Create requirements.txt
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_python_project' into smaller, more focused methods. Current metrics: LOC=99, Statements=45, Complexity=1, Nesting=1
+
+---
+
+#### Long method 'generate_javascript_project' detected: 127 lines, 41 statements, complexity 1
+
+- **File:** `./scripts/generate_benchmark_data.rs`
+- **Line:** 385
+
+**Code:**
+```
+fn generate_javascript_project(dir: impl AsRef<Path>) {
+    let dir = dir.as_ref();
+    fs::create_dir_all(dir.join("src")).unwrap();
+    
+    // Create package.json
+...
+```
+
+**Recommendation:** Consider breaking down 'generate_javascript_project' into smaller, more focused methods. Current metrics: LOC=127, Statements=41, Complexity=1, Nesting=1
+
+---
+
+#### Large class 'VerificationRunner' detected: 0 LOC, 55 methods, 2 fields
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 203
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+
+#### Long method 'verify_memory_pool_system' detected: 52 lines, 83 statements, complexity 13
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 286
+
+**Code:**
+```
+async fn verify_memory_pool_system(&self) -> Result<MemoryPoolVerification, Box<dyn std::error::Error>> {
+        println!("  • Memory Pool System (src/analysis/memory/pool.rs)");
+        
+        let mut verification = MemoryPoolVerification {
+            sharded_pools_functional: VerificationResult::NotImplemented,
+...
+```
+
+**Recommendation:** Consider breaking down 'verify_memory_pool_system' into smaller, more focused methods. Current metrics: LOC=52, Statements=83, Complexity=13, Nesting=6
+
+---
+
+#### Long method 'verify_memory_pool_system' detected: 52 lines, 83 statements, complexity 13
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 286
+
+**Code:**
+```
+async fn verify_memory_pool_system(&self) -> Result<MemoryPoolVerification, Box<dyn std::error::Error>> {
+        println!("  • Memory Pool System (src/analysis/memory/pool.rs)");
+        
+        let mut verification = MemoryPoolVerification {
+            sharded_pools_functional: VerificationResult::NotImplemented,
+...
+```
+
+**Recommendation:** Consider breaking down 'verify_memory_pool_system' into smaller, more focused methods. Current metrics: LOC=52, Statements=83, Complexity=13, Nesting=6
+
+---
+
+#### Long method 'verify_arena_allocation_system' detected: 52 lines, 83 statements, complexity 13
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 354
+
+**Code:**
+```
+async fn verify_arena_allocation_system(&self) -> Result<ArenaAllocationVerification, Box<dyn std::error::Error>> {
+        println!("  • Arena Allocation System (src/analysis/memory/arena.rs)");
+        
+        let mut verification = ArenaAllocationVerification {
+            bumpalo_herd_pattern: VerificationResult::NotImplemented,
+...
+```
+
+**Recommendation:** Consider breaking down 'verify_arena_allocation_system' into smaller, more focused methods. Current metrics: LOC=52, Statements=83, Complexity=13, Nesting=6
+
+---
+
+#### Long method 'verify_arena_allocation_system' detected: 52 lines, 83 statements, complexity 13
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 354
+
+**Code:**
+```
+async fn verify_arena_allocation_system(&self) -> Result<ArenaAllocationVerification, Box<dyn std::error::Error>> {
+        println!("  • Arena Allocation System (src/analysis/memory/arena.rs)");
+        
+        let mut verification = ArenaAllocationVerification {
+            bumpalo_herd_pattern: VerificationResult::NotImplemented,
+...
+```
+
+**Recommendation:** Consider breaking down 'verify_arena_allocation_system' into smaller, more focused methods. Current metrics: LOC=52, Statements=83, Complexity=13, Nesting=6
+
+---
+
+#### Long method 'verify_configuration_init' detected: 52 lines, 85 statements, complexity 13
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 468
+
+**Code:**
+```
+async fn verify_configuration_init(&self) -> Result<ConfigurationVerification, Box<dyn std::error::Error>> {
+        println!("  • Memory Optimization Config (src/analysis/memory/config.rs)");
+        
+        let mut verification = ConfigurationVerification {
+            default_configs_valid: VerificationResult::NotImplemented,
+...
+```
+
+**Recommendation:** Consider breaking down 'verify_configuration_init' into smaller, more focused methods. Current metrics: LOC=52, Statements=85, Complexity=13, Nesting=6
+
+---
+
+#### Long method 'verify_configuration_init' detected: 52 lines, 85 statements, complexity 13
+
+- **File:** `./scripts/verify_uv210_uv26.rs`
+- **Line:** 468
+
+**Code:**
+```
+async fn verify_configuration_init(&self) -> Result<ConfigurationVerification, Box<dyn std::error::Error>> {
+        println!("  • Memory Optimization Config (src/analysis/memory/config.rs)");
+        
+        let mut verification = ConfigurationVerification {
+            default_configs_valid: VerificationResult::NotImplemented,
+...
+```
+
+**Recommendation:** Consider breaking down 'verify_configuration_init' into smaller, more focused methods. Current metrics: LOC=52, Statements=85, Complexity=13, Nesting=6
 
 ---
 
