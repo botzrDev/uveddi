@@ -1,0 +1,21 @@
+graph {{ layout }}
+    %% {{ title }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}"]
+    {% if component.is_in_cycle -%}
+    class {{ component.id }} cycle-critical
+    {% else -%}
+    class {{ component.id }} normal-component
+    {% endif -%}
+{% endfor %}
+
+{% for cycle in cycles -%}
+    {% for i in range(end=cycle | length) -%}
+        {% set current = cycle[i] -%}
+        {% set next = cycle[(i + 1) % (cycle | length)] -%}
+        {{ current }} ==> {{ next }}
+    {% endfor -%}
+{% endfor %}
+
+classDef cycle-critical fill:#FFB3B3,stroke:#FF0000,stroke-width:3px;
+classDef normal-component fill:#E6F3FF,stroke:#1E88E5,stroke-width:1px;

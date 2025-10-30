@@ -1,0 +1,27 @@
+# Rust
+/target/
+Cargo.lock
+
+# WASM build outputs
+/pkg/
+*.wasm
+*.wasm.d.ts
+*.js
+*.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+tarpaulin-report.html
+lcov.info

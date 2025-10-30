@@ -1,0 +1,344 @@
+//! {PLUGIN_NAME} - Security Analysis Plugin
+//! 
+//! {PLUGIN_DESCRIPTION}
+//!
+//! This plugin focuses on security vulnerability detection and compliance checking.
+//! Generated on {GENERATION_TIMESTAMP} by Uveddi Plugin Generator
+
+use std::collections::HashMap;
+
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "../../../wit/core-analysis.wit",
+});
+
+use exports::{initialize, analyze, get_info, cleanup};
+
+static mut PLUGIN_STATE: Option<{PLUGIN_ID_UPPER}SecurityPlugin> = None;
+
+struct {PLUGIN_ID_UPPER}SecurityPlugin {
+    config: PluginConfig,
+    analysis_count: u32,
+    vulnerability_patterns: Vec<SecurityPattern>,
+}
+
+struct SecurityPattern {
+    name: &'static str,
+    pattern: &'static str,
+    severity: SeverityLevel,
+    category: &'static str,
+    description: &'static str,
+}
+
+impl {PLUGIN_ID_UPPER}SecurityPlugin {
+    fn new() -> Self {
+        Self {
+            config: PluginConfig {
+                severity_threshold: SeverityLevel::Medium,
+                max_issues_per_file: 100,
+                include_patterns: vec![{SUPPORTED_LANGUAGES}].iter()
+                    .map(|lang| format!("*.{}", lang))
+                    .collect(),
+                exclude_patterns: vec!["*.test.*".to_string(), "*.spec.*".to_string()],
+                rule_overrides: vec![],
+                custom_settings: vec![
+                    ("check_secrets".to_string(), "true".to_string()),
+                    ("check_injections".to_string(), "true".to_string()),
+                ],
+            },
+            analysis_count: 0,
+            vulnerability_patterns: Self::initialize_patterns(),
+        }
+    }
+
+    fn initialize_patterns() -> Vec<SecurityPattern> {
+        vec![
+            SecurityPattern {
+                name: "hardcoded_password",
+                pattern: r#"(?i)(password|passwd|pwd)\s*=\s*["'][^"']{3,}["']"#,
+                severity: SeverityLevel::High,
+                category: "secrets",
+                description: "Hardcoded password detected",
+            },
+            SecurityPattern {
+                name: "sql_injection",
+                pattern: r#"(?i)(SELECT|INSERT|UPDATE|DELETE).*\+.*["']"#,
+                severity: SeverityLevel::Critical,
+                category: "injection",
+                description: "Potential SQL injection vulnerability",
+            },
+            SecurityPattern {
+                name: "weak_crypto",
+                pattern: r#"(?i)(md5|sha1|des|3des|rc4)"#,
+                severity: SeverityLevel::Medium,
+                category: "cryptography",
+                description: "Weak cryptographic algorithm detected",
+            },
+            SecurityPattern {
+                name: "xss_vulnerability",
+                pattern: r#"(?i)innerHTML\s*=\s*[^;]*\+|document\.write\s*\([^)]*\+"#,
+                severity: SeverityLevel::High,
+                category: "xss",
+                description: "Potential XSS vulnerability",
+            },
+        ]
+    }
+
+    fn analyze_file(&mut self, file: SourceFile) -> Result<AnalysisResult, String> {
+        self.analysis_count += 1;
+        
+        let start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u32;
+
+        log(LogLevel::Info, &format!("Security scanning {}", file.path));
+
+        let mut issues = Vec::new();
+        let mut vulnerability_count = 0;
+
+        // Pattern-based security analysis
+        for pattern in &self.vulnerability_patterns {
+            let pattern_issues = self.find_pattern_matches(pattern, &file);
+            vulnerability_count += pattern_issues.len();
+            issues.extend(pattern_issues);
+        }
+
+        // AST-based security analysis
+        if let Some(ast) = &file.ast {
+            let ast_issues = self.analyze_ast_security(ast, &file)?;
+            issues.extend(ast_issues);
+        }
+
+        // Calculate security metrics
+        let security_score = self.calculate_security_score(&issues);
+        let critical_vulnerabilities = issues.iter()
+            .filter(|i| i.severity == SeverityLevel::Critical)
+            .count() as f64;
+
+        let metrics = Metrics {
+            lines_of_code: file.content.lines().count() as u32,
+            lines_of_comments: 0,
+            complexity: 1,
+            maintainability_index: 100.0 - (issues.len() as f64 * 5.0),
+            technical_debt_minutes: self.calculate_security_debt(&issues),
+            custom_metrics: vec![
+                ("security_score".to_string(), security_score),
+                ("critical_vulnerabilities".to_string(), critical_vulnerabilities),
+                ("vulnerability_count".to_string(), vulnerability_count as f64),
+            ],
+        };
+
+        let end_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u32;
+
+        Ok(AnalysisResult {
+            issues,
+            metrics,
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: end_time - start_time,
+            plugin_version: "{VERSION}".to_string(),
+        })
+    }
+
+    fn find_pattern_matches(&self, pattern: &SecurityPattern, file: &SourceFile) -> Vec<Issue> {
+        let mut issues = Vec::new();
+        let lines: Vec<&str> = file.content.lines().collect();
+
+        for (line_num, line) in lines.iter().enumerate() {
+            let line_num = line_num as u32 + 1;
+            
+            // Simplified pattern matching (in real implementation, use regex)
+            if self.line_matches_pattern(line, pattern.pattern) {
+                let issue_id = match pattern.name {
+                    "hardcoded_password" => "SEC001",
+                    "sql_injection" => "SEC002",
+                    "weak_crypto" => "SEC003",
+                    "xss_vulnerability" => "SEC004",
+                    _ => "SEC999",
+                };
+
+                issues.push(Issue {
+                    id: issue_id.to_string(),
+                    severity: pattern.severity.clone(),
+                    category: IssueCategory::Security,
+                    message: pattern.description.to_string(),
+                    description: Some(self.get_detailed_description(pattern.name)),
+                    file: file.path.clone(),
+                    span: Span {
+                        start: Position { line: line_num, column: 1, byte_offset: 0 },
+                        end: Position { line: line_num, column: line.len() as u32, byte_offset: 0 },
+                    },
+                    rule_id: Some(pattern.name.to_string()),
+                    suggestion: Some(self.get_fix_suggestion(pattern.name)),
+                    fix: None,
+                    metadata: vec![
+                        ("category".to_string(), pattern.category.to_string()),
+                        ("pattern".to_string(), pattern.pattern.to_string()),
+                    ],
+                });
+            }
+        }
+
+        issues
+    }
+
+    // TODO: Implement proper pattern matching
+    fn line_matches_pattern(&self, line: &str, pattern: &str) -> bool {
+        // Simplified pattern matching for template
+        match pattern {
+            r#"(?i)(password|passwd|pwd)\s*=\s*["'][^"']{3,}["']"# => {
+                let line_lower = line.to_lowercase();
+                (line_lower.contains("password") || line_lower.contains("passwd") || line_lower.contains("pwd")) &&
+                line.contains("=") && (line.contains("\"") || line.contains("'"))
+            },
+            _ => false,
+        }
+    }
+
+    fn analyze_ast_security(&self, ast: &AstNode, file: &SourceFile) -> Result<Vec<Issue>, String> {
+        let mut issues = Vec::new();
+
+        // Look for dangerous function calls
+        if let Ok(dangerous_calls) = query_ast(ast.clone(), "(call_expression (identifier) @func (#match? @func \"^(eval|exec|system)$\"))") {
+            for node in dangerous_calls {
+                issues.push(Issue {
+                    id: "SEC005".to_string(),
+                    severity: SeverityLevel::Critical,
+                    category: IssueCategory::Security,
+                    message: "Dangerous function call detected".to_string(),
+                    description: Some("Functions like eval(), exec(), and system() can execute arbitrary code and are security risks.".to_string()),
+                    file: file.path.clone(),
+                    span: node.span,
+                    rule_id: Some("dangerous_function".to_string()),
+                    suggestion: Some("Avoid using eval(), exec(), and system() functions. Use safer alternatives.".to_string()),
+                    fix: None,
+                    metadata: vec![
+                        ("function".to_string(), node.content),
+                        ("category".to_string(), "code_injection".to_string()),
+                    ],
+                });
+            }
+        }
+
+        Ok(issues)
+    }
+
+    fn get_detailed_description(&self, pattern_name: &str) -> String {
+        match pattern_name {
+            "hardcoded_password" => "Hardcoded passwords in source code are a major security risk as they can be easily discovered by anyone with access to the code.".to_string(),
+            "sql_injection" => "SQL injection occurs when user input is directly concatenated into SQL queries without proper sanitization.".to_string(),
+            "weak_crypto" => "Weak cryptographic algorithms like MD5 and SHA1 are vulnerable to collision attacks.".to_string(),
+            "xss_vulnerability" => "Cross-site scripting (XSS) vulnerabilities allow attackers to inject malicious scripts.".to_string(),
+            _ => "Security vulnerability detected".to_string(),
+        }
+    }
+
+    fn get_fix_suggestion(&self, pattern_name: &str) -> String {
+        match pattern_name {
+            "hardcoded_password" => "Store passwords in environment variables or secure configuration files".to_string(),
+            "sql_injection" => "Use parameterized queries or prepared statements".to_string(),
+            "weak_crypto" => "Use modern cryptographic algorithms like SHA-256 or bcrypt".to_string(),
+            "xss_vulnerability" => "Sanitize user input and use proper encoding".to_string(),
+            _ => "Review code for security implications".to_string(),
+        }
+    }
+
+    fn calculate_security_score(&self, issues: &[Issue]) -> f64 {
+        if issues.is_empty() {
+            return 100.0;
+        }
+
+        let penalty: f64 = issues.iter().map(|issue| {
+            match issue.severity {
+                SeverityLevel::Critical => 40.0,
+                SeverityLevel::High => 25.0,
+                SeverityLevel::Medium => 15.0,
+                SeverityLevel::Low => 5.0,
+                SeverityLevel::Info => 1.0,
+            }
+        }).sum();
+
+        (100.0 - penalty).max(0.0)
+    }
+
+    fn calculate_security_debt(&self, issues: &[Issue]) -> u32 {
+        issues.iter().map(|issue| {
+            match issue.severity {
+                SeverityLevel::Critical => 240, // 4 hours
+                SeverityLevel::High => 120,     // 2 hours
+                SeverityLevel::Medium => 60,    // 1 hour
+                SeverityLevel::Low => 30,       // 30 minutes
+                SeverityLevel::Info => 15,      // 15 minutes
+            }
+        }).sum()
+    }
+}
+
+// Plugin lifecycle implementation
+impl initialize {
+    fn call(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing {PLUGIN_NAME}");
+        
+        unsafe {
+            let mut plugin = {PLUGIN_ID_UPPER}SecurityPlugin::new();
+            plugin.config = config;
+            PLUGIN_STATE = Some(plugin);
+        }
+        
+        log(LogLevel::Info, "{PLUGIN_NAME} initialized successfully");
+        Ok(())
+    }
+}
+
+impl analyze {
+    fn call(file: SourceFile) -> Result<AnalysisResult, String> {
+        unsafe {
+            if let Some(ref mut state) = PLUGIN_STATE {
+                state.analyze_file(file)
+            } else {
+                Err("Plugin not initialized".to_string())
+            }
+        }
+    }
+}
+
+impl get_info {
+    fn call() -> PluginInfo {
+        PluginInfo {
+            id: "{PLUGIN_ID}".to_string(),
+            name: "{PLUGIN_NAME}".to_string(),
+            version: "{VERSION}".to_string(),
+            description: "{PLUGIN_DESCRIPTION}".to_string(),
+            author: "{AUTHOR}".to_string(),
+            license: "{LICENSE}".to_string(),
+            homepage: Some("https://github.com/your-org/plugins/{PLUGIN_ID}".to_string()),
+            supported_languages: vec![{SUPPORTED_LANGUAGES}],
+            detector_types: vec![IssueCategory::Security],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![
+                Permission::ReadFiles.into(),
+                // Uncomment if network access is needed:
+                // Permission::NetworkAccess.into(),
+            ],
+        }
+    }
+}
+
+impl cleanup {
+    fn call() -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up {PLUGIN_NAME}");
+        
+        unsafe {
+            if let Some(ref state) = PLUGIN_STATE {
+                log(LogLevel::Info, &format!("Scanned {} files for security issues during session", state.analysis_count));
+            }
+            PLUGIN_STATE = None;
+        }
+        
+        Ok(())
+    }
+}

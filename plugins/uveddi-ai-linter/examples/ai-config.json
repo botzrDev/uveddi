@@ -1,0 +1,9 @@
+{
+  "provider": "ollama",
+  "model_name": "deepseek-coder:6.7b",
+  "endpoint": "http://localhost:11434",
+  "api_key": null,
+  "max_tokens": 2048,
+  "temperature": 0.1,
+  "timeout_seconds": 60
+}

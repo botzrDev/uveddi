@@ -1,0 +1,41 @@
+{#  Generic Component Diagram Template  #}
+{#  Displays architectural components and their relationships  #}
+graph {{ layout }}
+
+{%- for component in components %}
+  {{ component.id }}["{{ component.icon }} {{ component.name }}{{ component.details | default("") }}"]
+  {%- if component.css_class %}
+    class {{ component.id }} {{ component.css_class }}
+  {%- else %}
+    class {{ component.id }} {{ component.style_class | default("generic-component") }}
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.style == "dashed" %}
+    {{ dependency.from_id }} -.->|"{{ dependency.label | default(dependency.type) }}"| {{ dependency.to_id }}
+  {%- elif dependency.style == "thick" %}
+    {{ dependency.from_id }} ==>|"{{ dependency.label | default(dependency.type) }}"| {{ dependency.to_id }}
+  {%- else %}
+    {{ dependency.from_id }} -->|"{{ dependency.label | default(dependency.type) }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend(",color:") }}
+  {%- endfor %}
+{%- else %}
+  {#  Default component styles  #}
+  classDef generic-component fill:#E8F4F8,stroke:#4A90A4,stroke-width:1px
+  classDef service-node fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+  classDef data-store fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+  classDef external-user fill:#E8F5E8,stroke:#4CAF50,stroke-width:1px
+  classDef external-system fill:#FFF3E0,stroke:#FF9800,stroke-width:1px
+  classDef api-endpoint fill:#E0F2F1,stroke:#00BCD4,stroke-width:1px
+  classDef message-broker fill:#FCE4EC,stroke:#E91E63,stroke-width:2px
+  classDef rust-component fill:#FFE0B2,stroke:#FF6F00,stroke-width:1px
+  classDef python-component fill:#E1F5FE,stroke:#0277BD,stroke-width:1px
+  classDef js-component fill:#FFF8E1,stroke:#F57F17,stroke-width:1px
+  classDef ts-component fill:#E8EAF6,stroke:#3F51B5,stroke-width:1px
+{%- endif %}

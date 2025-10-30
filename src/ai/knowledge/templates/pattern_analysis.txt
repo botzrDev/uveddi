@@ -1,0 +1,22 @@
+# Architectural Issue Analysis
+
+## Issue Description
+{{issue_description}}
+
+## Severity Level
+{{issue_severity}}
+
+## Knowledge Context
+{{knowledge_context}}
+
+## Analysis Request
+
+Based on the above information about detected anti-patterns and architectural issues, please provide:
+
+1. **Root Cause Analysis**: Identify the underlying causes of these patterns
+2. **Impact Assessment**: Evaluate the potential impact on code quality, maintainability, and performance
+3. **Prioritized Recommendations**: Suggest concrete steps to address these issues, ordered by priority
+4. **Prevention Strategies**: Recommend practices to prevent similar issues in the future
+5. **Implementation Guidance**: Provide specific, actionable guidance for remediation
+
+Please focus on practical, implementable solutions that consider the project context and constraints.

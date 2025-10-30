@@ -1,0 +1,156 @@
+name: Code Quality Gate with Uveddi
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install Uveddi
+      run: |
+        # Option 1: Install from release (recommended for CI)
+        # curl -L https://github.com/botzrDev/uveddi/releases/latest/download/uveddi-linux-x86_64.tar.gz | tar xz
+        # sudo mv uveddi /usr/local/bin/
+        
+        # Option 2: Build from source (for development/testing)
+        cargo build --release --features dev-core
+        sudo cp target/release/uveddi /usr/local/bin/
+
+    - name: Run Uveddi CI Check
+      run: |
+        # Run analysis with CI quality gate
+        # Fail if debt score > 50 or critical issues > 0
+        uveddi ci check . --max-debt 50 --max-critical 0
+      
+    - name: Generate Analysis Report (on failure)
+      if: failure()
+      run: |
+        # Generate detailed report for debugging
+        mkdir -p analysis-reports
+        uveddi analyze . --output-format json --output analysis-reports/report.json
+        uveddi analyze . --output-format html --output analysis-reports/report.html
+        
+        # Extract summary for easier reading
+        echo "## Analysis Summary" >> $GITHUB_STEP_SUMMARY
+        echo '```json' >> $GITHUB_STEP_SUMMARY
+        cat analysis-reports/report.json | jq '.summary' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Analysis Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: uveddi-analysis-reports
+        path: analysis-reports/
+        retention-days: 30
+
+  custom-thresholds:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Install Uveddi
+      run: |
+        cargo build --release --features dev-core
+        sudo cp target/release/uveddi /usr/local/bin/
+
+    - name: Lenient CI Check for PRs
+      run: |
+        # More lenient thresholds for PRs to encourage contributions
+        # while still maintaining quality standards
+        uveddi ci check . --max-debt 75 --max-critical 2
+
+    - name: Generate PR Comment Report
+      if: always()
+      run: |
+        # Generate JSON report for PR comment
+        uveddi analyze . --output-format json --output pr-report.json
+        
+        # Extract key metrics for PR comment
+        DEBT_SCORE=$(cat pr-report.json | jq -r '.summary.debtScore // 0')
+        CRITICAL_COUNT=$(cat pr-report.json | jq -r '.summary.issuesBySeverity.critical // 0')
+        TOTAL_ISSUES=$(cat pr-report.json | jq -r '.summary.issuesTotal // 0')
+        FILES_ANALYZED=$(cat pr-report.json | jq -r '.summary.filesAnalyzed // 0')
+        
+        echo "## 🔍 Uveddi Code Analysis Report" > pr-comment.md
+        echo "" >> pr-comment.md
+        echo "| Metric | Value |" >> pr-comment.md
+        echo "|--------|-------|" >> pr-comment.md
+        echo "| 📊 Technical Debt Score | ${DEBT_SCORE}/100 |" >> pr-comment.md
+        echo "| 🚨 Critical Issues | ${CRITICAL_COUNT} |" >> pr-comment.md
+        echo "| ⚠️ Total Issues | ${TOTAL_ISSUES} |" >> pr-comment.md
+        echo "| 📁 Files Analyzed | ${FILES_ANALYZED} |" >> pr-comment.md
+        echo "" >> pr-comment.md
+        
+        if [ "$CRITICAL_COUNT" -gt "2" ] || [ "$DEBT_SCORE" -gt "75" ]; then
+            echo "❌ **Quality Gate Failed** - Please address critical issues before merging." >> pr-comment.md
+        else
+            echo "✅ **Quality Gate Passed** - Code meets quality standards." >> pr-comment.md
+        fi
+        
+        echo "" >> pr-comment.md
+        echo "<details><summary>📋 Top Issues</summary>" >> pr-comment.md
+        echo "" >> pr-comment.md
+        echo '```json' >> pr-comment.md
+        cat pr-report.json | jq '.issues[:5]' >> pr-comment.md
+        echo '```' >> pr-comment.md
+        echo "</details>" >> pr-comment.md
+        
+        echo "" >> pr-comment.md
+        echo "*Analysis powered by [Uveddi](https://github.com/botzrDev/uveddi)*" >> pr-comment.md
+
+    - name: Comment PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const comment = fs.readFileSync('pr-comment.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Upload PR Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: uveddi-pr-report
+        path: pr-report.json
+        retention-days: 7

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Analysis Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header .subtitle {
+            margin-top: 10px;
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .summary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .summary h2 {
+            margin: 0 0 20px 0;
+            font-size: 1.8em;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-item .value {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .summary-item .label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        
+        .status-excellent { color: #27ae60; }
+        .status-good { color: #f39c12; }
+        .status-concerning { color: #e67e22; }
+        .status-critical { color: #e74c3c; }
+        
+        .benchmark {
+            border: 1px solid #e0e0e0;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .benchmark-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .benchmark-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .benchmark-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+        
+        .status-pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-nobaseline {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .benchmark-content {
+            padding: 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+        
+        .insights {
+            margin-top: 20px;
+        }
+        
+        .insights h4 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .insight-item {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .recommendations {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .recommendations h2 {
+            color: #495057;
+            margin-top: 0;
+        }
+        
+        .recommendation-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .recommendation-priority {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .priority-critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .priority-high {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        .priority-medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .priority-low {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Performance Analysis Report</h1>
+            <div class="subtitle">
+                Generated on {{ report.metadata.generated_at | date(format="%Y-%m-%d %H:%M:%S UTC") }}
+                {% if report.metadata.git_branch %} | Branch: {{ report.metadata.git_branch }}{% endif %}
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="summary">
+                <h2>Executive Summary</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="value status-{{ report.executive_summary.overall_performance_status | lower }}">
+                            {{ report.executive_summary.overall_performance_status }}
+                        </div>
+                        <div class="label">Overall Status</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value">{{ report.executive_summary.performance_score | safe_round(precision=1) }}%</div>
+                        <div class="label">Performance Score</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value">{{ report.executive_summary.total_regressions }}</div>
+                        <div class="label">Regressions</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value">{{ report.executive_summary.total_improvements }}</div>
+                        <div class="label">Improvements</div>
+                    </div>
+                </div>
+                
+                {% if report.executive_summary.key_findings %}
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px;">Key Findings:</h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        {% for finding in report.executive_summary.key_findings %}
+                        <li>{{ finding }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            
+            <h2>Benchmark Results</h2>
+            {% for benchmark in report.benchmark_results %}
+            <div class="benchmark">
+                <div class="benchmark-header">
+                    <h3 class="benchmark-title">
+                        {{ benchmark.name }}
+                        <span class="benchmark-status status-{{ benchmark.status | lower }}">
+                            {{ benchmark.status }}
+                        </span>
+                    </h3>
+                </div>
+                
+                <div class="benchmark-content">
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-value">{{ benchmark.current_performance.metric_value | safe_round(precision=2) }}</div>
+                            <div class="metric-label">{{ benchmark.current_performance.metric_unit }}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">{{ benchmark.current_performance.coefficient_of_variation | safe_percentage(total=1) }}%</div>
+                            <div class="metric-label">Variability (CV)</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">{{ benchmark.statistical_confidence | safe_percentage(total=1) }}%</div>
+                            <div class="metric-label">Confidence</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">{{ benchmark.current_performance.sample_count }}</div>
+                            <div class="metric-label">Samples</div>
+                        </div>
+                        {% if benchmark.baseline_comparison %}
+                        <div class="metric">
+                            <div class="metric-value">{{ benchmark.baseline_comparison.performance_change_percent | safe_round(precision=1) }}%</div>
+                            <div class="metric-label">Change</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">{{ benchmark.baseline_comparison.effect_size | safe_round(precision=2) }}</div>
+                            <div class="metric-label">Effect Size</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if benchmark.insights %}
+                    <div class="insights">
+                        <h4>Insights</h4>
+                        {% for insight in benchmark.insights %}
+                        <div class="insight-item">{{ insight }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if report.recommendations %}
+            <div class="recommendations">
+                <h2>Recommendations</h2>
+                {% for rec in report.recommendations %}
+                <div class="recommendation-item">
+                    <div style="margin-bottom: 10px;">
+                        <span class="recommendation-priority priority-{{ rec.priority | lower }}">
+                            {{ rec.priority }}
+                        </span>
+                        <strong style="margin-left: 10px;">{{ rec.title }}</strong>
+                    </div>
+                    <div>{{ rec.description }}</div>
+                    {% if rec.affected_benchmarks %}
+                    <div style="margin-top: 10px; color: #6c757d; font-size: 0.9em;">
+                        Affects: {{ rec.affected_benchmarks | join(sep=", ") }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <div>Report generated by Uveddi Performance Analysis Framework</div>
+            <div style="margin-top: 5px; font-size: 0.9em;">
+                Analysis completed in {{ report.metadata.analysis_duration_ms }}ms
+                | {{ report.metadata.total_benchmarks }} benchmarks analyzed
+            </div>
+        </div>
+    </div>
+</body>
+</html>

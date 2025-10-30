@@ -1,0 +1,97 @@
+# Production Docker image for Uveddi with security hardening and optimization
+# Multi-stage build optimized for production deployments
+
+# Stage 1: Builder with dependency caching
+FROM rust:1.70-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    musl-dev \
+    pkgconfig \
+    openssl-dev \
+    sqlite-dev \
+    git \
+    ca-certificates
+
+# Create app user and directory
+RUN addgroup -g 1001 -S uveddi && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G uveddi uveddi
+
+WORKDIR /app
+
+# Copy dependency files first for better layer caching
+COPY Cargo.toml Cargo.lock ./
+RUN cargo fetch --target x86_64-unknown-linux-musl
+
+# Copy source code
+COPY . .
+RUN chown -R uveddi:uveddi /app
+
+# Build with production features and optimizations
+ENV RUSTFLAGS="-C target-cpu=native -C opt-level=3 -C codegen-units=1 -C panic=abort"
+RUN cargo build --release --target x86_64-unknown-linux-musl --features production
+
+# Strip binary to reduce size
+RUN strip target/x86_64-unknown-linux-musl/release/uveddi
+
+# Stage 2: Runtime (minimal Alpine image)
+FROM alpine:3.18 AS runtime
+
+# Install only runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    sqlite \
+    libssl3 \
+    curl \
+    tzdata \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user
+RUN addgroup -g 1001 -S uveddi && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G uveddi uveddi
+
+# Create necessary directories with proper ownership
+RUN mkdir -p /app/data /app/cache /app/logs /app/config && \
+    chown -R uveddi:uveddi /app
+
+# Copy application binary from builder stage
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/uveddi /usr/local/bin/uveddi
+COPY --chown=uveddi:uveddi docker-entrypoint.sh /docker-entrypoint.sh
+COPY --chown=uveddi:uveddi config/ /app/config/
+
+# Set proper permissions
+RUN chmod +x /docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/uveddi && \
+    chmod 755 /app/config
+
+WORKDIR /app
+
+# Switch to non-root user
+USER uveddi
+
+# Configure environment for production
+ENV RUST_LOG=info
+ENV RUST_BACKTRACE=0
+ENV DATABASE_URL=sqlite:///app/data/uveddi.db
+ENV CACHE_DIR=/app/cache
+ENV LOG_DIR=/app/logs
+ENV TZ=UTC
+
+# Expose application port
+EXPOSE 8080 9090
+
+# Add labels for better container management
+LABEL maintainer="Uveddi Team"
+LABEL version="0.9.0-alpha"
+LABEL description="Uveddi Architectural Analysis Tool - Production Image"
+LABEL org.opencontainers.image.source="https://github.com/botzrDev/uveddi"
+LABEL org.opencontainers.image.description="Production-ready Uveddi container with security hardening"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Health check with shorter intervals for production
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+    CMD /docker-entrypoint.sh health || exit 1
+
+# Use the secure entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["uveddi", "serve", "--port", "8080", "--prometheus-port", "9090"]

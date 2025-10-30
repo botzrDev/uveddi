@@ -1,0 +1,387 @@
+package uveddi:metrics-analysis;
+
+use uveddi:core-analysis/core-analysis.{ast-node, source-file, span, position};
+
+/// Advanced code metrics and visualization interface
+world metrics-analysis {
+    /// Complexity metrics
+    record complexity-metrics {
+        cyclomatic-complexity: u32,
+        cognitive-complexity: u32,
+        npath-complexity: u64,
+        essential-complexity: u32,
+        design-complexity: u32,
+        halstead-metrics: halstead-metrics,
+    }
+
+    /// Halstead complexity metrics
+    record halstead-metrics {
+        vocabulary: u32,        // n = n1 + n2
+        length: u32,           // N = N1 + N2
+        calculated-length: float64, // n1*log2(n1) + n2*log2(n2)
+        volume: float64,       // N * log2(n)
+        difficulty: float64,   // (n1/2) * (N2/n2)
+        effort: float64,       // difficulty * volume
+        time: float64,         // effort / 18
+        bugs: float64,         // volume / 3000
+    }
+
+    /// Coupling metrics
+    record coupling-metrics {
+        afferent-coupling: u32,     // Ca - incoming dependencies
+        efferent-coupling: u32,     // Ce - outgoing dependencies
+        instability: float64,       // I = Ce / (Ca + Ce)
+        coupling-between-objects: u32, // CBO
+        response-for-class: u32,    // RFC
+        message-passing-coupling: u32, // MPC
+        data-abstraction-coupling: u32, // DAC
+    }
+
+    /// Cohesion metrics
+    record cohesion-metrics {
+        lack-of-cohesion-methods-1: float64, // LCOM1
+        lack-of-cohesion-methods-2: float64, // LCOM2
+        lack-of-cohesion-methods-3: float64, // LCOM3
+        lack-of-cohesion-methods-4: float64, // LCOM4
+        tight-class-cohesion: float64,       // TCC
+        loose-class-cohesion: float64,       // LCC
+    }
+
+    /// Size metrics
+    record size-metrics {
+        lines-of-code: u32,
+        logical-lines-of-code: u32,
+        comment-lines: u32,
+        blank-lines: u32,
+        number-of-methods: u32,
+        number-of-classes: u32,
+        number-of-functions: u32,
+        number-of-statements: u32,
+        number-of-files: u32,
+        weighted-methods-per-class: u32, // WMC
+    }
+
+    /// Inheritance metrics
+    record inheritance-metrics {
+        depth-of-inheritance-tree: u32,     // DIT
+        number-of-children: u32,            // NOC
+        class-interface-size: u32,          // CIS
+        number-of-methods-inherited: u32,   // NMI
+        number-of-methods-overridden: u32,  // NMO
+    }
+
+    /// Historical metrics from Git analysis
+    record historical-metrics {
+        change-frequency: u32,
+        bug-fix-frequency: u32,
+        lines-added: u32,
+        lines-deleted: u32,
+        commits-count: u32,
+        unique-contributors: u32,
+        last-modified: u64, // Unix timestamp
+        age-days: u32,
+        hotspot-score: float64,
+        change-coupling: list<coupling-relationship>,
+    }
+
+    /// Change coupling between files
+    record coupling-relationship {
+        file-a: string,
+        file-b: string,
+        coupling-strength: float64,
+        co-change-frequency: u32,
+        confidence: float64,
+    }
+
+    /// Maintainability metrics
+    record maintainability-metrics {
+        maintainability-index: float64,
+        technical-debt-ratio: float64,
+        code-health-rating: health-rating,
+        refactoring-recommendations: list<refactoring-suggestion>,
+        quality-gates: list<quality-gate-result>,
+    }
+
+    /// Health rating levels
+    enum health-rating {
+        excellent,
+        good,
+        fair,
+        poor,
+        critical,
+    }
+
+    /// Refactoring suggestions
+    record refactoring-suggestion {
+        type: refactoring-type,
+        priority: priority-level,
+        description: string,
+        estimated-effort: effort-level,
+        benefits: list<string>,
+        risks: list<string>,
+        affected-files: list<string>,
+    }
+
+    /// Refactoring types
+    enum refactoring-type {
+        extract-method,
+        extract-class,
+        move-method,
+        rename,
+        simplify-conditional,
+        remove-duplicate,
+        decompose-complex-method,
+        reduce-coupling,
+        improve-cohesion,
+    }
+
+    /// Priority levels
+    enum priority-level {
+        critical,
+        high,
+        medium,
+        low,
+    }
+
+    /// Effort levels
+    enum effort-level {
+        minimal,
+        small,
+        medium,
+        large,
+        epic,
+    }
+
+    /// Quality gate result
+    record quality-gate-result {
+        gate-name: string,
+        passed: bool,
+        threshold: float64,
+        actual-value: float64,
+        metric-name: string,
+        message: string,
+    }
+
+    /// Performance metrics
+    record performance-metrics {
+        algorithmic-complexity: complexity-class,
+        memory-complexity: complexity-class,
+        performance-hotspots: list<hotspot>,
+        potential-bottlenecks: list<bottleneck>,
+    }
+
+    /// Algorithmic complexity classes
+    enum complexity-class {
+        constant,      // O(1)
+        logarithmic,   // O(log n)
+        linear,        // O(n)
+        linearithmic,  // O(n log n)
+        quadratic,     // O(n²)
+        cubic,         // O(n³)
+        exponential,   // O(2^n)
+        factorial,     // O(n!)
+        unknown,
+    }
+
+    /// Performance hotspot
+    record hotspot {
+        function-name: string,
+        file: string,
+        span: span,
+        complexity: complexity-class,
+        estimated-cpu-impact: float64,
+        estimated-memory-impact: float64,
+        suggestions: list<string>,
+    }
+
+    /// Performance bottleneck
+    record bottleneck {
+        type: bottleneck-type,
+        location: span,
+        description: string,
+        severity: severity-level,
+        optimization-suggestions: list<string>,
+    }
+
+    /// Bottleneck types
+    enum bottleneck-type {
+        nested-loops,
+        recursive-calls,
+        io-operations,
+        memory-allocation,
+        synchronization,
+        database-queries,
+        network-calls,
+    }
+
+    /// Severity levels
+    enum severity-level {
+        critical,
+        major,
+        minor,
+        info,
+    }
+
+    /// Comprehensive metrics suite
+    record comprehensive-metrics {
+        complexity: complexity-metrics,
+        coupling: coupling-metrics,
+        cohesion: cohesion-metrics,
+        size: size-metrics,
+        inheritance: inheritance-metrics,
+        historical: option<historical-metrics>,
+        maintainability: maintainability-metrics,
+        performance: performance-metrics,
+        custom-metrics: list<tuple<string, float64>>,
+    }
+
+    /// Visualization configuration
+    record visualization-config {
+        chart-type: chart-type,
+        metrics: list<string>,
+        grouping: option<grouping-config>,
+        filtering: option<filter-config>,
+        styling: option<style-config>,
+    }
+
+    /// Chart types
+    enum chart-type {
+        treemap,
+        scatter-plot,
+        bar-chart,
+        line-chart,
+        heatmap,
+        network-graph,
+        sankey-diagram,
+        bubble-chart,
+        radar-chart,
+    }
+
+    /// Grouping configuration
+    record grouping-config {
+        group-by: grouping-criteria,
+        aggregation: aggregation-function,
+    }
+
+    /// Grouping criteria
+    enum grouping-criteria {
+        file-type,
+        directory,
+        package,
+        namespace,
+        class,
+        author,
+        date-range,
+    }
+
+    /// Aggregation functions
+    enum aggregation-function {
+        sum,
+        average,
+        median,
+        maximum,
+        minimum,
+        count,
+    }
+
+    /// Filter configuration
+    record filter-config {
+        include-patterns: list<string>,
+        exclude-patterns: list<string>,
+        metric-thresholds: list<tuple<string, float64>>,
+        date-range: option<tuple<u64, u64>>,
+    }
+
+    /// Style configuration
+    record style-config {
+        color-scheme: color-scheme,
+        size-metric: string,
+        color-metric: string,
+        layout: layout-algorithm,
+    }
+
+    /// Color schemes
+    enum color-scheme {
+        viridis,
+        plasma,
+        inferno,
+        red-green,
+        blue-red,
+        categorical,
+        grayscale,
+    }
+
+    /// Layout algorithms
+    enum layout-algorithm {
+        hierarchical,
+        force-directed,
+        circular,
+        grid,
+        treemap,
+    }
+
+    /// Generated visualization
+    record visualization-result {
+        chart-type: chart-type,
+        data: string, // JSON data for the visualization
+        config: string, // Configuration for rendering
+        metadata: visualization-metadata,
+    }
+
+    /// Visualization metadata
+    record visualization-metadata {
+        title: string,
+        description: string,
+        data-points: u32,
+        generated-at: u64,
+        metrics-included: list<string>,
+        filters-applied: list<string>,
+    }
+
+    /// Plugin interface functions
+    export calculate-comprehensive-metrics: func(file: source-file) -> result<comprehensive-metrics, string>;
+    export calculate-historical-metrics: func(file-path: string, git-repo: string) -> result<historical-metrics, string>;
+    export detect-hotspots: func(metrics: comprehensive-metrics, thresholds: list<tuple<string, float64>>) -> list<hotspot>;
+    export suggest-refactoring: func(metrics: comprehensive-metrics) -> list<refactoring-suggestion>;
+    export generate-visualization: func(metrics: list<comprehensive-metrics>, config: visualization-config) -> result<visualization-result, string>;
+    export evaluate-quality-gates: func(metrics: comprehensive-metrics, gates: list<quality-gate-result>) -> list<quality-gate-result>;
+
+    /// Host functions for metrics calculation
+    import analyze-git-history: func(repo-path: string, file-path: string, months: u32) -> result<historical-metrics, string>;
+    import calculate-ast-metrics: func(ast: ast-node, language: string) -> result<complexity-metrics, string>;
+    import analyze-dependencies: func(ast: ast-node, file-path: string) -> result<coupling-metrics, string>;
+    import detect-code-patterns: func(ast: ast-node, patterns: list<string>) -> result<list<tuple<string, span>>, string>;
+
+    /// Visualization functions
+    import render-treemap: func(data: string, config: style-config) -> result<string, string>;
+    import render-network-graph: func(nodes: list<tuple<string, float64>>, edges: list<tuple<string, string, float64>>) -> result<string, string>;
+    import render-heatmap: func(matrix: list<list<float64>>, labels: list<string>) -> result<string, string>;
+
+    /// Benchmarking and comparison
+    import compare-with-baseline: func(current: comprehensive-metrics, baseline: comprehensive-metrics) -> result<comparison-result, string>;
+    import load-industry-benchmarks: func(language: string, project-size: project-size-category) -> result<comprehensive-metrics, string>;
+
+    /// Comparison result
+    record comparison-result {
+        improved-metrics: list<string>,
+        degraded-metrics: list<string>,
+        stability-score: float64,
+        overall-trend: trend-direction,
+        recommendations: list<string>,
+    }
+
+    /// Trend direction
+    enum trend-direction {
+        improving,
+        stable,
+        degrading,
+    }
+
+    /// Project size categories
+    enum project-size-category {
+        small,      // < 10k LOC
+        medium,     // 10k - 100k LOC
+        large,      // 100k - 1M LOC
+        enterprise, // > 1M LOC
+    }
+}

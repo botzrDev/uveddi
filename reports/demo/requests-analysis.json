@@ -1,0 +1,209 @@
+{
+  "timestamp": "2025-08-20 19:05:29 UTC",
+  "repository": "requests",
+  "language": "python",
+  "analysis_time": 45.2,
+  "summary": {
+    "total_findings": 23,
+    "detectors_run": 5,
+    "successful_detectors": 5
+  },
+  "detectors": {
+    "god_object": {
+      "success": true,
+      "execution_time": 3.1,
+      "findings_count": 2,
+      "findings": [
+        {
+          "id": "god_object_1",
+          "severity": "medium",
+          "description": "Mock god_object finding 1",
+          "file": "src/mock_file_1.py",
+          "line": 10
+        },
+        {
+          "id": "god_object_2",
+          "severity": "medium",
+          "description": "Mock god_object finding 2",
+          "file": "src/mock_file_2.py",
+          "line": 15
+        }
+      ]
+    },
+    "magic_values": {
+      "success": true,
+      "execution_time": 2.8,
+      "findings_count": 14,
+      "findings": [
+        {
+          "id": "magic_values_1",
+          "severity": "medium",
+          "description": "Mock magic_values finding 1",
+          "file": "src/mock_file_1.py",
+          "line": 10
+        },
+        {
+          "id": "magic_values_2",
+          "severity": "medium",
+          "description": "Mock magic_values finding 2",
+          "file": "src/mock_file_2.py",
+          "line": 15
+        },
+        {
+          "id": "magic_values_3",
+          "severity": "medium",
+          "description": "Mock magic_values finding 3",
+          "file": "src/mock_file_3.py",
+          "line": 20
+        },
+        {
+          "id": "magic_values_4",
+          "severity": "medium",
+          "description": "Mock magic_values finding 4",
+          "file": "src/mock_file_4.py",
+          "line": 25
+        },
+        {
+          "id": "magic_values_5",
+          "severity": "medium",
+          "description": "Mock magic_values finding 5",
+          "file": "src/mock_file_5.py",
+          "line": 30
+        },
+        {
+          "id": "magic_values_6",
+          "severity": "medium",
+          "description": "Mock magic_values finding 6",
+          "file": "src/mock_file_6.py",
+          "line": 35
+        },
+        {
+          "id": "magic_values_7",
+          "severity": "medium",
+          "description": "Mock magic_values finding 7",
+          "file": "src/mock_file_7.py",
+          "line": 40
+        },
+        {
+          "id": "magic_values_8",
+          "severity": "medium",
+          "description": "Mock magic_values finding 8",
+          "file": "src/mock_file_8.py",
+          "line": 45
+        },
+        {
+          "id": "magic_values_9",
+          "severity": "medium",
+          "description": "Mock magic_values finding 9",
+          "file": "src/mock_file_9.py",
+          "line": 50
+        },
+        {
+          "id": "magic_values_10",
+          "severity": "medium",
+          "description": "Mock magic_values finding 10",
+          "file": "src/mock_file_10.py",
+          "line": 55
+        },
+        {
+          "id": "magic_values_11",
+          "severity": "medium",
+          "description": "Mock magic_values finding 11",
+          "file": "src/mock_file_11.py",
+          "line": 60
+        },
+        {
+          "id": "magic_values_12",
+          "severity": "medium",
+          "description": "Mock magic_values finding 12",
+          "file": "src/mock_file_12.py",
+          "line": 65
+        },
+        {
+          "id": "magic_values_13",
+          "severity": "medium",
+          "description": "Mock magic_values finding 13",
+          "file": "src/mock_file_13.py",
+          "line": 70
+        },
+        {
+          "id": "magic_values_14",
+          "severity": "medium",
+          "description": "Mock magic_values finding 14",
+          "file": "src/mock_file_14.py",
+          "line": 75
+        }
+      ]
+    },
+    "code_duplication": {
+      "success": true,
+      "execution_time": 8.4,
+      "findings_count": 5,
+      "findings": [
+        {
+          "id": "code_duplication_1",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 1",
+          "file": "src/mock_file_1.py",
+          "line": 10
+        },
+        {
+          "id": "code_duplication_2",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 2",
+          "file": "src/mock_file_2.py",
+          "line": 15
+        },
+        {
+          "id": "code_duplication_3",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 3",
+          "file": "src/mock_file_3.py",
+          "line": 20
+        },
+        {
+          "id": "code_duplication_4",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 4",
+          "file": "src/mock_file_4.py",
+          "line": 25
+        },
+        {
+          "id": "code_duplication_5",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 5",
+          "file": "src/mock_file_5.py",
+          "line": 30
+        }
+      ]
+    },
+    "dead_code": {
+      "success": true,
+      "execution_time": 1.2,
+      "findings_count": 1,
+      "findings": [
+        {
+          "id": "dead_code_1",
+          "severity": "medium",
+          "description": "Mock dead_code finding 1",
+          "file": "src/mock_file_1.py",
+          "line": 10
+        }
+      ]
+    },
+    "long_methods": {
+      "success": true,
+      "execution_time": 2.7,
+      "findings_count": 1,
+      "findings": [
+        {
+          "id": "long_methods_1",
+          "severity": "medium",
+          "description": "Mock long_methods finding 1",
+          "file": "src/mock_file_1.py",
+          "line": 10
+        }
+      ]
+    }
+  }
+}

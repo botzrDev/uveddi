@@ -1,0 +1,100 @@
+# Uveddi Configuration Template: TypeScript React Application
+# Optimized for React applications with TypeScript
+
+# AI Configuration
+ollama_model = "deepseek-coder:6.7b-instruct-q4_0"
+
+[dead_code]
+# Balanced confidence for TypeScript's static typing
+confidence_threshold = 0.8
+library_mode = false
+
+# React/TypeScript specific ignore patterns
+ignore_patterns = [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".next/**",
+    "out/**",
+    "coverage/**",
+    "*.min.js",
+    "*.min.css",
+    "public/**",
+    "static/**",
+    "__tests__/**",
+    "*.test.ts",
+    "*.test.tsx",
+    "*.spec.ts", 
+    "*.spec.tsx",
+    "*.stories.ts",
+    "*.stories.tsx",
+    "*.d.ts",
+    "webpack.config.js",
+    "rollup.config.js",
+    "vite.config.ts"
+]
+
+# Keep React/TypeScript patterns alive
+keep_alive_patterns = [
+    "export",
+    "export default",
+    "React.FC",
+    "Component",
+    "function",
+    "const",
+    "interface",
+    "type",
+    "enum",
+    "namespace",
+    "useEffect",
+    "useState",
+    "useCallback",
+    "useMemo",
+    "forwardRef",
+    "memo"
+]
+
+[large_classes]
+# React components should stay small
+max_logical_loc = 200
+max_methods = 20
+max_fields = 15
+max_cyclomatic_complexity = 12
+max_cognitive_complexity = 15
+max_lcom_score = 0.75
+max_coupling = 25
+
+# React/TypeScript specific ignore patterns
+ignore_patterns = [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    "__tests__/**",
+    "*.test.ts",
+    "*.test.tsx",
+    "*.stories.ts",
+    "*.stories.tsx",
+    "*.d.ts",
+    "src/types/**",
+    "src/constants/**",
+    "src/utils/**"
+]
+
+# Language-specific overrides
+[large_classes.language_overrides.typescript]
+max_logical_loc = 200
+max_methods = 20
+max_fields = 15
+max_cyclomatic_complexity = 12
+max_cognitive_complexity = 15
+max_lcom_score = 0.75
+max_coupling = 25
+
+[large_classes.language_overrides.javascript]
+max_logical_loc = 180
+max_methods = 18
+max_fields = 12
+max_cyclomatic_complexity = 10
+max_cognitive_complexity = 12
+max_lcom_score = 0.7
+max_coupling = 22

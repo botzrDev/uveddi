@@ -1,0 +1,123 @@
+# Performance Analyzer Plugin Manifest
+
+[plugin]
+id = "performance-analyzer"
+name = "Performance Analyzer"
+version = "1.0.0"
+description = "Analyzes code for performance anti-patterns and provides optimization suggestions"
+author = "Uveddi Team"
+license = "MIT"
+homepage = "https://github.com/uveddi/plugins/performance-analyzer"
+repository = "https://github.com/uveddi/plugins/performance-analyzer"
+documentation = "https://docs.uveddi.dev/plugins/performance-analyzer"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "performance"
+tags = ["performance", "optimization", "complexity", "memory", "cpu"]
+maturity = "stable"
+
+[plugin.support]
+supported_languages = ["rust", "javascript", "typescript", "python", "java", "go"]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+# Performance-specific analysis capabilities
+detectors = [
+    "nested_loops",
+    "string_concatenation_loop", 
+    "synchronous_file_io",
+    "unoptimized_regex",
+    "memory_allocation_loop",
+    "inefficient_data_structures",
+    "blocking_operations",
+    "cpu_intensive_patterns"
+]
+
+# Issue categories this plugin can detect
+categories = ["performance", "complexity", "maintainability"]
+
+# Metrics this plugin provides
+metrics = [
+    "performance_score",
+    "hotspot_count",
+    "complexity_rating",
+    "memory_efficiency",
+    "cpu_efficiency"
+]
+
+[plugin.configuration]
+# Default configuration values
+default_severity_threshold = "medium"
+default_max_issues_per_file = 50
+
+# Configurable options
+[plugin.configuration.options]
+max_loop_depth = { type = "integer", default = 5, description = "Maximum acceptable loop nesting depth" }
+complexity_threshold = { type = "integer", default = 15, description = "Complexity threshold for flagging functions" }
+string_concat_detection = { type = "boolean", default = true, description = "Enable string concatenation detection" }
+async_io_enforcement = { type = "boolean", default = false, description = "Flag all synchronous I/O operations" }
+memory_tracking = { type = "boolean", default = true, description = "Track memory allocation patterns" }
+
+[plugin.permissions]
+# Required permissions for this plugin
+required = ["read-files"]
+optional = ["system-info"]  # For more detailed performance analysis
+
+[plugin.resources]
+# Resource limits specific to this plugin
+max_memory_mb = 128
+max_cpu_percent = 20
+timeout_seconds = 60
+max_file_handles = 5
+
+[plugin.rules]
+# Performance analysis rules with metadata
+[plugin.rules.PERF001]
+name = "nested_loops"
+severity = "high"
+category = "complexity"
+message = "Nested loops detected - consider optimization"
+enabled = true
+
+[plugin.rules.PERF002]
+name = "memory_allocation_loop"
+severity = "medium"
+category = "memory"
+message = "Memory allocation inside loop"
+enabled = true
+
+[plugin.rules.PERF003]
+name = "string_concatenation_loop"
+severity = "medium"
+category = "memory"
+message = "String concatenation in loop"
+enabled = true
+
+[plugin.rules.PERF004]
+name = "synchronous_file_io"
+severity = "low"
+category = "blocking"
+message = "Synchronous file I/O detected"
+enabled = false  # Disabled by default as it can be noisy
+
+[plugin.build]
+# Build configuration
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/performance_analyzer_plugin.wasm"
+
+[plugin.testing]
+# Test configuration
+test_files = [
+    "tests/fixtures/nested_loops.rs",
+    "tests/fixtures/string_concat.js",
+    "tests/fixtures/sync_io.py"
+]
+expected_issues = [
+    { file = "nested_loops.rs", rule = "PERF001", count = 1 },
+    { file = "string_concat.js", rule = "PERF003", count = 2 },
+    { file = "sync_io.py", rule = "PERF004", count = 1 }
+]

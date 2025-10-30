@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /home/austingreen/Documents/botzr/projects/uveddi/tests -type d -name __pycache__ -exec rm -rf {} +)",
+      "Bash(rm -rf /home/austingreen/Documents/botzr/projects/uveddi/alpha-test-results)",
+      "Bash(rm -rf /home/austingreen/Documents/botzr/projects/uveddi/assignments)",
+      "Bash(rm -f BUILD-VERSIONING-SYSTEM.md COMMENT_AUDIT_REPORT.md VALIDATION-REPORT.md VALIDATION-SUMMARY.md COMMIT_MESSAGE_DB05.txt)",
+      "Bash(rm -f RELEASE_NOTES_v0.9.0-alpha.md RELEASE_NOTES_v1.0.0.md RELEASE_BUILD_GUIDE.md VERSION-RELEASE-WORKFLOW.md)",
+      "Bash(cargo build --release --bin uveddi)",
+      "Bash(git tag:*)",
+      "Bash(ssh -T:*)",
+      "Read(//home/austingreen/test-uveddi-install/**)",
+      "Bash(uveddi analyze:*)",
+      "Bash(cat:*)",
+      "Bash(uveddi migrate:*)",
+      "Bash(uveddi init:*)",
+      "Bash(uveddi hooks --help:*)",
+      "Bash(uveddi ci --help:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

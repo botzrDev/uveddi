@@ -1,0 +1,310 @@
+name: 🧪 QA Validation - Detector Accuracy Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC to catch regressions
+    - cron: '0 2 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  detector-accuracy-tests:
+    name: 🎯 Detector Accuracy Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🦀 Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+        components: rustfmt, clippy
+
+    - name: 📦 Cache Dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target/
+        key: ${{ runner.os }}-cargo-qa-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-qa-
+          ${{ runner.os }}-cargo-
+
+    - name: 🔧 Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: 🏗️  Build Project
+      run: cargo build --release
+
+    - name: 🧪 Run Comprehensive QA Tests
+      run: |
+        ./scripts/run_qa_tests.sh
+      env:
+        RUST_LOG: info
+        UVEDDI_VERSION: ${{ github.sha }}
+
+    - name: 📊 Upload QA Reports
+      uses: actions/upload-artifact@v3
+      if: always()  # Upload even if tests fail
+      with:
+        name: qa-reports-${{ github.sha }}
+        path: target/qa-reports/
+        retention-days: 30
+
+    - name: 📈 Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Detector Accuracy Tests
+        path: target/qa-reports/test_results.json
+        reporter: java-junit
+        fail-on-error: true
+
+    - name: 💬 Comment PR with Results
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request' && always()
+      with:
+        script: |
+          const fs = require('fs');
+
+          // Read QA results
+          let summaryContent = '## 🧪 QA Validation Results\n\n';
+
+          try {
+            const dashboardPath = 'target/qa-reports/qa_dashboard.html';
+            if (fs.existsSync(dashboardPath)) {
+              summaryContent += '✅ **QA Dashboard Generated Successfully**\n\n';
+            }
+
+            const accuracyPath = 'target/qa-reports/accuracy_report.md';
+            if (fs.existsSync(accuracyPath)) {
+              const accuracyReport = fs.readFileSync(accuracyPath, 'utf8');
+              const lines = accuracyReport.split('\n').slice(0, 20); // First 20 lines
+              summaryContent += '### Accuracy Report Summary\n```\n' + lines.join('\n') + '\n```\n\n';
+            }
+
+            summaryContent += '📁 **Full reports available in CI artifacts**\n';
+            summaryContent += `🔗 **Download**: [qa-reports-${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+          } catch (error) {
+            summaryContent += `❌ **Error reading QA results**: ${error.message}`;
+          }
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summaryContent
+          });
+
+  regression-analysis:
+    name: 📈 Regression Analysis
+    runs-on: ubuntu-latest
+    needs: detector-accuracy-tests
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for regression analysis
+
+    - name: 🦀 Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: 📦 Download Previous QA Results
+      uses: actions/download-artifact@v3
+      with:
+        name: qa-reports-${{ github.sha }}
+        path: target/qa-reports/
+
+    - name: 📊 Run Regression Analysis
+      run: |
+        cargo test --release qa_automation::regression_tests -- --nocapture
+      env:
+        RUST_LOG: info
+
+    - name: 🚨 Alert on Regressions
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `🚨 Detector Regression Detected - ${new Date().toISOString()}`,
+            body: `
+              ## ⚠️ Regression Detection Alert
+
+              **Commit**: \`${{ github.sha }}\`
+              **Branch**: \`${{ github.ref_name }}\`
+              **Workflow**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+              ### 🔍 Issue Details
+              One or more detectors have shown performance regression compared to the baseline.
+
+              ### 📊 Next Steps
+              1. Review the regression analysis report in the workflow artifacts
+              2. Identify the specific detectors affected
+              3. Investigate recent changes that might have caused the regression
+              4. Fix the issues and update tests as needed
+
+              ### 🏷️ Labels
+              - regression
+              - qa-failure
+              - needs-investigation
+
+              **Auto-generated by QA Validation Workflow**
+            `,
+            labels: ['regression', 'qa-failure', 'needs-investigation', 'priority-high']
+          });
+
+  performance-benchmarks:
+    name: ⚡ Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: detector-accuracy-tests
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🦀 Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: 🏗️  Build Release
+      run: cargo build --release
+
+    - name: ⚡ Run Performance Benchmarks
+      run: |
+        cargo test --release qa_automation::performance_benchmarks -- --nocapture
+      env:
+        RUST_LOG: info
+
+    - name: 📊 Generate Performance Report
+      run: |
+        mkdir -p target/benchmarks
+        cargo bench --no-run
+        # Generate benchmark comparison report
+        echo "# Performance Benchmark Results" > target/benchmarks/performance_report.md
+        echo "Generated: $(date)" >> target/benchmarks/performance_report.md
+
+    - name: 📈 Upload Benchmark Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-benchmarks-${{ github.sha }}
+        path: target/benchmarks/
+        retention-days: 7
+
+  security-validation:
+    name: 🔒 Security Detector Validation
+    runs-on: ubuntu-latest
+    needs: detector-accuracy-tests
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🦀 Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: 🔒 Run Security Detector Tests
+      run: |
+        # Run specific security detector validation
+        cargo test --release security_detector -- --nocapture
+        cargo test --release injection_fixtures -- --nocapture
+        cargo test --release hardcoded_secrets_fixtures -- --nocapture
+      env:
+        RUST_LOG: info
+
+    - name: 🛡️  Validate OWASP Coverage
+      run: |
+        echo "🔍 Validating OWASP Top 10 coverage..."
+        # Check that all OWASP categories are covered
+        cargo run --release --bin owasp_coverage_validator
+
+    - name: 📊 Generate Security Report
+      run: |
+        mkdir -p target/security-reports
+        echo "# Security Validation Report" > target/security-reports/security_validation.md
+        echo "All OWASP Top 10 categories validated ✅" >> target/security-reports/security_validation.md
+
+  quality-gate:
+    name: 🚪 Quality Gate
+    runs-on: ubuntu-latest
+    needs: [detector-accuracy-tests, regression-analysis, performance-benchmarks, security-validation]
+    if: always()
+
+    steps:
+    - name: 🎯 Evaluate Quality Gate
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const detectorTests = '${{ needs.detector-accuracy-tests.result }}';
+          const regressionAnalysis = '${{ needs.regression-analysis.result }}';
+          const performanceBenchmarks = '${{ needs.performance-benchmarks.result }}';
+          const securityValidation = '${{ needs.security-validation.result }}';
+
+          const results = {
+            'Detector Accuracy Tests': detectorTests,
+            'Regression Analysis': regressionAnalysis,
+            'Performance Benchmarks': performanceBenchmarks,
+            'Security Validation': securityValidation
+          };
+
+          let allPassed = true;
+          let summary = '## 🚪 Quality Gate Results\n\n';
+
+          for (const [testName, result] of Object.entries(results)) {
+            const status = result === 'success' ? '✅' : result === 'skipped' ? '⏭️' : '❌';
+            summary += `- ${status} **${testName}**: ${result}\n`;
+
+            if (result !== 'success' && result !== 'skipped') {
+              allPassed = false;
+            }
+          }
+
+          summary += '\n';
+
+          if (allPassed) {
+            summary += '🎉 **Quality Gate: PASSED** ✅\n';
+            summary += 'All detector validation tests passed successfully!';
+            core.setOutput('quality_gate', 'passed');
+          } else {
+            summary += '❌ **Quality Gate: FAILED**\n';
+            summary += 'One or more validation tests failed. Please review the results above.';
+            core.setOutput('quality_gate', 'failed');
+            core.setFailed('Quality gate failed');
+          }
+
+          console.log(summary);
+
+    - name: 📝 Update Status
+      if: always()
+      run: |
+        echo "Quality gate status: ${{ steps.quality-gate.outputs.quality_gate }}"

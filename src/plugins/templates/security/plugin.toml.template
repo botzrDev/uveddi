@@ -1,0 +1,136 @@
+# {PLUGIN_NAME} Security Plugin Manifest
+
+[plugin]
+id = "{PLUGIN_ID}"
+name = "{PLUGIN_NAME}"
+version = "{VERSION}"
+description = "{PLUGIN_DESCRIPTION}"
+author = "{AUTHOR}"
+license = "{LICENSE}"
+homepage = "https://github.com/your-org/plugins/{PLUGIN_ID}"
+repository = "https://github.com/your-org/plugins/{PLUGIN_ID}"
+documentation = "https://docs.your-org.com/plugins/{PLUGIN_ID}"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "security"
+tags = ["security", "vulnerability", "compliance", "secrets", "injection"]
+maturity = "beta"
+security_focused = true
+generated = true
+generation_timestamp = "{GENERATION_TIMESTAMP}"
+generator_version = "1.0.0"
+
+[plugin.support]
+supported_languages = [{SUPPORTED_LANGUAGES}]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+detectors = [
+    "hardcoded_password",
+    "sql_injection",
+    "weak_crypto",
+    "xss_vulnerability",
+    "dangerous_function",
+]
+
+categories = ["security"]
+
+metrics = [
+    "security_score",
+    "critical_vulnerabilities", 
+    "vulnerability_count",
+    "secrets_detected",
+    "injection_risks"
+]
+
+# Security standards compliance
+compliance_frameworks = ["OWASP", "CWE", "SANS"]
+
+[plugin.configuration]
+default_severity_threshold = "medium"
+default_max_issues_per_file = 100
+
+[plugin.configuration.options]
+check_secrets = { type = "boolean", default = true, description = "Check for hardcoded secrets and API keys" }
+check_injections = { type = "boolean", default = true, description = "Check for injection vulnerabilities" }
+check_crypto = { type = "boolean", default = true, description = "Check for weak cryptographic practices" }
+check_xss = { type = "boolean", default = true, description = "Check for XSS vulnerabilities" }
+compliance_level = { type = "string", default = "standard", values = ["minimal", "standard", "strict"], description = "Security compliance level" }
+
+[plugin.permissions]
+required = ["read-files"]
+optional = ["network-access", "system-info"]
+network_access_reason = "Fetch latest vulnerability data and security advisories"
+system_info_reason = "Analyze system security configuration"
+
+[plugin.resources]
+max_memory_mb = 128
+max_cpu_percent = 25
+timeout_seconds = 90
+max_file_handles = 10
+
+[plugin.security]
+sandbox_mode = "strict"
+audit_logging = true
+
+[plugin.rules]
+[plugin.rules.SEC001]
+name = "hardcoded_password"
+severity = "high"
+category = "secrets"
+message = "Hardcoded password detected"
+enabled = true
+cwe_id = "CWE-798"
+
+[plugin.rules.SEC002]
+name = "sql_injection"
+severity = "critical"
+category = "injection"
+message = "Potential SQL injection vulnerability"
+enabled = true
+cwe_id = "CWE-89"
+
+[plugin.rules.SEC003]
+name = "weak_crypto"
+severity = "medium"
+category = "cryptography"
+message = "Weak cryptographic algorithm detected"
+enabled = true
+cwe_id = "CWE-327"
+
+[plugin.rules.SEC004]
+name = "xss_vulnerability"
+severity = "high"
+category = "xss"
+message = "Potential XSS vulnerability"
+enabled = true
+cwe_id = "CWE-79"
+
+[plugin.rules.SEC005]
+name = "dangerous_function"
+severity = "critical"
+category = "code_injection"
+message = "Dangerous function call detected"
+enabled = true
+cwe_id = "CWE-94"
+
+[plugin.build]
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/{PLUGIN_ID_SNAKE}_security_plugin.wasm"
+
+[plugin.testing]
+test_files = [
+    "examples/fixtures/hardcoded_secrets.rs",
+    "examples/fixtures/sql_injection.js",
+    "examples/fixtures/xss_vulnerable.html",
+]
+
+expected_issues = [
+    { file = "hardcoded_secrets.rs", rule = "SEC001", count = 1 },
+    { file = "sql_injection.js", rule = "SEC002", count = 2 },
+    { file = "xss_vulnerable.html", rule = "SEC004", count = 1 },
+]

@@ -1,0 +1,167 @@
+# Uveddi Configuration Template: Monorepo Project
+# Optimized for large monorepo projects with multiple languages
+
+# AI Configuration - Larger model for complex codebases
+ollama_model = "codellama:7b-instruct"
+
+[dead_code]
+# Lower confidence for complex monorepo interactions
+confidence_threshold = 0.75
+library_mode = false
+
+# Comprehensive ignore patterns for monorepo
+ignore_patterns = [
+    # Build and dependency directories
+    "node_modules/**",
+    "target/**", 
+    "**/target/**",
+    "dist/**",
+    "build/**",
+    "out/**",
+    ".next/**",
+    
+    # Cache and temporary directories
+    "__pycache__/**",
+    ".pytest_cache/**",
+    ".coverage/**",
+    "coverage/**",
+    ".nyc_output/**",
+    
+    # Language-specific patterns
+    "*.pyc",
+    "*.pyo",
+    "*.min.js",
+    "*.min.css",
+    "Cargo.lock",
+    "yarn.lock",
+    "package-lock.json",
+    
+    # Test directories
+    "tests/**",
+    "test/**",
+    "__tests__/**",
+    "spec/**",
+    "**/tests/**",
+    "*.test.*",
+    "*.spec.*",
+    
+    # Documentation and examples
+    "docs/**",
+    "documentation/**",
+    "examples/**",
+    "demo/**",
+    "samples/**",
+    "*.md",
+    
+    # Configuration files
+    "*.config.js",
+    "*.config.ts",
+    "webpack.config.*",
+    "rollup.config.*",
+    "vite.config.*",
+    
+    # IDE and editor files
+    ".vscode/**",
+    ".idea/**",
+    "*.swp",
+    "*.swo",
+    ".DS_Store"
+]
+
+# Keep common patterns alive across languages
+keep_alive_patterns = [
+    # Rust
+    "pub fn", "pub struct", "pub enum", "pub trait", "main",
+    # Python  
+    "__init__", "__main__", "main", "app", "def save", "def clean",
+    # TypeScript/JavaScript
+    "export", "export default", "function", "const", "interface", "type",
+    # Go
+    "func main", "func init", "func New",
+    # Java
+    "public static void main", "public class", "public interface",
+    # Common
+    "Main", "main", "init", "setup", "configure"
+]
+
+[large_classes]
+# More lenient thresholds for large, complex projects
+max_logical_loc = 400
+max_methods = 40
+max_fields = 30
+max_cyclomatic_complexity = 20
+max_cognitive_complexity = 25
+max_lcom_score = 0.85
+max_coupling = 40
+
+# Monorepo specific ignore patterns
+ignore_patterns = [
+    # All build/dist directories
+    "**/node_modules/**",
+    "**/target/**",
+    "**/dist/**",
+    "**/build/**",
+    
+    # All test directories
+    "**/tests/**",
+    "**/test/**",
+    "**/__tests__/**",
+    "**/*test*",
+    "**/*spec*",
+    
+    # Configuration and tooling
+    "**/config/**",
+    "**/configs/**",
+    "**/.config/**",
+    "**/tools/**",
+    "**/scripts/**",
+    
+    # Generated code
+    "**/generated/**",
+    "**/gen/**",
+    "**/*generated*",
+    "**/proto/**",
+    
+    # Package-specific
+    "packages/**/lib/**",
+    "packages/**/es/**",
+    "apps/**/public/**",
+    "libs/**/dist/**"
+]
+
+# Language-specific overrides for monorepo
+[large_classes.language_overrides.rust]
+max_logical_loc = 200
+max_methods = 20
+max_fields = 15
+max_cyclomatic_complexity = 15
+max_cognitive_complexity = 18
+max_lcom_score = 0.75
+max_coupling = 25
+
+[large_classes.language_overrides.python]
+max_logical_loc = 350
+max_methods = 35
+max_fields = 25
+max_cyclomatic_complexity = 18
+max_cognitive_complexity = 22
+max_lcom_score = 0.8
+max_coupling = 35
+
+[large_classes.language_overrides.typescript]
+max_logical_loc = 250
+max_methods = 25
+max_fields = 20
+max_cyclomatic_complexity = 15
+max_cognitive_complexity = 20
+max_lcom_score = 0.8
+max_coupling = 30
+
+[large_classes.language_overrides.javascript] 
+max_logical_loc = 220
+max_methods = 22
+max_fields = 18
+max_cyclomatic_complexity = 12
+max_cognitive_complexity = 18
+max_lcom_score = 0.75
+max_coupling = 28

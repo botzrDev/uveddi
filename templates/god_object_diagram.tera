@@ -1,0 +1,39 @@
+{#  God Object Class Diagram Template  #}
+{#  Visualizes large classes/modules with excessive responsibilities  #}
+graph {{ layout }}
+
+{%- for component in components %}
+  {%- if component.type == "god_object" %}
+    {{ component.id }}["🏗️ {{ component.name }}<br/>{{ component.members_count }} members"]
+    class {{ component.id }} god-object-critical
+  {%- elif component.related_to_god_object %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} god-object-related
+  {%- else %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} normal-component
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.strength == "high" %}
+    {{ dependency.from_id }} -.->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- else %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend:",color:" }}
+  {%- endfor %}
+{%- else %}
+  {#  Default styles for God Object detection  #}
+  classDef god-object-critical fill:#FF4444,stroke:#CC0000,stroke-width:3px,color:#FFF
+  classDef god-object-related fill:#FFB366,stroke:#FF8800,stroke-width:2px
+  classDef normal-component fill:#E8F4F8,stroke:#4A90A4,stroke-width:1px
+{%- endif %}
+
+{%- if title %}
+subgraph "{{ title }}"
+{%- endif %}

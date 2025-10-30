@@ -1,0 +1,401 @@
+name: Frontend E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/frontend-e2e.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Frontend unit tests and build
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Build application
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 1
+
+  # Backend setup and tests
+  backend-setup:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run backend tests
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        run: |
+          python -m pytest tests/ -v
+
+      - name: Start backend server
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        run: |
+          python main.py &
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+
+  # End-to-end tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: [frontend-build, backend-setup]
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        # Run tests across multiple browsers
+        browser: [chrome, firefox, edge]
+        # Split tests into groups for parallel execution
+        test-group: [
+          "landing-page,authentication",
+          "dashboard,analysis-details", 
+          "user-journey,performance",
+          "accessibility"
+        ]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Python for backend
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup test database
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        run: |
+          python -c "
+          import asyncio
+          from database import create_tables
+          asyncio.run(create_tables())
+          "
+
+      - name: Start backend server
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        run: |
+          python main.py &
+          echo $! > backend.pid
+          sleep 15
+          curl -f http://localhost:8000/health || (cat backend.log && exit 1)
+
+      - name: Run Cypress E2E tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          start: npm run dev
+          wait-on: 'http://localhost:9999'
+          wait-on-timeout: 120
+          browser: ${{ matrix.browser }}
+          spec: cypress/e2e/{${{ matrix.test-group }}}*.cy.ts
+          config: video=true,screenshotOnRunFailure=true
+        env:
+          CYPRESS_baseUrl: http://localhost:9999
+          CYPRESS_apiUrl: http://localhost:8000
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-artifacts-${{ matrix.browser }}-${{ matrix.test-group }}
+          path: |
+            frontend/cypress/screenshots/
+            frontend/cypress/videos/
+          retention-days: 7
+
+      - name: Stop backend server
+        if: always()
+        working-directory: ./backend
+        run: |
+          if [ -f backend.pid ]; then
+            kill $(cat backend.pid) || true
+          fi
+
+  # Performance benchmarking
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: [frontend-build]
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './frontend/.lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Run performance tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          start: npm run preview
+          wait-on: 'http://localhost:4173'
+          spec: cypress/e2e/performance.cy.ts
+          config: video=false
+        env:
+          CYPRESS_baseUrl: http://localhost:4173
+
+  # Accessibility testing
+  accessibility-tests:
+    runs-on: ubuntu-latest
+    needs: [frontend-build]
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run accessibility tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          start: npm run dev
+          wait-on: 'http://localhost:9999'
+          spec: cypress/e2e/accessibility.cy.ts
+          config: video=false
+        env:
+          CYPRESS_baseUrl: http://localhost:9999
+
+      - name: Upload accessibility report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accessibility-report
+          path: frontend/cypress/reports/
+          retention-days: 30
+
+  # Test results summary
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, performance-tests, accessibility-tests]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate test summary
+        run: |
+          echo "# Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Tests" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "✅ All E2E tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some E2E tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Performance Tests" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.performance-tests.result }}" == "success" ]; then
+            echo "✅ Performance tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Performance tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Accessibility Tests" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.accessibility-tests.result }}" == "success" ]; then
+            echo "✅ Accessibility tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Accessibility tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `
+            ## 🧪 Test Results
+            
+            | Test Suite | Status |
+            |------------|--------|
+            | E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+            | Performance | ${{ needs.performance-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+            | Accessibility | ${{ needs.accessibility-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+            
+            **Test Coverage:**
+            - 🌐 Landing Page & Navigation
+            - 🔐 Authentication Flows
+            - 📊 Dashboard & Data Display
+            - 📈 Analysis Details & Reports
+            - 🚀 Performance Benchmarks
+            - ♿ Accessibility Compliance
+            - 🔄 End-to-End User Journeys
+            
+            View detailed results in the [Actions tab](${context.payload.pull_request.html_url}/checks).
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+# Slack notification for test failures
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, performance-tests, accessibility-tests]
+    if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#uveddi-alerts'
+          text: |
+            🚨 Frontend E2E tests failed on ${{ github.ref_name }}
+            
+            Failed jobs:
+            ${{ needs.e2e-tests.result != 'success' && '• E2E Tests' || '' }}
+            ${{ needs.performance-tests.result != 'success' && '• Performance Tests' || '' }}
+            ${{ needs.accessibility-tests.result != 'success' && '• Accessibility Tests' || '' }}
+            
+            View details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,75 @@
+# Pre-commit hooks configuration for Uveddi
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Rust formatting and linting
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: Cargo Format
+        entry: cargo fmt --all
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: Cargo Clippy
+        entry: cargo clippy
+        language: system
+        types: [rust]
+        pass_filenames: false
+        args: ['--all-targets', '--all-features', '--', '-D', 'warnings']
+
+      - id: cargo-check
+        name: Cargo Check
+        entry: cargo check
+        language: system
+        types: [rust]
+        pass_filenames: false
+        args: ['--all-targets', '--all-features']
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Markdown formatting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        exclude: '^(CHANGELOG\.md|node_modules/)'
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '\.lock$'
+
+  # Rust-specific security audit
+  - repo: local
+    hooks:
+      - id: cargo-audit
+        name: Cargo Security Audit
+        entry: cargo audit
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [manual]  # Only run manually due to potential network calls
+
+# Configuration for markdownlint
+# Create .markdownlint.json if you want custom rules

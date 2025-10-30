@@ -1,0 +1,176 @@
+# Code Complexity Analyzer Plugin Manifest
+
+[plugin]
+id = "complexity-analyzer"
+name = "Code Complexity Analyzer"
+version = "1.0.0"
+description = "Analyzes code complexity using multiple metrics including Cyclomatic Complexity, Halstead Metrics, and Cognitive Complexity"
+author = "Uveddi Team"
+license = "MIT"
+homepage = "https://github.com/uveddi/plugins/complexity-analyzer"
+repository = "https://github.com/uveddi/plugins/complexity-analyzer"
+documentation = "https://docs.uveddi.dev/plugins/complexity-analyzer"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "complexity"
+tags = ["complexity", "metrics", "maintainability", "cyclomatic", "halstead", "cognitive"]
+maturity = "stable"
+
+[plugin.support]
+supported_languages = [
+    "rust", "javascript", "typescript", "python", 
+    "java", "go", "c", "cpp", "csharp"
+]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+# Complexity analysis capabilities
+detectors = [
+    "high_cyclomatic_complexity",
+    "high_cognitive_complexity", 
+    "long_function",
+    "too_many_parameters",
+    "deep_nesting",
+    "low_maintainability_index"
+]
+
+# Metrics categories
+categories = ["complexity", "maintainability"]
+
+# Complexity metrics provided
+metrics = [
+    "cyclomatic_complexity",
+    "cognitive_complexity",
+    "halstead_difficulty",
+    "maintainability_index",
+    "average_function_complexity",
+    "max_nesting_depth",
+    "function_count",
+    "high_complexity_functions"
+]
+
+# Supported complexity standards
+standards = ["ISO/IEC 25023", "IEEE 982.1", "McCabe"]
+
+[plugin.configuration]
+default_severity_threshold = "medium"
+default_max_issues_per_file = 50
+
+[plugin.configuration.options]
+cyclomatic_threshold = { type = "integer", default = 10, min = 1, max = 50, description = "Cyclomatic complexity threshold" }
+cognitive_threshold = { type = "integer", default = 15, min = 1, max = 50, description = "Cognitive complexity threshold" }  
+max_function_lines = { type = "integer", default = 50, min = 10, max = 500, description = "Maximum function length in lines" }
+max_parameters = { type = "integer", default = 6, min = 1, max = 20, description = "Maximum number of parameters" }
+max_nesting_depth = { type = "integer", default = 4, min = 1, max = 10, description = "Maximum nesting depth" }
+maintainability_threshold = { type = "float", default = 60.0, min = 0.0, max = 100.0, description = "Minimum maintainability index" }
+halstead_analysis = { type = "boolean", default = true, description = "Enable Halstead complexity metrics" }
+
+[plugin.permissions]
+required = ["read-files"]
+optional = []
+
+[plugin.resources]
+max_memory_mb = 128
+max_cpu_percent = 25
+timeout_seconds = 90
+max_file_handles = 5
+
+[plugin.metrics_config]
+# Complexity metric thresholds and scoring
+[plugin.metrics_config.cyclomatic_complexity]
+excellent = { max = 5, score = 100 }
+good = { max = 10, score = 80 }
+acceptable = { max = 15, score = 60 }
+poor = { max = 20, score = 40 }
+very_poor = { max = 999, score = 20 }
+
+[plugin.metrics_config.cognitive_complexity]
+excellent = { max = 5, score = 100 }
+good = { max = 15, score = 80 }
+acceptable = { max = 25, score = 60 }
+poor = { max = 50, score = 40 }
+very_poor = { max = 999, score = 20 }
+
+[plugin.metrics_config.maintainability_index]
+excellent = { min = 85, score = 100 }
+good = { min = 70, score = 80 }
+acceptable = { min = 55, score = 60 }
+poor = { min = 40, score = 40 }
+very_poor = { min = 0, score = 20 }
+
+[plugin.rules]
+# Cyclomatic Complexity
+[plugin.rules.COMP001]
+name = "high_cyclomatic_complexity"
+severity = "medium"
+category = "complexity"
+message = "High cyclomatic complexity"
+enabled = true
+threshold = 10
+
+[plugin.rules.COMP002]
+name = "high_cognitive_complexity"  
+severity = "medium"
+category = "complexity"
+message = "High cognitive complexity"
+enabled = true
+threshold = 15
+
+[plugin.rules.COMP003]
+name = "long_function"
+severity = "low"
+category = "maintainability" 
+message = "Function is too long"
+enabled = true
+threshold = 50
+
+[plugin.rules.COMP004]
+name = "too_many_parameters"
+severity = "low"
+category = "maintainability"
+message = "Too many function parameters"
+enabled = true
+threshold = 6
+
+[plugin.rules.COMP005]
+name = "deep_nesting"
+severity = "medium"
+category = "complexity"
+message = "Deep nesting detected"
+enabled = true
+threshold = 4
+
+[plugin.build]
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/complexity_analyzer_plugin.wasm"
+
+[plugin.testing]
+test_files = [
+    "tests/fixtures/high_complexity.rs",
+    "tests/fixtures/long_function.js",
+    "tests/fixtures/deep_nesting.py",
+    "tests/fixtures/many_parameters.java"
+]
+
+expected_issues = [
+    { file = "high_complexity.rs", rule = "COMP001", count = 2 },
+    { file = "high_complexity.rs", rule = "COMP002", count = 1 },
+    { file = "long_function.js", rule = "COMP003", count = 1 },
+    { file = "deep_nesting.py", rule = "COMP005", count = 1 },
+    { file = "many_parameters.java", rule = "COMP004", count = 1 }
+]
+
+[plugin.documentation]
+# Documentation and examples
+user_guide = "docs/user-guide.md"
+developer_guide = "docs/developer-guide.md"
+examples_directory = "examples/"
+
+# Complexity analysis educational resources
+complexity_primer = "docs/complexity-primer.md"
+metrics_explanation = "docs/metrics-explained.md"
+best_practices = "docs/best-practices.md"

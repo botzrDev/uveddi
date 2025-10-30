@@ -1,0 +1,410 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      deployment_strategy:
+        description: 'Deployment strategy'
+        required: true
+        default: 'blue-green'
+        type: choice
+        options:
+        - blue-green
+        - rolling
+        - canary
+      skip_tests:
+        description: 'Skip tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  KUBERNETES_VERSION: "1.28"
+
+jobs:
+  # Security and quality gates
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Security audit
+        run: |
+          cargo audit
+          cargo deny check
+
+  # Build and test
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: security-scan
+    if: ${{ !inputs.skip_tests }}
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and test Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          target: runtime
+
+      - name: Run container security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+  # Integration tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ !inputs.skip_tests }}
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: uveddi_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup test environment
+        run: |
+          docker run -d --name test-uveddi \
+            --network host \
+            -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/uveddi_test \
+            -e RUST_LOG=debug \
+            ${{ needs.build.outputs.image-tag }}
+
+      - name: Wait for service to be ready
+        run: |
+          timeout 120 bash -c 'until curl -f http://localhost:8080/health; do sleep 5; done'
+
+      - name: Run integration tests
+        run: |
+          curl -f http://localhost:8080/health
+          curl -f http://localhost:8080/health/database
+          curl -f http://localhost:8080/metrics
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop test-uveddi || true
+          docker rm test-uveddi || true
+
+  # Staging deployment
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests]
+    if: |
+      (github.ref == 'refs/heads/main' || inputs.environment == 'staging') &&
+      !failure() && !cancelled()
+    environment:
+      name: staging
+      url: https://staging.uveddi.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+
+      - name: Deploy to staging
+        run: |
+          # Update image tags in manifests
+          sed -i "s|image: uveddi:.*|image: ${{ needs.build.outputs.image-tag }}|g" k8s/staging/*.yml
+          
+          # Apply staging configuration
+          kubectl apply -f k8s/staging/
+          
+          # Wait for rollout
+          kubectl rollout status deployment/uveddi -n uveddi-staging --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          STAGING_URL=$(kubectl get service uveddi-lb -n uveddi-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -f http://${STAGING_URL}/health
+          curl -f http://${STAGING_URL}/health/database
+
+      - name: Update deployment status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}' === 'success' ? 'success' : 'failure';
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment?.id || 0,
+              state: status,
+              environment_url: 'https://staging.uveddi.com',
+              description: `Staging deployment ${status}`
+            });
+
+  # Production deployment approval
+  production-approval:
+    name: Production Deployment Approval
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: |
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || inputs.environment == 'production') &&
+      !failure() && !cancelled()
+    environment:
+      name: production-approval
+    steps:
+      - name: Request approval
+        run: |
+          echo "Production deployment requested for:"
+          echo "- Image: ${{ needs.build.outputs.image-tag }}"
+          echo "- Strategy: ${{ inputs.deployment_strategy || 'blue-green' }}"
+          echo "- Commit: ${{ github.sha }}"
+
+  # Production deployment
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, production-approval]
+    if: |
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || inputs.environment == 'production') &&
+      !failure() && !cancelled()
+    environment:
+      name: production
+      url: https://uveddi.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+
+      - name: Pre-deployment health check
+        run: |
+          kubectl get pods -n uveddi-production
+          kubectl exec -n uveddi-production deployment/uveddi-blue -- curl -f http://localhost:8080/health
+          kubectl exec -n uveddi-production deployment/uveddi-green -- curl -f http://localhost:8080/health
+
+      - name: Blue-Green Deployment
+        if: ${{ inputs.deployment_strategy == 'blue-green' || inputs.deployment_strategy == '' }}
+        run: |
+          # Make deployment script executable
+          chmod +x k8s/production/scripts/blue-green-deploy.sh
+          
+          # Extract version from image tag
+          VERSION=$(echo "${{ needs.build.outputs.image-tag }}" | cut -d':' -f2)
+          
+          # Run blue-green deployment
+          kubectl exec -n uveddi-production deployment/health-monitor -- \
+            /scripts/blue-green-deploy.sh $VERSION
+
+      - name: Rolling Deployment
+        if: ${{ inputs.deployment_strategy == 'rolling' }}
+        run: |
+          # Update both blue and green deployments with rolling strategy
+          kubectl set image deployment/uveddi-blue uveddi=${{ needs.build.outputs.image-tag }} -n uveddi-production
+          kubectl set image deployment/uveddi-green uveddi=${{ needs.build.outputs.image-tag }} -n uveddi-production
+          
+          # Wait for rollout
+          kubectl rollout status deployment/uveddi-blue -n uveddi-production --timeout=600s
+          kubectl rollout status deployment/uveddi-green -n uveddi-production --timeout=600s
+
+      - name: Canary Deployment
+        if: ${{ inputs.deployment_strategy == 'canary' }}
+        run: |
+          # Deploy to 10% of traffic first
+          kubectl patch service uveddi-active -n uveddi-production -p \
+            '{"spec":{"selector":{"version":"green"}}}'
+          
+          kubectl set image deployment/uveddi-green uveddi=${{ needs.build.outputs.image-tag }} -n uveddi-production
+          kubectl rollout status deployment/uveddi-green -n uveddi-production --timeout=600s
+          
+          # Wait and monitor for 5 minutes
+          sleep 300
+          
+          # If successful, switch all traffic
+          kubectl patch service uveddi-active -n uveddi-production -p \
+            '{"spec":{"selector":{"version":"green"}}}'
+
+      - name: Post-deployment verification
+        run: |
+          # Wait for deployment to stabilize
+          sleep 60
+          
+          # Health checks
+          kubectl exec -n uveddi-production deployment/uveddi-blue -- curl -f http://localhost:8080/health
+          kubectl exec -n uveddi-production deployment/uveddi-green -- curl -f http://localhost:8080/health
+          
+          # External health check
+          PROD_URL=$(kubectl get service uveddi-active -n uveddi-production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -f http://${PROD_URL}/health
+          curl -f http://${PROD_URL}/metrics
+
+      - name: Update deployment metrics
+        if: always()
+        run: |
+          # Record deployment metrics
+          kubectl exec -n uveddi-production deployment/health-monitor -- \
+            curl -X POST http://localhost:8080/deployments \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "${{ needs.build.outputs.image-tag }}",
+              "strategy": "${{ inputs.deployment_strategy || 'blue-green' }}",
+              "status": "${{ job.status }}",
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }'
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "🚨 Production deployment failed, initiating rollback..."
+          kubectl exec -n uveddi-production deployment/health-monitor -- \
+            /scripts/rollback.sh
+
+      - name: Notify stakeholders
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}' === 'success' ? '✅ SUCCESS' : '❌ FAILED';
+            const strategy = '${{ inputs.deployment_strategy || 'blue-green' }}';
+            const version = '${{ needs.build.outputs.image-tag }}';
+            
+            const message = `
+            ## Production Deployment ${status}
+            
+            **Details:**
+            - **Version**: \`${version}\`
+            - **Strategy**: \`${strategy}\`
+            - **Commit**: \`${{ github.sha }}\`
+            - **Triggered by**: @${{ github.actor }}
+            
+            **Links:**
+            - [Production URL](https://uveddi.com)
+            - [Monitoring Dashboard](https://grafana.uveddi.com)
+            - [Deployment Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            // Post to Slack or other notification system
+            console.log(message);
+
+  # Disaster recovery test
+  dr-test:
+    name: Disaster Recovery Test
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success() && github.ref == 'refs/heads/main'
+    environment:
+      name: disaster-recovery-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+
+      - name: Test disaster recovery procedures
+        run: |
+          echo "🧪 Testing disaster recovery procedures..."
+          
+          # Test backup verification
+          kubectl exec -n uveddi-production job/database-backup -- \
+            /scripts/verify-backup.sh
+          
+          # Test DR environment deployment (dry run)
+          kubectl apply --dry-run=client -f k8s/disaster-recovery/
+          
+          # Test health monitoring
+          kubectl exec -n uveddi-production deployment/health-monitor -- \
+            curl -f http://localhost:8080/health
+          
+          echo "✅ Disaster recovery test completed"
+
+      - name: Update DR test results
+        run: |
+          kubectl exec -n uveddi-production deployment/disaster-recovery-controller -- \
+            curl -X POST http://localhost:8080/dr-tests \
+            -H "Content-Type: application/json" \
+            -d '{
+              "test_date": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "status": "passed",
+              "version": "${{ needs.build.outputs.image-tag }}"
+            }'

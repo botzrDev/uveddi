@@ -1,0 +1,26 @@
+[plugin]
+name = "uveddi-rule-engine"
+version = "1.0.0"
+author = "Uveddi Team"
+description = "Custom rule and policy engine for organizational coding standards"
+license = "MIT"
+
+[capabilities]
+languages = ["rust", "python", "javascript", "typescript", ]
+detector_types = ["policy", "quality", "style", "architecture", ]
+api_version = "1.0"
+
+[requirements]
+min_uveddi_version = "1.0.0"
+max_uveddi_version = "2.0.0"
+
+[permissions]
+read_files = True
+write_files = False
+network_access = False
+system_info = True
+
+[resources]
+max_memory_mb = 256
+max_cpu_percent = 75
+timeout_seconds = 60

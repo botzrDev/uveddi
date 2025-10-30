@@ -1,0 +1,152 @@
+{
+  "issues": [
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "struct GodObject {\n    field1: String,\n    field2: String,\n    field3: String,\n    field4: String,\n    field5: String,\n    field6: String,\n    field7: String,\n    field8: String,\n    field9: String,\n    field10: String,\n    field11: String,\n    field12: String,\n    field13: String,\n    field14: String,\n    field15: String,\n    field16: String,\n    field17: String,\n    field18: String,\n    field19: String,\n    field20: String,\n}",
+      "description": "God Object detected: 'GodObject' has 5 methods and 20 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 3,
+      "filePath": "test_with_issues.rs",
+      "severity": "Critical",
+      "startLine": 3
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:94-102 with 100.0% similarity.",
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub fn duplicate_code_2(&self) -> String {\n        let mut result = String::new();\n        result.push_str(\"duplicate line 1\\n\");\n        result.push_str(\"duplicate line 2\\n\");\n        result.push_str...",
+      "description": "Code duplication detected (Type2): 100.0% similarity between test_with_issues.rs:105-113 and test_with_issues.rs:94-102",
+      "endLine": 113,
+      "filePath": "test_with_issues.rs",
+      "severity": "medium",
+      "startLine": 105
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:28-91 with 93.8% similarity.",
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub fn duplicate_code_2(&self) -> String {\n        let mut result = String::new();\n        result.push_str(\"duplicate line 1\\n\");\n        result.push_str(\"duplicate line 2\\n\");\n        result.push_str...",
+      "description": "Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:105-113 and test_with_issues.rs:28-91",
+      "endLine": 113,
+      "filePath": "test_with_issues.rs",
+      "severity": "medium",
+      "startLine": 105
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:94-102 with 93.8% similarity.",
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub fn massive_method(&self) -> String {\n        let mut result = String::new();\n        result.push_str(\"line 1\\n\");\n        result.push_str(\"line 2\\n\");\n        result.push_str(\"line 3\\n\");\n        ...",
+      "description": "Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:28-91 and test_with_issues.rs:94-102",
+      "endLine": 91,
+      "filePath": "test_with_issues.rs",
+      "severity": "medium",
+      "startLine": 28
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:105-113 with 93.8% similarity.",
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub fn massive_method(&self) -> String {\n        let mut result = String::new();\n        result.push_str(\"line 1\\n\");\n        result.push_str(\"line 2\\n\");\n        result.push_str(\"line 3\\n\");\n        ...",
+      "description": "Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:28-91 and test_with_issues.rs:105-113",
+      "endLine": 91,
+      "filePath": "test_with_issues.rs",
+      "severity": "medium",
+      "startLine": 28
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:28-91 with 93.8% similarity.",
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub fn duplicate_code_1(&self) -> String {\n        let mut result = String::new();\n        result.push_str(\"duplicate line 1\\n\");\n        result.push_str(\"duplicate line 2\\n\");\n        result.push_str...",
+      "description": "Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:94-102 and test_with_issues.rs:28-91",
+      "endLine": 102,
+      "filePath": "test_with_issues.rs",
+      "severity": "medium",
+      "startLine": 94
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:105-113 with 100.0% similarity.",
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub fn duplicate_code_1(&self) -> String {\n        let mut result = String::new();\n        result.push_str(\"duplicate line 1\\n\");\n        result.push_str(\"duplicate line 2\\n\");\n        result.push_str...",
+      "description": "Code duplication detected (Type2): 100.0% similarity between test_with_issues.rs:94-102 and test_with_issues.rs:105-113",
+      "endLine": 102,
+      "filePath": "test_with_issues.rs",
+      "severity": "medium",
+      "startLine": 94
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "massive_method",
+      "description": "Potentially dead code: function 'massive_method' is not used in this file (confidence: 60.0%)",
+      "endLine": 28,
+      "filePath": "test_with_issues.rs",
+      "severity": "Medium",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "duplicate_code_1",
+      "description": "Potentially dead code: function 'duplicate_code_1' is not used in this file (confidence: 60.0%)",
+      "endLine": 94,
+      "filePath": "test_with_issues.rs",
+      "severity": "Medium",
+      "startLine": 94
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "duplicate_code_2",
+      "description": "Potentially dead code: function 'duplicate_code_2' is not used in this file (confidence: 60.0%)",
+      "endLine": 105,
+      "filePath": "test_with_issues.rs",
+      "severity": "Medium",
+      "startLine": 105
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "unused_method",
+      "description": "Potentially dead code: function 'unused_method' is not used in this file (confidence: 90.0%)",
+      "endLine": 116,
+      "filePath": "test_with_issues.rs",
+      "severity": "High",
+      "startLine": 116
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "another_unused_method",
+      "description": "Potentially dead code: function 'another_unused_method' is not used in this file (confidence: 90.0%)",
+      "endLine": 120,
+      "filePath": "test_with_issues.rs",
+      "severity": "High",
+      "startLine": 120
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "GodObject",
+      "description": "Potentially dead code: struct 'GodObject' is not used in this file (confidence: 90.0%)",
+      "endLine": 3,
+      "filePath": "test_with_issues.rs",
+      "severity": "High",
+      "startLine": 3
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 73 dependencies, which exceeds the critical threshold of 12. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "test_with_issues.rs",
+      "severity": "Critical"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "test_with_issues.rs",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-08-16T19:40:29.254663574-05:00"
+  }
+}

@@ -1,0 +1,58 @@
+name: Unwrap Detection
+
+on: [push, pull_request]
+
+jobs:
+  detect-unwraps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for unsafe unwraps in production code
+        run: |
+          # Fail if unwraps found in critical paths (excluding tests)
+          UNWRAPS=$(find src/ -name "*.rs" -not -path "*/tests/*" -not -name "*test*.rs" -not -name "*tests.rs" | xargs grep -l "\.unwrap()" | wc -l)
+          
+          if [ $UNWRAPS -gt 0 ]; then
+            echo "❌ Found $UNWRAPS files with unwrap() in production code"
+            echo "Files with unwrap() calls:"
+            find src/ -name "*.rs" -not -path "*/tests/*" -not -name "*test*.rs" -not -name "*tests.rs" | xargs grep -n "\.unwrap()"
+            echo ""
+            echo "UV-276: Replace unwrap() calls with proper error handling"
+            echo "See docs/development/error-handling-guidelines.md for guidance"
+            exit 1
+          fi
+          
+          echo "✅ No unsafe unwraps found in production code"
+
+      - name: Check for expect() calls with insufficient context
+        run: |
+          # Check for expect() calls that don't provide meaningful context
+          POOR_EXPECTS=$(find src/ -name "*.rs" -not -path "*/tests/*" | xargs grep -n "\.expect(\"\w\+\")" | wc -l)
+          
+          if [ $POOR_EXPECTS -gt 0 ]; then
+            echo "⚠️  Found $POOR_EXPECTS expect() calls with insufficient context"
+            find src/ -name "*.rs" -not -path "*/tests/*" | xargs grep -n "\.expect(\"\w\+\")"
+            echo ""
+            echo "Consider providing more descriptive error messages in expect() calls"
+            # Don't fail for this, just warn
+          fi
+
+      - name: Report unwrap statistics
+        run: |
+          echo "📊 Unwrap Statistics Report:"
+          echo "=========================="
+          
+          TOTAL_FILES=$(find src/ -name "*.rs" | wc -l)
+          TEST_UNWRAPS=$(find tests/ -name "*.rs" | xargs grep -l "\.unwrap()" 2>/dev/null | wc -l)
+          PROD_UNWRAPS=$(find src/ -name "*.rs" -not -path "*/tests/*" -not -name "*test*.rs" | xargs grep -l "\.unwrap()" 2>/dev/null | wc -l)
+          
+          echo "Total Rust files: $TOTAL_FILES"
+          echo "Production files with unwrap(): $PROD_UNWRAPS"
+          echo "Test files with unwrap(): $TEST_UNWRAPS"
+          
+          if [ $PROD_UNWRAPS -eq 0 ]; then
+            echo "🎉 UV-276 compliance: ACHIEVED"
+          else
+            echo "🚨 UV-276 compliance: FAILED"
+          fi

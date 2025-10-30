@@ -1,0 +1,223 @@
+package uveddi:core-analysis;
+
+/// Core analysis interface used by all Uveddi plugins
+world core-analysis {
+    /// Position in source code
+    record position {
+        line: u32,
+        column: u32,
+        byte-offset: u32,
+    }
+
+    /// Source code span
+    record span {
+        start: position,
+        end: position,
+    }
+
+    /// AST node representation
+    record ast-node {
+        node-type: string,
+        content: string,
+        span: span,
+        language: string,
+        attributes: list<tuple<string, string>>,
+    }
+
+    /// Source file with metadata
+    record source-file {
+        path: string,
+        content: string,
+        language: string,
+        size: u32,
+        hash: string,
+        ast: option<ast-node>,
+    }
+
+    /// Severity levels for issues
+    enum severity-level {
+        critical,
+        high,
+        medium,
+        low,
+        info,
+    }
+
+    /// Issue categories
+    enum issue-category {
+        security,
+        performance,
+        quality,
+        maintainability,
+        style,
+        complexity,
+        duplication,
+        architecture,
+        documentation,
+        testing,
+    }
+
+    /// Analysis issue
+    record issue {
+        id: string,
+        severity: severity-level,
+        category: issue-category,
+        message: string,
+        description: option<string>,
+        file: string,
+        span: span,
+        rule-id: option<string>,
+        suggestion: option<string>,
+        fix: option<code-fix>,
+        metadata: list<tuple<string, string>>,
+    }
+
+    /// Code fix suggestion
+    record code-fix {
+        description: string,
+        replacements: list<replacement>,
+    }
+
+    /// Text replacement
+    record replacement {
+        span: span,
+        new-text: string,
+    }
+
+    /// Code metrics
+    record metrics {
+        lines-of-code: u32,
+        lines-of-comments: u32,
+        complexity: u32,
+        maintainability-index: f64,
+        technical-debt-minutes: u32,
+        custom-metrics: list<tuple<string, f64>>,
+    }
+
+    /// Analysis result
+    record analysis-result {
+        issues: list<issue>,
+        metrics: metrics,
+        dependencies: list<string>,
+        exports: list<string>,
+        duration-ms: u32,
+        plugin-version: string,
+    }
+
+    /// Plugin configuration
+    record plugin-config {
+        severity-threshold: severity-level,
+        max-issues-per-file: u32,
+        include-patterns: list<string>,
+        exclude-patterns: list<string>,
+        rule-overrides: list<tuple<string, bool>>,
+        custom-settings: list<tuple<string, string>>,
+    }
+
+    /// Plugin capabilities and metadata
+    record plugin-info {
+        id: string,
+        name: string,
+        version: string,
+        description: string,
+        author: string,
+        license: string,
+        homepage: option<string>,
+        supported-languages: list<string>,
+        detector-types: list<issue-category>,
+        api-version: string,
+        required-permissions: list<permission>,
+    }
+
+    /// Plugin permissions
+    flags permission {
+        read-files,
+        write-files,
+        network-access,
+        system-info,
+        environment-vars,
+        spawn-processes,
+    }
+
+    /// Resource limits
+    record resource-limits {
+        max-memory-mb: u32,
+        max-cpu-percent: u32,
+        timeout-seconds: u32,
+        max-file-handles: u32,
+    }
+
+    /// Plugin lifecycle management
+    export initialize: func(config: plugin-config, limits: resource-limits) -> result<_, string>;
+    export analyze: func(file: source-file) -> result<analysis-result, string>;
+    export get-info: func() -> plugin-info;
+    export cleanup: func() -> result<_, string>;
+
+    /// Host functions available to plugins
+
+    /// Logging levels
+    enum log-level {
+        trace,
+        debug,
+        info,
+        warn,
+        error,
+    }
+
+    /// Log messages to host
+    import log: func(level: log-level, message: string);
+
+    /// File system operations
+    import read-file: func(path: string) -> result<string, string>;
+    import write-file: func(path: string, content: string) -> result<_, string>;
+    import file-exists: func(path: string) -> bool;
+    import list-files: func(pattern: string) -> result<list<string>, string>;
+    import get-file-metadata: func(path: string) -> result<file-metadata, string>;
+
+    /// File metadata
+    record file-metadata {
+        size: u64,
+        modified: u64, // Unix timestamp
+        is-directory: bool,
+        permissions: u32,
+    }
+
+    /// Configuration access
+    import get-config: func(key: string) -> option<string>;
+    import set-config: func(key: string, value: string) -> result<_, string>;
+
+    /// AST and parsing utilities
+    import parse-ast: func(code: string, language: string) -> result<ast-node, string>;
+    import query-ast: func(node: ast-node, query: string) -> result<list<ast-node>, string>;
+
+    /// Cryptographic utilities
+    import calculate-hash: func(algorithm: string, content: string) -> result<string, string>;
+    import verify-signature: func(content: string, signature: string, public-key: string) -> result<bool, string>;
+
+    /// Network operations (if network-access permission is granted)
+    import http-get: func(url: string, headers: list<tuple<string, string>>) -> result<http-response, string>;
+    import http-post: func(url: string, body: string, headers: list<tuple<string, string>>) -> result<http-response, string>;
+
+    /// HTTP response
+    record http-response {
+        status: u16,
+        headers: list<tuple<string, string>>,
+        body: string,
+    }
+
+    /// Database operations (for caching and persistence)
+    import db-get: func(key: string) -> option<string>;
+    import db-set: func(key: string, value: string, ttl-seconds: option<u32>) -> result<_, string>;
+    import db-delete: func(key: string) -> result<bool, string>;
+
+    /// Process information
+    import get-process-info: func() -> result<process-info, string>;
+
+    /// Process information
+    record process-info {
+        pid: u32,
+        memory-usage-mb: u32,
+        cpu-usage-percent: f32,
+        uptime-seconds: u32,
+    }
+}

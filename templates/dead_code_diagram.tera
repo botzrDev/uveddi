@@ -1,0 +1,49 @@
+{#  Dead Code Detection Treemap/Component Diagram  #}
+{#  Shows unused/unreachable code with reduced opacity  #}
+graph {{ layout }}
+
+{%- for component in components %}
+  {%- if component.is_dead_code %}
+    {{ component.id }}["💀 {{ component.name }}<br/>Unused"]
+    class {{ component.id }} dead-code-critical
+  {%- elif component.potentially_unused %}
+    {{ component.id }}["⚠️ {{ component.name }}<br/>Rarely used"]
+    class {{ component.id }} dead-code-warning
+  {%- elif component.low_usage %}
+    {{ component.id }}["📉 {{ component.name }}<br/>Low usage"]
+    class {{ component.id }} low-usage
+  {%- else %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} active-component
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.from_dead_code or dependency.to_dead_code %}
+    {{ dependency.from_id }} -.->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- else %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if dead_code_groups %}
+  {%- for group in dead_code_groups %}
+    subgraph "Dead Code Group: {{ group.name }}"
+    {%- for node_id in group.nodes %}
+      {{ node_id }}
+    {%- endfor %}
+    end
+  {%- endfor %}
+{%- endif %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend(",color:") }},opacity:{{ style.opacity | default("1.0") }}
+  {%- endfor %}
+{%- else %}
+  {#  Default styles for Dead Code Detection  #}
+  classDef dead-code-critical fill:#FF4444,stroke:#CC0000,stroke-width:2px,color:#FFF,opacity:0.7
+  classDef dead-code-warning fill:#FFAA00,stroke:#FF8800,stroke-width:2px,opacity:0.8
+  classDef low-usage fill:#FFF3CD,stroke:#FFEAA7,stroke-width:1px,opacity:0.9
+  classDef active-component fill:#E8F5E8,stroke:#4CAF50,stroke-width:1px
+{%- endif %}

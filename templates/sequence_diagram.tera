@@ -1,0 +1,22 @@
+{#  Sequence Diagram Template  #}
+{#  Shows interaction flows between components over time  #}
+sequenceDiagram
+{%- for component in components %}
+    participant {{ component.id }} as {{ component.name }}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.is_async %}
+    {{ dependency.from_id }}->>+{{ dependency.to_id }}: {{ dependency.message | default(dependency.type) }}
+  {%- elif dependency.is_return %}
+    {{ dependency.from_id }}-->>-{{ dependency.to_id }}: {{ dependency.message | default(dependency.type) }}
+  {%- else %}
+    {{ dependency.from_id }}->>{{ dependency.to_id }}: {{ dependency.message | default(dependency.type) }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if notes %}
+  {%- for note in notes %}
+    Note {{ note.position | default("over") }} {{ note.target_id }}: {{ note.text }}
+  {%- endfor %}
+{%- endif %}

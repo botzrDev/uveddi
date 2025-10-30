@@ -1,0 +1,203 @@
+//! {PLUGIN_NAME}
+//! 
+//! {PLUGIN_DESCRIPTION}
+//!
+//! Generated on {GENERATION_TIMESTAMP} by Uveddi Plugin Generator
+
+use std::collections::HashMap;
+
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "../../../wit/core-analysis.wit",
+});
+
+use exports::{initialize, analyze, get_info, cleanup};
+
+static mut PLUGIN_STATE: Option<{PLUGIN_ID_UPPER}Plugin> = None;
+
+struct {PLUGIN_ID_UPPER}Plugin {
+    config: PluginConfig,
+    analysis_count: u32,
+    // Add your plugin-specific state here
+}
+
+impl {PLUGIN_ID_UPPER}Plugin {
+    fn new() -> Self {
+        Self {
+            config: PluginConfig {
+                severity_threshold: SeverityLevel::Medium,
+                max_issues_per_file: 50,
+                include_patterns: vec![{SUPPORTED_LANGUAGES}].iter()
+                    .map(|lang| format!("*.{}", lang))
+                    .collect(),
+                exclude_patterns: vec!["*.test.*".to_string(), "*.spec.*".to_string()],
+                rule_overrides: vec![],
+                custom_settings: vec![
+                    ("example_setting".to_string(), "default_value".to_string()),
+                ],
+            },
+            analysis_count: 0,
+        }
+    }
+
+    fn analyze_file(&mut self, file: SourceFile) -> Result<AnalysisResult, String> {
+        self.analysis_count += 1;
+        
+        let start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u32;
+
+        log(LogLevel::Info, &format!("Analyzing {} with {PLUGIN_NAME}", file.path));
+
+        let mut issues = Vec::new();
+
+        // TODO: Implement your analysis logic here
+        // Example: Check for a simple pattern in the code
+        let lines: Vec<&str> = file.content.lines().collect();
+        for (line_num, line) in lines.iter().enumerate() {
+            let line_num = (line_num + 1) as u32;
+            
+            // Example rule: Flag TODO comments
+            if line.contains("TODO") || line.contains("FIXME") {
+                issues.push(Issue {
+                    id: "TODO001".to_string(),
+                    severity: SeverityLevel::Info,
+                    category: IssueCategory::Quality,
+                    message: "TODO or FIXME comment found".to_string(),
+                    description: Some("This TODO or FIXME comment indicates incomplete work that should be addressed.".to_string()),
+                    file: file.path.clone(),
+                    span: Span {
+                        start: Position { line: line_num, column: 1, byte_offset: 0 },
+                        end: Position { line: line_num, column: line.len() as u32, byte_offset: 0 },
+                    },
+                    rule_id: Some("todo_comment".to_string()),
+                    suggestion: Some("Complete the TODO item or create a proper issue tracker entry".to_string()),
+                    fix: None,
+                    metadata: vec![
+                        ("comment_type".to_string(), if line.contains("TODO") { "TODO" } else { "FIXME" }.to_string()),
+                    ],
+                });
+            }
+        }
+
+        // TODO: Add AST-based analysis if needed
+        if let Some(ast) = file.ast {
+            let ast_issues = self.analyze_ast(&ast, &file)?;
+            issues.extend(ast_issues);
+        }
+
+        // Calculate metrics
+        let metrics = Metrics {
+            lines_of_code: lines.len() as u32,
+            lines_of_comments: self.count_comments(&lines),
+            complexity: 1, // TODO: Implement complexity calculation
+            maintainability_index: 100.0 - (issues.len() as f64 * 2.0),
+            technical_debt_minutes: issues.len() as u32 * 5, // 5 minutes per issue
+            custom_metrics: vec![
+                ("issues_found".to_string(), issues.len() as f64),
+                ("analysis_count".to_string(), self.analysis_count as f64),
+            ],
+        };
+
+        let end_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u32;
+
+        Ok(AnalysisResult {
+            issues,
+            metrics,
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: end_time - start_time,
+            plugin_version: "{VERSION}".to_string(),
+        })
+    }
+
+    fn analyze_ast(&self, ast: &AstNode, file: &SourceFile) -> Result<Vec<Issue>, String> {
+        let mut issues = Vec::new();
+
+        // TODO: Implement AST-based analysis
+        // Example: Find function declarations
+        if let Ok(functions) = query_ast(ast.clone(), "(function_item) @function") {
+            log(LogLevel::Debug, &format!("Found {} functions in {}", functions.len(), file.path));
+            
+            // TODO: Add specific analysis for functions
+        }
+
+        Ok(issues)
+    }
+
+    fn count_comments(&self, lines: &[&str]) -> u32 {
+        lines.iter()
+            .filter(|line| {
+                let trimmed = line.trim();
+                trimmed.starts_with("//") || trimmed.starts_with("#") || 
+                trimmed.starts_with("/*") || trimmed.starts_with("'''") || 
+                trimmed.starts_with("\"\"\"")
+            })
+            .count() as u32
+    }
+}
+
+// Plugin lifecycle implementation
+impl initialize {
+    fn call(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing {PLUGIN_NAME}");
+        
+        unsafe {
+            let mut plugin = {PLUGIN_ID_UPPER}Plugin::new();
+            plugin.config = config;
+            PLUGIN_STATE = Some(plugin);
+        }
+        
+        log(LogLevel::Info, "{PLUGIN_NAME} initialized successfully");
+        Ok(())
+    }
+}
+
+impl analyze {
+    fn call(file: SourceFile) -> Result<AnalysisResult, String> {
+        unsafe {
+            if let Some(ref mut state) = PLUGIN_STATE {
+                state.analyze_file(file)
+            } else {
+                Err("Plugin not initialized".to_string())
+            }
+        }
+    }
+}
+
+impl get_info {
+    fn call() -> PluginInfo {
+        PluginInfo {
+            id: "{PLUGIN_ID}".to_string(),
+            name: "{PLUGIN_NAME}".to_string(),
+            version: "{VERSION}".to_string(),
+            description: "{PLUGIN_DESCRIPTION}".to_string(),
+            author: "{AUTHOR}".to_string(),
+            license: "{LICENSE}".to_string(),
+            homepage: Some("https://github.com/your-org/plugins/{PLUGIN_ID}".to_string()),
+            supported_languages: vec![{SUPPORTED_LANGUAGES}],
+            detector_types: vec![IssueCategory::Quality], // TODO: Update with your categories
+            api_version: "1.0".to_string(),
+            required_permissions: vec![Permission::ReadFiles.into()],
+        }
+    }
+}
+
+impl cleanup {
+    fn call() -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up {PLUGIN_NAME}");
+        
+        unsafe {
+            if let Some(ref state) = PLUGIN_STATE {
+                log(LogLevel::Info, &format!("Analyzed {} files during session", state.analysis_count));
+            }
+            PLUGIN_STATE = None;
+        }
+        
+        Ok(())
+    }
+}

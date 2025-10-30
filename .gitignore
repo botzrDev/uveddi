@@ -1,1 +1,142 @@
-/target
+# Rust build artifacts
+/target/
+**/*.rs.bk
+**/debug/
+/target/incremental/
+
+# Cache directories (runtime caches, not source code)
+/cache/
+
+# IDE/editor settings
+/.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime*
+.DS_Store
+
+# Dependency/package manager files
+Cargo.lock
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.old
+
+# Ignore generated reports and diagrams
+*.md.report
+*.diagram
+
+# Ignore by analysis tools
+.archlintignore
+
+# Ignore Rust Analyzer metadata
+/.rust-analyzer/
+
+# Ignore docs build artifacts (if any)
+/docs/book/
+
+# Ignore local SQLite database and related files
+.uveddi/
+.uveddi_cache/
+*.db
+uveddi_cache.db
+**/tmp_*
+# Cache directories
+/cache/
+# Ignore PID files from scripts
+/scripts/*.pid
+
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Node.js/Frontend
+node_modules/
+dist/
+dist-ssr/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Cypress test artifacts
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
+frontend/cypress/fixtures/generated/
+frontend/cypress/.cache/
+
+# Misc
+*.bin
+*.exe
+*.out
+*.so
+*.dll
+*.dylib
+*.o
+
+# LLVM bitcode files
+*.bc
+*.lock
+
+# Ignore test repositories and samples
+test_repos/
+alpha_testing/
+
+# Local development configurations
+.claude/
+.clinerules/
+.pids/
+*.pid
+.cargo/config.toml.wsl*
+
+# Archive and temporary directories
+archive/
+true/
+assignments/
+alpha-test-results/
+
+# Test results and generated reports (root level)
+analysis-test.md
+all-detectors-test-results.md
+validation-test-results.md
+detector-extended-validation-results.md
+magic-values-test-results.md
+uveddi-self-analysis.md
+analysis-report.md
+DETECTOR-*.md
+ALL-DETECTORS-*.md
+
+# Historical documentation
+BUILD-VERSIONING-SYSTEM.md
+COMMENT_AUDIT_REPORT.md
+VALIDATION-REPORT.md
+VALIDATION-SUMMARY.md
+COMMIT_MESSAGE_*.txt
+
+# Prevent nested git repositories from being treated as submodules  
+*/*/.git/
+
+# Uncomment if config/ or plugins/ contain only generated or environment-specific files.
+# /config/
+# /plugins/
+
+# Coverage and profiler output (generated during tests)
+# Raw profiling outputs from LLVM/Profiler
+*.profraw
+# Coverage output dir and archives
+/coverage/
+/coverage/**
+/coverage/archive/
+/coverage/archive/**
+coverage_reports/

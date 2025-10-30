@@ -1,0 +1,48 @@
+# Uveddi Configuration Template: Minimal CI/CD Configuration
+# Optimized for fast CI/CD pipelines with essential analysis only
+
+# AI Configuration - Lightweight model for speed
+ollama_model = "llama2:7b-chat"
+
+[dead_code]
+# Higher confidence to reduce false positives in CI
+confidence_threshold = 0.85
+library_mode = false
+
+# Minimal ignore patterns for speed
+ignore_patterns = [
+    "node_modules/**",
+    "target/**",
+    "__pycache__/**",
+    "dist/**",
+    "build/**",
+    "*.min.js",
+    "*.test.*",
+    "test/**",
+    "tests/**"
+]
+
+# Essential keep-alive patterns only
+keep_alive_patterns = [
+    "main",
+    "export",
+    "pub",
+    "__main__"
+]
+
+[large_classes]
+# Relaxed thresholds for CI speed
+max_logical_loc = 500
+max_methods = 50
+max_fields = 40
+max_cyclomatic_complexity = 25
+max_cognitive_complexity = 30
+max_lcom_score = 0.9
+max_coupling = 50
+
+# Minimal ignore patterns
+ignore_patterns = [
+    "test/**",
+    "tests/**",
+    "*.test.*"
+]

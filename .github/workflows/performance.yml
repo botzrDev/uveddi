@@ -1,0 +1,257 @@
+name: Performance Benchmark
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+
+env:
+  RUST_BACKTRACE: 1
+  RENDERING_SERVICE_URL: http://localhost:3001
+
+jobs:
+  rust-benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for baseline comparison
+      
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: rust-benchmark-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+          
+      - name: Download baseline benchmarks
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-benchmark-baseline
+          path: ./benchmarks/baselines/
+        continue-on-error: true
+        
+      - name: Run Rust benchmarks
+        run: |
+          cargo bench --features=tree-sitter -- --output-format json | tee rust-benchmark-results.json
+          
+      - name: Generate Rust performance report
+        run: |
+          python3 scripts/generate_rust_report.py rust-benchmark-results.json
+          
+      - name: Check Rust performance regression
+        run: |
+          python3 scripts/check_rust_regression.py || exit 1
+        continue-on-error: false
+        
+      - name: Run benchmark comparison and trending
+        run: |
+          python3 scripts/benchmark_comparison.py
+          
+      - name: Send performance alerts if regressions detected
+        if: failure()
+        run: |
+          python3 scripts/alert_manager.py performance-analysis/baseline-comparison.json
+        continue-on-error: true
+        
+      - name: Upload Rust benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-benchmark-results
+          path: |
+            rust-benchmark-results.json
+            rust-performance-report.json
+            
+      - name: Store as baseline if main branch
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-benchmark-baseline
+          path: rust-benchmark-results.json
+
+  rendering-service-benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          
+      - name: Install dependencies
+        run: |
+          cd rendering-service
+          npm install
+          
+      - name: Download baseline benchmarks
+        uses: actions/download-artifact@v4
+        with:
+          name: js-benchmark-baseline
+          path: ./rendering-service/
+        continue-on-error: true
+        
+      - name: Start rendering service
+        run: |
+          docker compose -f deploy/docker-compose.yml up -d rendering-service
+          sleep 10  # Wait for service to be ready
+          
+      - name: Health check
+        run: |
+          curl -f http://localhost:3001/health || exit 1
+          
+      - name: Run rendering benchmark suite
+        run: |
+          cd rendering-service
+          node benchmark.js
+          
+      - name: Check rendering performance regression
+        run: |
+          node rendering-service/scripts/check_regression.js || exit 1
+        continue-on-error: false
+        
+      - name: Upload rendering benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: js-benchmark-report
+          path: rendering-service/benchmark-report.json
+          
+      - name: Store as baseline if main branch
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: js-benchmark-baseline
+          path: rendering-service/benchmark-report.json
+          
+      - name: Stop rendering service
+        run: |
+          docker compose -f deploy/docker-compose.yml down
+
+  scalability-testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Python dependencies
+        run: |
+          pip install psutil aiohttp requests
+          
+      - name: Install rendering service dependencies
+        run: |
+          cd rendering-service
+          npm install
+          
+      - name: Start rendering service for scalability testing
+        run: |
+          docker compose -f deploy/docker-compose.yml up -d rendering-service
+          sleep 15  # Wait for service to be ready
+          
+      - name: Run scalability tests (1k, 5k, 10k+ files)
+        run: |
+          python3 scripts/scalability_test.py
+          
+      - name: Upload scalability test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: scalability-test-results
+          path: scalability-test-results/
+          
+      - name: Stop rendering service
+        run: |
+          docker compose -f deploy/docker-compose.yml down
+
+  performance-analysis:
+    needs: [rust-benchmarks, rendering-service-benchmarks, scalability-testing]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*benchmark*"
+          path: ./benchmark-results/
+          
+      - name: Download scalability results
+        uses: actions/download-artifact@v4
+        with:
+          name: scalability-test-results
+          path: ./scalability-test-results/
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Python dependencies
+        run: |
+          pip install matplotlib pandas numpy seaborn psutil aiohttp requests
+          
+      - name: Generate comprehensive performance report
+        run: |
+          python3 scripts/generate_performance_dashboard.py
+          
+      - name: Upload performance dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-dashboard
+          path: |
+            performance-dashboard.html
+            performance-trends.png
+            performance-analysis/
+            
+      - name: Comment PR with performance summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = './performance-summary.md';
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            }

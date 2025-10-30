@@ -1,0 +1,26 @@
+[plugin]
+name = "uveddi-metrics-analyzer"
+version = "1.0.0"
+author = "Uveddi Team"
+description = "Advanced code metrics calculation and visualization for comprehensive quality analysis"
+license = "MIT"
+
+[capabilities]
+languages = ["rust", "python", "javascript", "typescript", ]
+detector_types = ["metrics", "complexity", "quality", "visualization", ]
+api_version = "1.0"
+
+[requirements]
+min_uveddi_version = "1.0.0"
+max_uveddi_version = "2.0.0"
+
+[permissions]
+read_files = True
+write_files = False
+network_access = False
+system_info = True
+
+[resources]
+max_memory_mb = 384
+max_cpu_percent = 70
+timeout_seconds = 90

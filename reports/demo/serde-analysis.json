@@ -1,0 +1,97 @@
+{
+  "timestamp": "2025-08-20 19:05:29 UTC",
+  "repository": "serde",
+  "language": "rust",
+  "analysis_time": 28.4,
+  "summary": {
+    "total_findings": 8,
+    "detectors_run": 4,
+    "successful_detectors": 4
+  },
+  "detectors": {
+    "magic_values": {
+      "success": true,
+      "execution_time": 1.8,
+      "findings_count": 3,
+      "findings": [
+        {
+          "id": "magic_values_1",
+          "severity": "medium",
+          "description": "Mock magic_values finding 1",
+          "file": "src/mock_file_1.rs",
+          "line": 10
+        },
+        {
+          "id": "magic_values_2",
+          "severity": "medium",
+          "description": "Mock magic_values finding 2",
+          "file": "src/mock_file_2.rs",
+          "line": 15
+        },
+        {
+          "id": "magic_values_3",
+          "severity": "medium",
+          "description": "Mock magic_values finding 3",
+          "file": "src/mock_file_3.rs",
+          "line": 20
+        }
+      ]
+    },
+    "tight_coupling": {
+      "success": true,
+      "execution_time": 3.2,
+      "findings_count": 2,
+      "findings": [
+        {
+          "id": "tight_coupling_1",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 1",
+          "file": "src/mock_file_1.rs",
+          "line": 10
+        },
+        {
+          "id": "tight_coupling_2",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 2",
+          "file": "src/mock_file_2.rs",
+          "line": 15
+        }
+      ]
+    },
+    "dead_code": {
+      "success": true,
+      "execution_time": 2.1,
+      "findings_count": 1,
+      "findings": [
+        {
+          "id": "dead_code_1",
+          "severity": "medium",
+          "description": "Mock dead_code finding 1",
+          "file": "src/mock_file_1.rs",
+          "line": 10
+        }
+      ]
+    },
+    "code_duplication": {
+      "success": true,
+      "execution_time": 4.8,
+      "findings_count": 2,
+      "findings": [
+        {
+          "id": "code_duplication_1",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 1",
+          "file": "src/mock_file_1.rs",
+          "line": 10
+        },
+        {
+          "id": "code_duplication_2",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 2",
+          "file": "src/mock_file_2.rs",
+          "line": 15
+        }
+      ]
+    }
+  }
+}

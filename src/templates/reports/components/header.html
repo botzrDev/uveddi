@@ -1,0 +1,64 @@
+{% macro render_header(analysis_run, timestamp, git_branch) %}
+<div class="report-header">
+    <div class="header-content">
+        <div class="header-main">
+            <h1 class="report-title">{{ analysis_run.project_name | default(value="Project") }} Analysis Report</h1>
+            <div class="header-metadata">
+                <time datetime="{{ timestamp }}" class="generation-time">
+                    Generated on {{ timestamp }}
+                </time>
+                {% if git_branch %}
+                    <span class="git-info">
+                        <span class="branch-label">Branch:</span>
+                        <code class="branch-name">{{ git_branch }}</code>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {{ self::render_header_stats(analysis_run=analysis_run) }}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro render_header_stats(analysis_run) %}
+<div class="header-stats" role="region" aria-label="Analysis statistics">
+    <div class="stat-grid">
+        <div class="stat-item">
+            <span class="stat-value" aria-describedby="files-desc">
+                {{ analysis_run.total_files | default(value=0) | number_format }}
+            </span>
+            <span class="stat-label" id="files-desc">Files Analyzed</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" aria-describedby="loc-desc">
+                {{ analysis_run.total_loc | default(value=0) | number_format }}
+            </span>
+            <span class="stat-label" id="loc-desc">Lines of Code</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" aria-describedby="duration-desc">
+                {{ (analysis_run.analysis_duration_ms | default(value=0) / 1000) | round(2) }}s
+            </span>
+            <span class="stat-label" id="duration-desc">Analysis Time</span>
+        </div>
+        {% if analysis_run.languages %}
+        <div class="stat-item">
+            <span class="stat-value" aria-describedby="lang-desc">
+                {{ analysis_run.languages | length }}
+            </span>
+            <span class="stat-label" id="lang-desc">Languages</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro render_quality_badge(analysis_run) %}
+{% set quality_score = analysis_run.quality_score | default(value=0) %}
+{% set badge_class = "excellent" if quality_score >= 90 else "good" if quality_score >= 70 else "fair" if quality_score >= 50 else "poor" %}
+<div class="quality-badge quality-{{ badge_class }}" role="img" aria-label="Code quality score: {{ quality_score }}%">
+    <div class="badge-score">{{ quality_score }}%</div>
+    <div class="badge-label">Quality Score</div>
+</div>
+{% endmacro %}

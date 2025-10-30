@@ -1,0 +1,371 @@
+//! Database Connection Pool Implementation
+//!
+//! This module provides efficient connection pooling for SQLite databases to improve
+//! performance and reduce connection overhead in multi-threaded environments.
+
+use super::config::{DatabaseConfig, DatabaseType, PoolConfig};
+use super::providers::DatabaseProvider;
+use crate::error::{Result, UveddiError};
+use rusqlite::Connection;
+use std::path::Path;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+use tokio::sync::Semaphore;
+
+/// Pooled connection wrapper
+pub struct PooledConnection {
+    connection: Connection,
+    created_at: Instant,
+    last_used: Arc<Mutex<Instant>>,
+}
+
+impl PooledConnection {
+    fn new(connection: Connection) -> Self {
+        let now = Instant::now();
+        Self {
+            connection,
+            created_at: now,
+            last_used: Arc::new(Mutex::new(now)),
+        }
+    }
+
+    pub fn execute_batch(&self, sql: &str) -> rusqlite::Result<()> {
+        self.update_last_used();
+        self.connection.execute_batch(sql)
+    }
+
+    pub fn execute(&self, sql: &str, params: impl rusqlite::Params) -> rusqlite::Result<usize> {
+        self.update_last_used();
+        self.connection.execute(sql, params)
+    }
+
+    pub fn prepare(&self, sql: &str) -> rusqlite::Result<rusqlite::Statement> {
+        self.update_last_used();
+        self.connection.prepare(sql)
+    }
+
+    pub fn transaction(&mut self) -> rusqlite::Result<rusqlite::Transaction> {
+        self.update_last_used();
+        self.connection.transaction()
+    }
+
+    pub fn last_insert_rowid(&self) -> i64 {
+        self.update_last_used();
+        self.connection.last_insert_rowid()
+    }
+
+    pub fn query_row<T, P, F>(&self, sql: &str, params: P, f: F) -> rusqlite::Result<T>
+    where
+        P: rusqlite::Params,
+        F: FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T>,
+    {
+        self.update_last_used();
+        self.connection.query_row(sql, params, f)
+    }
+
+    fn update_last_used(&self) {
+        if let Ok(mut last_used) = self.last_used.lock() {
+            *last_used = Instant::now();
+        }
+    }
+
+    fn is_expired(&self, config: &PoolConfig) -> bool {
+        let now = Instant::now();
+
+        // Check max lifetime
+        if now.duration_since(self.created_at) > config.max_lifetime {
+            return true;
+        }
+
+        // Check idle timeout
+        if let Ok(last_used) = self.last_used.lock() {
+            if now.duration_since(*last_used) > config.idle_timeout {
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
+/// Database connection pool
+pub struct ConnectionPool {
+    db_path: Option<std::path::PathBuf>,
+    connections: Arc<Mutex<Vec<PooledConnection>>>,
+    semaphore: Arc<Semaphore>,
+    config: PoolConfig,
+    provider: Arc<dyn DatabaseProvider>,
+    database_type: DatabaseType,
+}
+
+impl ConnectionPool {
+    /// Create a new database connection pool
+    pub async fn new(
+        db_config: DatabaseConfig,
+        provider: Arc<dyn DatabaseProvider>,
+    ) -> Result<Arc<Self>> {
+        let db_path = Some(std::path::PathBuf::from(&db_config.connection_string));
+        let semaphore = Arc::new(Semaphore::new(db_config.pool.max_connections));
+        let database_type = db_config.database_type.clone();
+
+        Ok(Arc::new(Self {
+            db_path,
+            connections: Arc::new(Mutex::new(Vec::new())),
+            semaphore,
+            config: db_config.pool,
+            provider,
+            database_type,
+        }))
+    }
+
+    /// Get a connection from the pool
+    pub async fn get_connection(&self) -> Result<PooledConnection> {
+        // Acquire permit from semaphore (blocks if pool is full)
+        let _permit = self.semaphore.clone().acquire_owned().await.map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire connection permit: {}", e))
+        })?;
+
+        // Try to get existing connection
+        if let Ok(mut connections) = self.connections.lock() {
+            // Remove expired connections
+            connections.retain(|conn| !conn.is_expired(&self.config));
+
+            // Return available connection
+            if let Some(conn) = connections.pop() {
+                return Ok(conn);
+            }
+        }
+
+        // Create new connection if none available
+        self.create_connection()
+    }
+
+    /// Create a new database connection
+    fn create_connection(&self) -> Result<PooledConnection> {
+        let conn = match &self.db_path {
+            Some(path) => Connection::open(path).map_err(UveddiError::from)?,
+            None => Connection::open_in_memory().map_err(UveddiError::from)?,
+        };
+
+        // Configure connection for performance
+        conn.execute_batch(
+            "
+            PRAGMA journal_mode = WAL;
+            PRAGMA synchronous = NORMAL;
+            PRAGMA cache_size = 10000;
+            PRAGMA temp_store = MEMORY;
+            PRAGMA mmap_size = 268435456;
+            PRAGMA foreign_keys = ON;
+        ",
+        )?;
+
+        Ok(PooledConnection::new(conn))
+    }
+
+    /// Return connection to pool
+    pub async fn return_connection(&self, connection: PooledConnection) -> Result<()> {
+        if !connection.is_expired(&self.config) {
+            if let Ok(mut connections) = self.connections.lock() {
+                connections.push(connection);
+            }
+        }
+        // Connection is automatically dropped if expired or if pool is locked
+        Ok(())
+    }
+
+    /// Get pool statistics
+    pub fn stats(&self) -> PoolStats {
+        let available_connections = self
+            .connections
+            .lock()
+            .map(|conns| conns.len())
+            .unwrap_or(0);
+
+        let available_permits = self.semaphore.available_permits();
+
+        PoolStats {
+            max_connections: self.config.max_connections,
+            available_connections,
+            active_connections: self.config.max_connections - available_permits,
+        }
+    }
+
+    /// Get the database type
+    pub fn database_type(&self) -> &DatabaseType {
+        &self.database_type
+    }
+
+    /// Clean up expired connections
+    pub async fn cleanup_expired(&self) -> Result<usize> {
+        let mut removed = 0;
+        if let Ok(mut connections) = self.connections.lock() {
+            let initial_len = connections.len();
+            connections.retain(|conn| !conn.is_expired(&self.config));
+            removed = initial_len - connections.len();
+        }
+        Ok(removed)
+    }
+}
+
+/// Pool statistics
+#[derive(Debug, Clone)]
+pub struct PoolStats {
+    pub max_connections: usize,
+    pub available_connections: usize,
+    pub active_connections: usize,
+}
+
+/// Pool-aware database wrapper
+pub struct PooledDatabase {
+    pool: Arc<ConnectionPool>,
+}
+
+impl PooledDatabase {
+    /// Create new pooled database
+    pub async fn new(
+        db_config: DatabaseConfig,
+        provider: Arc<dyn DatabaseProvider>,
+    ) -> Result<Self> {
+        let pool = ConnectionPool::new(db_config, provider).await?;
+
+        Ok(Self { pool })
+    }
+
+    /// Execute function with pooled connection
+    pub async fn with_connection<F, R>(&self, f: F) -> Result<R>
+    where
+        F: FnOnce(&PooledConnection) -> Result<R>,
+    {
+        let conn = self.pool.get_connection().await?;
+        let result = f(&conn)?;
+        self.pool.return_connection(conn).await?;
+        Ok(result)
+    }
+
+    /// Execute function with mutable connection
+    pub async fn with_connection_mut<F, R>(&self, f: F) -> Result<R>
+    where
+        F: FnOnce(&mut PooledConnection) -> Result<R>,
+    {
+        let mut conn = self.pool.get_connection().await?;
+        let result = f(&mut conn)?;
+        self.pool.return_connection(conn).await?;
+        Ok(result)
+    }
+
+    /// Get pool statistics
+    pub fn pool_stats(&self) -> PoolStats {
+        self.pool.stats()
+    }
+
+    /// Cleanup expired connections
+    pub async fn cleanup(&self) -> Result<usize> {
+        self.pool.cleanup_expired().await
+    }
+}
+
+impl Clone for PooledDatabase {
+    fn clone(&self) -> Self {
+        Self {
+            pool: self.pool.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn test_pool_creation() {
+        let config = PoolConfig {
+            max_connections: 5,
+            min_connections: 1,
+            connection_timeout: Duration::from_secs(10),
+            idle_timeout: Duration::from_secs(60),
+            max_lifetime: Duration::from_secs(300),
+            test_on_checkout: true,
+            pool_timeout: Duration::from_secs(30),
+        };
+
+        let db_config = DatabaseConfig {
+            database_type: DatabaseType::SQLite,
+            connection_string: ":memory:".to_string(),
+            read_connection_strings: vec![],
+            pool: config,
+            enable_metrics: false,
+            enable_logging: false,
+            enable_prepared_statements: false,
+        };
+        let provider_db_config =
+            crate::database::connection::config::DatabaseConfig::sqlite(":memory:");
+        let provider = Arc::new(crate::database::SqliteProvider::new(provider_db_config).unwrap());
+        let db = PooledDatabase::new(db_config, provider).await.unwrap();
+        let stats = db.pool_stats();
+
+        assert_eq!(stats.max_connections, 5);
+        assert_eq!(stats.active_connections, 0);
+    }
+
+    #[tokio::test]
+    async fn test_connection_execution() {
+        let db_config = DatabaseConfig::default();
+        let provider_db_config =
+            crate::database::connection::config::DatabaseConfig::sqlite(":memory:");
+        let provider = Arc::new(crate::database::SqliteProvider::new(provider_db_config).unwrap());
+        let db = PooledDatabase::new(db_config, provider).await.unwrap();
+
+        let result = db
+            .with_connection(|conn| {
+                conn.execute_batch("CREATE TABLE test (id INTEGER PRIMARY KEY)")?;
+                conn.execute("INSERT INTO test (id) VALUES (?)", [1])?;
+                Ok(())
+            })
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_connections() {
+        let db_config = DatabaseConfig::default();
+        let provider_db_config =
+            crate::database::connection::config::DatabaseConfig::sqlite(":memory:");
+        let provider = Arc::new(crate::database::SqliteProvider::new(provider_db_config).unwrap());
+        let db = PooledDatabase::new(db_config, provider).await.unwrap();
+        let db_clone = db.clone();
+
+        // Create table first
+        db.with_connection(|conn| {
+            conn.execute_batch("CREATE TABLE concurrent_test (id INTEGER PRIMARY KEY)")?;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+        let handle1 = tokio::spawn(async move {
+            for i in 0..5 {
+                let _ = db
+                    .with_connection(|conn| {
+                        conn.execute("INSERT INTO concurrent_test (id) VALUES (?)", [i])?;
+                        Ok(())
+                    })
+                    .await;
+            }
+        });
+
+        let handle2 = tokio::spawn(async move {
+            for i in 5..10 {
+                let _ = db_clone
+                    .with_connection(|conn| {
+                        conn.execute("INSERT INTO concurrent_test (id) VALUES (?)", [i])?;
+                        Ok(())
+                    })
+                    .await;
+            }
+        });
+
+        let _ = tokio::join!(handle1, handle2);
+    }
+}

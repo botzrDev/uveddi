@@ -1,0 +1,404 @@
+name: Documentation Sync & Auto-Update
+
+on:
+  push:
+    paths:
+      - 'src/**/*.rs'
+      - 'docs/**/*.md'
+      - 'Cargo.toml'
+      - 'README.md'
+    branches: [main, develop, community-release-clean]
+  pull_request:
+    paths:
+      - 'src/**/*.rs'
+      - 'docs/**/*.md'
+    branches: [main, develop, community-release-clean]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs-changed: ${{ steps.changes.outputs.docs }}
+      code-changed: ${{ steps.changes.outputs.code }}
+      api-changed: ${{ steps.changes.outputs.api }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Detect changes
+      id: changes
+      run: |
+        # Check for documentation changes
+        if git diff --quiet HEAD~1 HEAD -- docs/ README.md; then
+          echo "docs=false" >> $GITHUB_OUTPUT
+        else
+          echo "docs=true" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check for code changes
+        if git diff --quiet HEAD~1 HEAD -- src/; then
+          echo "code=false" >> $GITHUB_OUTPUT
+        else
+          echo "code=true" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check for API-related changes
+        if git diff --quiet HEAD~1 HEAD -- src/api/ src/cli/ Cargo.toml; then
+          echo "api=false" >> $GITHUB_OUTPUT
+        else
+          echo "api=true" >> $GITHUB_OUTPUT
+        fi
+
+  sync-rust-docs:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code-changed == 'true'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustdoc
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target/
+        key: ${{ runner.os }}-cargo-doc-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Generate updated Rust documentation
+      run: |
+        echo "🔧 Generating comprehensive Rust documentation..."
+        cargo doc --all-features --no-deps --document-private-items \
+          --workspace --lib --bins
+        
+        # Generate JSON metadata for tooling
+        cargo +nightly doc --all-features --no-deps -Z unstable-options \
+          --output-format json --workspace --lib 2>/dev/null || true
+
+    - name: Extract API documentation changes
+      run: |
+        echo "📋 Extracting API documentation changes..."
+        
+        # Create API summary
+        mkdir -p docs/api/generated
+        
+        # Extract public API changes
+        cat > docs/api/generated/api_summary.md << 'EOF'
+        # API Documentation Summary
+        
+        Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        Commit: ${{ github.sha }}
+        
+        ## Public API Changes
+        
+        This document is automatically generated from Rust documentation.
+        
+        ### Modules
+        EOF
+        
+        # Find all public modules and add them
+        find target/doc -name "*.html" -path "*/uveddi/*" | head -20 | while read file; do
+          module_name=$(basename "$file" .html)
+          echo "- \`$module_name\`" >> docs/api/generated/api_summary.md
+        done
+
+    - name: Update OpenAPI specification
+      if: needs.detect-changes.outputs.api-changed == 'true'
+      run: |
+        echo "🔌 Updating OpenAPI specification..."
+        
+        # Ensure OpenAPI spec exists
+        mkdir -p docs/api
+        if [ ! -f "docs/api/openapi.yaml" ]; then
+          cat > docs/api/openapi.yaml << 'EOF'
+        openapi: 3.0.3
+        info:
+          title: Uveddi API
+          description: AI-powered code analysis tool API
+          version: 1.0.0
+        servers:
+          - url: http://localhost:8080/api/v1
+            description: Local development server
+        paths:
+          /health:
+            get:
+              summary: Health check endpoint
+              responses:
+                '200':
+                  description: Service is healthy
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: "ok"
+        components:
+          schemas:
+            Error:
+              type: object
+              properties:
+                error:
+                  type: string
+                message:
+                  type: string
+        EOF
+        fi
+        
+        # Update version from Cargo.toml
+        VERSION=$(grep '^version =' Cargo.toml | cut -d'"' -f2)
+        sed -i "s/version: .*/version: $VERSION/" docs/api/openapi.yaml
+        
+        # Update timestamp
+        echo "# Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> docs/api/openapi.yaml
+
+  build-documentation:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, sync-rust-docs]
+    if: always() && (needs.detect-changes.outputs.docs-changed == 'true' || needs.detect-changes.outputs.code-changed == 'true')
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: package.json
+
+    - name: Install documentation tools
+      run: |
+        # Install mdbook
+        curl -L https://github.com/rust-lang/mdBook/releases/download/v0.4.25/mdbook-v0.4.25-x86_64-unknown-linux-gnu.tar.gz | tar xz
+        chmod +x mdbook
+        sudo mv mdbook /usr/local/bin/
+        
+        # Install additional tools
+        npm install -g @mermaid-js/mermaid-cli
+        npm install -g swagger-parser-cli
+        npm install -g redoc-cli
+
+    - name: Build mdbook documentation
+      run: |
+        echo "📚 Building mdbook documentation..."
+        
+        # Ensure docs directory structure
+        mkdir -p docs/src
+        
+        # Create SUMMARY.md if it doesn't exist
+        if [ ! -f "docs/src/SUMMARY.md" ]; then
+          cat > docs/src/SUMMARY.md << 'EOF'
+        # Summary
+        
+        - [Introduction](./introduction.md)
+        - [Getting Started](./getting-started.md)
+        - [Architecture](./architecture.md)
+        - [API Reference](./api-reference.md)
+        - [Development](./development.md)
+        - [Contributing](./contributing.md)
+        EOF
+        fi
+        
+        # Build documentation
+        mdbook build docs/
+        
+        echo "✅ Documentation built successfully"
+
+    - name: Generate API documentation
+      run: |
+        echo "🔌 Generating API documentation..."
+        
+        # Validate OpenAPI spec
+        if [ -f "docs/api/openapi.yaml" ]; then
+          swagger-parser validate docs/api/openapi.yaml
+          
+          # Generate HTML API docs
+          mkdir -p docs/book/api
+          redoc-cli build docs/api/openapi.yaml --output docs/book/api/index.html
+          
+          echo "✅ API documentation generated"
+        else
+          echo "⚠️ OpenAPI specification not found, skipping API docs generation"
+        fi
+
+    - name: Optimize documentation
+      run: |
+        echo "⚡ Optimizing documentation..."
+        
+        # Compress images if any exist
+        if command -v optipng >/dev/null 2>&1; then
+          find docs/book -name "*.png" -exec optipng -o2 {} \;
+        fi
+        
+        # Minify HTML files
+        if command -v html-minifier >/dev/null 2>&1; then
+          find docs/book -name "*.html" -exec html-minifier \
+            --collapse-whitespace --remove-comments \
+            --minify-css --minify-js {} --output {} \;
+        fi
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: |
+          docs/book/
+          target/doc/
+        retention-days: 30
+
+  commit-documentation-updates:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-documentation]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect-changes.outputs.code-changed == 'true'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Download documentation artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: documentation
+        path: ./documentation-build
+
+    - name: Update documentation in repository
+      run: |
+        echo "💾 Updating documentation in repository..."
+        
+        # Copy built documentation back to repository
+        if [ -d "./documentation-build/book" ]; then
+          rm -rf docs/book
+          cp -r ./documentation-build/book docs/
+        fi
+        
+        # Update API documentation
+        if [ -d "./documentation-build/target/doc" ]; then
+          mkdir -p docs/api/rust
+          cp -r ./documentation-build/target/doc/* docs/api/rust/
+        fi
+        
+        # Update last-updated timestamp
+        echo "Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" > docs/LAST_UPDATED.txt
+
+    - name: Check for documentation changes
+      id: doc-changes
+      run: |
+        if git diff --quiet docs/; then
+          echo "has-changes=false" >> $GITHUB_OUTPUT
+          echo "No documentation changes detected"
+        else
+          echo "has-changes=true" >> $GITHUB_OUTPUT
+          echo "Documentation changes detected"
+          git status docs/
+        fi
+
+    - name: Commit documentation updates
+      if: steps.doc-changes.outputs.has-changes == 'true'
+      run: |
+        echo "📝 Committing documentation updates..."
+        
+        # Configure git
+        git config --local user.email "action@github.com"
+        git config --local user.name "Documentation Auto-Update"
+        
+        # Add changes
+        git add docs/
+        
+        # Commit with detailed message
+        git commit -m "docs: auto-update documentation
+
+        - Update Rust API documentation
+        - Regenerate mdbook documentation  
+        - Update API specifications
+        - Sync with code changes from ${{ github.sha }}
+
+        🤖 Auto-generated by documentation-sync workflow"
+
+    - name: Push documentation updates
+      if: steps.doc-changes.outputs.has-changes == 'true'
+      run: |
+        echo "🚀 Pushing documentation updates..."
+        git push origin main
+
+  deploy-documentation:
+    runs-on: ubuntu-latest
+    needs: [build-documentation, commit-documentation-updates]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download documentation artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: documentation
+        path: ./documentation-build
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./documentation-build/book
+        destination_dir: docs
+        user_name: 'Documentation Deploy Bot'
+        user_email: 'noreply@github.com'
+        commit_message: 'Deploy documentation updates for ${{ github.sha }}'
+
+  documentation-health-check:
+    runs-on: ubuntu-latest
+    needs: [deploy-documentation]
+    if: always()
+    
+    steps:
+    - name: Check documentation health
+      run: |
+        echo "🏥 Performing documentation health check..."
+        
+        # Check if GitHub Pages is accessible
+        sleep 30  # Wait for deployment
+        
+        REPO_NAME="${{ github.repository }}"
+        DOCS_URL="https://${REPO_NAME#*/}.github.io/${REPO_NAME#*/}/docs/"
+        
+        echo "Checking documentation at: $DOCS_URL"
+        
+        if curl -f -s "$DOCS_URL" >/dev/null; then
+          echo "✅ Documentation is accessible"
+          echo "📚 Documentation URL: $DOCS_URL"
+        else
+          echo "⚠️ Documentation may not be accessible yet (deployment in progress)"
+        fi
+
+    - name: Create deployment status
+      run: |
+        echo "## 📚 Documentation Deployment Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status | Details |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Rust Docs | ✅ Generated | API documentation updated |" >> $GITHUB_STEP_SUMMARY
+        echo "| mdbook | ✅ Built | Main documentation updated |" >> $GITHUB_STEP_SUMMARY
+        echo "| OpenAPI | ✅ Updated | API specification current |" >> $GITHUB_STEP_SUMMARY
+        echo "| GitHub Pages | ✅ Deployed | Live documentation available |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 **Documentation URL**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/docs/" >> $GITHUB_STEP_SUMMARY

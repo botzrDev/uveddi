@@ -1,0 +1,32 @@
+[package]
+name = "documentation-analyzer-plugin"
+version = "1.0.0"
+edition = "2021"
+authors = ["Uveddi Team <team@uveddi.dev>"]
+license = "MIT"
+description = "Documentation analysis plugin for Uveddi - analyzes documentation coverage and quality"
+repository = "https://github.com/uveddi/plugins/documentation-analyzer"
+readme = "README.md"
+keywords = ["documentation", "coverage", "quality", "static-analysis"]
+categories = ["development-tools", "text-processing"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.30.0"
+
+[package.metadata.component]
+package = "uveddi:documentation-analyzer"
+
+[package.metadata.component.dependencies]
+"wasi:cli" = { path = "wit/deps/cli" }
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1

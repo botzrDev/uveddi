@@ -1,0 +1,26 @@
+[plugin]
+name = "uveddi-ai-linter"
+version = "1.0.0"
+author = "Uveddi Team"
+description = "AI-powered code quality analysis with hallucination detection and verification"
+license = "MIT"
+
+[capabilities]
+languages = ["rust", "python", "javascript", "typescript", ]
+detector_types = ["ai-analysis", "quality", "security", "performance", ]
+api_version = "1.0"
+
+[requirements]
+min_uveddi_version = "1.0.0"
+max_uveddi_version = "2.0.0"
+
+[permissions]
+read_files = True
+write_files = False
+network_access = True
+system_info = True
+
+[resources]
+max_memory_mb = 512
+max_cpu_percent = 80
+timeout_seconds = 120

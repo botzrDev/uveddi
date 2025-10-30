@@ -1,0 +1,53 @@
+{% extends "layouts/report.html" %}
+
+{% block additional_sections %}
+    <section id="technical-debt" class="report-section" aria-labelledby="debt-heading">
+        <h2 id="debt-heading">Technical Debt Analysis</h2>
+        <div class="debt-metrics">
+            <div class="metric-card">
+                <h3>Estimated Technical Debt</h3>
+                <div class="metric-value">{{ summary_stats.technical_debt_hours | default(value="N/A") }} hours</div>
+            </div>
+            <div class="metric-card">
+                <h3>Debt per Issue</h3>
+                <div class="metric-value">{{ summary_stats.avg_debt_per_issue | default(value="N/A") }} hours</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="recommendations" class="report-section" aria-labelledby="recommendations-heading">
+        <h2 id="recommendations-heading">Recommendations</h2>
+        <div class="recommendations-list">
+            {% if recommendations %}
+                {% for recommendation in recommendations %}
+                    <div class="recommendation-item">
+                        <h3>{{ recommendation.title }}</h3>
+                        <p>{{ recommendation.description }}</p>
+                        <div class="recommendation-priority priority-{{ recommendation.priority }}">
+                            Priority: {{ recommendation.priority | title }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No specific recommendations available. Consider running a more detailed analysis.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section id="appendix" class="report-section" aria-labelledby="appendix-heading">
+        <h2 id="appendix-heading">Appendix</h2>
+        <div class="appendix-content">
+            <h3>Analysis Configuration</h3>
+            <dl class="config-list">
+                <dt>Analysis Engine Version</dt>
+                <dd>{{ analysis_run.engine_version | default(value="Unknown") }}</dd>
+                
+                <dt>Configuration Profile</dt>
+                <dd>{{ analysis_run.config_profile | default(value="Default") }}</dd>
+                
+                <dt>Language Detection</dt>
+                <dd>{{ analysis_run.detected_languages | join(sep=", ") | default(value="Auto-detected") }}</dd>
+            </dl>
+        </div>
+    </section>
+{% endblock %}

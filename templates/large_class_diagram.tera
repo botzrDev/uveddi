@@ -1,0 +1,64 @@
+{#  Large Class/Module Network Diagram  #}
+{#  Shows oversized components and their relationships  #}
+graph {{ layout }}
+
+{%- for component in components %}
+  {%- if component.size_category == "extra_large" %}
+    {{ component.id }}["🔥 {{ component.name }}<br/>{{ component.lines_of_code }} LOC<br/>{{ component.complexity }} complexity"]
+    class {{ component.id }} large-class-critical
+  {%- elif component.size_category == "large" %}
+    {{ component.id }}["⚠️ {{ component.name }}<br/>{{ component.lines_of_code }} LOC"]
+    class {{ component.id }} large-class-warning
+  {%- elif component.size_category == "medium" %}
+    {{ component.id }}["📊 {{ component.name }}<br/>{{ component.lines_of_code }} LOC"]
+    class {{ component.id }} medium-class
+  {%- else %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} normal-class
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.weight == "heavy" %}
+    {{ dependency.from_id }} ==>|"{{ dependency.type }}<br/>{{ dependency.count }} refs"| {{ dependency.to_id }}
+  {%- elif dependency.weight == "medium" %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- else %}
+    {{ dependency.from_id }} -.->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if large_class_clusters %}
+  {%- for cluster in large_class_clusters %}
+    subgraph "Large Class Cluster: {{ cluster.name }}"
+    {%- for node_id in cluster.nodes %}
+      {{ node_id }}
+    {%- endfor %}
+    end
+  {%- endfor %}
+{%- endif %}
+
+{%- if size_legend %}
+  subgraph "Size Legend"
+    legend1["Small: < 100 LOC"]
+    legend2["Medium: 100-300 LOC"]
+    legend3["Large: 300-500 LOC"]
+    legend4["Extra Large: > 500 LOC"]
+    class legend1 normal-class
+    class legend2 medium-class
+    class legend3 large-class-warning
+    class legend4 large-class-critical
+  end
+{%- endif %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend(",color:") }}
+  {%- endfor %}
+{%- else %}
+  {#  Default styles for Large Class Detection  #}
+  classDef large-class-critical fill:#FF4444,stroke:#CC0000,stroke-width:3px,color:#FFF
+  classDef large-class-warning fill:#FF8800,stroke:#CC6600,stroke-width:2px,color:#FFF
+  classDef medium-class fill:#FFAA00,stroke:#DD8800,stroke-width:2px
+  classDef normal-class fill:#E8F5E8,stroke:#4CAF50,stroke-width:1px
+{%- endif %}
