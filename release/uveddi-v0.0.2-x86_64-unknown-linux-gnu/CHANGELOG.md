@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-10-03
+## [0.0.2] - 2025-10-03
 
-### 🎉 Major Release - Production Ready
+### Initial Release - Early Access
 
-This is the first stable release of Uveddi, marking the transition from alpha to production-ready status. This release represents months of development, testing, and refinement to deliver a robust code analysis platform.
+This is the initial release of Uveddi. This release represents development, testing, and refinement to deliver a code analysis platform.
 
 ### Added
 
@@ -192,7 +192,7 @@ cargo run -- analyze ./src
 cargo build --features production
 ```
 
-**After (v1.0.0):**
+**After (v0.0.2):**
 ```bash
 cargo run --features standard -- analyze ./src
 cargo build --features full
@@ -251,7 +251,7 @@ cargo test --features full
 
 ### Performance Improvements
 
-| Metric | v0.9.0-alpha | v1.0.0 | Improvement |
+| Metric | v0.9.0-alpha | v0.0.2 | Improvement |
 |--------|--------------|--------|-------------|
 | Analysis time (medium codebase) | 45s | 31s | 30% faster |
 | Memory usage (large project) | 3.2GB | 2.4GB | 25% reduction |

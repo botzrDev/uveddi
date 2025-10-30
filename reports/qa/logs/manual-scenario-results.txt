@@ -1,6 +1,6 @@
-MANUAL SCENARIO SWEEP - UVEDDI 1.0.0
+MANUAL SCENARIO SWEEP - UVEDDI 0.0.2
 Date: 2025-11-22
-Branch: release/1.0.0
+Branch: release/0.0.2
 Tester: Solo Dev (QA Lead)
 
 =======================================

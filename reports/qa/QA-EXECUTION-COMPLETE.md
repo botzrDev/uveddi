@@ -1,7 +1,7 @@
 # Assignment A5 - QA Execution: COMPLETE ✅
 
 **Completion Date:** 2025-11-22  
-**Branch:** release/1.0.0  
+**Branch:** release/0.0.2  
 **QA Lead:** Solo Dev  
 **Status:** ✅ ALL DELIVERABLES COMPLETE  
 
@@ -134,10 +134,10 @@ Assignment A5 (QA Execution) has been completed successfully with all required d
 1. ✅ Document security detector limitations (BETA) in release notes
 2. ✅ Document known test failures and calibration gaps
 3. ✅ Create GitHub issues for DEF-001, DEF-002
-4. ✅ Commit to v1.0.1 patch in 2 weeks (target: 2025-12-06)
+4. ✅ Commit to v0.0.3 patch in 2 weeks (target: 2025-12-06)
 5. ✅ Provide user guidance on result interpretation
 
-**Alternative:** Release as v1.0.0-rc1 for additional validation
+**Alternative:** Release as v0.0.2-rc1 for additional validation
 
 ---
 
@@ -145,12 +145,12 @@ Assignment A5 (QA Execution) has been completed successfully with all required d
 
 ### Immediate (Pre-Release)
 1. Review QA findings with stakeholders
-2. Decide: v1.0.0 stable OR v1.0.0-rc1
+2. Decide: v0.0.2 stable OR v0.0.2-rc1
 3. Complete release notes with limitations
 4. Create GitHub tracking issues
 5. Update user documentation
 
-### v1.0.1 Patch (2 weeks)
+### v0.0.3 Patch (2 weeks)
 1. Fix DEF-002: Security detector regex patterns (CRITICAL)
 2. Fix DEF-001: Integration test compilation (HIGH)
 3. Fix DEF-003: Database test isolation (HIGH)
@@ -214,5 +214,5 @@ All acceptance criteria from Assignment A5 have been met:
 
 **Prepared by:** Solo Dev (QA Lead)  
 **Date:** 2025-11-22  
-**Branch:** release/1.0.0  
+**Branch:** release/0.0.2  
 **Sign-Off:** ✅ APPROVED for progression to A6

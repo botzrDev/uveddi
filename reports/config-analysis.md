@@ -1245,7 +1245,7 @@ You have **1** critical architectural issues that require immediate attention:
 
 ### Analysis Configuration
 
-- **Analysis Engine Version**: 1.0.0
+- **Analysis Engine Version**: 0.0.2
 - **Project ID**: 1
 - **Status**: completed
 - **Files Analyzed**: 1

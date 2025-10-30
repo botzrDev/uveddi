@@ -1,6 +1,6 @@
 # Security Policy
 
-**Product:** Uveddi CLI v1.0.0  
+**Product:** Uveddi CLI v0.0.2  
 **Effective Date:** 2025-10-09  
 **Last Updated:** 2025-10-09  
 **Policy Version:** 1.0
@@ -27,7 +27,7 @@ We provide security updates for the following Uveddi versions:
 - **Security-Only Updates:** Previous minor versions may receive critical security fixes for 90 days after new minor release
 - **End of Life:** Versions no longer supported will not receive security updates
 
-**Current Supported Version:** 1.0.0  
+**Current Supported Version:** 0.0.2  
 **Next Minor Release:** 1.1.0 (Planned Q2 2026)
 
 ---
@@ -350,7 +350,7 @@ This security policy is reviewed and updated:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0 | 2025-10-09 | Initial policy for 1.0.0 release |
+| 1.0 | 2025-10-09 | Initial policy for 0.0.2 release |
 
 **Next Scheduled Review:** 2026-01-09
 
@@ -404,7 +404,7 @@ We thank the security research community for helping keep Uveddi secure. Special
 
 ## ✅ Compliance Certifications
 
-**Current Status (1.0.0 Release):**
+**Current Status (0.0.2 Release):**
 - ✅ MIT License (open source code)
 - ✅ Dependency license compliance
 - ✅ No known critical vulnerabilities

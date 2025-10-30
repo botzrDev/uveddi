@@ -1,4 +1,4 @@
-# Uveddi Test Suite - v1.0.0 Release
+# Uveddi Test Suite - v0.0.2 Release
 
 This document provides comprehensive guidance for running and maintaining the Uveddi test suite. For detailed test inventory, see `reports/qa/test-inventory.md`.
 
@@ -475,6 +475,6 @@ Before releasing a new version:
 
 ---
 
-**Last Updated:** 2025-11-22 (v1.0.0 Release)
+**Last Updated:** 2025-11-22 (v0.0.2 Release)
 **QA Lead:** Solo Dev
 **Status:** Ready for Release Testing

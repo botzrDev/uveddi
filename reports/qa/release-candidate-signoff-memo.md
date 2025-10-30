@@ -1,9 +1,9 @@
 # Release Candidate Sign-Off Memo
-## Uveddi 1.0.0
+## Uveddi 0.0.2
 
 **Document Type:** Executive Decision Memo  
 **Date:** 2025-11-22  
-**Branch:** release/1.0.0  
+**Branch:** release/0.0.2  
 **QA Lead:** Solo Dev  
 **Prepared For:** Release Decision Authority  
 
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITIONAL GO** recommendation for release with specific conditions and a committed patch timeline.
+After comprehensive QA testing of Uveddi 0.0.2, the QA team provides a **CONDITIONAL GO** recommendation for release with specific conditions and a committed patch timeline.
 
 ### Quick Facts
 
@@ -26,13 +26,13 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 
 ### Recommendation
 
-**CONDITIONAL GO** - Release as v1.0.0 with:
+**CONDITIONAL GO** - Release as v0.0.2 with:
 1. Documented limitations in release notes
-2. Commitment to v1.0.1 patch within 2 weeks
+2. Commitment to v0.0.3 patch within 2 weeks
 3. Security features marked as BETA
 4. Clear user guidance on result interpretation
 
-**Alternative:** Release as v1.0.0-rc1 (release candidate) for additional community validation
+**Alternative:** Release as v0.0.2-rc1 (release candidate) for additional community validation
 
 ---
 
@@ -42,7 +42,7 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 
 1. **Binary Builds Successfully**
    - Release build completes in 2m 34s
-   - Version 1.0.0 reported correctly
+   - Version 0.0.2 reported correctly
    - No critical compilation errors
 
 2. **Core User Workflows Functional**
@@ -80,11 +80,11 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 7. **Security Feature Accuracy**
    - 35 security detector tests failing
    - Root cause: Regex pattern limitations (lookahead/lookbehind)
-   - **Mitigation:** Mark as BETA, document limitations, fix in v1.0.1
+   - **Mitigation:** Mark as BETA, document limitations, fix in v0.0.3
 
 8. **Integration Test Coverage**
    - Tests won't compile due to refactoring impacts
-   - **Mitigation:** Manual testing covers critical paths, fix in v1.0.1
+   - **Mitigation:** Manual testing covers critical paths, fix in v0.0.3
 
 ---
 
@@ -137,7 +137,7 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 
 ## Critical Dependencies
 
-### For v1.0.0 Release ✅ (Ready)
+### For v0.0.2 Release ✅ (Ready)
 
 - [x] Release build successful
 - [x] Core CLI commands functional
@@ -149,12 +149,12 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 - [x] Defect log created
 - [x] Patch plan documented
 
-### For v1.0.0 Stable (Conditions)
+### For v0.0.2 Stable (Conditions)
 
 - [ ] Release notes include security detector limitations
 - [ ] GitHub issues created for tracking (DEF-001, DEF-002)
 - [ ] User documentation includes workarounds
-- [ ] v1.0.1 patch plan communicated publicly
+- [ ] v0.0.3 patch plan communicated publicly
 - [ ] Security features marked as BETA in docs
 
 ---
@@ -165,7 +165,7 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 
 | Risk | Probability | Impact | Mitigation | Owner |
 |------|------------|--------|------------|-------|
-| Security false negatives | HIGH | HIGH | Document as BETA, recommend manual review, fix in v1.0.1 | Security Team |
+| Security false negatives | HIGH | HIGH | Document as BETA, recommend manual review, fix in v0.0.3 | Security Team |
 | Detector miscalibration causes user confusion | MEDIUM | MEDIUM | Clear documentation, threshold guidance | Product Team |
 | Integration test failures indicate deeper issues | LOW | HIGH | Manual testing provides confidence | QA Team |
 
@@ -194,12 +194,12 @@ After comprehensive QA testing of Uveddi 1.0.0, the QA team provides a **CONDITI
 **DEF-001: Integration Test Compilation** (CRITICAL)
 - **Status:** MITIGATED
 - **Resolution:** Manual testing validates critical paths
-- **Patch:** v1.0.1 (2 weeks)
+- **Patch:** v0.0.3 (2 weeks)
 
 **DEF-002: Security Regex Patterns** (CRITICAL)
 - **Status:** MITIGATED
 - **Resolution:** Document as BETA, provide guidance
-- **Patch:** v1.0.1 (2 weeks)
+- **Patch:** v0.0.3 (2 weeks)
 
 ### No Blocking Issues Remaining
 
@@ -209,7 +209,7 @@ All critical defects have documented mitigations and patch plans. No blocking is
 
 ## Release Options
 
-### Option 1: Full v1.0.0 Release (RECOMMENDED)
+### Option 1: Full v0.0.2 Release (RECOMMENDED)
 
 **Pros:**
 - Delivers value to users immediately
@@ -225,12 +225,12 @@ All critical defects have documented mitigations and patch plans. No blocking is
 **Requirements:**
 - Complete release notes with limitations
 - GitHub issue tracking
-- Patch commitment (v1.0.1 in 2 weeks)
+- Patch commitment (v0.0.3 in 2 weeks)
 - User guidance on interpreting results
 
 **Recommendation:** ✅ **PROCEED** with proper documentation
 
-### Option 2: Release Candidate (v1.0.0-rc1)
+### Option 2: Release Candidate (v0.0.2-rc1)
 
 **Pros:**
 - Additional validation period
@@ -264,14 +264,14 @@ All critical defects have documented mitigations and patch plans. No blocking is
 
 ### Primary Recommendation: CONDITIONAL GO
 
-**Release as: Uveddi v1.0.0**
+**Release as: Uveddi v0.0.2**
 
 **Required Conditions:**
 1. ✅ **Release Notes** must include:
    - Security detector limitations (BETA status)
    - Known test failures and what they mean
    - Guidance on result interpretation
-   - Commitment to v1.0.1 patch in 2 weeks
+   - Commitment to v0.0.3 patch in 2 weeks
 
 2. ✅ **GitHub Issues** created for:
    - DEF-001: Integration test compilation
@@ -282,10 +282,10 @@ All critical defects have documented mitigations and patch plans. No blocking is
    - When to use security features
    - How to interpret detector results
    - Workarounds for known limitations
-   - Upgrade path to v1.0.1
+   - Upgrade path to v0.0.3
 
 4. ✅ **Patch Commitment:**
-   - v1.0.1 within 2 weeks of v1.0.0
+   - v0.0.3 within 2 weeks of v0.0.2
    - Fixes DEF-001, DEF-002
    - Additional test suite improvements
 
@@ -298,16 +298,16 @@ All critical defects have documented mitigations and patch plans. No blocking is
 ### Secondary Recommendation: Consider RC
 
 **If:** Additional community validation desired  
-**Then:** Release as v1.0.0-rc1 first
+**Then:** Release as v0.0.2-rc1 first
 - 1 week validation period
 - Gather feedback
-- Then release v1.0.0 stable
+- Then release v0.0.2 stable
 
 ---
 
 ## Post-Release Plan
 
-### v1.0.1 Patch (2 Weeks)
+### v0.0.3 Patch (2 Weeks)
 
 **Must Fix:**
 - DEF-002: Security detector regex patterns
@@ -356,22 +356,22 @@ All critical defects have documented mitigations and patch plans. No blocking is
 - [x] Patch plan established
 - [x] User impact acceptable
 
-**Release Decision:** Proceed with v1.0.0 release subject to:
+**Release Decision:** Proceed with v0.0.2 release subject to:
 1. Completion of release notes with limitations
 2. Creation of tracking issues (DEF-001, DEF-002)
 3. User documentation updates
-4. Public commitment to v1.0.1 patch
+4. Public commitment to v0.0.3 patch
 
 ### Approvals
 
 **QA Lead Sign-Off:** ✅ **APPROVED** (Conditional)  
 **Prepared By:** Solo Dev  
 **Date:** 2025-11-22  
-**Branch:** release/1.0.0  
+**Branch:** release/0.0.2  
 
 **Next Steps:**
 1. Review this memo with stakeholders
-2. Decide on release option (v1.0.0 vs v1.0.0-rc1)
+2. Decide on release option (v0.0.2 vs v0.0.2-rc1)
 3. Complete required documentation
 4. Create tracking issues
 5. Proceed with release OR implement feedback

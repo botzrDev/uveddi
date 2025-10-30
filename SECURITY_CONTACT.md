@@ -1,6 +1,6 @@
 # Uveddi Security Contact Information
 
-**Version:** 1.0.0  
+**Version:** 0.0.2  
 **Last Updated:** 2025-10-09  
 **Status:** Active
 
@@ -283,7 +283,7 @@ We publicly thank security researchers who help improve Uveddi:
 ### Bug Bounty Program
 
 **Status:** 🚧 Not yet established  
-**Target:** Q2 2026 (post-1.0.0 maturity)  
+**Target:** Q2 2026 (post-0.0.2 maturity)  
 **Platform:** TBD (HackerOne, Bugcrowd, or self-hosted)
 
 Interested in participating? Email security@uveddi.com to express interest.

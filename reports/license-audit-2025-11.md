@@ -1,4 +1,4 @@
-# Uveddi 1.0.0 License & Dependency Audit Report
+# Uveddi 0.0.2 License & Dependency Audit Report
 
 **Date:** 2025-10-09  
 **Auditor:** GitHub Copilot (Assignment A4)  
@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This audit reviews all Rust dependencies in Uveddi 1.0.0 for license compliance, security advisories, and commercial distribution readiness. The project uses **448 total dependencies** with predominantly permissive licenses compatible with commercial distribution.
+This audit reviews all Rust dependencies in Uveddi 0.0.2 for license compliance, security advisories, and commercial distribution readiness. The project uses **448 total dependencies** with predominantly permissive licenses compatible with commercial distribution.
 
 ### Key Findings
 
@@ -94,7 +94,7 @@ Apache-2.0 WITH LLVM-exception provides additional permissions for static linkin
 
 **Dependency Path:**
 ```
-uveddi v1.0.0
+uveddi v0.0.2
 └── notify v7.0.0
     └── notify-types v1.0.1
         └── instant v0.1.13
@@ -105,10 +105,10 @@ uveddi v1.0.0
 **Recommended Actions:**
 1. Monitor `notify` crate for updates that migrate away from `instant`
 2. Consider filing an issue with `notify` maintainers if not already addressed
-3. Track in security advisory backlog but does not block 1.0.0 release
+3. Track in security advisory backlog but does not block 0.0.2 release
 4. Add to `deny.toml` ignore list with documented reason
 
-**Mitigation Timeline:** Post-1.0.0 (Q1 2026)
+**Mitigation Timeline:** Post-0.0.2 (Q1 2026)
 
 ---
 

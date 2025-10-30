@@ -2,7 +2,7 @@
 
 Uveddi is a commercial-grade architectural analysis CLI that combines static code analysis with AI-assisted insights to help engineering teams audit, modernize, and govern large codebases.
 
-**Current Version**: `1.0.0` &nbsp;|&nbsp; **Availability**: Commercial release
+**Current Version**: `0.0.2` &nbsp;|&nbsp; **Availability**: Commercial release
 
 **Pricing**: $9 per week or $300 per year (billed annually)
 

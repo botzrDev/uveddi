@@ -371,7 +371,7 @@ utf8-width,0.1.7,MIT
 utf8_iter,1.0.4,Apache-2.0 OR MIT
 utf8parse,0.2.2,Apache-2.0 OR MIT
 uuid,1.18.1,Apache-2.0 OR MIT
-uveddi,1.0.0,MIT
+uveddi,0.0.2,MIT
 validator,0.20.0,MIT
 validator_derive,0.20.0,MIT
 valuable,0.1.1,MIT

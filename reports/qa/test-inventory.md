@@ -1,6 +1,6 @@
-# Uveddi 1.0.0 Test Inventory
+# Uveddi 0.0.2 Test Inventory
 **Date:** 2025-11-22
-**Branch:** release/1.0.0
+**Branch:** release/0.0.2
 **QA Lead:** Solo Dev
 
 ## Test Suite Summary

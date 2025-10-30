@@ -255,6 +255,6 @@ enable_auto_calibration = false
 
 ---
 
-**Version**: 1.0.0
+**Version**: 0.0.2
 **Last Updated**: 2025-10-09
 **Status**: Ready for integration
