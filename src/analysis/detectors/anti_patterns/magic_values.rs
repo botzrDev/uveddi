@@ -55,6 +55,14 @@ impl Default for MagicValuesConfig {
         allowed_floats.insert("0.0".to_string());
         allowed_floats.insert("1.0".to_string());
         allowed_floats.insert("-1.0".to_string());
+        // Common percentage thresholds - reduce false positives on threshold comparisons
+        allowed_floats.insert("0.5".to_string());   // 50%
+        allowed_floats.insert("0.25".to_string());  // 25%
+        allowed_floats.insert("0.75".to_string());  // 75%
+        allowed_floats.insert("0.9".to_string());   // 90%
+        allowed_floats.insert("0.1".to_string());   // 10%
+        allowed_floats.insert("90.0".to_string());  // 90% threshold
+        allowed_floats.insert("100.0".to_string()); // 100% threshold
 
         Self {
             allowed_integers,
@@ -126,6 +134,75 @@ impl MagicValuesDetector {
 
     pub fn with_config(config: MagicValuesConfig) -> Self {
         Self { config }
+    }
+
+    /// Check if a node is within test code context
+    /// This helps reduce false positives from test fixtures and test data
+    fn is_in_test_context(&self, node: &Node, source: &[u8]) -> bool {
+        let mut current = node.parent();
+
+        while let Some(parent) = current {
+            let kind = parent.kind();
+
+            // Check for #[test] or #[cfg(test)] attributes
+            if kind == "attribute_item" || kind == "attribute" {
+                let text = parent.utf8_text(source).unwrap_or("");
+                if text.contains("test") || text.contains("cfg(test)") {
+                    return true;
+                }
+            }
+
+            // Check for mod tests { }
+            if kind == "mod_item" {
+                if let Some(name) = parent.child_by_field_name("name") {
+                    let name_text = name.utf8_text(source).unwrap_or("");
+                    if name_text == "tests" || name_text.starts_with("test") {
+                        return true;
+                    }
+                }
+            }
+
+            // Check for fn test_*() function names
+            if kind == "function_item" {
+                if let Some(name) = parent.child_by_field_name("name") {
+                    let name_text = name.utf8_text(source).unwrap_or("");
+                    if name_text.starts_with("test_") {
+                        return true;
+                    }
+                }
+            }
+
+            current = parent.parent();
+        }
+        false
+    }
+
+    /// Check if the value is in a self-documenting function call context
+    /// e.g., Duration::from_secs(30), Vec::with_capacity(1024)
+    fn is_self_documenting_call(&self, node: &Node, source: &[u8]) -> bool {
+        if let Some(parent) = node.parent() {
+            if parent.kind() == "call_expression" || parent.kind() == "arguments" {
+                // Navigate up to find the actual call
+                let mut call_node = parent;
+                if parent.kind() == "arguments" {
+                    if let Some(p) = parent.parent() {
+                        call_node = p;
+                    }
+                }
+
+                if let Some(func) = call_node.child_by_field_name("function") {
+                    let func_text = func.utf8_text(source).unwrap_or("");
+                    let self_doc_patterns = [
+                        "from_secs", "from_millis", "from_nanos", "from_micros",
+                        "with_capacity", "repeat", "sleep", "timeout",
+                        "from_be_bytes", "from_le_bytes", "from_ne_bytes",
+                        "with_size", "resize", "reserve",
+                    ];
+                    return self_doc_patterns.iter().any(|p| func_text.ends_with(p));
+                }
+            }
+        }
+        false
     }
 
     /// Check if an integer value should be ignored based on configured heuristics
@@ -244,8 +321,12 @@ impl MagicValuesDetector {
             return true;
         }
 
-        // 2. Ignore environment variable names (uppercase with underscores)
-        if value.chars().all(|c| c.is_uppercase() || c == '_' || c.is_numeric()) && value.contains('_') {
+        // 2. Ignore environment variable names (uppercase, may have underscores)
+        // Fixed: Removed underscore requirement - "MODE", "DEBUG", "PORT" are valid env var names
+        if value.len() >= 2
+            && value.chars().next().map_or(false, |c| c.is_uppercase())
+            && value.chars().all(|c| c.is_uppercase() || c == '_' || c.is_numeric())
+        {
             return true;
         }
 
@@ -379,9 +460,11 @@ impl MagicValuesDetector {
         _value: &MagicValueType,
     ) -> MagicValueSeverity {
         match context {
-            MagicValueContext::Comparison | MagicValueContext::FunctionArgument => {
-                MagicValueSeverity::High
-            }
+            // Comparisons are often critical logic - keep High
+            MagicValueContext::Comparison => MagicValueSeverity::High,
+            // Function arguments are often self-documenting (Duration::from_secs, with_capacity)
+            // Recalibrated: High -> Medium to reduce false positives
+            MagicValueContext::FunctionArgument => MagicValueSeverity::Medium,
             MagicValueContext::Assignment | MagicValueContext::ReturnValue => {
                 MagicValueSeverity::Medium
             }
@@ -433,6 +516,15 @@ impl MagicValuesDetector {
 
                     match capture_name {
                         "number" => {
+                            // Skip values in test code entirely
+                            if self.is_in_test_context(&node, source) {
+                                continue;
+                            }
+                            // Skip self-documenting function calls (Duration::from_secs, etc.)
+                            if self.is_self_documenting_call(&node, source) {
+                                continue;
+                            }
+
                             if let Ok(int_val) = text.parse::<i64>() {
                                 if !self.is_integer_allowed(int_val, &context) {
                                     let value_type = MagicValueType::Integer(int_val);
@@ -464,6 +556,11 @@ impl MagicValuesDetector {
                             }
                         }
                         "string" => {
+                            // Skip strings in test code entirely
+                            if self.is_in_test_context(&node, source) {
+                                continue;
+                            }
+
                             // Remove quotes for analysis
                             let string_content = text.trim_matches('"').trim_matches('\'');
                             if !self.is_string_allowed(string_content, &context) {
