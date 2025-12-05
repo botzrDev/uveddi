@@ -21,6 +21,38 @@ use wasmtime_wasi::preview1::{self, WasiP1Ctx};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::{WasiCtxBuilder, WasiView};
 
+/// Result type for plugin analysis
+#[derive(Debug, Clone)]
+pub struct PluginAnalysisResult {
+    pub issues: Vec<PluginIssueResult>,
+    pub metrics: PluginMetrics,
+    pub duration_ms: u32,
+}
+
+/// Issue detected by a plugin
+#[derive(Debug, Clone)]
+pub struct PluginIssueResult {
+    pub id: String,
+    pub severity: String,
+    pub category: String,
+    pub message: String,
+    pub description: Option<String>,
+    pub file: String,
+    pub start_line: u32,
+    pub start_column: u32,
+    pub end_line: u32,
+    pub end_column: u32,
+    pub suggestion: Option<String>,
+}
+
+/// Metrics from plugin analysis
+#[derive(Debug, Clone, Default)]
+pub struct PluginMetrics {
+    pub lines_of_code: u32,
+    pub complexity: u32,
+    pub maintainability_index: f64,
+}
+
 /// Plugin lifecycle manager
 #[derive(Clone)]
 pub struct PluginLifecycleManager {
@@ -209,6 +241,26 @@ impl PluginLifecycleManager {
         tracing::info!("Host functions would be registered here with proper WIT bindings");
         Ok(())
     }
+
+    /// Analyze a file using a specific plugin
+    ///
+    /// This method invokes the plugin's analyze function with the given file data
+    /// and returns the analysis results.
+    #[cfg(feature = "wasm-plugins")]
+    pub async fn analyze_with_plugin(
+        &self,
+        plugin_id: &PluginId,
+        file_path: &str,
+        file_content: &str,
+        language: &str,
+    ) -> Result<PluginAnalysisResult, PluginError> {
+        let active_plugins = self.active_plugins.read().await;
+        let plugin = active_plugins
+            .get(plugin_id)
+            .ok_or_else(|| PluginError::NotFound(plugin_id.to_string()))?;
+
+        plugin.analyze_file(file_path, file_content, language)
+    }
 }
 
 impl Default for PluginLifecycleManager {
@@ -281,6 +333,169 @@ impl ActivePlugin {
 
         self.status = PluginStatus::Unloaded;
         Ok(())
+    }
+
+    /// Analyze a file using this plugin
+    ///
+    /// This invokes the plugin's `analyze` export function with the given file data.
+    /// The file content and metadata are passed as JSON, and results are returned as JSON.
+    #[cfg(feature = "wasm-plugins")]
+    pub fn analyze_file(
+        &self,
+        file_path: &str,
+        file_content: &str,
+        language: &str,
+    ) -> Result<PluginAnalysisResult, PluginError> {
+        use std::time::Instant;
+        let start_time = Instant::now();
+
+        // Get mutable access to the store
+        let mut store_guard = self.store.lock().map_err(|e| {
+            PluginError::Execution(format!("Failed to acquire store lock: {}", e))
+        })?;
+
+        // Prepare the input data as JSON
+        // Use a simple hash calculation instead of md5 crate
+        let content_hash = {
+            let mut hash: u64 = 0;
+            for byte in file_content.bytes() {
+                hash = hash.wrapping_mul(31).wrapping_add(byte as u64);
+            }
+            format!("{:016x}", hash)
+        };
+        let input_json = serde_json::json!({
+            "path": file_path,
+            "content": file_content,
+            "language": language,
+            "size": file_content.len() as u32,
+            "hash": content_hash,
+        });
+        let input_str = serde_json::to_string(&input_json)
+            .map_err(|e| PluginError::Execution(format!("JSON serialization failed: {}", e)))?;
+
+        // Get the analyze function from the instance
+        // Note: The exact function signature depends on how the WASM module is compiled.
+        // For core modules with JSON interface:
+        // - Input: pointer to JSON string, length
+        // - Output: pointer to result JSON string, length
+
+        // First, we need to allocate memory in the WASM module for the input
+        let memory = self.instance
+            .get_memory(&mut *store_guard, "memory")
+            .ok_or_else(|| PluginError::Execution("No memory export found".to_string()))?;
+
+        // Try to get the alloc function
+        let alloc_func = self.instance
+            .get_typed_func::<i32, i32>(&mut *store_guard, "alloc")
+            .or_else(|_| self.instance.get_typed_func::<i32, i32>(&mut *store_guard, "__alloc"))
+            .or_else(|_| self.instance.get_typed_func::<i32, i32>(&mut *store_guard, "malloc"));
+
+        // If we have an alloc function, use proper memory management
+        if let Ok(alloc) = alloc_func {
+            let input_bytes = input_str.as_bytes();
+            let input_len = input_bytes.len() as i32;
+
+            // Allocate memory for input
+            let input_ptr = alloc.call(&mut *store_guard, input_len)
+                .map_err(|e| PluginError::Execution(format!("Alloc failed: {}", e)))?;
+
+            // Write input to WASM memory
+            memory.write(&mut *store_guard, input_ptr as usize, input_bytes)
+                .map_err(|e| PluginError::Execution(format!("Memory write failed: {}", e)))?;
+
+            // Call the analyze function
+            // Expected signature: analyze(ptr: i32, len: i32) -> i32 (ptr to result)
+            if let Ok(analyze_func) = self.instance.get_typed_func::<(i32, i32), i32>(&mut *store_guard, "analyze") {
+                let result_ptr = analyze_func.call(&mut *store_guard, (input_ptr, input_len))
+                    .map_err(|e| PluginError::Execution(format!("Analyze call failed: {}", e)))?;
+
+                // Read the result from WASM memory
+                // First 4 bytes should be the length, then the JSON data
+                let mut len_bytes = [0u8; 4];
+                memory.read(&*store_guard, result_ptr as usize, &mut len_bytes)
+                    .map_err(|e| PluginError::Execution(format!("Memory read failed: {}", e)))?;
+                let result_len = i32::from_le_bytes(len_bytes) as usize;
+
+                let mut result_bytes = vec![0u8; result_len];
+                memory.read(&*store_guard, (result_ptr + 4) as usize, &mut result_bytes)
+                    .map_err(|e| PluginError::Execution(format!("Memory read failed: {}", e)))?;
+
+                let result_str = String::from_utf8(result_bytes)
+                    .map_err(|e| PluginError::Execution(format!("UTF-8 decode failed: {}", e)))?;
+
+                // Parse the result JSON
+                return self.parse_analysis_result(&result_str, start_time.elapsed().as_millis() as u32);
+            }
+        }
+
+        // Fallback: try simplified analyze function that works with pre-allocated buffers
+        // This is for plugins that don't have their own memory management
+        if let Ok(simple_analyze) = self.instance.get_typed_func::<(), i32>(&mut *store_guard, "analyze_simple") {
+            let result_code = simple_analyze.call(&mut *store_guard, ())
+                .map_err(|e| PluginError::Execution(format!("Simple analyze failed: {}", e)))?;
+
+            // Return a basic result based on the return code
+            return Ok(PluginAnalysisResult {
+                issues: vec![],
+                metrics: PluginMetrics {
+                    lines_of_code: file_content.lines().count() as u32,
+                    complexity: 0,
+                    maintainability_index: 100.0,
+                },
+                duration_ms: start_time.elapsed().as_millis() as u32,
+            });
+        }
+
+        // If no analyze function is found, return empty results with a warning
+        tracing::warn!("Plugin {} has no analyze function, returning empty results", self.id);
+        Ok(PluginAnalysisResult {
+            issues: vec![],
+            metrics: PluginMetrics::default(),
+            duration_ms: start_time.elapsed().as_millis() as u32,
+        })
+    }
+
+    /// Parse analysis result from JSON
+    #[cfg(feature = "wasm-plugins")]
+    fn parse_analysis_result(&self, json_str: &str, duration_ms: u32) -> Result<PluginAnalysisResult, PluginError> {
+        let value: serde_json::Value = serde_json::from_str(json_str)
+            .map_err(|e| PluginError::Execution(format!("Result JSON parse failed: {}", e)))?;
+
+        let mut issues = Vec::new();
+        if let Some(issues_array) = value.get("issues").and_then(|v| v.as_array()) {
+            for issue_val in issues_array {
+                let issue = PluginIssueResult {
+                    id: issue_val.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                    severity: issue_val.get("severity").and_then(|v| v.as_str()).unwrap_or("medium").to_string(),
+                    category: issue_val.get("category").and_then(|v| v.as_str()).unwrap_or("quality").to_string(),
+                    message: issue_val.get("message").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                    description: issue_val.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    file: issue_val.get("file").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                    start_line: issue_val.get("span").and_then(|v| v.get("start")).and_then(|v| v.get("line")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
+                    start_column: issue_val.get("span").and_then(|v| v.get("start")).and_then(|v| v.get("column")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
+                    end_line: issue_val.get("span").and_then(|v| v.get("end")).and_then(|v| v.get("line")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
+                    end_column: issue_val.get("span").and_then(|v| v.get("end")).and_then(|v| v.get("column")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
+                    suggestion: issue_val.get("suggestion").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                };
+                issues.push(issue);
+            }
+        }
+
+        let metrics = if let Some(metrics_val) = value.get("metrics") {
+            PluginMetrics {
+                lines_of_code: metrics_val.get("lines_of_code").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
+                complexity: metrics_val.get("complexity").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
+                maintainability_index: metrics_val.get("maintainability_index").and_then(|v| v.as_f64()).unwrap_or(100.0),
+            }
+        } else {
+            PluginMetrics::default()
+        };
+
+        Ok(PluginAnalysisResult {
+            issues,
+            metrics,
+            duration_ms,
+        })
     }
 }
 

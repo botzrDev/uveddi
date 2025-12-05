@@ -63,7 +63,9 @@ pub use engine::WasmPluginEngine;
 pub use errors::PluginError;
 pub use host_functions::{HostContext, HostContextFactory, HostFunctions};
 // Note: PluginResult is deprecated - use crate::error::Result<T> instead
-pub use lifecycle::{PluginLifecycleManager, ResourceReport};
+pub use lifecycle::{
+    PluginAnalysisResult, PluginIssueResult, PluginLifecycleManager, PluginMetrics, ResourceReport,
+};
 pub use registry::{PluginManifest, PluginMetadata, PluginRegistry};
 pub use runtime::{PluginRuntime, PluginRuntimeStats, RuntimeFactory, RuntimeStats};
 pub use security::{Permission, SecurityPolicy};

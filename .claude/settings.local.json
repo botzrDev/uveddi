@@ -15,7 +15,8 @@
       "Bash(uveddi migrate:*)",
       "Bash(uveddi init:*)",
       "Bash(uveddi hooks --help:*)",
-      "Bash(uveddi ci --help:*)"
+      "Bash(uveddi ci --help:*)",
+      "Bash(cargo build:*)"
     ],
     "deny": [],
     "ask": []

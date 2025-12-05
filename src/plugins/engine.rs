@@ -389,14 +389,80 @@ impl WasmPluginAdapter {
         &self,
         file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, PluginError> {
-        // 1. Serialize AST to Arrow format
-        let ast_buffer = self.data_plane.serialize_ast(file)?;
+        use crate::plugins::lifecycle::PluginAnalysisResult;
 
-        // 2. Get plugin instance (simplified - in real implementation this would be more complex)
-        // For now, we'll return empty results
-        let issues = Vec::new();
+        // Get file path and content
+        let file_path = file.file_path.display().to_string();
+        let file_content = file.source.as_str();
+        let language = format!("{:?}", file.language).to_lowercase();
+
+        // Call the plugin's analyze function via the lifecycle manager
+        let analysis_result = self
+            .lifecycle_manager
+            .analyze_with_plugin(&self.plugin_id, &file_path, file_content, &language)
+            .await?;
+
+        // Convert plugin issues to ArchitecturalIssues
+        let issues: Vec<ArchitecturalIssue> = analysis_result
+            .issues
+            .into_iter()
+            .map(|issue| {
+                let anti_pattern_type_id = self.get_anti_pattern_type_id(&issue.category);
+                ArchitecturalIssue {
+                    issue_id: None,
+                    analysis_run_id: 0, // Will be set by caller
+                    anti_pattern_type_id,
+                    file_path: issue.file.clone(),
+                    start_line: Some(issue.start_line as i32),
+                    end_line: Some(issue.end_line as i32),
+                    line_number: Some(issue.start_line as i32),
+                    column_number: Some(issue.start_column as i32),
+                    message: issue.message.clone(),
+                    metadata: serde_json::json!({
+                        "plugin_id": self.plugin_id.to_string(),
+                        "plugin_name": self.manifest.name,
+                        "issue_id": issue.id,
+                        "category": issue.category,
+                    })
+                    .to_string(),
+                    detector_name: format!("plugin:{}", self.manifest.name),
+                    created_at: chrono::Utc::now(),
+                    severity: issue.severity,
+                    description: issue.description.unwrap_or_else(|| issue.message.clone()),
+                    code_snippet: None,
+                    ai_explanation: issue.suggestion,
+                }
+            })
+            .collect();
+
+        tracing::debug!(
+            "Plugin {} analyzed {} and found {} issues",
+            self.manifest.name,
+            file_path,
+            issues.len()
+        );
 
         Ok(issues)
+    }
+
+    /// Map issue category to anti-pattern type ID
+    #[cfg(feature = "wasm-plugins")]
+    fn get_anti_pattern_type_id(&self, category: &str) -> i64 {
+        // This is a simplified mapping. In production, this would look up
+        // the actual anti-pattern type IDs from the database.
+        match category.to_lowercase().as_str() {
+            "complexity" => 1,
+            "maintainability" => 2,
+            "security" => 3,
+            "performance" => 4,
+            "quality" => 5,
+            "style" => 6,
+            "duplication" => 7,
+            "architecture" => 8,
+            "documentation" => 9,
+            "testing" => 10,
+            _ => 0, // Unknown category
+        }
     }
 }
 
