@@ -140,3 +140,4 @@ COMMIT_MESSAGE_*.txt
 /coverage/archive/
 /coverage/archive/**
 coverage_reports/
+context/

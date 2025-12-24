@@ -52,6 +52,14 @@ pub mod security;
 pub mod types;
 pub mod verification;
 
+// Component Model host implementation
+#[cfg(feature = "wasm-plugins")]
+pub mod component_host;
+
+// Component Model plugin loader
+#[cfg(feature = "wasm-plugins")]
+pub mod component_loader;
+
 // Knowledge plugin system modules
 pub mod development;
 pub mod integration;
@@ -90,12 +98,15 @@ pub mod wasm {
     pub use super::*;
 
     // Generate bindings from WIT file
+    // This creates:
+    // - CoreAnalysis: the main component struct with instantiate() method
+    // - CoreAnalysisPre: for pre-instantiation
+    // - CoreAnalysisImports: trait that must be implemented for host functions
+    // - All the record/enum types defined in the WIT file
     wasmtime::component::bindgen!({
         path: "wit/core-analysis.wit",
         world: "core-analysis",
     });
-
-    // pub use self::exports::uveddi::plugins::*;
 }
 
 #[cfg(not(feature = "wasm-plugins"))]

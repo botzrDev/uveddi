@@ -939,13 +939,31 @@ impl KnowledgePluginLoader {
     }
 
     /// Loads a plugin from the specified path
+    /// 
+    /// Note: Dynamic loading of knowledge plugins from external paths is not yet implemented.
+    /// Currently, knowledge plugins must be compiled into the binary using the plugin traits.
+    /// 
+    /// To add a custom knowledge plugin:
+    /// 1. Implement the `KnowledgePlugin` trait for your plugin struct
+    /// 2. Register it with the `KnowledgePluginSystem` at startup
     pub async fn load_plugin(
         &self,
-        _plugin_path: &PathBuf,
+        plugin_path: &PathBuf,
     ) -> Result<KnowledgePluginPackage, PluginError> {
-        // Implementation for loading plugin packages
-        // This would parse plugin manifests, validate structure, etc.
-        todo!("Implement plugin loading")
+        // TODO: Implement dynamic plugin loading when needed
+        // For now, knowledge plugins must be compiled into the binary
+        // 
+        // Future implementation would:
+        // 1. Read plugin manifest from plugin_path
+        // 2. Parse and validate the manifest
+        // 3. For WASM-based knowledge plugins, use ComponentPluginLoader
+        // 4. For native plugins, use dynamic library loading
+        
+        Err(PluginError::NotFound(format!(
+            "Dynamic knowledge plugin loading not yet implemented. Plugin path: {:?}. \
+            Knowledge plugins must be compiled into the binary.",
+            plugin_path
+        )))
     }
 }
 
