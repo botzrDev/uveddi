@@ -190,11 +190,11 @@ mod cache_execution_tests {
         // Generate report
         let report = collector.generate_report();
 
-        // Verify report contains expected metrics
-        assert!(report.contains("ast"));
-        assert!(report.contains("analysis"));
-        assert!(report.contains("hit"));
-        assert!(report.contains("miss"));
+        // Verify report contains expected metrics (report uses proper case)
+        assert!(report.contains("AST Cache"));
+        assert!(report.contains("Analysis Cache"));
+        assert!(report.contains("Hits"));
+        assert!(report.contains("Misses"));
     }
 
     #[test]

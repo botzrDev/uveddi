@@ -342,7 +342,10 @@ impl ScalableDatabase {
         }
 
         // Aggregate health status
-        let is_healthy = write_health.is_healthy && read_healths.iter().any(|h| h.is_healthy);
+        // If no read providers configured, only write health matters
+        // If read providers exist, at least one must be healthy
+        let is_healthy = write_health.is_healthy
+            && (read_healths.is_empty() || read_healths.iter().any(|h| h.is_healthy));
 
         Ok(DatabaseHealthStatus {
             is_healthy,

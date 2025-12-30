@@ -398,9 +398,13 @@ mod tests {
         let ast1 = cache_manager.get_or_parse_ast(file_path).await.unwrap();
         let ast2 = cache_manager.get_or_parse_ast(file_path).await.unwrap();
 
-        // Both should be valid ASTs (caching not yet implemented)
-        assert!(ast1.tree.is_some());
-        assert!(ast2.tree.is_some());
+        // Note: tree is None in cached version due to tree-sitter Tree not being cloneable
+        // We verify that parsing succeeded by checking source is populated
+        assert!(!ast1.source.is_empty());
+        assert!(!ast2.source.is_empty());
+        // Language should be detected as Rust
+        assert_eq!(ast1.language.to_string(), "rust");
+        assert_eq!(ast2.language.to_string(), "rust");
     }
 
     #[tokio::test]

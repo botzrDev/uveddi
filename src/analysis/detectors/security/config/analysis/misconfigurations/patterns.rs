@@ -144,9 +144,11 @@ impl PatternBuilder {
                 "environment_var".to_string(),
                 Regex::new(r"^([A-Z_][A-Z0-9_]*)\s*=\s*(.+)$")?,
             ),
+            // Note: XML element matching without backreference support
+            // This simpler pattern matches common XML tags
             (
                 "xml_element".to_string(),
-                Regex::new(r"<([^>]+)>([^<]*)</\1>")?,
+                Regex::new(r"<([a-zA-Z_][a-zA-Z0-9_-]*)>([^<]*)</[a-zA-Z_][a-zA-Z0-9_-]*>")?,
             ),
         ];
 
@@ -155,11 +157,36 @@ impl PatternBuilder {
 
     /// Extract key-value pairs from different configuration formats
     pub fn extract_key_value(line: &str) -> Option<(String, String)> {
-        // YAML format: key: value
-        if let Some(captures) = Regex::new(r"^\s*([^:]+):\s*(.+)$").ok()?.captures(line) {
+        // JSON format: "key": "value" - check first since it's more specific
+        if let Some(captures) = Regex::new(r#"^\s*"([^"]+)"\s*:\s*"([^"]+)"[,}]?$"#)
+            .ok()?
+            .captures(line)
+        {
+            return Some((
+                captures.get(1)?.as_str().to_string(),
+                captures.get(2)?.as_str().to_string(),
+            ));
+        }
+
+        // JSON format with unquoted value: "key": value
+        if let Some(captures) = Regex::new(r#"^\s*"([^"]+)"\s*:\s*([^",}\s]+)[,}]?$"#)
+            .ok()?
+            .captures(line)
+        {
+            return Some((
+                captures.get(1)?.as_str().to_string(),
+                captures.get(2)?.as_str().to_string(),
+            ));
+        }
+
+        // YAML format: key: value (key must not start with quote)
+        if let Some(captures) = Regex::new(r#"^\s*([^":\s][^:]*?):\s*(.+)$"#).ok()?.captures(line) {
+            let value = captures.get(2)?.as_str().trim();
+            // Strip surrounding quotes from value if present
+            let value = value.trim_matches('"').trim_matches('\'');
             return Some((
                 captures.get(1)?.as_str().trim().to_string(),
-                captures.get(2)?.as_str().trim().to_string(),
+                value.to_string(),
             ));
         }
 
@@ -168,17 +195,6 @@ impl PatternBuilder {
             return Some((
                 captures.get(1)?.as_str().trim().to_string(),
                 captures.get(2)?.as_str().trim().to_string(),
-            ));
-        }
-
-        // JSON format: "key": "value"
-        if let Some(captures) = Regex::new(r#"^\s*"([^"]+)"\s*:\s*"?([^",}]+)"?[,}]?$"#)
-            .ok()?
-            .captures(line)
-        {
-            return Some((
-                captures.get(1)?.as_str().to_string(),
-                captures.get(2)?.as_str().to_string(),
             ));
         }
 

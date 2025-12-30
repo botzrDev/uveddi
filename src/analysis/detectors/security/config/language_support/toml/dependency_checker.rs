@@ -95,14 +95,13 @@ mod tests {
         let config = ConfigSecurityConfig::default();
         let checker = TomlDependencyChecker::new(&config);
 
-        let toml_content = r#"
-[dependencies]
+        let toml_content = r#"[dependencies]
 serde = "*"
 tokio = { git = "http://github.com/tokio-rs/tokio.git" }
 local_crate = { path = "../../external/crate" }
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_dependency_security(&parsed).unwrap();
         assert!(!issues.is_empty());
 
@@ -118,8 +117,7 @@ local_crate = { path = "../../external/crate" }
         let config = ConfigSecurityConfig::default();
         let checker = TomlDependencyChecker::new(&config);
 
-        let toml_content = r#"
-[project]
+        let toml_content = r#"[project]
 dependencies = [
     "requests",
     "pillow>=8.0.0"
@@ -131,7 +129,7 @@ name = "internal"
 url = "http://internal.pypi.com/simple/"
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_dependency_security(&parsed).unwrap();
         assert!(!issues.is_empty());
 
@@ -145,8 +143,7 @@ url = "http://internal.pypi.com/simple/"
         let config = ConfigSecurityConfig::default();
         let checker = TomlDependencyChecker::new(&config);
 
-        let toml_content = r#"
-# Rust dependencies
+        let toml_content = r#"# Rust dependencies
 [dependencies]
 serde = "1.0"
 tokio = { git = "https://github.com/tokio-rs/tokio.git", tag = "v1.0.0" }
@@ -159,7 +156,7 @@ dependencies = ["requests>=2.25.0"]
 dependencies = {}
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_dependency_security(&parsed).unwrap();
         // Should analyze both Rust and Python dependencies
         // Well-configured dependencies should have minimal issues
@@ -171,8 +168,7 @@ dependencies = {}
         let config = ConfigSecurityConfig::default();
         let checker = TomlDependencyChecker::new(&config);
 
-        let toml_content = r#"
-[dependencies]
+        let toml_content = r#"[dependencies]
 serde = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 
@@ -180,7 +176,7 @@ tokio = { version = "1.0", features = ["full"] }
 dependencies = ["requests>=2.25.0,<3.0"]
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_dependency_security(&parsed).unwrap();
         // Should have minimal issues for well-configured dependencies
         assert!(issues.len() <= 1);

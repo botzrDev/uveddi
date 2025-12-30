@@ -310,7 +310,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_connection_execution() {
-        let db_config = DatabaseConfig::default();
+        let db_config = DatabaseConfig::sqlite(":memory:");
         let provider_db_config =
             crate::database::connection::config::DatabaseConfig::sqlite(":memory:");
         let provider = Arc::new(crate::database::SqliteProvider::new(provider_db_config).unwrap());
@@ -329,7 +329,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_concurrent_connections() {
-        let db_config = DatabaseConfig::default();
+        let db_config = DatabaseConfig::sqlite(":memory:");
         let provider_db_config =
             crate::database::connection::config::DatabaseConfig::sqlite(":memory:");
         let provider = Arc::new(crate::database::SqliteProvider::new(provider_db_config).unwrap());

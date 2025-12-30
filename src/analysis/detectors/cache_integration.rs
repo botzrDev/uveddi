@@ -169,16 +169,17 @@ impl DetectorCacheManager {
             .clone()
     }
 
-    /// Update stats for a detector
+    /// Update stats for a detector (creates the entry if it doesn't exist)
     async fn update_stats(
         &self,
         detector_name: &str,
         updater: impl FnOnce(&mut DetectorCacheStats),
     ) {
         let mut stats = self.stats.write().await;
-        if let Some(detector_stats) = stats.get_mut(detector_name) {
-            updater(detector_stats);
-        }
+        let detector_stats = stats
+            .entry(detector_name.to_string())
+            .or_insert_with(|| DetectorCacheStats::new(detector_name.to_string()));
+        updater(detector_stats);
     }
 
     /// Try to get cached results for a detector

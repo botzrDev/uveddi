@@ -173,7 +173,7 @@ impl SmartConfigValidator {
             errors.push(ValidationError {
                 field: "root".to_string(),
                 message: "Configuration appears to be empty".to_string(),
-                severity: ErrorSeverity::High,
+                severity: ErrorSeverity::Critical, // Empty config is a critical error
                 fix_suggestion: Some(
                     "Run 'uveddi init' to generate a complete configuration".to_string(),
                 ),

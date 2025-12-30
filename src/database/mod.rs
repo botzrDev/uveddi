@@ -301,19 +301,15 @@ pub async fn initialize_database() -> crate::error::Result<ScalableDatabase> {
 /// Initialize database with monitoring
 ///
 /// Sets up database with comprehensive monitoring and health checking.
+/// Returns an Arc-wrapped database since the monitor needs shared ownership.
 pub async fn initialize_database_with_monitoring(
     monitoring_config: Option<MonitoringConfig>,
-) -> crate::error::Result<(ScalableDatabase, monitoring::MonitoringHandle)> {
+) -> crate::error::Result<(std::sync::Arc<ScalableDatabase>, monitoring::MonitoringHandle)> {
     let database = std::sync::Arc::new(initialize_database().await?);
 
     let monitoring_config = monitoring_config.unwrap_or_default();
     let monitor = DatabaseMonitor::new(database.clone(), monitoring_config);
     let monitoring_handle = monitor.start_monitoring();
-
-    // Return the database (unwrapped from Arc) and monitoring handle
-    let database = std::sync::Arc::try_unwrap(database).map_err(|_| {
-        crate::error::UveddiError::initialization_error("Failed to unwrap database Arc")
-    })?;
 
     Ok((database, monitoring_handle))
 }

@@ -258,18 +258,36 @@ impl ConfigurableFileWatcher {
             return true;
         }
 
+        // Handle **/dirname/** pattern (matches directory anywhere in path)
+        if pattern.starts_with("**/") && pattern.ends_with("/**") {
+            let middle = &pattern[3..pattern.len() - 3];
+            // Match if path contains /dirname/ or starts with dirname/ or ends with /dirname
+            return path.contains(&format!("/{}/", middle))
+                || path.starts_with(&format!("{}/", middle))
+                || path.contains(&format!("/{}", middle));
+        }
+
+        // Handle **/*.ext pattern (any file with extension in any subdirectory)
         if pattern.starts_with("**/") {
             let suffix = &pattern[3..];
+            // If suffix is like *.rs, check extension
+            if suffix.starts_with("*.") {
+                let extension = &suffix[1..]; // ".rs"
+                return path.ends_with(extension);
+            }
+            // Otherwise check for literal suffix
             return path.contains(suffix) || path.ends_with(suffix);
         }
 
+        // Handle prefix/** pattern (anything under a directory)
         if pattern.ends_with("/**") {
             let prefix = &pattern[..pattern.len() - 3];
-            return path.starts_with(prefix);
+            return path.starts_with(prefix) || path.contains(&format!("/{}/", prefix));
         }
 
+        // Handle *.ext pattern (file with extension in current directory)
         if pattern.starts_with("*.") {
-            let extension = &pattern[2..];
+            let extension = &pattern[1..]; // ".rs"
             return path.ends_with(extension);
         }
 

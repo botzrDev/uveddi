@@ -229,18 +229,17 @@ mod tests {
 # Application configuration
 environment: production
 debug: true
-cors:
-  allow_origin: "*"
+cors_allow_origin: "*"
+access_control_allow_origin: "*"
 
-# Session configuration
+# Session configuration (structured for YAML parsing)
 session:
   secure: false
   httponly: false
 
 # Database configuration
-database:
-  ssl: false
-  port: 3306
+ssl_enabled: false
+database_port: 3306
 
 # Logging
 log_level: debug

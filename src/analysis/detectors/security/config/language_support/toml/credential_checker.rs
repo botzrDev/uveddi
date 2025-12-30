@@ -243,12 +243,11 @@ mod tests {
         let config = ConfigSecurityConfig::default();
         let checker = TomlCredentialChecker::new(&config);
 
-        let toml_content = r#"
-password = "SuperSecret123!"
+        let toml_content = r#"password = "SuperSecret123!"
 api_key = "sk-1234567890abcdef"
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_credentials(&parsed).unwrap();
         assert!(!issues.is_empty());
         assert!(issues
@@ -261,12 +260,11 @@ api_key = "sk-1234567890abcdef"
         let config = ConfigSecurityConfig::default();
         let checker = TomlCredentialChecker::new(&config);
 
-        let toml_content = r#"
-[database]
+        let toml_content = r#"[database]
 url = "postgres://user:password@localhost/db"
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_database_credentials(&parsed);
         assert!(issues
             .iter()
@@ -278,12 +276,11 @@ url = "postgres://user:password@localhost/db"
         let config = ConfigSecurityConfig::default();
         let checker = TomlCredentialChecker::new(&config);
 
-        let toml_content = r#"
-password = "changeme"
+        let toml_content = r#"password = "changeme"
 api_key = "your-api-key-here"
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_credentials(&parsed).unwrap();
         // Should not detect placeholder values as real credentials
         assert!(issues.is_empty());

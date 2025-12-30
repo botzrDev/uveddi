@@ -250,13 +250,12 @@ mod tests {
         let config = ConfigSecurityConfig::default();
         let checker = TomlBuildChecker::new(&config);
 
-        let toml_content = r#"
-[features]
+        let toml_content = r#"[features]
 default = ["unsafe-optimizations"]
 unsafe = []
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_build_configuration(&parsed).unwrap();
         assert!(issues
             .iter()
@@ -268,13 +267,12 @@ unsafe = []
         let config = ConfigSecurityConfig::default();
         let checker = TomlBuildChecker::new(&config);
 
-        let toml_content = r#"
-[package]
+        let toml_content = r#"[package]
 name = "test"
 build = "build.rs"
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_build_configuration(&parsed).unwrap();
         assert!(issues
             .iter()
@@ -286,8 +284,7 @@ build = "build.rs"
         let config = ConfigSecurityConfig::default();
         let checker = TomlBuildChecker::new(&config);
 
-        let toml_content = r#"
-[profile.release]
+        let toml_content = r#"[profile.release]
 debug = true
 opt-level = 0
 
@@ -295,7 +292,7 @@ opt-level = 0
 overflow-checks = false
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_build_configuration(&parsed).unwrap();
         assert!(issues
             .iter()
@@ -310,13 +307,12 @@ overflow-checks = false
         let config = ConfigSecurityConfig::default();
         let checker = TomlBuildChecker::new(&config);
 
-        let toml_content = r#"
-[workspace]
+        let toml_content = r#"[workspace]
 members = ["../external-crate", "local-crate"]
 exclude = ["security-audit", "tests"]
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_build_configuration(&parsed).unwrap();
         assert!(issues
             .iter()
@@ -331,8 +327,7 @@ exclude = ["security-audit", "tests"]
         let config = ConfigSecurityConfig::default();
         let checker = TomlBuildChecker::new(&config);
 
-        let toml_content = r#"
-[package]
+        let toml_content = r#"[package]
 name = "safe-crate"
 version = "1.0.0"
 
@@ -345,7 +340,7 @@ debug = false
 opt-level = 3
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = checker.check_build_configuration(&parsed).unwrap();
         // Should have minimal issues for well-configured build
         assert!(issues.len() <= 1);

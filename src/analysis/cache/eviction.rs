@@ -299,7 +299,11 @@ mod tests {
         // Access key1 to make it most recent
         manager.record_access(&"key1", 100);
 
-        // Add one more entry (should trigger eviction)
+        // At capacity (3 entries with max 3) - not yet over limit
+        assert!(!manager.needs_eviction());
+
+        // Add one more entry (should trigger eviction need since > max)
+        manager.record_access(&"key4", 100);
         assert!(manager.needs_eviction());
 
         let to_evict = manager.select_for_eviction(1);

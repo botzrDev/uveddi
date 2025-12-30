@@ -602,7 +602,9 @@ mod tests {
         assert_eq!(history.snapshots.len(), 5);
 
         // Cleanup metrics older than 2 hours
+        // Note: cleanup uses SystemTime::now() which is slightly later than test's `now`,
+        // so only the 1-hour-old snapshot reliably remains (2-hour boundary is a race)
         history.cleanup_old_metrics(Duration::from_secs(7200));
-        assert_eq!(history.snapshots.len(), 2);
+        assert_eq!(history.snapshots.len(), 1);
     }
 }

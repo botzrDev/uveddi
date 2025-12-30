@@ -427,9 +427,10 @@ mod tests {
             crate::ast::SourceLanguage::JavaScript
         ));
 
+        // TypeScript files are now detected as TypeScript (not JavaScript)
         assert!(matches!(
             provider.detect_language_from_path(Path::new("test.ts")),
-            crate::ast::SourceLanguage::JavaScript
+            crate::ast::SourceLanguage::TypeScript
         ));
     }
 

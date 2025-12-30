@@ -147,7 +147,8 @@ impl TlsAnalyzer {
             },
             TlsVersionPattern {
                 name: "TLS 1.0".to_string(),
-                pattern: r"ssl\.PROTOCOL_TLSv1(?![\._]\d)|TLSv1\.0".to_string(),
+                // Match ssl.PROTOCOL_TLSv1 at word boundary (not followed by _, ., or digit)
+                pattern: r"ssl\.PROTOCOL_TLSv1\b|TLSv1\.0".to_string(),
                 version: TlsVersion::TLS10,
                 description: "TLS 1.0 has known vulnerabilities".to_string(),
                 severity: SecuritySeverity::High,

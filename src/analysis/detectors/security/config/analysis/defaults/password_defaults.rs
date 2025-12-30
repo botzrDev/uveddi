@@ -207,6 +207,14 @@ impl PasswordDefaultChecker {
         let line_lower = line.to_lowercase();
         let value_lower = value.to_lowercase();
 
+        // For empty values, only check for empty string literals
+        if value.is_empty() || value.trim().is_empty() {
+            return line_lower.contains(": \"\"")
+                || line_lower.contains(": ''")
+                || line_lower.contains(":\"\"")
+                || line_lower.contains(":''");
+        }
+
         // Check for exact matches with common delimiters
         let patterns = [
             format!("\"{}\"", value_lower), // "value"
@@ -218,7 +226,6 @@ impl PasswordDefaultChecker {
         ];
 
         patterns.iter().any(|pattern| line_lower.contains(pattern))
-            || (value.is_empty() && (line_lower.contains(": \"\"") || line_lower.contains(": ''")))
     }
 }
 

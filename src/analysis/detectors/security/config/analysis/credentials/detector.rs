@@ -189,14 +189,16 @@ mod tests {
         let analyzer = CredentialAnalyzer::new(&config).unwrap();
 
         let content = r#"
-api_key: "sk-1234567890abcdef"
+api_key: "sk-1234567890abcdefghij"
 aws_access_key_id: "AKIAIOSFODNN7EXAMPLE"
 "#;
 
         let issues = analyzer.analyze(content).unwrap();
-        assert_eq!(issues.len(), 2);
+        // Expects 3 issues: Generic API Key, AWS Access Key, and Structured Credential from YAML parsing
+        assert_eq!(issues.len(), 3);
         assert!(issues.iter().any(|i| i.title.contains("API Key")));
         assert!(issues.iter().any(|i| i.title.contains("AWS Access Key")));
+        assert!(issues.iter().any(|i| i.title.contains("Structured Credential")));
     }
 
     #[test]

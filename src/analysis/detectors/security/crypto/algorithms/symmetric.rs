@@ -175,10 +175,12 @@ impl SymmetricAnalyzer {
             },
             InsecureModePattern {
                 name: "CBC without MAC".to_string(),
-                pattern: r"(?i)cbc(?!.*(?:hmac|tag|auth))".to_string(),
+                // Simplified pattern - matches CBC mode (confidence lowered as we can't
+                // verify absence of MAC in regex without lookahead)
+                pattern: r"(?i)\bcbc\b".to_string(),
                 description: "CBC mode without authentication is vulnerable to padding oracle attacks".to_string(),
                 severity: SecuritySeverity::Medium,
-                confidence: 0.6,
+                confidence: 0.4, // Lowered - may have false positives if MAC is present
                 secure_alternative: "GCM mode or CBC with HMAC".to_string(),
             },
         ]);

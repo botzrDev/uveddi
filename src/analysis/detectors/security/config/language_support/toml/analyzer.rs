@@ -31,7 +31,7 @@ impl LanguageAnalyzer for TomlAnalyzer {
     fn analyze(&self, content: &str) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
-        match content.parse::<TomlValue>() {
+        match toml::from_str::<TomlValue>(content) {
             Ok(toml_value) => {
                 // Check for credentials and secrets
                 issues.extend(self.credential_checker.check_credentials(&toml_value)?);
@@ -68,11 +68,9 @@ impl LanguageAnalyzer for TomlAnalyzer {
     }
 
     fn validate_syntax(&self, content: &str) -> Result<(), AnalysisError> {
-        content
-            .parse::<TomlValue>()
-            .map_err(|e| AnalysisError::ParseError {
-                message: format!("Invalid TOML syntax: {}", e),
-            })?;
+        toml::from_str::<TomlValue>(content).map_err(|e| AnalysisError::ParseError {
+            message: format!("Invalid TOML syntax: {}", e),
+        })?;
         Ok(())
     }
 }
@@ -259,8 +257,7 @@ mod tests {
         let config = ConfigSecurityConfig::default();
         let analyzer = TomlAnalyzer::new(&config).unwrap();
 
-        let toml_content = r#"
-[database]
+        let toml_content = r#"[database]
 password = "SuperSecret123!"
 ssl = false
 port = 5432
@@ -292,8 +289,7 @@ script = "build.rs"
         let config = ConfigSecurityConfig::default();
         let analyzer = TomlAnalyzer::new(&config).unwrap();
 
-        let toml_content = r#"
-[tool.poetry]
+        let toml_content = r#"[tool.poetry]
 [[tool.poetry.source]]
 name = "internal"
 url = "http://internal.pypi.com/simple/"
@@ -302,7 +298,7 @@ url = "http://internal.pypi.com/simple/"
 line-length = 300
 "#;
 
-        let parsed: TomlValue = toml_content.parse().unwrap();
+        let parsed: TomlValue = toml::from_str(toml_content).unwrap();
         let issues = analyzer.check_python_project(&parsed);
         assert!(issues
             .iter()

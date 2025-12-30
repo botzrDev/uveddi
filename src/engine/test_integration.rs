@@ -47,7 +47,7 @@ fn main() {
 }
 "#;
 
-        let symbols = vec![
+        let mut symbols = vec![
             Symbol {
                 name: "TestStruct".to_string(),
                 kind: SymbolKind::Struct,
@@ -57,99 +57,62 @@ fn main() {
                 end_column: 1,
                 parent: None,
             },
-            // Methods
-            Symbol {
-                name: "new".to_string(),
-                kind: SymbolKind::Method,
-                line: 16,
-                column: 4,
-                end_line: 16,
-                end_column: 30,
-                parent: Some("TestStruct".to_string()),
-            },
-            Symbol {
-                name: "method1".to_string(),
-                kind: SymbolKind::Method,
-                line: 17,
-                column: 4,
-                end_line: 17,
-                end_column: 35,
-                parent: Some("TestStruct".to_string()),
-            },
-            Symbol {
-                name: "method2".to_string(),
-                kind: SymbolKind::Method,
-                line: 18,
-                column: 4,
-                end_line: 18,
-                end_column: 30,
-                parent: Some("TestStruct".to_string()),
-            },
-            Symbol {
-                name: "method3".to_string(),
-                kind: SymbolKind::Method,
-                line: 19,
-                column: 4,
-                end_line: 19,
-                end_column: 38,
-                parent: Some("TestStruct".to_string()),
-            },
-            Symbol {
-                name: "method4".to_string(),
-                kind: SymbolKind::Method,
-                line: 20,
-                column: 4,
-                end_line: 20,
-                end_column: 35,
-                parent: Some("TestStruct".to_string()),
-            },
-            Symbol {
-                name: "method5".to_string(),
-                kind: SymbolKind::Method,
-                line: 21,
-                column: 4,
-                end_line: 21,
-                end_column: 35,
-                parent: Some("TestStruct".to_string()),
-            },
-            Symbol {
-                name: "method6".to_string(),
-                kind: SymbolKind::Method,
-                line: 22,
-                column: 4,
-                end_line: 22,
-                end_column: 35,
-                parent: Some("TestStruct".to_string()),
-            },
-            // Functions
-            Symbol {
-                name: "unused_function".to_string(),
-                kind: SymbolKind::Function,
-                line: 25,
-                column: 0,
-                end_line: 25,
-                end_column: 30,
-                parent: None,
-            },
-            Symbol {
-                name: "used_function".to_string(),
-                kind: SymbolKind::Function,
-                line: 27,
-                column: 0,
-                end_line: 27,
-                end_column: 40,
-                parent: None,
-            },
-            Symbol {
-                name: "main".to_string(),
-                kind: SymbolKind::Function,
-                line: 29,
-                column: 0,
-                end_line: 31,
-                end_column: 1,
-                parent: None,
-            },
         ];
+
+        // Add 35 methods to exceed threshold (Rust default is 30)
+        for i in 1..=35 {
+            symbols.push(Symbol {
+                name: format!("method{}", i),
+                kind: SymbolKind::Method,
+                line: 16 + i,
+                column: 4,
+                end_line: 16 + i,
+                end_column: 35,
+                parent: Some("TestStruct".to_string()),
+            });
+        }
+
+        // Add 25 fields to exceed threshold (Rust default is 20)
+        for i in 1..=25 {
+            symbols.push(Symbol {
+                name: format!("field{}", i),
+                kind: SymbolKind::Field,
+                line: 3 + i,
+                column: 4,
+                end_line: 3 + i,
+                end_column: 20,
+                parent: Some("TestStruct".to_string()),
+            });
+        }
+
+        // Functions
+        symbols.push(Symbol {
+            name: "unused_function".to_string(),
+            kind: SymbolKind::Function,
+            line: 25,
+            column: 0,
+            end_line: 25,
+            end_column: 30,
+            parent: None,
+        });
+        symbols.push(Symbol {
+            name: "used_function".to_string(),
+            kind: SymbolKind::Function,
+            line: 27,
+            column: 0,
+            end_line: 27,
+            end_column: 40,
+            parent: None,
+        });
+        symbols.push(Symbol {
+            name: "main".to_string(),
+            kind: SymbolKind::Function,
+            line: 29,
+            column: 0,
+            end_line: 31,
+            end_column: 1,
+            parent: None,
+        });
 
         let relations = vec![Relation {
             from: "main".to_string(),
@@ -195,7 +158,7 @@ fn main() {
 
         let issues = god_detector.detect(&context).expect("Detection failed");
 
-        // Should detect TestStruct as a god object (7 methods + 10 fields)
+        // Should detect TestStruct as a god object (35 methods + 25 fields, exceeding Rust thresholds of 30/20)
         assert!(!issues.is_empty(), "Should detect god object");
         assert!(issues[0].description.contains("TestStruct"));
         assert!(issues[0].anti_pattern_type_id == 1);

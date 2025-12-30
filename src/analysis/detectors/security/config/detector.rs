@@ -117,6 +117,13 @@ impl ConfigSecurityDetector {
     }
 
     fn detect_config_type(&self, file_path: &PathBuf) -> Result<ConfigType, AnalysisError> {
+        // Check for .env files first (they don't have a traditional extension)
+        if let Some(file_name) = file_path.file_name().and_then(|n| n.to_str()) {
+            if file_name == ".env" || file_name.starts_with(".env.") {
+                return Ok(ConfigType::Environment);
+            }
+        }
+
         if let Some(extension) = file_path.extension().and_then(|ext| ext.to_str()) {
             match extension.to_lowercase().as_str() {
                 "yaml" | "yml" => Ok(ConfigType::Yaml),

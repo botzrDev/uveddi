@@ -114,10 +114,11 @@ impl CsrfDetector {
     fn python_patterns() -> Vec<CsrfPattern> {
         vec![
             CsrfPattern {
-                pattern: r#"@app\.route.*methods=\[.*POST.*\].*\n.*def.*\(.*\):.*\n(?!.*csrf)"#
+                // Simplified pattern - matches POST routes (cannot verify CSRF absence without lookahead)
+                pattern: r#"@app\.route.*methods=\[.*POST.*\]"#
                     .to_string(),
                 description: "POST route without CSRF token validation".to_string(),
-                confidence: 0.75,
+                confidence: 0.5, // Lowered - may have false positives if CSRF is present
                 severity: SecuritySeverity::High,
                 csrf_type: CsrfType::MissingTokenValidation,
                 framework_context: "Flask route".to_string(),
@@ -161,9 +162,10 @@ impl CsrfDetector {
     fn javascript_patterns() -> Vec<CsrfPattern> {
         vec![
             CsrfPattern {
-                pattern: r#"app\.post\(.*\)\s*(?!.*csrf)"#.to_string(),
+                // Simplified pattern - matches POST endpoints (cannot verify CSRF absence without lookahead)
+                pattern: r#"app\.post\("#.to_string(),
                 description: "POST endpoint without CSRF protection".to_string(),
-                confidence: 0.7,
+                confidence: 0.45, // Lowered - may have false positives if CSRF is present
                 severity: SecuritySeverity::High,
                 csrf_type: CsrfType::MissingTokenValidation,
                 framework_context: "Express.js route".to_string(),

@@ -32,7 +32,15 @@
       "Bash(if ! grep -q '#!\\\\[cfg\\(feature' \"$file\")",
       "Bash(echo:*)",
       "Bash(fi)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git stash:*)",
+      "Bash(cargo tree:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.rs)",
+      "Bash(cargo check:*)",
+      "Bash(cargo search:*)",
+      "Bash(cargo --quiet rustc:*)",
+      "Bash(rustc:*)"
     ],
     "deny": [],
     "ask": []

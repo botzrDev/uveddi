@@ -250,8 +250,8 @@ mod tests {
         };
         symbols.push(main_class);
 
-        // Add many methods to exceed threshold
-        for i in 1..=8 {
+        // Add many methods to exceed threshold (Rust default is 30)
+        for i in 1..=35 {
             symbols.push(Symbol {
                 name: format!("method{}", i),
                 kind: SymbolKind::Method,
@@ -263,8 +263,8 @@ mod tests {
             });
         }
 
-        // Add many fields to exceed threshold
-        for i in 1..=10 {
+        // Add many fields to exceed threshold (Rust default is 20)
+        for i in 1..=25 {
             symbols.push(Symbol {
                 name: format!("field{}", i),
                 kind: SymbolKind::Field,

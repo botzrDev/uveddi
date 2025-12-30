@@ -97,7 +97,7 @@ impl MisconfigurationRule {
                 description: "Service is using default/well-known ports".to_string(),
                 severity: ConfigSeverity::Low,
                 pattern: MisconfigurationPattern::Regex(
-                    Regex::new(r"(?i)port[\s]*[:=][\s]*(21|22|23|80|443|3306|5432|6379|27017|8080|8000)(?!\d)")?,
+                    Regex::new(r"(?i)port[\s]*[:=][\s]*(21|22|23|80|443|3306|5432|6379|27017|8080|8000)\b")?,
                 ),
                 remediation: "Consider using non-default ports to reduce automated attack surface.".to_string(),
                 cwe_id: Some(1188),
