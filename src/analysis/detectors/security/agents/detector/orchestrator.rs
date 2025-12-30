@@ -255,14 +255,8 @@ impl SecurityOrchestrator {
     ) -> Result<Vec<SubTask>, AnalysisError> {
         let mut subtasks = Vec::new();
 
-        // Always include OWASP analysis as it's comprehensive
-        subtasks.push(SubTask {
-            task_id: Uuid::new_v4().to_string(),
-            task_type: TaskType::OwaspAnalysis,
-            agent_id: "OwaspAgent".to_string(),
-            context: context.clone(),
-            priority: 1,
-        });
+        // NOTE: OWASP analysis is handled inline via the various analyzers and
+        // convert_issues_to_vulnerabilities, so we don't create a separate subtask for it.
 
         if self.config.enable_taint_agent {
             subtasks.push(SubTask {
@@ -378,11 +372,40 @@ impl SecurityOrchestrator {
                     ));
                 }
             }
-            _ => {
-                return Err(AnalysisError::DetectionError(format!(
-                    "Unsupported task type: {:?}",
-                    subtask.task_type
-                )));
+            TaskType::DependencyAnalysis => {
+                if let Some(agent) = self.agents.get("DependencyAgent") {
+                    let agent = agent.clone_box();
+                    let context = subtask.context.clone();
+                    tokio::spawn(async move { agent.execute_task(task_id, context).await })
+                } else {
+                    return Err(AnalysisError::DetectionError(
+                        "DependencyAgent not available".to_string(),
+                    ));
+                }
+            }
+            TaskType::ValidationAnalysis => {
+                if let Some(agent) = self.agents.get("ValidationAgent") {
+                    let agent = agent.clone_box();
+                    let context = subtask.context.clone();
+                    tokio::spawn(async move { agent.execute_task(task_id, context).await })
+                } else {
+                    return Err(AnalysisError::DetectionError(
+                        "ValidationAgent not available".to_string(),
+                    ));
+                }
+            }
+            // OWASP analysis is handled inline, not as a subtask
+            TaskType::OwaspAnalysis => {
+                tokio::spawn(async move { Ok(AgentResult::OwaspAnalysis(Vec::new())) })
+            }
+            // AI enhancement and architectural correlation are not yet implemented
+            TaskType::AiEnhancement | TaskType::ArchitecturalCorrelation => {
+                debug!("Task type {:?} not yet implemented", subtask.task_type);
+                tokio::spawn(async move {
+                    Ok(AgentResult::Error(format!(
+                        "Task type not implemented"
+                    )))
+                })
             }
         };
 

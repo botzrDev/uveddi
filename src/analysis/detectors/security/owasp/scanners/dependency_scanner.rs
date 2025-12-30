@@ -89,6 +89,25 @@ impl DependencyScanner {
 
     fn parse_package_json(&self, content: &str) -> Vec<(String, String)> {
         let mut dependencies = Vec::new();
+
+        // Try JSON parsing first for compact JSON
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(content) {
+            // Check "dependencies" and "devDependencies"
+            for dep_key in &["dependencies", "devDependencies"] {
+                if let Some(deps) = json.get(dep_key).and_then(|v| v.as_object()) {
+                    for (package, version) in deps {
+                        if let Some(v) = version.as_str() {
+                            // Strip semver prefixes (^, ~, >=, etc.)
+                            let clean_version = v.trim_start_matches(|c| c == '^' || c == '~' || c == '>' || c == '=' || c == '<');
+                            dependencies.push((package.clone(), clean_version.to_string()));
+                        }
+                    }
+                }
+            }
+            return dependencies;
+        }
+
+        // Fallback to line-by-line parsing for malformed JSON
         for line in content.lines() {
             if line.contains('"') && line.contains(':') {
                 if let Some(package_info) = self.extract_js_dependency(line) {

@@ -28,18 +28,25 @@ impl SecurityIssueFilter for HeaderValidationFilter {
     async fn apply(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut retained = Vec::with_capacity(issues.len());
 
-        for issue in issues {
+        for mut issue in issues {
             let header_related = issue
                 .metadata
                 .tags
                 .iter()
                 .any(|tag| tag.eq_ignore_ascii_case("header"));
 
-            if header_related || !self.strict_headers {
-                retained.push(issue);
-            } else {
-                debug!("Dropping non-header issue during header validation");
+            // If strict_headers is enabled, boost header-related issues rather than filtering others
+            // All issues pass through, but header-related ones get a confidence boost
+            if header_related && self.strict_headers {
+                let before = issue.confidence_score;
+                issue.confidence_score = (before + 0.1).min(1.0);
+                debug!(
+                    "Boosted header-related issue confidence from {:.2} to {:.2}",
+                    before, issue.confidence_score
+                );
             }
+
+            retained.push(issue);
         }
 
         Ok(retained)

@@ -77,24 +77,24 @@ impl PathTraversalDetector {
     fn rust_patterns() -> Vec<PathTraversalPattern> {
         vec![
             PathTraversalPattern {
-                pattern: r#"File::open\(.*\+.*\)"#.to_string(),
-                description: "File path constructed with user input".to_string(),
+                pattern: r#"File::open\([^)]*\+"#.to_string(),
+                description: "File::open with path constructed from user input".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
                 traversal_type: PathTraversalType::DirectoryTraversal,
                 context: "File::open with concatenation".to_string(),
             },
             PathTraversalPattern {
-                pattern: r#"fs::read\(.*format!"#.to_string(),
-                description: "File read with formatted path".to_string(),
+                pattern: r#"fs::read\([^)]*format!"#.to_string(),
+                description: "fs::read with formatted path".to_string(),
                 confidence: 0.85,
                 severity: SecuritySeverity::High,
                 traversal_type: PathTraversalType::DirectoryTraversal,
                 context: "fs::read with formatting".to_string(),
             },
             PathTraversalPattern {
-                pattern: r#"Path::new\(.*\+.*\)"#.to_string(),
-                description: "Path construction with string concatenation".to_string(),
+                pattern: r#"Path::new\([^)]*\+"#.to_string(),
+                description: "Path::new with string concatenation".to_string(),
                 confidence: 0.75,
                 severity: SecuritySeverity::Medium,
                 traversal_type: PathTraversalType::RelativePathManipulation,
@@ -183,7 +183,8 @@ impl PathTraversalDetector {
                 context: "fs.readFile with concatenation".to_string(),
             },
             PathTraversalPattern {
-                pattern: r#"fs\.readFile\(`.*\$\{.*\}.*`\)"#.to_string(),
+                // Match template literals with ${...} in fs.readFile
+                pattern: r#"fs\.readFile\(`[^`]*\$\{[^}]*\}[^`]*`"#.to_string(),
                 description: "File read with template literals".to_string(),
                 confidence: 0.85,
                 severity: SecuritySeverity::High,
@@ -191,7 +192,8 @@ impl PathTraversalDetector {
                 context: "fs.readFile with template literals".to_string(),
             },
             PathTraversalPattern {
-                pattern: r#"path\.join\(.*req\..*\)"#.to_string(),
+                // Match path.join with any request parameter (req.params, req.query, req.body)
+                pattern: r#"path\.join\([^)]*req\."#.to_string(),
                 description: "Path join with request parameters".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::High,
@@ -207,16 +209,25 @@ impl PathTraversalDetector {
                 context: "require() function".to_string(),
             },
             PathTraversalPattern {
-                pattern: r#"express\.static\(.*\+.*\)"#.to_string(),
-                description: "Static file serving with dynamic path".to_string(),
+                pattern: r#"express\.static\([^)]*\+"#.to_string(),
+                description: "Express static file serving with dynamic path".to_string(),
                 confidence: 0.85,
                 severity: SecuritySeverity::High,
                 traversal_type: PathTraversalType::DirectoryTraversal,
                 context: "Express static middleware".to_string(),
             },
             PathTraversalPattern {
+                // Match res.sendFile with path.join or any dynamic path
+                pattern: r#"res\.sendFile\([^)]*path\.join"#.to_string(),
+                description: "Express sendFile with joined path".to_string(),
+                confidence: 0.9,
+                severity: SecuritySeverity::High,
+                traversal_type: PathTraversalType::DirectoryTraversal,
+                context: "Express sendFile".to_string(),
+            },
+            PathTraversalPattern {
                 pattern: r#"res\.sendFile\(.*\+.*\)"#.to_string(),
-                description: "Send file with concatenated path".to_string(),
+                description: "Express sendFile with concatenated path".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,
                 traversal_type: PathTraversalType::DirectoryTraversal,

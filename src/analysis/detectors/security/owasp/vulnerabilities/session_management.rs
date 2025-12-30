@@ -79,7 +79,8 @@ impl SessionManagementDetector {
     fn rust_patterns() -> Vec<SessionPattern> {
         vec![
             SessionPattern {
-                pattern: r#"Cookie::build.*\.secure\(false\)"#.to_string(),
+                // Match .secure(false) anywhere (for multiline builder chains)
+                pattern: r#"\.secure\(false\)"#.to_string(),
                 description: "Session cookie not marked as secure".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,
@@ -87,7 +88,8 @@ impl SessionManagementDetector {
                 context: "Cookie security settings".to_string(),
             },
             SessionPattern {
-                pattern: r#"Cookie::build.*\.http_only\(false\)"#.to_string(),
+                // Match .http_only(false) anywhere
+                pattern: r#"\.http_only\(false\)"#.to_string(),
                 description: "Session cookie accessible via JavaScript".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Medium,
@@ -103,7 +105,8 @@ impl SessionManagementDetector {
                 context: "Session ID generation".to_string(),
             },
             SessionPattern {
-                pattern: r#"session\.insert.*password\|token\|secret"#.to_string(),
+                // Match session.insert with password, token, or secret
+                pattern: r#"session\.insert\([^)]*"(password|token|secret)"#.to_string(),
                 description: "Storing sensitive data in session".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::Medium,
@@ -169,7 +172,8 @@ impl SessionManagementDetector {
     fn javascript_patterns() -> Vec<SessionPattern> {
         vec![
             SessionPattern {
-                pattern: r#"session\(.*secure:\s*false"#.to_string(),
+                // Match secure: false anywhere (for multiline session configs)
+                pattern: r#"secure:\s*false"#.to_string(),
                 description: "Session middleware with secure flag disabled".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,
@@ -177,7 +181,8 @@ impl SessionManagementDetector {
                 context: "Express session configuration".to_string(),
             },
             SessionPattern {
-                pattern: r#"session\(.*httpOnly:\s*false"#.to_string(),
+                // Match httpOnly: false anywhere
+                pattern: r#"httpOnly:\s*false"#.to_string(),
                 description: "Session cookies accessible via JavaScript".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::Medium,
@@ -185,7 +190,8 @@ impl SessionManagementDetector {
                 context: "Express session configuration".to_string(),
             },
             SessionPattern {
-                pattern: r#"session\(.*maxAge:\s*undefined\|null"#.to_string(),
+                // Match maxAge: undefined or null
+                pattern: r#"maxAge:\s*(undefined|null)"#.to_string(),
                 description: "No session expiration configured".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::Medium,
@@ -193,7 +199,8 @@ impl SessionManagementDetector {
                 context: "Express session timeout".to_string(),
             },
             SessionPattern {
-                pattern: r#"Math\.random\(\).*session.*id"#.to_string(),
+                // Match Math.random() used for any ID generation (sessionId, session_id, etc)
+                pattern: r#"Math\.random\(\)"#.to_string(),
                 description: "Weak session ID generation using Math.random()".to_string(),
                 confidence: 0.9,
                 severity: SecuritySeverity::High,
@@ -201,7 +208,8 @@ impl SessionManagementDetector {
                 context: "Session ID generation".to_string(),
             },
             SessionPattern {
-                pattern: r#"req\.session\..*password\|token\|secret"#.to_string(),
+                // Match req.session.password or similar sensitive data storage
+                pattern: r#"req\.session\.(password|token|secret)"#.to_string(),
                 description: "Storing sensitive data in session".to_string(),
                 confidence: 0.8,
                 severity: SecuritySeverity::Medium,
@@ -217,7 +225,8 @@ impl SessionManagementDetector {
                 context: "Session logout".to_string(),
             },
             SessionPattern {
-                pattern: r#"session\(.*secret:\s*['"][a-zA-Z0-9]{1,10}['"]"#.to_string(),
+                // Match weak session secret (short secret)
+                pattern: r#"secret:\s*['"][a-zA-Z0-9]{1,10}['"]"#.to_string(),
                 description: "Weak session secret".to_string(),
                 confidence: 0.85,
                 severity: SecuritySeverity::Critical,

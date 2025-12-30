@@ -24,7 +24,9 @@ impl ValidationConfig {
     }
 
     pub fn agreement_threshold(&self) -> usize {
-        self.false_positive.min_lines_threshold.max(1)
+        // For cross-validation, we require at least 2 detectors to agree on a finding.
+        // This is a standard threshold for multi-detector validation.
+        2
     }
 
     pub fn min_confidence_threshold(&self) -> f64 {

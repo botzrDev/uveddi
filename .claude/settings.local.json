@@ -40,7 +40,11 @@
       "Bash(cargo check:*)",
       "Bash(cargo search:*)",
       "Bash(cargo --quiet rustc:*)",
-      "Bash(rustc:*)"
+      "Bash(rustc:*)",
+      "Bash(RUST_BACKTRACE=1 cargo test:*)",
+      "Bash(RUST_LOG=debug cargo test:*)",
+      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/debug/uveddi analyze:*)",
+      "Bash(cargo run:*)"
     ],
     "deny": [],
     "ask": []

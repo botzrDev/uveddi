@@ -75,7 +75,8 @@ impl PatternScanner {
             // SQL Injection patterns
             VulnerabilityPattern {
                 id: "sql_injection_concatenation".to_string(),
-                regex: r#"(?i)(query|execute|sql)\s*\+.*["'][^"']*["']"#.to_string(),
+                // Match patterns like: query = "SELECT..." + variable or "SELECT..." + variable
+                regex: r#"(?i)["'](SELECT|INSERT|UPDATE|DELETE|DROP)\s+[^"']*["']\s*\+"#.to_string(),
                 category: OwaspCategory::Injection,
                 issue_type: SecurityIssueType::Injection,
                 severity: SecuritySeverity::Critical,
@@ -111,7 +112,7 @@ impl PatternScanner {
             // Hardcoded secrets patterns
             VulnerabilityPattern {
                 id: "hardcoded_api_key".to_string(),
-                regex: r#"(?i)(api_key|apikey|secret|password|token)\s*[:=]\s*["'][a-zA-Z0-9+/]{20,}["']"#.to_string(),
+                regex: r#"(?i)(api_key|apikey|secret|password|token)\s*[:=]\s*["'][a-zA-Z0-9_+/\-]{20,}["']"#.to_string(),
                 category: OwaspCategory::CryptographicFailures,
                 issue_type: SecurityIssueType::HardcodedSecrets,
                 severity: SecuritySeverity::High,

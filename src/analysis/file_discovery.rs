@@ -85,6 +85,7 @@ impl FileDiscovery {
             .git_ignore(true) // Respect .gitignore
             .git_global(true) // Respect global git ignore
             .git_exclude(true) // Respect .git/info/exclude
+            .require_git(false) // Respect .gitignore even without .git directory
             .build();
 
         for result in walker {

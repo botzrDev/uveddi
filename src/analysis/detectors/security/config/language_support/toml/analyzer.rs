@@ -279,7 +279,7 @@ script = "build.rs"
         // Should detect multiple types of issues
         assert!(issues.iter().any(|i| i.title.contains("Credential")));
         assert!(issues.iter().any(|i| i.title.contains("SSL Disabled")));
-        assert!(issues.iter().any(|i| i.title.contains("Wildcard")));
+        assert!(issues.iter().any(|i| i.title.contains("Version Constraint"))); // serde = "*"
         assert!(issues.iter().any(|i| i.title.contains("Insecure Git")));
         assert!(issues.iter().any(|i| i.title.contains("Unsafe")));
     }

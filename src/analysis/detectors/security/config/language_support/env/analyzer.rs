@@ -226,9 +226,10 @@ KEY3='single quoted'
         let config = ConfigSecurityConfig::default();
         let analyzer = EnvAnalyzer::new(&config).unwrap();
 
+        // Use simple non-web-indicator variables to avoid "missing required vars" checks
         let safe_content = r#"
-PORT=3000
-NODE_ENV=production
+APP_NAME=myapp
+RUST_LOG=warn
 LOG_LEVEL=info
 "#;
 

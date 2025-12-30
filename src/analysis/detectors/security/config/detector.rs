@@ -258,7 +258,9 @@ api:
             .unwrap();
 
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| i.title.contains("hardcoded")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.to_lowercase().contains("hardcoded")));
     }
 
     #[tokio::test]

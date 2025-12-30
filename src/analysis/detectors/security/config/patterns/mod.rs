@@ -83,11 +83,11 @@ pub mod utils {
         })
     }
 
-    /// Extract context around a match
+    /// Extract context around a match (line_number is 0-indexed)
     pub fn extract_context(content: &str, line_number: usize, context_lines: usize) -> String {
         let lines: Vec<&str> = content.lines().collect();
-        let start = line_number.saturating_sub(context_lines + 1);
-        let end = (line_number + context_lines).min(lines.len());
+        let start = line_number.saturating_sub(context_lines);
+        let end = (line_number + context_lines + 1).min(lines.len());
 
         lines[start..end].join("\n")
     }

@@ -76,7 +76,17 @@ impl TomlCredentialChecker {
             return false;
         }
 
-        let fake_indicators = ["test", "example", "demo", "placeholder", "xxx", "***"];
+        let fake_indicators = [
+            "test",
+            "example",
+            "demo",
+            "placeholder",
+            "xxx",
+            "***",
+            "changeme",
+            "your-",
+            "-here",
+        ];
         if fake_indicators
             .iter()
             .any(|&indicator| value.to_lowercase().contains(indicator))

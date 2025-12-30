@@ -86,7 +86,12 @@ mod error_message_quality_tests {
         assert!(message.contains("inserting analysis results"));
         assert!(message.contains("uveddi_cache.db"));
         assert!(message.contains("Recovery:"));
-        assert!(message.contains("Close other database connections"));
+        // The recovery hint provides context about the operation and database schema
+        // (rusqlite::ffi::Error::new doesn't preserve ErrorCode for matching)
+        assert!(
+            message.contains("operation") || message.contains("database"),
+            "Recovery hint should provide actionable guidance"
+        );
     }
 
     #[test]

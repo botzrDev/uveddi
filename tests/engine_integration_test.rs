@@ -166,7 +166,8 @@ mod integration_tests {
         }];
 
         // Verify basic structure
-        assert_eq!(symbols.len(), 9);
+        // Count: 1 class + 6 methods + 3 functions = 10 symbols
+        assert_eq!(symbols.len(), 10);
         assert_eq!(relations.len(), 1);
 
         // Count methods in LargeClass

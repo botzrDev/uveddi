@@ -441,7 +441,7 @@ pub fn values_that_should_not_be_detected() -> i32 {
     let double = 2;
 
     // SHOULD NOT DETECT: Array index (0-99 range)
-    let items = vec![10, 20, 30, 40, 50];
+    let items = vec![10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
     let first = items[0];
     let second = items[1];
     let tenth = items[9];

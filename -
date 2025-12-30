@@ -1,0 +1,34 @@
+# Code Analysis Report
+
+**Generated:** 2025-12-30 16:43:31 UTC
+
+## Summary
+
+- **Files Analyzed:** 3
+- **Issues Found:** 2
+- **Analysis Duration:** 0.36s
+
+---
+
+## Issues by Severity
+
+### 🟡 Medium (1 issues)
+
+#### Magic value '"processed"' passed as function argument (medium). Consider extracting this magic string into a named constant to improve maintainability.
+
+- **File:** `/tmp/.tmpkjOKZa/src/lib.rs`
+- **Line:** 23
+
+---
+
+### ⚪ Low (1 issues)
+
+#### Large class 'LargeClass' detected: 0 LOC, 12 methods, 15 fields
+
+- **File:** `/tmp/.tmpkjOKZa/src/main.rs`
+- **Line:** 3
+
+**Recommendation:** Consider breaking this class into smaller, more focused classes
+
+---
+

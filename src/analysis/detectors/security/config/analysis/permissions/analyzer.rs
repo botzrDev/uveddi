@@ -79,50 +79,66 @@ impl PermissionAnalyzer {
         value: &YamlValue,
     ) -> Result<Vec<ConfigIssue>, AnalysisError> {
         let mut issues = Vec::new();
+        self.check_kubernetes_security_context_recursive(value, &mut issues);
+        Ok(issues)
+    }
 
-        if let YamlValue::Mapping(map) = value {
-            for (key, val) in map {
-                if key.as_str() == Some("securityContext") {
-                    if let YamlValue::Mapping(security_context) = val {
-                        // Check for runAsRoot
-                        if let Some(run_as_user) =
-                            security_context.get(&YamlValue::String("runAsUser".to_string()))
-                        {
-                            if run_as_user.as_u64() == Some(0) {
-                                issues.push(ConfigIssue::new(
-                                    ConfigSeverity::High,
-                                    0.9,
-                                    "Container Running as Root",
-                                    "Kubernetes container configured to run as root user (UID 0)",
-                                )
-                                .with_tag("kubernetes-security")
-                                .with_remediation("Set runAsUser to a non-root UID (e.g., 1000)")
-                                .with_cwe(250));
+    fn check_kubernetes_security_context_recursive(
+        &self,
+        value: &YamlValue,
+        issues: &mut Vec<ConfigIssue>,
+    ) {
+        match value {
+            YamlValue::Mapping(map) => {
+                for (key, val) in map {
+                    if key.as_str() == Some("securityContext") {
+                        if let YamlValue::Mapping(security_context) = val {
+                            // Check for runAsRoot
+                            if let Some(run_as_user) =
+                                security_context.get(&YamlValue::String("runAsUser".to_string()))
+                            {
+                                if run_as_user.as_u64() == Some(0) {
+                                    issues.push(ConfigIssue::new(
+                                        ConfigSeverity::High,
+                                        0.9,
+                                        "Container Running as Root",
+                                        "Kubernetes container configured to run as root user (UID 0)",
+                                    )
+                                    .with_tag("kubernetes-security")
+                                    .with_remediation("Set runAsUser to a non-root UID (e.g., 1000)")
+                                    .with_cwe(250));
+                                }
                             }
-                        }
 
-                        // Check for privileged containers
-                        if let Some(privileged) =
-                            security_context.get(&YamlValue::String("privileged".to_string()))
-                        {
-                            if privileged.as_bool() == Some(true) {
-                                issues.push(ConfigIssue::new(
-                                    ConfigSeverity::Critical,
-                                    0.95,
-                                    "Privileged Container in Security Context",
-                                    "Container configured with privileged access in security context",
-                                )
-                                .with_tag("kubernetes-security")
-                                .with_remediation("Remove privileged: true and use specific capabilities")
-                                .with_cwe(250));
+                            // Check for privileged containers
+                            if let Some(privileged) =
+                                security_context.get(&YamlValue::String("privileged".to_string()))
+                            {
+                                if privileged.as_bool() == Some(true) {
+                                    issues.push(ConfigIssue::new(
+                                        ConfigSeverity::Critical,
+                                        0.95,
+                                        "Privileged Container in Security Context",
+                                        "Container configured with privileged access in security context",
+                                    )
+                                    .with_tag("kubernetes-security")
+                                    .with_remediation("Remove privileged: true and use specific capabilities")
+                                    .with_cwe(250));
+                                }
                             }
                         }
                     }
+                    // Recursively check nested values
+                    self.check_kubernetes_security_context_recursive(val, issues);
                 }
             }
+            YamlValue::Sequence(seq) => {
+                for item in seq {
+                    self.check_kubernetes_security_context_recursive(item, issues);
+                }
+            }
+            _ => {}
         }
-
-        Ok(issues)
     }
 
     fn check_database_user_permissions(

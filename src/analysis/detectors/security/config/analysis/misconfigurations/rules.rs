@@ -57,7 +57,8 @@ impl MisconfigurationRule {
                 severity: ConfigSeverity::High,
                 pattern: MisconfigurationPattern::KeyValue {
                     key_pattern: Regex::new(r"(?i)(cors|access[_-]?control[_-]?allow[_-]?origin)")?,
-                    value_pattern: Some(Regex::new(r"^\*$")?),
+                    // Match wildcard with or without surrounding quotes
+                    value_pattern: Some(Regex::new(r#"^["']?\*["']?$"#)?),
                 },
                 remediation: "Restrict CORS to specific trusted origins instead of using '*'.".to_string(),
                 cwe_id: Some(942),

@@ -68,8 +68,10 @@ impl FilePermissionChecker {
                 name: "World-Writable File".to_string(),
                 description: "File or directory is world-writable".to_string(),
                 severity: ConfigSeverity::High,
+                // Only match permissions where the LAST digit (other/world) is 2, 3, 6, or 7
+                // (i.e., has write permission for others)
                 pattern: Regex::new(
-                    r#"(?i)(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7]*[2367][0-7]*['"]?"#,
+                    r#"(?i)(mode|chmod|permissions?)[\s]*[:=][\s]*['"]?[0-7][0-7][2367]['"]?"#,
                 )?,
                 remediation:
                     "Remove world-write permissions. Use 644 for files and 755 for directories."

@@ -152,8 +152,12 @@ impl WebFrameworkAnalyzer {
         language: &SourceLanguage,
     ) -> Option<String> {
         for (framework_name, profile) in &self.framework_patterns {
-            if profile.language == *language && content.contains(framework_name) {
-                return Some(framework_name.clone());
+            if profile.language == *language {
+                // Check for both hyphen and underscore variants (e.g., "actix-web" vs "actix_web")
+                let underscore_variant = framework_name.replace('-', "_");
+                if content.contains(framework_name) || content.contains(&underscore_variant) {
+                    return Some(framework_name.clone());
+                }
             }
         }
         None

@@ -29,8 +29,15 @@ impl TomlBuildChecker {
         let mut issues = Vec::new();
 
         if let TomlValue::Table(table) = value {
-            // Check for dangerous build scripts
-            if table.contains_key("build") {
+            // Check for dangerous build scripts (can be in [package] or top-level [build])
+            let has_build_script = table.contains_key("build")
+                || table
+                    .get("package")
+                    .and_then(|p| p.as_table())
+                    .map(|pkg| pkg.contains_key("build"))
+                    .unwrap_or(false);
+
+            if has_build_script {
                 issues.push(utils::create_config_issue(
                     ConfigSeverity::Info,
                     "Build Script Present",

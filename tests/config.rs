@@ -1,7 +1,16 @@
 use std::env;
 use std::fs;
+use std::sync::Mutex;
 use tempfile::tempdir;
 use uveddi::config::Config;
+
+// Mutex to ensure environment variable tests don't interfere with each other
+// Use unwrap_or_else to recover from poisoned mutex
+static ENV_MUTEX: Mutex<()> = Mutex::new(());
+
+fn acquire_env_lock() -> std::sync::MutexGuard<'static, ()> {
+    ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner())
+}
 
 fn setup() {
     // Clean up any previous environment variables
@@ -10,20 +19,23 @@ fn setup() {
 
 #[test]
 fn test_config_from_env_with_ollama_model() {
+    let _lock = acquire_env_lock();
     setup();
 
     // Set environment variable
     env::set_var("OLLAMA_MODEL", "llama2");
 
     let config = Config::from_env().unwrap();
-    assert_eq!(config.ollama_model, Some("llama2".to_string()));
 
-    // Clean up
+    // Clean up first to prevent interference
     env::remove_var("OLLAMA_MODEL");
+
+    assert_eq!(config.ollama_model, Some("llama2".to_string()));
 }
 
 #[test]
 fn test_config_from_env_without_ollama_model() {
+    let _lock = acquire_env_lock();
     setup();
 
     let config = Config::from_env().unwrap();
@@ -32,6 +44,7 @@ fn test_config_from_env_without_ollama_model() {
 
 #[test]
 fn test_config_from_file_valid_toml() {
+    let _lock = acquire_env_lock();
     setup();
 
     let temp_dir = tempdir().unwrap();
@@ -49,6 +62,7 @@ ollama_model = "llama2"
 
 #[test]
 fn test_config_from_file_minimal_toml() {
+    let _lock = acquire_env_lock();
     setup();
 
     let temp_dir = tempdir().unwrap();
@@ -66,6 +80,7 @@ fn test_config_from_file_minimal_toml() {
 
 #[test]
 fn test_config_from_file_nonexistent_file() {
+    let _lock = acquire_env_lock();
     setup();
 
     let result = Config::from_file("/nonexistent/path/config.toml");
@@ -74,6 +89,7 @@ fn test_config_from_file_nonexistent_file() {
 
 #[test]
 fn test_config_from_file_invalid_toml() {
+    let _lock = acquire_env_lock();
     setup();
 
     let temp_dir = tempdir().unwrap();
@@ -91,6 +107,7 @@ invalid toml content [[[
 
 #[test]
 fn test_config_clone() {
+    let _lock = acquire_env_lock();
     setup();
 
     let config = Config {
@@ -105,6 +122,7 @@ fn test_config_clone() {
 
 #[test]
 fn test_config_debug_format() {
+    let _lock = acquire_env_lock();
     setup();
 
     let config = Config {
@@ -120,6 +138,7 @@ fn test_config_debug_format() {
 /// Integration test for config show/set workflow (A3 requirement)
 #[test]
 fn test_config_show_set_workflow() {
+    let _lock = acquire_env_lock();
     setup();
 
     let temp_dir = tempdir().unwrap();
@@ -160,6 +179,7 @@ fn test_config_show_set_workflow() {
 /// Integration test for config persistence across operations (A3 requirement)
 #[test]
 fn test_config_persistence_across_operations() {
+    let _lock = acquire_env_lock();
     setup();
 
     let temp_dir = tempdir().unwrap();
@@ -197,6 +217,7 @@ fn test_config_persistence_across_operations() {
 /// Test config show with missing file falls back correctly (A3 requirement)
 #[test]
 fn test_config_show_missing_file_fallback() {
+    let _lock = acquire_env_lock();
     setup();
 
     let temp_dir = tempdir().unwrap();
@@ -212,10 +233,12 @@ fn test_config_show_missing_file_fallback() {
     // But loading from env should still work
     env::set_var("OLLAMA_MODEL", "env-fallback-model");
     let env_config = Config::from_env().unwrap();
+
+    // Clean up first
+    env::remove_var("OLLAMA_MODEL");
+
     assert_eq!(
         env_config.ollama_model,
         Some("env-fallback-model".to_string())
     );
-
-    env::remove_var("OLLAMA_MODEL");
 }
