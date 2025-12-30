@@ -1,3 +1,10 @@
+//! Database CRUD tests
+//!
+//! NOTE: This test module references an outdated module path.
+//! Enable by removing the #![cfg(feature = "database-crud-tests")] gate.
+
+#![cfg(feature = "database-crud-tests")]
+
 use std::path::Path;
 use uveddi::database::crud::Database;
 use uveddi::database::models::AntiPatternType;

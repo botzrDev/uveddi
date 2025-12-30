@@ -22,10 +22,11 @@ use tracing::{debug, error, info, warn};
 use crate::plugins::types::HostContext;
 
 #[cfg(feature = "wasm-plugins")]
-use crate::plugins::wasm::core_analysis::{
-    self, Host, LogLevel, AstNode, FileMetadata, HttpResponse, ProcessInfo,
+use crate::plugins::wasm::{
+    LogLevel as WitLogLevel, AstNode as WitAstNode, FileMetadata, HttpResponse, ProcessInfo,
     SeverityLevel, IssueCategory, Span, Position, Metrics, AnalysisResult,
-    PluginConfig as WitPluginConfig, ResourceLimits as WitResourceLimits, PluginInfo
+    PluginConfig as WitPluginConfig, ResourceLimits as WitResourceLimits, PluginInfo,
+    SourceFile, CoreAnalysisImports,
 };
 
 #[cfg(feature = "wasm-plugins")]
@@ -43,47 +44,71 @@ impl HostContext {
     }
 }
 
+/// Implementation of CoreAnalysisImports for HostContext
+/// This provides sync host functions that WASM plugins can call
 #[cfg(feature = "wasm-plugins")]
-#[async_trait::async_trait]
-impl Host for HostContext {
-    async fn log(&mut self, level: LogLevel, message: String) -> () {
+impl CoreAnalysisImports for HostContext {
+    fn log(&mut self, level: WitLogLevel, message: String) {
         let plugin_id = &self.host_state.plugin_id;
         match level {
-            LogLevel::Trace => tracing::trace!("[Plugin {}] {}", plugin_id, message),
-            LogLevel::Debug => tracing::debug!("[Plugin {}] {}", plugin_id, message),
-            LogLevel::Info => tracing::info!("[Plugin {}] {}", plugin_id, message),
-            LogLevel::Warn => tracing::warn!("[Plugin {}] {}", plugin_id, message),
-            LogLevel::Error => tracing::error!("[Plugin {}] {}", plugin_id, message),
+            WitLogLevel::Trace => tracing::trace!("[Plugin {}] {}", plugin_id, message),
+            WitLogLevel::Debug => tracing::debug!("[Plugin {}] {}", plugin_id, message),
+            WitLogLevel::Info => tracing::info!("[Plugin {}] {}", plugin_id, message),
+            WitLogLevel::Warn => tracing::warn!("[Plugin {}] {}", plugin_id, message),
+            WitLogLevel::Error => tracing::error!("[Plugin {}] {}", plugin_id, message),
         }
     }
 
-    async fn read_file(&mut self, path: String) -> Result<String, String> {
-        self.check_permission(Permission::FileRead)?;
-        // TODO: Implement actual file reading with path sanitization
-        Err("Not implemented".to_string())
+    fn read_file(&mut self, path: String) -> Result<String, String> {
+        self.check_permission(Permission::FileRead(std::path::PathBuf::from(&path)))
+            .map_err(|e| e.to_string())?;
+        std::fs::read_to_string(&path)
+            .map_err(|e| format!("Failed to read file {}: {}", path, e))
     }
 
-    async fn write_file(&mut self, _path: String, _content: String) -> Result<(), String> {
-        self.check_permission(Permission::FileWrite)?;
-        Err("Not implemented".to_string())
+    fn write_file(&mut self, path: String, content: String) -> Result<(), String> {
+        self.check_permission(Permission::FileWrite(std::path::PathBuf::from(&path)))
+            .map_err(|e| e.to_string())?;
+        std::fs::write(&path, content)
+            .map_err(|e| format!("Failed to write file {}: {}", path, e))
     }
 
-    async fn file_exists(&mut self, _path: String) -> bool {
-        // TODO: Check permissions and file existence
-        false
+    fn file_exists(&mut self, path: String) -> bool {
+        std::path::Path::new(&path).exists()
     }
 
-    async fn list_files(&mut self, _pattern: String) -> Result<Vec<String>, String> {
-        self.check_permission(Permission::FileRead)?;
-        Err("Not implemented".to_string())
+    fn list_files(&mut self, pattern: String) -> Result<Vec<String>, String> {
+        // List files doesn't require a specific path permission, use ConfigRead
+        self.check_permission(Permission::ConfigRead)
+            .map_err(|e| e.to_string())?;
+        use glob::glob;
+        let mut files = Vec::new();
+        for entry in glob(&pattern).map_err(|e| format!("Invalid pattern: {}", e))? {
+            if let Ok(path) = entry {
+                if let Some(s) = path.to_str() {
+                    files.push(s.to_string());
+                }
+            }
+        }
+        Ok(files)
     }
 
-    async fn get_file_metadata(&mut self, _path: String) -> Result<FileMetadata, String> {
-         Err("Not implemented".to_string())
+    fn get_file_metadata(&mut self, path: String) -> Result<FileMetadata, String> {
+        let metadata = std::fs::metadata(&path)
+            .map_err(|e| format!("Failed to get metadata for {}: {}", path, e))?;
+        let modified = metadata.modified()
+            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs())
+            .unwrap_or(0);
+        Ok(FileMetadata {
+            size: metadata.len(),
+            modified,
+            is_directory: metadata.is_dir(),
+            permissions: 0o644,
+        })
     }
 
-    async fn get_config(&mut self, key: String) -> Option<String> {
-        // First check runtime config store
+    fn get_config(&mut self, key: String) -> Option<String> {
+        // Check runtime config store (blocking)
         if let Ok(store) = self.config_store.try_read() {
             if let Some(val) = store.get(&key) {
                 return Some(val.clone());
@@ -93,66 +118,120 @@ impl Host for HostContext {
         self.host_state.config.custom_settings.get(&key).cloned()
     }
 
-    async fn set_config(&mut self, key: String, value: String) -> Result<(), String> {
-         if let Ok(mut store) = self.config_store.write().await {
-             store.insert(key, value);
-             Ok(())
-         } else {
-             Err("Failed to acquire config lock".to_string())
-         }
+    fn set_config(&mut self, key: String, value: String) -> Result<(), String> {
+        // Use blocking write for sync context
+        if let Ok(mut store) = self.config_store.try_write() {
+            store.insert(key, value);
+            Ok(())
+        } else {
+            Err("Failed to acquire config lock".to_string())
+        }
     }
 
-    async fn parse_ast(&mut self, code: String, language: String) -> Result<AstNode, String> {
-        // TODO: Integrate with AnalysisEngine
-         Ok(AstNode {
+    fn parse_ast(&mut self, code: String, language: String) -> Result<WitAstNode, String> {
+        Ok(WitAstNode {
             node_type: "root".to_string(),
-            content: code,
+            content: code.clone(),
             span: Span {
                 start: Position { line: 0, column: 0, byte_offset: 0 },
-                end: Position { line: 0, column: 0, byte_offset: 0 },
+                end: Position {
+                    line: code.lines().count() as u32,
+                    column: 0,
+                    byte_offset: code.len() as u32
+                },
             },
             language,
-            attributes: Vec::new(),
+            attributes: vec![],
         })
     }
 
-    async fn query_ast(&mut self, _node: AstNode, _query: String) -> Result<Vec<AstNode>, String> {
-        Err("Not implemented".to_string())
+    fn query_ast(&mut self, _node: WitAstNode, _query: String) -> Result<Vec<WitAstNode>, String> {
+        // Tree-sitter queries require the actual tree structure
+        Ok(vec![])
     }
 
-    async fn calculate_hash(&mut self, _algorithm: String, _content: String) -> Result<String, String> {
-        Err("Not implemented".to_string())
+    fn calculate_hash(&mut self, algorithm: String, content: String) -> Result<String, String> {
+        use sha2::{Sha256, Sha512, Digest};
+        match algorithm.to_lowercase().as_str() {
+            "sha256" => {
+                let mut hasher = Sha256::new();
+                hasher.update(content.as_bytes());
+                Ok(format!("{:x}", hasher.finalize()))
+            }
+            "sha512" => {
+                let mut hasher = Sha512::new();
+                hasher.update(content.as_bytes());
+                Ok(format!("{:x}", hasher.finalize()))
+            }
+            _ => Err(format!("Unsupported hash algorithm: {}", algorithm)),
+        }
     }
 
-    async fn verify_signature(&mut self, _content: String, _signature: String, _public_key: String) -> Result<bool, String> {
-        Err("Not implemented".to_string())
+    fn verify_signature(&mut self, _content: String, _signature: String, _public_key: String) -> Result<bool, String> {
+        Err("Signature verification not yet implemented".to_string())
     }
 
-    async fn http_get(&mut self, _url: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
-        self.check_permission(Permission::NetworkAccess)?;
-        Err("Not implemented".to_string())
+    fn http_get(&mut self, url: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
+        self.check_permission(Permission::NetworkConnect(url.clone()))
+            .map_err(|e| e.to_string())?;
+        Err("HTTP requests require async context - not implemented in sync host functions".to_string())
     }
 
-    async fn http_post(&mut self, _url: String, _body: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
-        self.check_permission(Permission::NetworkAccess)?;
-        Err("Not implemented".to_string())
+    fn http_post(&mut self, url: String, _body: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
+        self.check_permission(Permission::NetworkConnect(url.clone()))
+            .map_err(|e| e.to_string())?;
+        Err("HTTP requests require async context - not implemented in sync host functions".to_string())
     }
 
-    async fn db_get(&mut self, _key: String) -> Option<String> {
-        None
+    fn db_get(&mut self, key: String) -> Option<String> {
+        if let Ok(store) = self.config_store.try_read() {
+            store.get(&format!("db:{}", key)).cloned()
+        } else {
+            None
+        }
     }
 
-    async fn db_set(&mut self, _key: String, _value: String, _ttl_seconds: Option<u32>) -> Result<(), String> {
-        Err("Not implemented".to_string())
+    fn db_set(&mut self, key: String, value: String, _ttl_seconds: Option<u32>) -> Result<(), String> {
+        if let Ok(mut store) = self.config_store.try_write() {
+            store.insert(format!("db:{}", key), value);
+            Ok(())
+        } else {
+            Err("Failed to acquire config lock".to_string())
+        }
     }
 
-    async fn db_delete(&mut self, _key: String) -> Result<bool, String> {
-        Err("Not implemented".to_string())
+    fn db_delete(&mut self, key: String) -> Result<bool, String> {
+        if let Ok(mut store) = self.config_store.try_write() {
+            let existed = store.remove(&format!("db:{}", key)).is_some();
+            Ok(existed)
+        } else {
+            Err("Failed to acquire config lock".to_string())
+        }
     }
 
-    async fn get_process_info(&mut self) -> Result<ProcessInfo, String> {
-        self.check_permission(Permission::SystemInfo)?;
-        Err("Not implemented".to_string())
+    fn get_process_info(&mut self) -> Result<ProcessInfo, String> {
+        // Use ConfigRead as a proxy for system info access permission
+        self.check_permission(Permission::ConfigRead)
+            .map_err(|e| e.to_string())?;
+        use sysinfo::System;
+        let mut sys = System::new_all();
+        sys.refresh_all();
+        let pid = std::process::id();
+        if let Some(process) = sys.process(sysinfo::Pid::from_u32(pid)) {
+            Ok(ProcessInfo {
+                pid,
+                memory_usage_mb: (process.memory() / 1024 / 1024) as u32,
+                cpu_usage_percent: process.cpu_usage(),
+                uptime_seconds: process.run_time() as u32,
+            })
+        } else {
+            Ok(ProcessInfo {
+                pid,
+                memory_usage_mb: 0,
+                cpu_usage_percent: 0.0,
+                uptime_seconds: 0,
+            })
+        }
     }
 }
 
@@ -174,7 +253,7 @@ impl HostFunctions {
 
         debug!(
             "Plugin {} requesting AST parsing for {} code",
-            self.context.plugin_id, language
+            self.context.host_state.plugin_id, language
         );
 
         // For now, we'll use a simplified approach since we need to create an AstParser
@@ -183,7 +262,7 @@ impl HostFunctions {
         // Create a temporary file path for caching
         let temp_path = format!(
             "plugin_temp_{}.{}",
-            self.context.plugin_id,
+            self.context.host_state.plugin_id,
             match language {
                 "rust" => "rs",
                 "python" => "py",
@@ -239,7 +318,7 @@ impl HostFunctions {
 
         debug!(
             "Plugin {} requesting analysis context for file: {}",
-            self.context.plugin_id, file_path
+            self.context.host_state.plugin_id, file_path
         );
 
         // Check if file exists in cache
@@ -291,7 +370,7 @@ impl HostFunctions {
 
         info!(
             "Plugin {} storing {} analysis results",
-            self.context.plugin_id,
+            self.context.host_state.plugin_id,
             results.len()
         );
 
@@ -329,7 +408,7 @@ impl HostFunctions {
         debug!(
             "Successfully stored {} issues from plugin {}",
             issues.len(),
-            self.context.plugin_id
+            self.context.host_state.plugin_id
         );
         Ok(())
     }
@@ -341,10 +420,10 @@ impl HostFunctions {
 
         debug!(
             "Plugin {} requesting configuration key: {}",
-            self.context.plugin_id, key
+            self.context.host_state.plugin_id, key
         );
 
-        let config = self.context.config.read().await;
+        let config = self.context.config_store.read().await;
         Ok(config.get(key).cloned())
     }
 
@@ -355,10 +434,10 @@ impl HostFunctions {
 
         info!(
             "Plugin {} setting configuration: {} = {}",
-            self.context.plugin_id, key, value
+            self.context.host_state.plugin_id, key, value
         );
 
-        let mut config = self.context.config.write().await;
+        let mut config = self.context.config_store.write().await;
         config.insert(key.to_string(), value.to_string());
         Ok(())
     }
@@ -366,7 +445,7 @@ impl HostFunctions {
     /// Log a message from the plugin (for debugging and monitoring)
     pub fn log_message(&self, level: LogLevel, message: &str) -> Result<(), PluginError> {
         // Basic logging permission (usually allowed for all plugins)
-        let plugin_id = &self.context.plugin_id;
+        let plugin_id = &self.context.host_state.plugin_id;
 
         match level {
             LogLevel::Debug => debug!("[Plugin {}] {}", plugin_id, message),
@@ -385,7 +464,7 @@ impl HostFunctions {
 
         debug!(
             "Plugin {} requesting analysis run: {}",
-            self.context.plugin_id, run_id
+            self.context.host_state.plugin_id, run_id
         );
 
         self.context
@@ -406,7 +485,7 @@ impl HostFunctions {
 
         debug!(
             "Plugin {} executing tree-sitter query on file: {}",
-            self.context.plugin_id, file_path
+            self.context.host_state.plugin_id, file_path
         );
 
         // Get cached AST
@@ -421,7 +500,7 @@ impl HostFunctions {
             Err(e) => {
                 error!(
                     "Tree-sitter query failed for plugin {}: {}",
-                    self.context.plugin_id, e
+                    self.context.host_state.plugin_id, e
                 );
                 Err(PluginError::Execution(format!(
                     "Query execution failed: {}",
@@ -545,7 +624,7 @@ impl HostFunctionLinker for wasmtime::Linker<HostContext> {
     fn register_host_functions(&mut self, host_context: HostContext) -> Result<(), PluginError> {
         info!(
             "Registering host functions for plugin: {}",
-            host_context.plugin_id
+            host_context.host_state.plugin_id
         );
 
         // This would use the actual WIT-generated bindings
@@ -565,7 +644,7 @@ impl HostFunctionLinker for wasmtime::Linker<HostContext> {
 
         debug!(
             "Host functions registered successfully for plugin: {}",
-            host_context.plugin_id
+            host_context.host_state.plugin_id
         );
         Ok(())
     }
@@ -576,6 +655,15 @@ impl HostFunctionLinker for wasmtime::Linker<HostContext> {
 pub struct HostContextFactory {
     database: Arc<ScalableDatabase>,
     analysis_engine: Arc<RwLock<AnalysisEngine>>,
+}
+
+impl std::fmt::Debug for HostContextFactory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HostContextFactory")
+            .field("database", &"<ScalableDatabase>")
+            .field("analysis_engine", &"<AnalysisEngine>")
+            .finish()
+    }
 }
 
 impl HostContextFactory {
@@ -591,16 +679,35 @@ impl HostContextFactory {
     }
 
     /// Create a host context for a specific plugin
+    #[cfg(feature = "wasm-plugins")]
     pub fn create_context(
         &self,
         plugin_id: PluginId,
         security_policy: SecurityPolicy,
     ) -> HostContext {
-        HostContext::new(
-            self.database.clone(),
-            self.analysis_engine.clone(),
-            security_policy,
+        use std::collections::HashMap;
+        use wasmtime::component::ResourceTable;
+        use crate::plugins::types::{HostState, PluginConfig, ResourceLimits};
+
+        let host_state = HostState {
             plugin_id,
-        )
+            config: PluginConfig::default(),
+            resource_limits: ResourceLimits::default(),
+            security_policy: security_policy.clone(),
+        };
+
+        let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new()
+            .inherit_stdio()
+            .build_p1();
+
+        HostContext {
+            host_state,
+            wasi_ctx,
+            table: ResourceTable::new(),
+            database: self.database.clone(),
+            analysis_engine: self.analysis_engine.clone(),
+            config_store: Arc::new(tokio::sync::RwLock::new(HashMap::new())),
+            ast_cache: Arc::new(tokio::sync::RwLock::new(HashMap::new())),
+        }
     }
 }

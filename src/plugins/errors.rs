@@ -194,3 +194,9 @@ impl PluginError {
         }
     }
 }
+
+impl From<String> for PluginError {
+    fn from(s: String) -> Self {
+        PluginError::Execution(s)
+    }
+}

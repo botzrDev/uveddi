@@ -22,7 +22,17 @@
       "Bash(git -C /home/austingreen/Documents/botzr/projects/uveddi log --oneline)",
       "Bash(wc:*)",
       "Bash(cargo test:*)",
-      "Bash(cargo clippy:*)"
+      "Bash(cargo clippy:*)",
+      "Bash(cargo expand:*)",
+      "Bash(ls:*)",
+      "Bash(for file in tests/*.rs tests/coverage/*.rs)",
+      "Bash(do)",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(if ! grep -q '#!\\\\[cfg\\(feature' \"$file\")",
+      "Bash(echo:*)",
+      "Bash(fi)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

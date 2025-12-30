@@ -962,61 +962,100 @@ impl KnowledgePluginLoader {
             // 2. Parse manifest from sibling .toml file (simple assumption for now)
             // In a real implementation we might embedded it or use a proper manifest loader
             // For now, construct a default metadata
-             let metadata = KnowledgePluginMetadata {
-                id: plugin_path.file_stem().unwrap().to_string_lossy().to_string(),
-                name: plugin_path.file_stem().unwrap().to_string_lossy().to_string(),
+            let plugin_id = plugin_path.file_stem().unwrap().to_string_lossy().to_string();
+            let metadata = KnowledgePluginMetadata {
+                id: plugin_id.clone(),
+                name: plugin_id,
                 version: "0.1.0".to_string(),
                 description: "Loaded via knowledge system".to_string(),
                 author: "Unknown".to_string(),
-                license: "Unknown".to_string(),
+                plugin_type: KnowledgePluginType::Detector,
                 supported_languages: vec![SourceLanguage::Universal],
-                capabilities: KnowledgePluginCapabilities::default(),
-                permissions: KnowledgePluginPermissions::default(),
+                dependencies: vec![],
+                api_version: "1.0.0".to_string(),
+                capabilities: KnowledgePluginCapabilities {
+                    provides_patterns: false,
+                    provides_detectors: true,
+                    provides_solutions: false,
+                    provides_language_support: false,
+                    provides_framework_knowledge: false,
+                    requires_network: false,
+                    requires_filesystem: false,
+                },
+                permissions: KnowledgePluginPermissions {
+                    network: NetworkPermissions {
+                        allow_http: false,
+                        allow_https: false,
+                        allowed_domains: vec![],
+                        allowed_ports: vec![],
+                    },
+                    filesystem: FilesystemPermissions {
+                        allow_read: true,
+                        allow_write: false,
+                        allowed_paths: vec![],
+                    },
+                    system: SystemPermissions {
+                        allow_process_execution: false,
+                        allow_env_access: false,
+                        max_memory_mb: 256,
+                        max_execution_time_ms: 30000,
+                    },
+                    data: DataPermissions {
+                        allow_knowledge_read: true,
+                        allow_knowledge_write: false,
+                        allow_analysis_data: true,
+                    },
+                },
             };
 
             // 3. Create Component and instantiate
-            // Access security policy from config
-            let security_config = &self.config.security;
-            
             // Configure Engine (simplified)
             let mut config = wasmtime::Config::new();
             config.wasm_component_model(true);
-            config.async_support(true);
             let engine = Engine::new(&config).map_err(|e| PluginError::Loading(e.to_string()))?;
-            
+
             let component = Component::new(&engine, &binary)
                 .map_err(|e| PluginError::Loading(format!("Failed to create component: {}", e)))?;
-                
+
             let mut linker = Linker::<HostContext>::new(&engine);
-            
-            // Add WASI (using default config for now)
-             let wasi_ctx = wasmtime_wasi::preview1::WasiP1Ctx::new(
-                wasmtime_wasi::WasiCtxBuilder::new()
-                    .inherit_stdio()
-                    .build()
-            );
-            
-            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |host: &mut HostContext| {
-                &mut host.wasi_ctx
-            }).map_err(|e| PluginError::Loading(e.to_string()))?;
-            
-            // Add host functions
-            crate::plugins::wasm::CoreAnalysis::add_to_linker(&mut linker, |host: &mut HostContext| host)
+
+            // Add host functions (skip WASI Preview 1 as it's incompatible with Component Model Linker)
+            crate::plugins::wasm::CoreAnalysis::add_to_linker::<_, wasmtime::component::HasSelf<HostContext>>(&mut linker, |host| host)
                 .map_err(|e| PluginError::Loading(e.to_string()))?;
-                
-            // Create store
-             let host_context = HostContext::new(
-                 Arc::new(crate::database::ScalableDatabase::new_in_memory()), 
-                 Arc::new(RwLock::new(crate::analysis::AnalysisEngine::new())),
-                 crate::plugins::SecurityPolicy::default(), // Use default policy
-                 crate::plugins::types::PluginId::from_name(&metadata.id),
-            );
-            
+
+            // Create host state and WASI context
+            let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new()
+                .inherit_stdio()
+                .build_p1();
+
+            let host_state = crate::plugins::types::HostState {
+                plugin_id: crate::plugins::types::PluginId::from_name(&metadata.id),
+                config: crate::plugins::types::PluginConfig::default(),
+                resource_limits: crate::plugins::types::ResourceLimits::default(),
+                security_policy: crate::plugins::SecurityPolicy::default(),
+            };
+
+            // Create database and analysis engine
+            let database_config = crate::database::DatabaseConfig::default();
+            let database = crate::database::ScalableDatabase::new(database_config).await
+                .map_err(|e| PluginError::Loading(format!("Failed to create database: {}", e)))?;
+            let analysis_engine = crate::analysis::AnalysisEngine::new()
+                .map_err(|e| PluginError::Loading(format!("Failed to create analysis engine: {}", e)))?;
+
+            let host_context = HostContext {
+                host_state,
+                wasi_ctx,
+                table: wasmtime::component::ResourceTable::new(),
+                database: Arc::new(database),
+                analysis_engine: Arc::new(RwLock::new(analysis_engine)),
+                config_store: Arc::new(RwLock::new(std::collections::HashMap::new())),
+                ast_cache: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            };
+
             let mut store = Store::new(&engine, host_context);
-            
-            // Instantiate
-            let (bindings, _) = CoreAnalysis::instantiate(&mut store, &component, &linker)
-                 .await
+
+            // Instantiate (sync, not async)
+            let bindings = CoreAnalysis::instantiate(&mut store, &component, &linker)
                  .map_err(|e| PluginError::Loading(format!("Failed to instantiate: {}", e)))?;
                  
             // Create adapter

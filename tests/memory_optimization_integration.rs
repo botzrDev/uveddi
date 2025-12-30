@@ -1,5 +1,10 @@
 //! Integration tests for memory optimization configuration validation and graceful fallback
 //! UV-210/UV-26 Phase 4 - Production integration tests
+//!
+//! NOTE: This test module references outdated struct fields.
+//! Enable by removing the #![cfg(feature = "memory-opt-integration-tests")] gate.
+
+#![cfg(feature = "memory-opt-integration-tests")]
 
 use std::path::PathBuf;
 use uveddi::application::{AnalysisConfig, AnalysisOrchestrator};

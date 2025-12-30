@@ -451,6 +451,8 @@ mod tests {
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider.clone(),
+            #[cfg(feature = "wasm-plugins")]
+            None,
             aggregator.clone(),
             crate::analysis::detector_factory::DetectorFactory::create_default_detectors(),
         ));
@@ -460,6 +462,8 @@ mod tests {
             config_service,
             detector_scheduler,
             aggregator,
+            #[cfg(feature = "wasm-plugins")]
+            None,
             detector_factory,
         ));
 

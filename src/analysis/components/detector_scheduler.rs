@@ -422,7 +422,14 @@ mod tests {
         let detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> =
             vec![Box::new(GodObjectDetector::new(10, 15))];
 
-        DetectorScheduler::new(config_service, ast_provider, aggregator, detectors)
+        DetectorScheduler::new(
+            config_service,
+            ast_provider,
+            #[cfg(feature = "wasm-plugins")]
+            None,
+            aggregator,
+            detectors,
+        )
     }
 
     #[tokio::test]

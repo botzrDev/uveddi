@@ -27,7 +27,7 @@ async fn test_basic_incremental_analysis() {
     let test_files = create_test_project(&temp_dir, 10);
 
     // Create analysis engine
-    let base_engine = AnalysisEngine::new().unwrap();
+    let mut base_engine = AnalysisEngine::new().unwrap();
 
     // First run - full analysis
     let (issues1, _) = base_engine.analyze(temp_dir.path()).await.unwrap();
@@ -235,7 +235,7 @@ async fn test_performance_improvement_target() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(&temp_dir, 100); // Larger project for meaningful timing
 
-    let base_engine = AnalysisEngine::new().unwrap();
+    let mut base_engine = AnalysisEngine::new().unwrap();
 
     // First run - full analysis (establish baseline)
     let full_start = std::time::Instant::now();
@@ -306,7 +306,7 @@ async fn test_cache_invalidation() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(&temp_dir, 30);
 
-    let base_engine = AnalysisEngine::new().unwrap();
+    let mut base_engine = AnalysisEngine::new().unwrap();
     let config = IncrementalConfig::default();
 
     // First run

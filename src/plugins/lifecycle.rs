@@ -122,37 +122,31 @@ impl PluginLifecycleManager {
                 security_policy: security_policy.clone(),
             };
 
-            // Configure WASI
+            // Configure WASI context
             let wasi_ctx = security_policy.configure_wasi_context()?.build_p1();
 
-            // Add WASI to linker
-            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |host: &mut HostContext| {
-                &mut host.wasi_ctx
-            })?;
-
-            // Add our custom host functions
-            crate::plugins::wasm::CoreAnalysis::add_to_linker(&mut linker, |host: &mut HostContext| host)?;
+            // Add our custom host functions to the linker
+            // Note: WASI Preview 1 uses core modules, not Component Model, so we skip it
+            // and rely on our host functions providing necessary functionality
+            crate::plugins::wasm::CoreAnalysis::add_to_linker::<_, wasmtime::component::HasSelf<HostContext>>(&mut linker, |host| host)?;
 
             // Create store with fuel and memory limits
             let resource_table = wasmtime::component::ResourceTable::new();
-            let host_context = HostContext::new(
-                 // In a real app we'd inject these dependencies properly. 
-                 // For now, we mock/stub or use globals if available, but here we create fresh ones 
-                 // because PluginLifecycleManager doesn't hold these dependencies in this struct.
-                 // TODO: Pass dependencies to load_plugin
-                 Arc::new(crate::database::ScalableDatabase::new_in_memory()), 
-                 Arc::new(RwLock::new(crate::analysis::AnalysisEngine::new())),
-                 security_policy.clone(),
-                 plugin_id.clone(),
-            );
-            
-            // We need to overwrite the partially created host_context from above with correct one
-             let host_context = HostContext {
+
+            // Create database and analysis engine (placeholders for now)
+            // TODO: Pass real dependencies to load_plugin via PluginLifecycleManager fields
+            let database_config = crate::database::DatabaseConfig::default();
+            let database = crate::database::ScalableDatabase::new(database_config).await
+                .map_err(|e| PluginError::Loading(format!("Failed to create database: {}", e)))?;
+            let analysis_engine = crate::analysis::AnalysisEngine::new()
+                .map_err(|e| PluginError::Loading(format!("Failed to create analysis engine: {}", e)))?;
+
+            let host_context = HostContext {
                 host_state,
                 wasi_ctx,
                 table: resource_table,
-                database: Arc::new(crate::database::ScalableDatabase::new_in_memory()), // Placeholder
-                analysis_engine: Arc::new(RwLock::new(crate::analysis::AnalysisEngine::new())), // Placeholder
+                database: Arc::new(database),
+                analysis_engine: Arc::new(RwLock::new(analysis_engine)),
                 config_store: Arc::new(RwLock::new(HashMap::new())),
                 ast_cache: Arc::new(RwLock::new(HashMap::new())),
             };
@@ -161,7 +155,7 @@ impl PluginLifecycleManager {
             store.set_fuel(security_policy.resource_limits.max_fuel)?;
 
             // Instantiate the component
-            let (bindings, _instance) = CoreAnalysis::instantiate(&mut store, &component, &linker)?;
+            let bindings = CoreAnalysis::instantiate(&mut store, &component, &linker)?;
 
             // Create active plugin wrapper
             let active_plugin = ActivePlugin::new(
@@ -286,8 +280,7 @@ impl Default for PluginLifecycleManager {
 }
 
 /// Active plugin wrapper containing runtime state
-// Debug trait removed due to Wasmtime types not implementing Debug
-#[derive(Clone)]
+// Debug and Clone traits removed due to Wasmtime types not implementing them
 pub struct ActivePlugin {
     /// Unique identifier for the plugin
     pub id: PluginId,
@@ -377,7 +370,7 @@ impl ActivePlugin {
         };
 
         // Construct source file record
-        let source_file = crate::plugins::wasm::uveddi::core_analysis::SourceFile {
+        let source_file = crate::plugins::wasm::SourceFile {
             path: file_path.to_string(),
             content: file_content.to_string(),
             language: language.to_string(),
@@ -400,7 +393,7 @@ impl ActivePlugin {
     #[cfg(feature = "wasm-plugins")]
     fn convert_analysis_result(
         &self, 
-        analysis: crate::plugins::wasm::uveddi::core_analysis::AnalysisResult,
+        analysis: crate::plugins::wasm::AnalysisResult,
         duration_ms: u32
     ) -> Result<PluginAnalysisResult, PluginError> {
         let issues = analysis.issues.into_iter().map(|issue| {
