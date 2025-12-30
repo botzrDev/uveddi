@@ -1,6 +1,6 @@
 # Plugin API Reference
 
-This document provides the complete API reference for developing Uveddi plugins. It covers all available types, functions, and interfaces that plugins can use.
+This document provides the complete API reference for developing Uveddi plugins using the WebAssembly Component Model. Plugins are defined using WIT (WebAssembly Interface Types) and compiled to WASM components.
 
 ## Table of Contents
 
@@ -15,127 +15,152 @@ This document provides the complete API reference for developing Uveddi plugins.
 
 ## Core Types
 
-### Plugin Metadata
+All types are defined in the WIT interface file (`wit/core-analysis.wit`). Plugins use `wit_bindgen` to generate Rust bindings for these types.
 
-```rust
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PluginMetadata {
-    pub id: String,
-    pub name: String,
-    pub version: String,
-    pub description: String,
-    pub author: String,
-    pub license: String,
-    pub homepage: Option<String>,
-    pub repository: Option<String>,
-    pub api_version: String,
+### Position
+
+Represents a position in source code.
+
+```wit
+record position {
+    line: u32,
+    column: u32,
+    byte-offset: u32,
 }
 ```
 
-### Plugin Input
+### Span
 
-```rust
-#[derive(Deserialize)]
-pub struct PluginFileInput {
-    /// Path to the file being analyzed
-    pub file_path: String,
-    /// Content of the file
-    pub content: String,
-    /// Programming language of the file
-    pub language: String,
-    /// Additional context information
-    pub context: Option<AnalysisContext>,
-}
+Represents a range in source code.
 
-#[derive(Deserialize)]
-pub struct AnalysisContext {
-    pub project_root: String,
-    pub file_type: String,
-    pub encoding: String,
-    pub line_count: usize,
-    pub size_bytes: usize,
+```wit
+record span {
+    start: position,
+    end: position,
 }
 ```
 
-### Plugin Output
+### Source File
 
-```rust
-#[derive(Serialize)]
-pub struct PluginAnalysisResult {
-    /// Name of the plugin that generated this result
-    pub plugin_name: String,
-    /// List of issues found
-    pub issues: Vec<PluginIssue>,
-    /// Analysis metrics
-    pub metrics: Option<PluginMetrics>,
-    /// Additional metadata
-    pub metadata: HashMap<String, String>,
+Input file provided to the plugin for analysis.
+
+```wit
+record source-file {
+    path: string,
+    content: string,
+    language: string,
+    size: u32,
+    hash: string,
+    ast: option<ast-node>,
 }
+```
 
-#[derive(Serialize)]
-pub struct PluginIssue {
-    /// Unique identifier for the issue type
-    pub issue_type: String,
-    /// Severity level (INFO, WARNING, ERROR, CRITICAL)
-    pub severity: String,
-    /// Human-readable message
-    pub message: String,
-    /// File path where the issue was found
-    pub file_path: String,
-    /// Line number (1-based)
-    pub line_number: Option<u32>,
-    /// Column number (0-based)
-    pub column: Option<u32>,
-    /// End line number for multi-line issues
-    pub end_line: Option<u32>,
-    /// End column for range issues
-    pub end_column: Option<u32>,
-    /// Suggested fix or improvement
-    pub suggestion: Option<String>,
-    /// Additional context or explanation
-    pub context: Option<String>,
-    /// Confidence score (0.0 to 1.0)
-    pub confidence: Option<f64>,
-    /// Tags for categorization
-    pub tags: Vec<String>,
-}
+### AST Node
 
-#[derive(Serialize)]
-pub struct PluginMetrics {
-    /// Lines of code analyzed
-    pub lines_of_code: usize,
-    /// Cyclomatic complexity
-    pub complexity: Option<usize>,
-    /// Maintainability index (0-100)
-    pub maintainability_index: Option<f64>,
-    /// Processing time in milliseconds
-    pub processing_time_ms: u64,
-    /// Custom metrics
-    pub custom_metrics: HashMap<String, f64>,
+Represents a node in the abstract syntax tree.
+
+```wit
+record ast-node {
+    node-type: string,
+    content: string,
+    span: span,
+    language: string,
+    attributes: list<tuple<string, string>>,
 }
 ```
 
 ### Severity Levels
 
-```rust
-pub enum Severity {
-    Critical,  // Security vulnerabilities, critical bugs
-    High,      // Serious issues that should be fixed
-    Medium,    // Issues that should be addressed
-    Low,       // Minor improvements
-    Info,      // Informational findings
+```wit
+enum severity-level {
+    critical,  // Security vulnerabilities, critical bugs
+    high,      // Serious issues that should be fixed
+    medium,    // Issues that should be addressed
+    low,       // Minor improvements
+    info,      // Informational findings
+}
+```
+
+### Issue Categories
+
+```wit
+enum issue-category {
+    security,
+    performance,
+    quality,
+    maintainability,
+    style,
+    complexity,
+    duplication,
+    architecture,
+    documentation,
+    testing,
+}
+```
+
+### Issue
+
+Represents an issue detected by the plugin.
+
+```wit
+record issue {
+    id: string,
+    severity: severity-level,
+    category: issue-category,
+    message: string,
+    description: option<string>,
+    file: string,
+    span: span,
+    rule-id: option<string>,
+    suggestion: option<string>,
+    fix: option<code-fix>,
+    metadata: list<tuple<string, string>>,
+}
+```
+
+### Code Fix
+
+Suggested fix for an issue.
+
+```wit
+record code-fix {
+    description: string,
+    replacements: list<replacement>,
 }
 
-impl Severity {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Severity::Critical => "CRITICAL",
-            Severity::High => "HIGH", 
-            Severity::Medium => "MEDIUM",
-            Severity::Low => "LOW",
-            Severity::Info => "INFO",
-        }
-    }
+record replacement {
+    span: span,
+    new-text: string,
+}
+```
+
+### Metrics
+
+Code metrics calculated during analysis.
+
+```wit
+record metrics {
+    lines-of-code: u32,
+    lines-of-comments: u32,
+    complexity: u32,
+    maintainability-index: f64,
+    technical-debt-minutes: u32,
+    custom-metrics: list<tuple<string, f64>>,
+}
+```
+
+### Analysis Result
+
+Result returned by the plugin's analyze function.
+
+```wit
+record analysis-result {
+    issues: list<issue>,
+    metrics: metrics,
+    dependencies: list<string>,
+    exports: list<string>,
+    duration-ms: u32,
+    plugin-version: string,
 }
 ```
 
@@ -143,394 +168,395 @@ impl Severity {
 
 ### Required Exports
 
-Every plugin must export these functions:
+Every plugin must export these four functions:
 
-#### analyze_file
+#### initialize
 
-```rust
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8>
+```wit
+export initialize: func(config: plugin-config, limits: resource-limits) -> result<_, string>;
 ```
 
-**Description**: Main analysis function that processes a single file.
+**Description**: Initialize the plugin with configuration and resource limits.
 
 **Parameters**:
-- `file_data`: JSON-encoded `PluginFileInput` as bytes
+- `config`: Plugin configuration settings
+- `limits`: Resource limits for execution
 
-**Returns**: JSON-encoded `PluginAnalysisResult` as bytes
+**Returns**: `Ok(())` for success, `Err(message)` for failure
 
 **Example**:
 ```rust
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    // Parse input
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => return create_error_result(&format!("Parse error: {}", e)),
+fn initialize(config: PluginConfig, limits: ResourceLimits) -> Result<(), String> {
+    log(LogLevel::Info, "Initializing plugin");
+
+    // Store configuration for later use
+    let mut state = STATE.borrow_mut();
+    *state = Some(PluginState::new(config, limits));
+
+    Ok(())
+}
+```
+
+#### analyze
+
+```wit
+export analyze: func(file: source-file) -> result<analysis-result, string>;
+```
+
+**Description**: Analyze a source file and return issues and metrics.
+
+**Parameters**:
+- `file`: Source file to analyze (includes path, content, language, and optional pre-parsed AST)
+
+**Returns**: `Ok(analysis-result)` with issues and metrics, or `Err(message)` on failure
+
+**Example**:
+```rust
+fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+    let mut issues = Vec::new();
+
+    // Parse AST if not provided
+    let ast = if let Some(ast) = file.ast {
+        ast
+    } else {
+        parse_ast(&file.content, &file.language)?
     };
-    
+
     // Perform analysis
-    let issues = perform_analysis(&input);
-    
-    // Create result
-    let result = PluginAnalysisResult {
-        plugin_name: "my-plugin".to_string(),
+    issues.extend(check_complexity(&ast, &file)?);
+    issues.extend(check_style(&ast, &file)?);
+
+    Ok(AnalysisResult {
         issues,
-        metrics: Some(calculate_metrics(&input)),
-        metadata: HashMap::new(),
-    };
-    
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Serialization failed")
+        metrics: calculate_metrics(&file),
+        dependencies: vec![],
+        exports: vec![],
+        duration_ms: 0,
+        plugin_version: "1.0.0".to_string(),
     })
 }
 ```
 
-#### get_plugin_info
+#### get-info
 
-```rust
-#[export_name = "get_plugin_info"]
-pub fn get_plugin_info() -> Vec<u8>
+```wit
+export get-info: func() -> plugin-info;
 ```
 
-**Description**: Returns plugin metadata and capabilities.
+**Description**: Return plugin metadata and capabilities.
 
-**Returns**: JSON-encoded plugin information
+**Returns**: Plugin information structure
 
 **Example**:
 ```rust
-#[export_name = "get_plugin_info"]
-pub fn get_plugin_info() -> Vec<u8> {
-    let info = serde_json::json!({
-        "id": "my-plugin",
-        "name": "My Custom Plugin",
-        "version": "1.0.0",
-        "description": "Custom analysis plugin",
-        "author": "Your Name",
-        "license": "MIT",
-        "api_version": "1.0",
-        "supported_languages": ["rust", "python", "javascript"],
-        "capabilities": {
-            "static_analysis": true,
-            "security_scanning": false,
-            "performance_analysis": true,
-            "metrics_calculation": true
-        }
-    });
-    
-    serde_json::to_vec(&info).unwrap_or_default()
+fn get_info() -> PluginInfo {
+    PluginInfo {
+        id: "my-plugin".to_string(),
+        name: "My Custom Plugin".to_string(),
+        version: "1.0.0".to_string(),
+        description: "Custom analysis plugin".to_string(),
+        author: "Your Name".to_string(),
+        license: "MIT".to_string(),
+        homepage: Some("https://github.com/yourname/my-plugin".to_string()),
+        supported_languages: vec![
+            "rust".to_string(),
+            "python".to_string(),
+            "javascript".to_string(),
+        ],
+        detector_types: vec![IssueCategory::Quality, IssueCategory::Complexity],
+        api_version: "1.0".to_string(),
+        required_permissions: vec![Permission::ReadFiles],
+    }
 }
 ```
-
-### Optional Exports
-
-#### initialize
-
-```rust
-#[export_name = "initialize"]
-pub fn initialize(config_data: &[u8]) -> i32
-```
-
-**Description**: Initialize plugin with configuration.
-
-**Parameters**:
-- `config_data`: JSON-encoded configuration
-
-**Returns**: 0 for success, non-zero for error
 
 #### cleanup
 
-```rust
-#[export_name = "cleanup"]
-pub fn cleanup() -> i32
+```wit
+export cleanup: func() -> result<_, string>;
 ```
 
-**Description**: Cleanup resources before plugin unload.
+**Description**: Clean up resources before plugin unload.
 
-**Returns**: 0 for success, non-zero for error
+**Returns**: `Ok(())` for success, `Err(message)` for failure
 
-#### validate_config
-
+**Example**:
 ```rust
-#[export_name = "validate_config"]
-pub fn validate_config(config_data: &[u8]) -> Vec<u8>
+fn cleanup() -> Result<(), String> {
+    log(LogLevel::Info, "Cleaning up plugin resources");
+
+    // Clear any cached state
+    let mut state = STATE.borrow_mut();
+    *state = None;
+
+    Ok(())
+}
 ```
-
-**Description**: Validate plugin configuration.
-
-**Parameters**:
-- `config_data`: JSON-encoded configuration
-
-**Returns**: JSON-encoded validation result
 
 ## Host Functions
 
-Plugins can call these host-provided functions:
+Plugins can call these host-provided functions. All functions are type-safe and use the WIT interface.
 
-### Logging Functions
+### Logging
 
+```wit
+enum log-level {
+    trace,
+    debug,
+    info,
+    warn,
+    error,
+}
+
+import log: func(level: log-level, message: string);
+```
+
+**Example**:
 ```rust
-extern "C" {
-    /// Log debug message
-    pub fn host_log_debug(msg_ptr: *const u8, msg_len: usize);
-    
-    /// Log info message
-    pub fn host_log_info(msg_ptr: *const u8, msg_len: usize);
-    
-    /// Log warning message
-    pub fn host_log_warn(msg_ptr: *const u8, msg_len: usize);
-    
-    /// Log error message
-    pub fn host_log_error(msg_ptr: *const u8, msg_len: usize);
-}
+log(LogLevel::Info, "Starting analysis");
+log(LogLevel::Warn, &format!("High complexity detected: {}", value));
+log(LogLevel::Error, "Failed to parse file");
+```
 
-// Convenience wrappers
-pub fn log_debug(message: &str) {
-    unsafe {
-        host_log_debug(message.as_ptr(), message.len());
-    }
-}
+### File System Operations
 
-pub fn log_info(message: &str) {
-    unsafe {
-        host_log_info(message.as_ptr(), message.len());
-    }
-}
+```wit
+import read-file: func(path: string) -> result<string, string>;
+import write-file: func(path: string, content: string) -> result<_, string>;
+import file-exists: func(path: string) -> bool;
+import list-files: func(pattern: string) -> result<list<string>, string>;
+import get-file-metadata: func(path: string) -> result<file-metadata, string>;
 
-pub fn log_warn(message: &str) {
-    unsafe {
-        host_log_warn(message.as_ptr(), message.len());
-    }
-}
-
-pub fn log_error(message: &str) {
-    unsafe {
-        host_log_error(message.as_ptr(), message.len());
-    }
+record file-metadata {
+    size: u64,
+    modified: u64,  // Unix timestamp
+    is-directory: bool,
+    permissions: u32,
 }
 ```
 
-### AST Parsing Functions
-
+**Example**:
 ```rust
-extern "C" {
-    /// Parse code to AST using Tree-sitter
-    pub fn host_parse_ast(
-        code_ptr: *const u8, 
-        code_len: usize, 
-        lang_ptr: *const u8, 
-        lang_len: usize
-    ) -> u64;
-    
-    /// Execute Tree-sitter query on AST
-    pub fn host_query_ast(
-        ast_handle: u64,
-        query_ptr: *const u8,
-        query_len: usize
-    ) -> u64;
-    
-    /// Get AST node information
-    pub fn host_get_ast_node(
-        ast_handle: u64,
-        node_id: u32
-    ) -> u64;
-    
-    /// Free AST handle
-    pub fn host_free_ast(ast_handle: u64);
+// Read a configuration file
+if file_exists("config.toml".to_string()) {
+    match read_file("config.toml".to_string()) {
+        Ok(content) => log(LogLevel::Info, &format!("Config: {}", content)),
+        Err(e) => log(LogLevel::Error, &format!("Failed to read config: {}", e)),
+    }
 }
 
-// Convenience wrapper
-pub fn parse_ast(code: &str, language: &str) -> Option<u64> {
-    unsafe {
-        let handle = host_parse_ast(
-            code.as_ptr(), code.len(),
-            language.as_ptr(), language.len()
-        );
-        if handle != 0 {
-            Some(handle)
-        } else {
-            None
+// List all Rust files
+match list_files("src/**/*.rs".to_string()) {
+    Ok(files) => {
+        for file in files {
+            log(LogLevel::Debug, &format!("Found: {}", file));
         }
     }
+    Err(e) => log(LogLevel::Error, &e),
 }
 ```
 
-### Configuration Functions
+### Configuration Access
 
+```wit
+import get-config: func(key: string) -> option<string>;
+import set-config: func(key: string, value: string) -> result<_, string>;
+```
+
+**Example**:
 ```rust
-extern "C" {
-    /// Get configuration value by key
-    pub fn host_get_config(key_ptr: *const u8, key_len: usize) -> u64;
-    
-    /// Set configuration value
-    pub fn host_set_config(
-        key_ptr: *const u8, 
-        key_len: usize,
-        value_ptr: *const u8,
-        value_len: usize
-    ) -> i32;
+// Get a configuration value
+if let Some(threshold) = get_config("complexity_threshold".to_string()) {
+    let value: u32 = threshold.parse().unwrap_or(10);
+    log(LogLevel::Info, &format!("Using threshold: {}", value));
 }
 
-pub fn get_config_value(key: &str) -> Option<String> {
-    unsafe {
-        let handle = host_get_config(key.as_ptr(), key.len());
-        if handle != 0 {
-            // Extract string from handle (simplified)
-            Some("config_value".to_string())
-        } else {
-            None
+// Set a configuration value
+set_config("last_run".to_string(), "2024-01-15".to_string())?;
+```
+
+### AST Parsing and Querying
+
+```wit
+import parse-ast: func(code: string, language: string) -> result<ast-node, string>;
+import query-ast: func(node: ast-node, query: string) -> result<list<ast-node>, string>;
+```
+
+**Example**:
+```rust
+// Parse code to AST
+let ast = parse_ast(&file.content, &file.language)?;
+
+// Query for function definitions (tree-sitter query syntax)
+let functions = query_ast(&ast, "(function_item) @function")?;
+
+for func in functions {
+    log(LogLevel::Debug, &format!("Found function: {}", func.content));
+}
+```
+
+### Cryptographic Utilities
+
+```wit
+import calculate-hash: func(algorithm: string, content: string) -> result<string, string>;
+import verify-signature: func(content: string, signature: string, public-key: string) -> result<bool, string>;
+```
+
+**Example**:
+```rust
+// Calculate SHA-256 hash
+let hash = calculate_hash("sha256".to_string(), file.content.clone())?;
+log(LogLevel::Info, &format!("File hash: {}", hash));
+```
+
+### Network Operations
+
+Requires `network-access` permission.
+
+```wit
+import http-get: func(url: string, headers: list<tuple<string, string>>) -> result<http-response, string>;
+import http-post: func(url: string, body: string, headers: list<tuple<string, string>>) -> result<http-response, string>;
+
+record http-response {
+    status: u16,
+    headers: list<tuple<string, string>>,
+    body: string,
+}
+```
+
+**Example**:
+```rust
+// Make an HTTP GET request
+let headers = vec![("Accept".to_string(), "application/json".to_string())];
+match http_get("https://api.example.com/rules".to_string(), headers) {
+    Ok(response) => {
+        if response.status == 200 {
+            log(LogLevel::Info, &format!("Rules: {}", response.body));
         }
     }
+    Err(e) => log(LogLevel::Error, &format!("Request failed: {}", e)),
 }
 ```
 
-### File System Functions
+### Database Operations
 
-```rust
-extern "C" {
-    /// Read file contents (if permitted)
-    pub fn host_read_file(path_ptr: *const u8, path_len: usize) -> u64;
-    
-    /// Write file contents (if permitted)
-    pub fn host_write_file(
-        path_ptr: *const u8,
-        path_len: usize,
-        content_ptr: *const u8,
-        content_len: usize
-    ) -> i32;
-    
-    /// Check if file exists
-    pub fn host_file_exists(path_ptr: *const u8, path_len: usize) -> i32;
-    
-    /// Get file metadata
-    pub fn host_get_file_metadata(path_ptr: *const u8, path_len: usize) -> u64;
-}
+For caching and persistence.
+
+```wit
+import db-get: func(key: string) -> option<string>;
+import db-set: func(key: string, value: string, ttl-seconds: option<u32>) -> result<_, string>;
+import db-delete: func(key: string) -> result<bool, string>;
 ```
 
-### Network Functions (if permitted)
-
+**Example**:
 ```rust
-extern "C" {
-    /// Make HTTP request
-    pub fn host_http_request(
-        method_ptr: *const u8,
-        method_len: usize,
-        url_ptr: *const u8,
-        url_len: usize,
-        body_ptr: *const u8,
-        body_len: usize,
-        headers_ptr: *const u8,
-        headers_len: usize
-    ) -> u64;
+// Cache analysis results
+let cache_key = format!("analysis:{}", file.hash);
+if let Some(cached) = db_get(cache_key.clone()) {
+    log(LogLevel::Info, "Using cached results");
+    return Ok(serde_json::from_str(&cached).unwrap());
+}
+
+// Store results with 1-hour TTL
+let result = perform_analysis(&file)?;
+db_set(cache_key, serde_json::to_string(&result).unwrap(), Some(3600))?;
+```
+
+### Process Information
+
+```wit
+import get-process-info: func() -> result<process-info, string>;
+
+record process-info {
+    pid: u32,
+    memory-usage-mb: u32,
+    cpu-usage-percent: f32,
+    uptime-seconds: u32,
 }
 ```
 
 ## Data Structures
 
-### AST Node Information
+### Plugin Configuration
 
-```rust
-#[derive(Deserialize)]
-pub struct AstNodeInfo {
-    pub node_id: u32,
-    pub node_type: String,
-    pub start_position: Position,
-    pub end_position: Position,
-    pub text: String,
-    pub children: Vec<u32>,
-    pub parent: Option<u32>,
-}
-
-#[derive(Deserialize)]
-pub struct Position {
-    pub row: u32,
-    pub column: u32,
-    pub byte_offset: u32,
+```wit
+record plugin-config {
+    severity-threshold: severity-level,
+    max-issues-per-file: u32,
+    include-patterns: list<string>,
+    exclude-patterns: list<string>,
+    rule-overrides: list<tuple<string, bool>>,
+    custom-settings: list<tuple<string, string>>,
 }
 ```
 
-### Query Match
+### Resource Limits
 
-```rust
-#[derive(Deserialize)]
-pub struct QueryMatch {
-    pub pattern_index: u32,
-    pub captures: Vec<QueryCapture>,
-}
-
-#[derive(Deserialize)]
-pub struct QueryCapture {
-    pub node_id: u32,
-    pub capture_name: String,
-    pub capture_index: u32,
+```wit
+record resource-limits {
+    max-memory-mb: u32,
+    max-cpu-percent: u32,
+    timeout-seconds: u32,
+    max-file-handles: u32,
 }
 ```
 
-### File Metadata
+### Plugin Info
 
-```rust
-#[derive(Deserialize)]
-pub struct FileMetadata {
-    pub size: u64,
-    pub modified_time: u64,
-    pub created_time: u64,
-    pub is_directory: bool,
-    pub permissions: u32,
-    pub mime_type: Option<String>,
+```wit
+record plugin-info {
+    id: string,
+    name: string,
+    version: string,
+    description: string,
+    author: string,
+    license: string,
+    homepage: option<string>,
+    supported-languages: list<string>,
+    detector-types: list<issue-category>,
+    api-version: string,
+    required-permissions: list<permission>,
 }
 ```
 
 ## Plugin Lifecycle
 
-### Lifecycle States
+### Lifecycle Flow
 
-```rust
-pub enum PluginState {
-    /// Plugin is being loaded
-    Loading,
-    /// Plugin is initialized and ready
-    Ready,
-    /// Plugin is currently analyzing
-    Active,
-    /// Plugin encountered an error
-    Error(String),
-    /// Plugin is being unloaded
-    Unloading,
-}
+```
+1. Loading    -> Plugin WASM binary loaded into runtime
+2. Initialize -> initialize(config, limits) called
+3. Ready      -> Plugin ready to process files
+4. Analysis   -> analyze(file) called for each file
+5. Cleanup    -> cleanup() called before unload
+6. Unloaded   -> Plugin removed from runtime
 ```
 
-### Lifecycle Hooks
+### State Management
+
+Plugins should use thread-local or RefCell-based state:
 
 ```rust
-// Optional lifecycle hooks that plugins can implement
+use std::cell::RefCell;
 
-/// Called when plugin is first loaded
-#[export_name = "on_load"]
-pub fn on_load() -> i32 {
-    // Initialize global state
-    // Return 0 for success
-    0
+thread_local! {
+    static STATE: RefCell<Option<PluginState>> = RefCell::new(None);
 }
 
-/// Called before analysis batch starts
-#[export_name = "on_analysis_start"]  
-pub fn on_analysis_start(context_data: &[u8]) -> i32 {
-    // Prepare for analysis
-    0
+struct PluginState {
+    config: PluginConfig,
+    limits: ResourceLimits,
+    analysis_count: u32,
 }
 
-/// Called after analysis batch completes
-#[export_name = "on_analysis_complete"]
-pub fn on_analysis_complete(results_data: &[u8]) -> i32 {
-    // Post-process results
-    0
-}
-
-/// Called when plugin is being unloaded
-#[export_name = "on_unload"]
-pub fn on_unload() -> i32 {
-    // Cleanup resources
-    0
+impl PluginState {
+    fn new(config: PluginConfig, limits: ResourceLimits) -> Self {
+        Self {
+            config,
+            limits,
+            analysis_count: 0,
+        }
+    }
 }
 ```
 
@@ -538,303 +564,268 @@ pub fn on_unload() -> i32 {
 
 ### Permission Types
 
-```rust
-pub enum Permission {
-    /// Read files matching pattern
-    FileRead(String),
-    /// Write files matching pattern  
-    FileWrite(String),
-    /// Create temporary files
-    TempFileCreate,
-    /// Make network requests to domain
-    NetworkConnect(String),
-    /// Read configuration values
-    ConfigRead,
-    /// Write configuration values
-    ConfigWrite,
-    /// Read environment variables
-    EnvRead(String),
-    /// Execute external processes
-    ProcessSpawn(String),
-    /// Write to logs
-    Logging,
-    /// Access analysis database
-    DatabaseAccess,
-    /// Communicate with other plugins
-    PluginCommunication,
+```wit
+flags permission {
+    read-files,       // Read files from the file system
+    write-files,      // Write files to the file system
+    network-access,   // Make network requests
+    system-info,      // Access system information
+    environment-vars, // Read environment variables
+    spawn-processes,  // Execute external processes
 }
 ```
 
-### Permission Declaration
+### Declaring Permissions
+
+Permissions are declared in the plugin manifest (`plugin.toml`):
 
 ```toml
-# plugin.toml
-[permissions]
-# Basic permissions
-logging = true
-config_read = true
+[plugin]
+name = "my-plugin"
+version = "1.0.0"
 
-# File system permissions
-file_read_patterns = ["src/**/*.rs", "*.toml"]
-file_write_patterns = ["target/cache/**"]
-temp_file_create = true
+[capabilities]
+permissions = ["ReadFiles", "Logging"]
 
-# Network permissions  
-network_domains = ["api.example.com"]
-
-# System permissions
-env_read_vars = ["CI", "BUILD_*"]
-process_spawn = ["rustc", "cargo"]
-
-# Resource limits
+[capabilities.limits]
 max_memory_mb = 64
-max_execution_seconds = 60
-max_file_operations = 100
-max_network_requests = 10
+max_execution_seconds = 30
+fuel_limit = 2000000
 ```
 
 ### Permission Checking
 
+The host automatically checks permissions before allowing operations. If a plugin attempts an operation without the required permission, it receives an error:
+
 ```rust
-// Host function to check if permission is granted
-extern "C" {
-    pub fn host_check_permission(
-        permission_ptr: *const u8,
-        permission_len: usize
-    ) -> i32;  // 1 if granted, 0 if denied
-}
-
-pub fn has_permission(permission: &str) -> bool {
-    unsafe {
-        host_check_permission(permission.as_ptr(), permission.len()) != 0
+// This will fail if plugin lacks read-files permission
+match read_file("sensitive.txt".to_string()) {
+    Ok(content) => { /* use content */ }
+    Err(e) => {
+        // e = "Plugin does not have permission read-files"
+        log(LogLevel::Error, &e);
     }
-}
-
-// Usage in plugin
-pub fn read_config_file(path: &str) -> Result<String, &'static str> {
-    if !has_permission(&format!("file_read:{}", path)) {
-        return Err("Permission denied");
-    }
-    
-    // Proceed with file reading
-    Ok("file_content".to_string())
 }
 ```
 
 ## Configuration API
 
-### Configuration Schema
+### Plugin Configuration Schema
+
+Configuration is passed during initialization:
 
 ```rust
-#[derive(Deserialize, Serialize)]
-pub struct PluginConfig {
-    /// Plugin-specific settings
-    pub settings: HashMap<String, ConfigValue>,
-    /// Analysis thresholds
-    pub thresholds: HashMap<String, f64>,
-    /// Enabled rules
-    pub rules: HashMap<String, RuleConfig>,
-    /// Ignore patterns
-    pub ignore_patterns: Vec<String>,
-}
+fn initialize(config: PluginConfig, limits: ResourceLimits) -> Result<(), String> {
+    // Access severity threshold
+    let threshold = config.severity_threshold; // SeverityLevel enum
 
-#[derive(Deserialize, Serialize)]
-pub enum ConfigValue {
-    String(String),
-    Number(f64),
-    Boolean(bool),
-    Array(Vec<ConfigValue>),
-    Object(HashMap<String, ConfigValue>),
-}
+    // Access max issues
+    let max_issues = config.max_issues_per_file;
 
-#[derive(Deserialize, Serialize)]
-pub struct RuleConfig {
-    pub enabled: bool,
-    pub severity: String,
-    pub parameters: HashMap<String, ConfigValue>,
+    // Access include/exclude patterns
+    for pattern in &config.include_patterns {
+        log(LogLevel::Debug, &format!("Include: {}", pattern));
+    }
+
+    // Access custom settings
+    for (key, value) in &config.custom_settings {
+        log(LogLevel::Debug, &format!("Setting: {} = {}", key, value));
+    }
+
+    Ok(())
 }
 ```
 
-### Configuration Loading
+### Runtime Configuration
+
+Use `get_config` and `set_config` for runtime configuration:
 
 ```rust
-pub fn load_plugin_config() -> Result<PluginConfig, String> {
-    // Get raw config from host
-    let config_json = get_config_value("plugin.config")
-        .ok_or("No configuration found")?;
-        
-    // Parse configuration
-    serde_json::from_str(&config_json)
-        .map_err(|e| format!("Invalid configuration: {}", e))
-}
+// Read configuration
+let complexity_threshold = get_config("my_plugin.complexity_threshold".to_string())
+    .and_then(|s| s.parse::<u32>().ok())
+    .unwrap_or(10);
 
-pub fn get_rule_config(rule_id: &str) -> Option<RuleConfig> {
-    let config = load_plugin_config().ok()?;
-    config.rules.get(rule_id).cloned()
-}
-
-pub fn is_rule_enabled(rule_id: &str) -> bool {
-    get_rule_config(rule_id)
-        .map(|config| config.enabled)
-        .unwrap_or(false)
-}
+// Write configuration (persists for session)
+set_config("my_plugin.last_file".to_string(), file.path.clone())?;
 ```
 
 ## Error Handling
 
-### Error Types
-
-```rust
-#[derive(Debug, Serialize)]
-pub enum PluginError {
-    /// Invalid input provided
-    InvalidInput(String),
-    /// Configuration error
-    ConfigError(String), 
-    /// Permission denied
-    PermissionDenied(String),
-    /// Resource limit exceeded
-    ResourceLimit(String),
-    /// Analysis failed
-    AnalysisError(String),
-    /// Internal plugin error
-    InternalError(String),
-}
-
-impl PluginError {
-    pub fn as_json(&self) -> Vec<u8> {
-        serde_json::to_vec(self).unwrap_or_default()
-    }
-}
-```
-
 ### Error Response Format
 
-```rust
-#[derive(Serialize)]
-pub struct ErrorResponse {
-    pub error_type: String,
-    pub message: String,
-    pub details: Option<String>,
-    pub suggestion: Option<String>,
-}
-
-pub fn create_error_result(message: &str) -> Vec<u8> {
-    let error = ErrorResponse {
-        error_type: "PLUGIN_ERROR".to_string(),
-        message: message.to_string(),
-        details: None,
-        suggestion: None,
-    };
-    
-    serde_json::to_vec(&error).unwrap_or_default()
-}
-```
-
-### Error Handling Best Practices
+All fallible functions return `Result<T, String>`. The error string should be descriptive:
 
 ```rust
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    // Validate input size
-    if file_data.len() > MAX_INPUT_SIZE {
-        return create_error_result("Input too large");
+fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+    // Validate input
+    if file.content.is_empty() {
+        return Err("Cannot analyze empty file".to_string());
     }
-    
-    // Parse input with error handling
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => {
-            log_error(&format!("Failed to parse input: {}", e));
-            return create_error_result("Invalid input format");
-        }
-    };
-    
-    // Validate input content
-    if let Err(e) = validate_input(&input) {
-        log_warn(&format!("Input validation failed: {}", e));
-        return create_error_result(&e);
-    }
-    
-    // Perform analysis with error handling
-    let issues = match perform_analysis(&input) {
-        Ok(issues) => issues,
-        Err(e) => {
-            log_error(&format!("Analysis failed: {}", e));
-            return create_error_result("Analysis failed");
-        }
-    };
-    
-    // Create successful result
-    let result = PluginAnalysisResult {
-        plugin_name: "my-plugin".to_string(),
+
+    // Parse AST with error handling
+    let ast = parse_ast(&file.content, &file.language)
+        .map_err(|e| format!("AST parsing failed: {}", e))?;
+
+    // Perform analysis
+    let issues = analyze_ast(&ast, &file)
+        .map_err(|e| format!("Analysis failed: {}", e))?;
+
+    Ok(AnalysisResult {
         issues,
-        metrics: None,
-        metadata: HashMap::new(),
-    };
-    
-    serde_json::to_vec(&result).unwrap_or_else(|e| {
-        log_error(&format!("Failed to serialize result: {}", e));
-        create_error_result("Serialization failed")
+        metrics: Metrics::default(),
+        dependencies: vec![],
+        exports: vec![],
+        duration_ms: 0,
+        plugin_version: "1.0.0".to_string(),
     })
 }
 ```
 
-## Memory Management
+### Best Practices
 
-### Memory Allocation
+1. **Validate inputs early**: Check for empty content, invalid languages, etc.
+2. **Use descriptive errors**: Include context about what failed and why
+3. **Log errors**: Use `log(LogLevel::Error, ...)` before returning errors
+4. **Handle host function failures**: All host functions can fail, handle errors appropriately
+5. **Don't panic**: Use `Result` types instead of panicking
 
 ```rust
-// Host functions for memory management
-extern "C" {
-    /// Allocate memory in host
-    pub fn host_malloc(size: usize) -> *mut u8;
-    
-    /// Free memory in host
-    pub fn host_free(ptr: *mut u8);
-    
-    /// Get memory usage statistics
-    pub fn host_get_memory_stats() -> u64;
-}
+fn safe_analysis(file: &SourceFile) -> Result<Vec<Issue>, String> {
+    // Validate
+    if file.content.len() > 10_000_000 {
+        log(LogLevel::Warn, "File too large, skipping detailed analysis");
+        return Ok(vec![]);
+    }
 
-// Memory-safe wrappers
-pub struct HostMemory {
-    ptr: *mut u8,
-    size: usize,
-}
+    // Parse with error handling
+    let ast = match parse_ast(&file.content, &file.language) {
+        Ok(ast) => ast,
+        Err(e) => {
+            log(LogLevel::Error, &format!("Parse error: {}", e));
+            return Err(format!("Failed to parse {}: {}", file.path, e));
+        }
+    };
 
-impl HostMemory {
-    pub fn allocate(size: usize) -> Option<Self> {
-        unsafe {
-            let ptr = host_malloc(size);
-            if ptr.is_null() {
-                None
-            } else {
-                Some(HostMemory { ptr, size })
-            }
-        }
-    }
-    
-    pub fn as_slice(&self) -> &[u8] {
-        unsafe {
-            std::slice::from_raw_parts(self.ptr, self.size)
-        }
-    }
-    
-    pub fn as_mut_slice(&mut self) -> &mut [u8] {
-        unsafe {
-            std::slice::from_raw_parts_mut(self.ptr, self.size)
-        }
-    }
-}
-
-impl Drop for HostMemory {
-    fn drop(&mut self) {
-        unsafe {
-            host_free(self.ptr);
-        }
-    }
+    // Analyze
+    Ok(find_issues(&ast))
 }
 ```
 
-This API reference provides comprehensive documentation for developing plugins with Uveddi. For additional examples and tutorials, see the [Plugin Examples](examples.md) and [Development Guide](development-guide.md).
+## Complete Plugin Example
+
+Here's a complete minimal plugin implementation:
+
+```rust
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+struct MyPlugin {
+    state: RefCell<Option<PluginState>>,
+}
+
+struct PluginState {
+    config: PluginConfig,
+    analysis_count: u32,
+}
+
+impl Default for MyPlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
+    }
+}
+
+export!(MyPlugin);
+
+impl Guest for MyPlugin {
+    fn initialize(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing MyPlugin");
+
+        let state = PluginState {
+            config,
+            analysis_count: 0,
+        };
+
+        *STATE.borrow_mut() = Some(state);
+        Ok(())
+    }
+
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        log(LogLevel::Info, &format!("Analyzing {}", file.path));
+
+        let mut issues = Vec::new();
+
+        // Example: Check for TODO comments
+        for (line_num, line) in file.content.lines().enumerate() {
+            if line.contains("TODO") {
+                issues.push(Issue {
+                    id: format!("TODO-{}", line_num),
+                    severity: SeverityLevel::Info,
+                    category: IssueCategory::Documentation,
+                    message: "TODO comment found".to_string(),
+                    description: Some("Consider creating an issue for this TODO".to_string()),
+                    file: file.path.clone(),
+                    span: Span {
+                        start: Position { line: line_num as u32, column: 0, byte_offset: 0 },
+                        end: Position { line: line_num as u32, column: line.len() as u32, byte_offset: 0 },
+                    },
+                    rule_id: Some("todo-comment".to_string()),
+                    suggestion: Some("Create an issue tracker entry".to_string()),
+                    fix: None,
+                    metadata: vec![],
+                });
+            }
+        }
+
+        Ok(AnalysisResult {
+            issues,
+            metrics: Metrics {
+                lines_of_code: file.content.lines().count() as u32,
+                lines_of_comments: 0,
+                complexity: 0,
+                maintainability_index: 100.0,
+                technical_debt_minutes: 0,
+                custom_metrics: vec![],
+            },
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
+    }
+
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "my-plugin".to_string(),
+            name: "My Plugin".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Example plugin for demonstration".to_string(),
+            author: "Your Name".to_string(),
+            license: "MIT".to_string(),
+            homepage: None,
+            supported_languages: vec!["rust".to_string(), "python".to_string()],
+            detector_types: vec![IssueCategory::Documentation],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![],
+        }
+    }
+
+    fn cleanup() -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up MyPlugin");
+        *STATE.borrow_mut() = None;
+        Ok(())
+    }
+}
+
+thread_local! {
+    static STATE: RefCell<Option<PluginState>> = RefCell::new(None);
+}
+```
+
+This API reference provides comprehensive documentation for developing plugins with Uveddi using the WebAssembly Component Model. For tutorials and examples, see the [Plugin Development Guide](development-guide.md) and [Plugin Examples](examples.md).

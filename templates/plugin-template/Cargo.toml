@@ -9,44 +9,18 @@ authors = ["{{author}}"]
 crate-type = ["cdylib"]
 
 [dependencies]
-# WASM bindings
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
-js-sys = "0.3"
+# WIT bindings for Component Model
+wit-bindgen = "0.16"
 
-# Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
-# Error handling
-thiserror = "2.0"
-anyhow = "1.0"
-
-# Utility
-uuid = { version = "1.8", features = ["v4", "serde"] }
-
-# Tree-sitter for AST analysis (optional)
-tree-sitter = { version = "0.25", optional = true }
-tree-sitter-rust = { version = "0.24", optional = true }
-tree-sitter-python = { version = "0.23", optional = true }
-tree-sitter-javascript = { version = "0.23", optional = true }
-tree-sitter-typescript = { version = "0.23", optional = true }
-
-# Plugin-specific dependencies
-{{#each custom_dependencies}}
-{{this}}
-{{/each}}
-
-[features]
-default = []
-tree-sitter = ["dep:tree-sitter"]
-rust-support = ["tree-sitter", "dep:tree-sitter-rust"]  
-python-support = ["tree-sitter", "dep:tree-sitter-python"]
-js-support = ["tree-sitter", "dep:tree-sitter-javascript"]
-ts-support = ["tree-sitter", "dep:tree-sitter-typescript"]
+# Note: wit-bindgen generates all necessary types from the WIT file.
+# No additional WASM-specific dependencies are needed.
 
 [profile.release]
 opt-level = "z"     # Optimize for size
 lto = true
 codegen-units = 1
 panic = "abort"
+strip = true
+
+# Build for the wasm32-wasi target
+# Run: cargo build --release --target wasm32-wasi

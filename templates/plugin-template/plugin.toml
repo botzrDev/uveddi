@@ -1,26 +1,52 @@
+# Plugin Manifest for {{plugin_name}}
+# This file defines plugin metadata, capabilities, and requirements
+
 [plugin]
 name = "{{plugin_name}}"
 version = "{{version}}"
-author = "{{author}}"
 description = "{{description}}"
+author = "{{author}}"
 license = "{{license}}"
+homepage = "{{homepage}}"
+repository = "{{repository}}"
 
 [capabilities]
-languages = [{{#each languages}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}]
-detector_types = [{{#each detector_types}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}]
-api_version = "1.0"
+# Security permissions required by the plugin
+# Available: ReadFiles, WriteFiles, NetworkAccess, SystemInfo, EnvironmentVars, SpawnProcesses
+permissions = ["ReadFiles", "Logging"]
 
-[requirements]
-min_uveddi_version = "1.0.0"
-max_uveddi_version = "2.0.0"
+# Resource limits
+[capabilities.limits]
+max_memory_mb = 64
+max_execution_seconds = 30
+fuel_limit = 2000000
 
-[permissions]
-read_files = {{read_files}}
-write_files = {{write_files}}
-network_access = {{network_access}}
-system_info = {{system_info}}
+# Performance settings
+enable_caching = true
+cache_ttl_seconds = 3600
 
-[resources]
-max_memory_mb = {{max_memory_mb}}
-max_cpu_percent = {{max_cpu_percent}}
-timeout_seconds = {{timeout_seconds}}
+[dependencies]
+# Minimum Uveddi version required
+min_uveddi_version = "0.9.0"
+
+# Required host functions
+requires_tree_sitter = true
+requires_database_access = false
+requires_network_access = false
+
+# Supported file types and languages
+supported_languages = ["rust", "python", "javascript", "typescript"]
+supported_extensions = [".rs", ".py", ".js", ".ts", ".jsx", ".tsx"]
+
+[detection]
+# Types of issues this plugin can detect
+# Available: security, performance, quality, maintainability, style, complexity, duplication, architecture, documentation, testing
+issue_categories = ["quality", "documentation"]
+severity_levels = ["info", "low", "medium", "high", "critical"]
+
+[integration]
+# Integration settings
+run_in_parallel = true
+depends_on_plugins = []
+conflicts_with_plugins = []
+priority = 100  # Higher numbers run first

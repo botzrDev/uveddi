@@ -1,6 +1,6 @@
 # Plugin Examples
 
-This document provides comprehensive examples for developing different types of Uveddi plugins. Each example includes complete source code, configuration, and testing instructions.
+This document provides comprehensive examples for developing different types of Uveddi plugins using the WebAssembly Component Model. Each example includes complete source code, configuration, and testing instructions.
 
 ## Table of Contents
 
@@ -8,14 +8,12 @@ This document provides comprehensive examples for developing different types of 
 2. [Security Scanner Plugin](#security-scanner-plugin)
 3. [Performance Analyzer Plugin](#performance-analyzer-plugin)
 4. [Custom Rule Engine Plugin](#custom-rule-engine-plugin)
-5. [AI-Powered Code Quality Plugin](#ai-powered-code-quality-plugin)
-6. [Advanced Metrics Plugin](#advanced-metrics-plugin)
-7. [Framework-Specific Plugin](#framework-specific-plugin)
-8. [Enterprise Compliance Plugin](#enterprise-compliance-plugin)
+5. [Multi-Language Plugin](#multi-language-plugin)
+6. [Testing Strategies](#testing-strategies)
 
 ## Basic Detector Plugin
 
-This example shows a simple plugin that detects TODO comments in code.
+This example shows a simple plugin that detects TODO comments in code using the WIT Component Model.
 
 ### Plugin Structure
 
@@ -23,10 +21,10 @@ This example shows a simple plugin that detects TODO comments in code.
 todo-detector/
 ├── Cargo.toml
 ├── plugin.toml
+├── wit/
+│   └── core-analysis.wit
 ├── src/
 │   └── lib.rs
-├── tests/
-│   └── integration.rs
 └── test-data/
     └── sample.rs
 ```
@@ -43,14 +41,13 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-regex = "1.5"
+wit-bindgen = "0.16"
 
 [profile.release]
 opt-level = "z"
 lto = true
 codegen-units = 1
+strip = true
 ```
 
 ### plugin.toml
@@ -64,198 +61,221 @@ author = "Example Developer <dev@example.com>"
 license = "MIT"
 
 [capabilities]
-permissions = ["Logging"]
+permissions = ["ReadFiles", "Logging"]
+
+[capabilities.limits]
 max_memory_mb = 16
 max_execution_seconds = 10
-
-[detection]
-anti_pattern_types = ["CODE_SMELL", "MAINTAINABILITY"]
-issue_categories = ["TODO_COMMENTS"]
-severity_levels = ["INFO", "WARNING"]
 
 [dependencies]
 min_uveddi_version = "0.9.0"
 supported_languages = ["rust", "python", "javascript", "typescript", "java", "go"]
+
+[detection]
+issue_categories = ["documentation", "maintainability"]
+severity_levels = ["info", "low", "medium"]
 ```
 
 ### src/lib.rs
 
 ```rust
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use regex::Regex;
+//! TODO Detector Plugin
+//!
+//! Detects TODO, FIXME, HACK, and BUG comments in source code.
 
-#[derive(Deserialize)]
-pub struct PluginFileInput {
-    pub file_path: String,
-    pub content: String,
-    pub language: String,
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+struct TodoDetectorPlugin {
+    state: RefCell<Option<PluginState>>,
 }
 
-#[derive(Serialize)]
-pub struct PluginIssue {
-    pub issue_type: String,
-    pub severity: String,
-    pub message: String,
-    pub file_path: String,
-    pub line_number: Option<u32>,
-    pub column: Option<u32>,
-    pub suggestion: Option<String>,
-    pub confidence: Option<f64>,
-}
-
-#[derive(Serialize)]
-pub struct PluginAnalysisResult {
-    pub plugin_name: String,
-    pub issues: Vec<PluginIssue>,
-    pub metadata: HashMap<String, String>,
-}
-
-struct TodoDetector {
+struct PluginState {
+    config: PluginConfig,
     patterns: Vec<CommentPattern>,
+    analysis_count: u32,
 }
 
 struct CommentPattern {
     keyword: &'static str,
-    regex: Regex,
-    severity: &'static str,
-    message_template: &'static str,
+    severity: SeverityLevel,
+    message: &'static str,
 }
 
-impl TodoDetector {
-    fn new() -> Self {
+impl Default for TodoDetectorPlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
+    }
+}
+
+export!(TodoDetectorPlugin);
+
+impl Guest for TodoDetectorPlugin {
+    fn initialize(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing TODO Detector Plugin");
+
         let patterns = vec![
             CommentPattern {
                 keyword: "TODO",
-                regex: Regex::new(r"(?i)(?://|#|\*|<!--)\s*TODO\b").unwrap(),
-                severity: "INFO",
-                message_template: "TODO comment found - consider creating a proper issue",
+                severity: SeverityLevel::Info,
+                message: "TODO comment found - consider creating an issue",
             },
             CommentPattern {
                 keyword: "FIXME",
-                regex: Regex::new(r"(?i)(?://|#|\*|<!--)\s*FIXME\b").unwrap(),
-                severity: "WARNING",
-                message_template: "FIXME comment found - indicates code that needs fixing",
+                severity: SeverityLevel::Medium,
+                message: "FIXME comment found - indicates code needing fixes",
             },
             CommentPattern {
                 keyword: "HACK",
-                regex: Regex::new(r"(?i)(?://|#|\*|<!--)\s*HACK\b").unwrap(),
-                severity: "WARNING",
-                message_template: "HACK comment found - indicates non-standard solution",
+                severity: SeverityLevel::Medium,
+                message: "HACK comment found - indicates non-standard solution",
             },
             CommentPattern {
                 keyword: "BUG",
-                regex: Regex::new(r"(?i)(?://|#|\*|<!--)\s*BUG\b").unwrap(),
-                severity: "WARNING",
-                message_template: "BUG comment found - indicates known issue",
+                severity: SeverityLevel::High,
+                message: "BUG comment found - indicates known issue",
             },
         ];
 
-        TodoDetector { patterns }
+        let state = PluginState {
+            config,
+            patterns,
+            analysis_count: 0,
+        };
+
+        *PLUGIN_STATE.borrow_mut() = Some(state);
+
+        log(LogLevel::Info, "TODO Detector Plugin initialized");
+        Ok(())
     }
 
-    fn analyze(&self, input: &PluginFileInput) -> Vec<PluginIssue> {
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        log(LogLevel::Debug, &format!("Analyzing {}", file.path));
+
         let mut issues = Vec::new();
 
-        for (line_num, line) in input.content.lines().enumerate() {
-            for pattern in &self.patterns {
-                if let Some(mat) = pattern.regex.find(line) {
-                    let suggestion = match pattern.keyword {
-                        "TODO" => Some("Create a GitHub issue or Jira ticket for this task".to_string()),
-                        "FIXME" => Some("Schedule time to fix this issue".to_string()),
-                        "HACK" => Some("Refactor to use a proper solution".to_string()),
-                        "BUG" => Some("File a bug report and fix this issue".to_string()),
-                        _ => None,
-                    };
+        // Get patterns from state
+        let patterns = PLUGIN_STATE.borrow();
+        let state = patterns.as_ref().ok_or("Plugin not initialized")?;
 
-                    issues.push(PluginIssue {
-                        issue_type: format!("{}_COMMENT", pattern.keyword),
-                        severity: pattern.severity.to_string(),
-                        message: pattern.message_template.to_string(),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_num as u32 + 1),
-                        column: Some(mat.start() as u32),
-                        suggestion,
-                        confidence: Some(0.95),
-                    });
+        for (line_num, line) in file.content.lines().enumerate() {
+            let line_upper = line.to_uppercase();
+
+            for pattern in &state.patterns {
+                if let Some(col) = line_upper.find(pattern.keyword) {
+                    // Verify it's in a comment
+                    let before = &line[..col];
+                    let is_comment = before.contains("//")
+                        || before.contains("#")
+                        || before.contains("/*")
+                        || before.contains("*");
+
+                    if is_comment || line.trim().starts_with("//") || line.trim().starts_with("#") {
+                        issues.push(Issue {
+                            id: format!("{}-{}-{}", pattern.keyword, line_num + 1, col),
+                            severity: pattern.severity.clone(),
+                            category: IssueCategory::Documentation,
+                            message: pattern.message.to_string(),
+                            description: Some(format!(
+                                "Found {} comment at line {}",
+                                pattern.keyword, line_num + 1
+                            )),
+                            file: file.path.clone(),
+                            span: Span {
+                                start: Position {
+                                    line: line_num as u32 + 1,
+                                    column: col as u32,
+                                    byte_offset: 0,
+                                },
+                                end: Position {
+                                    line: line_num as u32 + 1,
+                                    column: (col + pattern.keyword.len()) as u32,
+                                    byte_offset: 0,
+                                },
+                            },
+                            rule_id: Some(format!("{}-comment", pattern.keyword.to_lowercase())),
+                            suggestion: Some("Consider creating an issue tracker entry".to_string()),
+                            fix: None,
+                            metadata: vec![
+                                ("keyword".to_string(), pattern.keyword.to_string()),
+                                ("context".to_string(), line.trim().to_string()),
+                            ],
+                        });
+                    }
                 }
             }
         }
 
-        issues
-    }
-}
-
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => {
-            return create_error_result(&format!("Failed to parse input: {}", e));
-        }
-    };
-
-    let detector = TodoDetector::new();
-    let issues = detector.analyze(&input);
-
-    let result = PluginAnalysisResult {
-        plugin_name: "todo-detector".to_string(),
-        issues,
-        metadata: [
-            ("analyzed_lines".to_string(), input.content.lines().count().to_string()),
-            ("language".to_string(), input.language.clone()),
-        ].into_iter().collect(),
-    };
-
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Failed to serialize result")
-    })
-}
-
-#[export_name = "get_plugin_info"]
-pub fn get_plugin_info() -> Vec<u8> {
-    let info = serde_json::json!({
-        "name": "todo-detector",
-        "version": "1.0.0",
-        "description": "Detects TODO, FIXME, and HACK comments in code",
-        "supported_languages": ["rust", "python", "javascript", "typescript", "java", "go"],
-        "capabilities": {
-            "static_analysis": true,
-            "comment_analysis": true
-        }
-    });
-
-    serde_json::to_vec(&info).unwrap_or_default()
-}
-
-fn create_error_result(message: &str) -> Vec<u8> {
-    let result = PluginAnalysisResult {
-        plugin_name: "todo-detector".to_string(),
-        issues: vec![],
-        metadata: [("error".to_string(), message.to_string())].into_iter().collect(),
-    };
-    serde_json::to_vec(&result).unwrap_or_default()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_todo_detection() {
-        let input = PluginFileInput {
-            file_path: "test.rs".to_string(),
-            content: "// TODO: Implement this\nfn main() {\n    // FIXME: Handle error\n}".to_string(),
-            language: "rust".to_string(),
+        // Calculate metrics
+        let metrics = Metrics {
+            lines_of_code: file.content.lines().count() as u32,
+            lines_of_comments: count_comment_lines(&file.content),
+            complexity: 1,
+            maintainability_index: 100.0 - (issues.len() as f64 * 2.0),
+            technical_debt_minutes: issues.len() as u32 * 5,
+            custom_metrics: vec![
+                ("todo_count".to_string(), issues.iter().filter(|i| i.id.starts_with("TODO")).count() as f64),
+                ("fixme_count".to_string(), issues.iter().filter(|i| i.id.starts_with("FIXME")).count() as f64),
+            ],
         };
 
-        let detector = TodoDetector::new();
-        let issues = detector.analyze(&input);
+        log(LogLevel::Info, &format!("Found {} issues in {}", issues.len(), file.path));
 
-        assert_eq!(issues.len(), 2);
-        assert_eq!(issues[0].issue_type, "TODO_COMMENT");
-        assert_eq!(issues[1].issue_type, "FIXME_COMMENT");
+        Ok(AnalysisResult {
+            issues,
+            metrics,
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
     }
+
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "todo-detector".to_string(),
+            name: "TODO Comment Detector".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects TODO, FIXME, HACK, and BUG comments".to_string(),
+            author: "Uveddi Team".to_string(),
+            license: "MIT".to_string(),
+            homepage: None,
+            supported_languages: vec![
+                "rust".to_string(), "python".to_string(),
+                "javascript".to_string(), "typescript".to_string(),
+                "java".to_string(), "go".to_string(),
+            ],
+            detector_types: vec![IssueCategory::Documentation, IssueCategory::Maintainability],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![],
+        }
+    }
+
+    fn cleanup() -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up TODO Detector Plugin");
+        *PLUGIN_STATE.borrow_mut() = None;
+        Ok(())
+    }
+}
+
+thread_local! {
+    static PLUGIN_STATE: RefCell<Option<PluginState>> = RefCell::new(None);
+}
+
+fn count_comment_lines(content: &str) -> u32 {
+    content.lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            trimmed.starts_with("//") || trimmed.starts_with("#") ||
+            trimmed.starts_with("/*") || trimmed.starts_with("*")
+        })
+        .count() as u32
 }
 ```
 
@@ -265,9 +285,9 @@ mod tests {
 # Build the plugin
 cargo build --release --target wasm32-wasi
 
-# Test with Uveddi
-echo "// TODO: Fix this later" > test.rs
-uveddi plugin test ./target/wasm32-wasi/release/todo_detector_plugin.wasm test.rs
+# Install and test
+uveddi plugin install target/wasm32-wasi/release/todo_detector_plugin.wasm
+uveddi plugin test todo-detector --test-file sample.rs
 ```
 
 ## Security Scanner Plugin
@@ -277,153 +297,236 @@ A comprehensive security scanner that detects various security vulnerabilities.
 ### src/lib.rs
 
 ```rust
-use serde::{Deserialize, Serialize};
-use regex::Regex;
-use std::collections::HashMap;
+//! Security Scanner Plugin
+//!
+//! Detects security vulnerabilities including SQL injection, XSS, and hardcoded secrets.
 
-#[derive(Serialize)]
-pub struct SecurityIssue {
-    pub issue_type: String,
-    pub severity: String,
-    pub message: String,
-    pub file_path: String,
-    pub line_number: Option<u32>,
-    pub column: Option<u32>,
-    pub suggestion: Option<String>,
-    pub confidence: Option<f64>,
-    pub cwe_id: Option<String>,
-    pub owasp_category: Option<String>,
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+struct SecurityScannerPlugin {
+    state: RefCell<Option<ScannerState>>,
+}
+
+struct ScannerState {
+    config: PluginConfig,
+    rules: Vec<SecurityRule>,
 }
 
 struct SecurityRule {
     id: &'static str,
     name: &'static str,
-    pattern: Regex,
-    severity: &'static str,
+    pattern: &'static str,
+    severity: SeverityLevel,
     message: &'static str,
     suggestion: &'static str,
     cwe_id: Option<&'static str>,
-    owasp_category: Option<&'static str>,
-    confidence: f64,
 }
 
-struct SecurityScanner {
-    rules: Vec<SecurityRule>,
+impl Default for SecurityScannerPlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
+    }
 }
 
-impl SecurityScanner {
-    fn new() -> Self {
+export!(SecurityScannerPlugin);
+
+impl Guest for SecurityScannerPlugin {
+    fn initialize(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing Security Scanner Plugin");
+
         let rules = vec![
-            // SQL Injection patterns
             SecurityRule {
                 id: "SEC001",
                 name: "Potential SQL Injection",
-                pattern: Regex::new(r#"(?i)(query|execute|exec)\s*\(\s*["\'][^"\']*\+[^"\']*["\']"#).unwrap(),
-                severity: "HIGH",
-                message: "Potential SQL injection vulnerability detected",
+                pattern: "query|execute|exec",
+                severity: SeverityLevel::High,
+                message: "Potential SQL injection vulnerability",
                 suggestion: "Use parameterized queries or prepared statements",
                 cwe_id: Some("CWE-89"),
-                owasp_category: Some("A03:2021-Injection"),
-                confidence: 0.8,
             },
-            // XSS patterns
             SecurityRule {
-                id: "SEC002", 
-                name: "Potential XSS",
-                pattern: Regex::new(r"(?i)innerHTML\s*=\s*.*\+").unwrap(),
-                severity: "HIGH",
-                message: "Potential XSS vulnerability through innerHTML",
-                suggestion: "Use textContent or properly sanitize input",
-                cwe_id: Some("CWE-79"),
-                owasp_category: Some("A03:2021-Injection"),
-                confidence: 0.7,
+                id: "SEC002",
+                name: "Hardcoded Secret",
+                pattern: "password|secret|api_key|token",
+                severity: SeverityLevel::Critical,
+                message: "Hardcoded secret detected",
+                suggestion: "Use environment variables or a secret management system",
+                cwe_id: Some("CWE-798"),
             },
-            // Hardcoded secrets
             SecurityRule {
                 id: "SEC003",
-                name: "Hardcoded Secret",
-                pattern: Regex::new(r#"(?i)(password|secret|key|token)\s*=\s*["\'][A-Za-z0-9+/=]{8,}["\']"#).unwrap(),
-                severity: "CRITICAL",
-                message: "Hardcoded secret detected",
-                suggestion: "Use environment variables or a secure key management system",
-                cwe_id: Some("CWE-798"),
-                owasp_category: Some("A02:2021-Cryptographic-Failures"),
-                confidence: 0.9,
+                name: "Potential XSS",
+                pattern: "innerHTML|outerHTML|document.write",
+                severity: SeverityLevel::High,
+                message: "Potential XSS vulnerability",
+                suggestion: "Use textContent or properly sanitize input",
+                cwe_id: Some("CWE-79"),
             },
-            // Weak crypto
             SecurityRule {
                 id: "SEC004",
-                name: "Weak Cryptography",
-                pattern: Regex::new(r"(?i)(md5|sha1|des|rc4)").unwrap(),
-                severity: "MEDIUM",
-                message: "Weak cryptographic algorithm detected",
-                suggestion: "Use SHA-256 or stronger algorithms",
-                cwe_id: Some("CWE-327"),
-                owasp_category: Some("A02:2021-Cryptographic-Failures"),
-                confidence: 0.6,
+                name: "Unsafe Deserialization",
+                pattern: "pickle.loads|yaml.load|unserialize",
+                severity: SeverityLevel::High,
+                message: "Unsafe deserialization detected",
+                suggestion: "Use safe loading methods like yaml.safe_load",
+                cwe_id: Some("CWE-502"),
+            },
+            SecurityRule {
+                id: "SEC005",
+                name: "Command Injection",
+                pattern: "system\\(|exec\\(|eval\\(|subprocess.call",
+                severity: SeverityLevel::Critical,
+                message: "Potential command injection",
+                suggestion: "Avoid dynamic command execution; use safe APIs",
+                cwe_id: Some("CWE-78"),
             },
         ];
 
-        SecurityScanner { rules }
+        let state = ScannerState { config, rules };
+        *SCANNER_STATE.borrow_mut() = Some(state);
+
+        log(LogLevel::Info, "Security Scanner initialized with {} rules", );
+        Ok(())
     }
 
-    fn scan(&self, input: &PluginFileInput) -> Vec<SecurityIssue> {
-        let mut issues = Vec::new();
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        log(LogLevel::Info, &format!("Scanning {} for security issues", file.path));
 
-        for (line_num, line) in input.content.lines().enumerate() {
-            for rule in &self.rules {
-                if let Some(mat) = rule.pattern.find(line) {
-                    issues.push(SecurityIssue {
-                        issue_type: rule.id.to_string(),
-                        severity: rule.severity.to_string(),
-                        message: format!("{}: {}", rule.name, rule.message),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_num as u32 + 1),
-                        column: Some(mat.start() as u32),
-                        suggestion: Some(rule.suggestion.to_string()),
-                        confidence: Some(rule.confidence),
-                        cwe_id: rule.cwe_id.map(String::from),
-                        owasp_category: rule.owasp_category.map(String::from),
-                    });
+        let mut issues = Vec::new();
+        let state_ref = SCANNER_STATE.borrow();
+        let state = state_ref.as_ref().ok_or("Plugin not initialized")?;
+
+        for (line_num, line) in file.content.lines().enumerate() {
+            let line_lower = line.to_lowercase();
+
+            for rule in &state.rules {
+                // Simple pattern matching (in production, use proper regex)
+                let patterns: Vec<&str> = rule.pattern.split('|').collect();
+
+                for pattern in patterns {
+                    if line_lower.contains(pattern) {
+                        // Additional context checks
+                        let is_likely_issue = match rule.id {
+                            "SEC002" => {
+                                // Check for assignment with string literal
+                                line.contains("=") && (line.contains("\"") || line.contains("'"))
+                            }
+                            _ => true,
+                        };
+
+                        if is_likely_issue {
+                            issues.push(Issue {
+                                id: format!("{}-{}", rule.id, line_num + 1),
+                                severity: rule.severity.clone(),
+                                category: IssueCategory::Security,
+                                message: rule.message.to_string(),
+                                description: Some(format!(
+                                    "{}: {}",
+                                    rule.name,
+                                    rule.cwe_id.unwrap_or("No CWE")
+                                )),
+                                file: file.path.clone(),
+                                span: Span {
+                                    start: Position {
+                                        line: line_num as u32 + 1,
+                                        column: 0,
+                                        byte_offset: 0,
+                                    },
+                                    end: Position {
+                                        line: line_num as u32 + 1,
+                                        column: line.len() as u32,
+                                        byte_offset: 0,
+                                    },
+                                },
+                                rule_id: Some(rule.id.to_string()),
+                                suggestion: Some(rule.suggestion.to_string()),
+                                fix: None,
+                                metadata: vec![
+                                    ("cwe".to_string(), rule.cwe_id.unwrap_or("unknown").to_string()),
+                                    ("pattern".to_string(), pattern.to_string()),
+                                ],
+                            });
+                            break; // Only report once per line per rule
+                        }
+                    }
                 }
             }
         }
 
-        issues
+        // Calculate security score
+        let critical_count = issues.iter()
+            .filter(|i| matches!(i.severity, SeverityLevel::Critical))
+            .count();
+        let high_count = issues.iter()
+            .filter(|i| matches!(i.severity, SeverityLevel::High))
+            .count();
+
+        let security_score = 100.0 - (critical_count as f64 * 20.0) - (high_count as f64 * 10.0);
+
+        let metrics = Metrics {
+            lines_of_code: file.content.lines().count() as u32,
+            lines_of_comments: 0,
+            complexity: 0,
+            maintainability_index: security_score.max(0.0),
+            technical_debt_minutes: (critical_count * 60 + high_count * 30) as u32,
+            custom_metrics: vec![
+                ("security_score".to_string(), security_score.max(0.0)),
+                ("critical_issues".to_string(), critical_count as f64),
+                ("high_issues".to_string(), high_count as f64),
+            ],
+        };
+
+        log(LogLevel::Info, &format!(
+            "Found {} security issues (Score: {:.1})",
+            issues.len(), security_score
+        ));
+
+        Ok(AnalysisResult {
+            issues,
+            metrics,
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
+    }
+
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "security-scanner".to_string(),
+            name: "Security Scanner".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Detects security vulnerabilities and provides remediation guidance".to_string(),
+            author: "Uveddi Team".to_string(),
+            license: "MIT".to_string(),
+            homepage: None,
+            supported_languages: vec![
+                "rust".to_string(), "python".to_string(),
+                "javascript".to_string(), "typescript".to_string(),
+                "java".to_string(), "go".to_string(), "php".to_string(),
+            ],
+            detector_types: vec![IssueCategory::Security],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![Permission::ReadFiles],
+        }
+    }
+
+    fn cleanup() -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up Security Scanner");
+        *SCANNER_STATE.borrow_mut() = None;
+        Ok(())
     }
 }
 
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => return create_error_result(&format!("Parse error: {}", e)),
-    };
-
-    let scanner = SecurityScanner::new();
-    let issues = scanner.scan(&input);
-
-    let result = PluginAnalysisResult {
-        plugin_name: "security-scanner".to_string(),
-        issues: issues.into_iter().map(|issue| PluginIssue {
-            issue_type: issue.issue_type,
-            severity: issue.severity,
-            message: issue.message,
-            file_path: issue.file_path,
-            line_number: issue.line_number,
-            column: issue.column,
-            suggestion: issue.suggestion,
-            confidence: issue.confidence,
-        }).collect(),
-        metadata: [
-            ("scanned_lines".to_string(), input.content.lines().count().to_string()),
-            ("rules_applied".to_string(), scanner.rules.len().to_string()),
-        ].into_iter().collect(),
-    };
-
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Serialization failed")
-    })
+thread_local! {
+    static SCANNER_STATE: RefCell<Option<ScannerState>> = RefCell::new(None);
 }
 ```
 
@@ -434,947 +537,759 @@ Analyzes code for performance bottlenecks and optimization opportunities.
 ### src/lib.rs
 
 ```rust
-use serde::{Deserialize, Serialize};
-use regex::Regex;
-use std::collections::HashMap;
+//! Performance Analyzer Plugin
+//!
+//! Detects performance issues like nested loops, inefficient algorithms, and memory issues.
 
-#[derive(Serialize)]
-pub struct PerformanceMetrics {
-    pub cyclomatic_complexity: u32,
-    pub function_count: u32,
-    pub loop_count: u32,
-    pub nested_loop_count: u32,
-    pub string_concatenations: u32,
-    pub sync_io_operations: u32,
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+struct PerformanceAnalyzerPlugin {
+    state: RefCell<Option<AnalyzerState>>,
 }
 
-struct PerformanceAnalyzer {
-    patterns: HashMap<&'static str, Regex>,
+struct AnalyzerState {
+    config: PluginConfig,
+    complexity_threshold: u32,
 }
 
-impl PerformanceAnalyzer {
-    fn new() -> Self {
-        let mut patterns = HashMap::new();
-        
-        // Function definitions
-        patterns.insert("function", Regex::new(r"(?i)\b(fn|function|def|public|private)\s+\w+\s*\(").unwrap());
-        
-        // Loop constructs
-        patterns.insert("for_loop", Regex::new(r"(?i)\b(for|foreach)\b").unwrap());
-        patterns.insert("while_loop", Regex::new(r"(?i)\bwhile\b").unwrap());
-        
-        // String concatenation in loops (performance issue)
-        patterns.insert("string_concat", Regex::new(r#"(?i)(\+\s*=\s*["\']|\bconcat\b|\bappend\b)"#).unwrap());
-        
-        // Synchronous I/O operations
-        patterns.insert("sync_io", Regex::new(r"(?i)\b(read|write|open)(?!async)\b").unwrap());
-        
-        // Nested structure indicators
-        patterns.insert("if_statement", Regex::new(r"(?i)\bif\b").unwrap());
-        patterns.insert("switch_case", Regex::new(r"(?i)\b(switch|match|case)\b").unwrap());
-
-        PerformanceAnalyzer { patterns }
+impl Default for PerformanceAnalyzerPlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
     }
+}
 
-    fn analyze(&self, input: &PluginFileInput) -> (Vec<PluginIssue>, PerformanceMetrics) {
-        let mut issues = Vec::new();
-        let mut metrics = PerformanceMetrics {
-            cyclomatic_complexity: 1, // Base complexity
-            function_count: 0,
-            loop_count: 0,
-            nested_loop_count: 0,
-            string_concatenations: 0,
-            sync_io_operations: 0,
+export!(PerformanceAnalyzerPlugin);
+
+impl Guest for PerformanceAnalyzerPlugin {
+    fn initialize(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing Performance Analyzer Plugin");
+
+        // Get custom threshold from config
+        let complexity_threshold = config.custom_settings.iter()
+            .find(|(k, _)| k == "complexity_threshold")
+            .and_then(|(_, v)| v.parse().ok())
+            .unwrap_or(10);
+
+        let state = AnalyzerState {
+            config,
+            complexity_threshold,
         };
 
-        let mut loop_nesting_level = 0;
-        let mut current_complexity = 1;
+        *ANALYZER_STATE.borrow_mut() = Some(state);
 
-        for (line_num, line) in input.content.lines().enumerate() {
-            let line_number = line_num as u32 + 1;
+        log(LogLevel::Info, &format!(
+            "Performance Analyzer initialized (threshold: {})",
+            complexity_threshold
+        ));
+        Ok(())
+    }
 
-            // Count functions
-            if self.patterns["function"].is_match(line) {
-                metrics.function_count += 1;
-            }
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        log(LogLevel::Debug, &format!("Analyzing performance of {}", file.path));
 
-            // Analyze loops
-            if self.patterns["for_loop"].is_match(line) || self.patterns["while_loop"].is_match(line) {
-                metrics.loop_count += 1;
-                loop_nesting_level += 1;
-                current_complexity += 1;
+        let state_ref = ANALYZER_STATE.borrow();
+        let state = state_ref.as_ref().ok_or("Plugin not initialized")?;
 
-                if loop_nesting_level > 1 {
-                    metrics.nested_loop_count += 1;
-                    issues.push(PluginIssue {
-                        issue_type: "PERF001".to_string(),
-                        severity: "WARNING".to_string(),
-                        message: "Nested loop detected - potential performance bottleneck".to_string(),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_number),
-                        column: None,
-                        suggestion: Some("Consider optimizing algorithm complexity".to_string()),
-                        confidence: Some(0.8),
+        let mut issues = Vec::new();
+        let mut loop_nesting = 0;
+        let mut max_nesting = 0;
+        let mut cyclomatic_complexity = 1;
+        let mut function_count = 0;
+
+        for (line_num, line) in file.content.lines().enumerate() {
+            let trimmed = line.trim();
+
+            // Track loop nesting
+            if trimmed.contains("for ") || trimmed.contains("while ") {
+                loop_nesting += 1;
+                cyclomatic_complexity += 1;
+                max_nesting = max_nesting.max(loop_nesting);
+
+                if loop_nesting > 2 {
+                    issues.push(Issue {
+                        id: format!("PERF001-{}", line_num + 1),
+                        severity: SeverityLevel::Medium,
+                        category: IssueCategory::Performance,
+                        message: format!("Deeply nested loop (depth: {})", loop_nesting),
+                        description: Some("Deep loop nesting can lead to O(n^k) complexity".to_string()),
+                        file: file.path.clone(),
+                        span: create_span(line_num as u32 + 1, 0, line.len() as u32),
+                        rule_id: Some("nested-loops".to_string()),
+                        suggestion: Some("Consider refactoring to reduce nesting depth".to_string()),
+                        fix: None,
+                        metadata: vec![("nesting_depth".to_string(), loop_nesting.to_string())],
                     });
                 }
-
-                // Check for string concatenation in loops
-                if self.patterns["string_concat"].is_match(line) {
-                    metrics.string_concatenations += 1;
-                    issues.push(PluginIssue {
-                        issue_type: "PERF003".to_string(),
-                        severity: "MEDIUM".to_string(),
-                        message: "String concatenation in loop - inefficient memory usage".to_string(),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_number),
-                        column: None,
-                        suggestion: Some("Use StringBuilder or Vec<String> for efficient concatenation".to_string()),
-                        confidence: Some(0.9),
-                    });
-                }
             }
 
-            // Detect end of loop constructs (simplified)
-            if line.trim() == "}" && loop_nesting_level > 0 {
-                loop_nesting_level = loop_nesting_level.saturating_sub(1);
+            // Track loop end
+            if trimmed == "}" && loop_nesting > 0 {
+                loop_nesting = loop_nesting.saturating_sub(1);
             }
 
-            // Detect synchronous I/O
-            if self.patterns["sync_io"].is_match(line) && !line.contains("async") {
-                metrics.sync_io_operations += 1;
-                issues.push(PluginIssue {
-                    issue_type: "PERF004".to_string(),
-                    severity: "INFO".to_string(),
-                    message: "Synchronous I/O operation detected".to_string(),
-                    file_path: input.file_path.clone(),
-                    line_number: Some(line_number),
-                    column: None,
-                    suggestion: Some("Consider using asynchronous I/O for better performance".to_string()),
-                    confidence: Some(0.7),
+            // Track functions
+            if trimmed.contains("fn ") || trimmed.contains("function ") || trimmed.contains("def ") {
+                function_count += 1;
+            }
+
+            // Track complexity
+            if trimmed.contains("if ") || trimmed.contains("match ") || trimmed.contains("case ") {
+                cyclomatic_complexity += 1;
+            }
+
+            // Detect inefficient patterns
+            if (trimmed.contains("+ \"") || trimmed.contains("+ '")) && loop_nesting > 0 {
+                issues.push(Issue {
+                    id: format!("PERF002-{}", line_num + 1),
+                    severity: SeverityLevel::Medium,
+                    category: IssueCategory::Performance,
+                    message: "String concatenation in loop".to_string(),
+                    description: Some("String concatenation in loops is inefficient".to_string()),
+                    file: file.path.clone(),
+                    span: create_span(line_num as u32 + 1, 0, line.len() as u32),
+                    rule_id: Some("string-concat-loop".to_string()),
+                    suggestion: Some("Use StringBuilder, Vec, or join()".to_string()),
+                    fix: None,
+                    metadata: vec![],
                 });
-            }
-
-            // Calculate cyclomatic complexity
-            if self.patterns["if_statement"].is_match(line) || 
-               self.patterns["switch_case"].is_match(line) {
-                current_complexity += 1;
             }
         }
 
-        metrics.cyclomatic_complexity = current_complexity;
-
-        // Generate high-level performance warnings
-        if metrics.cyclomatic_complexity > 15 {
-            issues.push(PluginIssue {
-                issue_type: "PERF_COMPLEXITY".to_string(),
-                severity: "WARNING".to_string(),
-                message: format!("High cyclomatic complexity: {}", metrics.cyclomatic_complexity),
-                file_path: input.file_path.clone(),
-                line_number: None,
-                column: None,
-                suggestion: Some("Consider refactoring into smaller functions".to_string()),
-                confidence: Some(0.95),
+        // Check overall complexity
+        if cyclomatic_complexity > state.complexity_threshold {
+            issues.push(Issue {
+                id: "PERF003".to_string(),
+                severity: SeverityLevel::Medium,
+                category: IssueCategory::Complexity,
+                message: format!("High cyclomatic complexity: {}", cyclomatic_complexity),
+                description: Some(format!(
+                    "Complexity {} exceeds threshold {}",
+                    cyclomatic_complexity, state.complexity_threshold
+                )),
+                file: file.path.clone(),
+                span: create_span(1, 0, 0),
+                rule_id: Some("high-complexity".to_string()),
+                suggestion: Some("Consider breaking into smaller functions".to_string()),
+                fix: None,
+                metadata: vec![("complexity".to_string(), cyclomatic_complexity.to_string())],
             });
         }
 
-        (issues, metrics)
+        let metrics = Metrics {
+            lines_of_code: file.content.lines().count() as u32,
+            lines_of_comments: 0,
+            complexity: cyclomatic_complexity,
+            maintainability_index: calculate_maintainability(cyclomatic_complexity, file.content.lines().count()),
+            technical_debt_minutes: issues.len() as u32 * 15,
+            custom_metrics: vec![
+                ("cyclomatic_complexity".to_string(), cyclomatic_complexity as f64),
+                ("max_nesting_depth".to_string(), max_nesting as f64),
+                ("function_count".to_string(), function_count as f64),
+            ],
+        };
+
+        Ok(AnalysisResult {
+            issues,
+            metrics,
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
+    }
+
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "performance-analyzer".to_string(),
+            name: "Performance Analyzer".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Analyzes code for performance bottlenecks".to_string(),
+            author: "Uveddi Team".to_string(),
+            license: "MIT".to_string(),
+            homepage: None,
+            supported_languages: vec![
+                "rust".to_string(), "python".to_string(),
+                "javascript".to_string(), "typescript".to_string(),
+            ],
+            detector_types: vec![IssueCategory::Performance, IssueCategory::Complexity],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![],
+        }
+    }
+
+    fn cleanup() -> Result<(), String> {
+        *ANALYZER_STATE.borrow_mut() = None;
+        Ok(())
     }
 }
 
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => return create_error_result(&format!("Parse error: {}", e)),
-    };
+thread_local! {
+    static ANALYZER_STATE: RefCell<Option<AnalyzerState>> = RefCell::new(None);
+}
 
-    let analyzer = PerformanceAnalyzer::new();
-    let (issues, metrics) = analyzer.analyze(&input);
+fn create_span(line: u32, start_col: u32, end_col: u32) -> Span {
+    Span {
+        start: Position { line, column: start_col, byte_offset: 0 },
+        end: Position { line, column: end_col, byte_offset: 0 },
+    }
+}
 
-    let mut metadata = HashMap::new();
-    metadata.insert("cyclomatic_complexity".to_string(), metrics.cyclomatic_complexity.to_string());
-    metadata.insert("function_count".to_string(), metrics.function_count.to_string());
-    metadata.insert("loop_count".to_string(), metrics.loop_count.to_string());
-    metadata.insert("nested_loops".to_string(), metrics.nested_loop_count.to_string());
-
-    let result = PluginAnalysisResult {
-        plugin_name: "performance-analyzer".to_string(),
-        issues,
-        metadata,
-    };
-
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Serialization failed")
-    })
+fn calculate_maintainability(complexity: u32, lines: usize) -> f64 {
+    // Simplified maintainability index
+    let base = 100.0;
+    let complexity_penalty = complexity as f64 * 2.0;
+    let size_penalty = (lines as f64 / 100.0) * 5.0;
+    (base - complexity_penalty - size_penalty).max(0.0)
 }
 ```
 
 ## Custom Rule Engine Plugin
 
-A flexible rule engine that allows users to define custom detection patterns.
-
-### Configuration Example
-
-```toml
-# custom-rules.toml
-[[rules]]
-id = "CUSTOM001"
-name = "No Print Statements"
-pattern = '\b(print|println|console\.log)\s*\('
-severity = "WARNING"
-message = "Print statement detected in production code"
-suggestion = "Use proper logging framework"
-
-[[rules]]
-id = "CUSTOM002"
-name = "Long Parameter Lists"
-pattern = '\([^)]*,[^)]*,[^)]*,[^)]*,[^)]*,'
-severity = "INFO"
-message = "Function has too many parameters"
-suggestion = "Consider using a struct or object to group parameters"
-```
+A flexible plugin that allows custom rule definitions from configuration.
 
 ### src/lib.rs
 
 ```rust
-use serde::{Deserialize, Serialize};
-use regex::Regex;
-use std::collections::HashMap;
+//! Custom Rule Engine Plugin
+//!
+//! Allows users to define custom detection rules via configuration.
 
-#[derive(Deserialize, Serialize, Clone)]
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+struct RuleEnginePlugin {
+    state: RefCell<Option<RuleEngineState>>,
+}
+
+struct RuleEngineState {
+    rules: Vec<CustomRule>,
+}
+
 struct CustomRule {
     id: String,
     name: String,
     pattern: String,
-    severity: String,
+    severity: SeverityLevel,
     message: String,
-    suggestion: Option<String>,
-    enabled: Option<bool>,
-    languages: Option<Vec<String>>,
+    suggestion: String,
+    languages: Vec<String>,
 }
 
-struct RuleEngine {
-    rules: Vec<CompiledRule>,
-}
-
-struct CompiledRule {
-    rule: CustomRule,
-    regex: Regex,
-}
-
-impl RuleEngine {
-    fn new() -> Self {
-        RuleEngine { rules: Vec::new() }
+impl Default for RuleEnginePlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
     }
+}
 
-    fn load_rules(&mut self, rules_config: &str) -> Result<(), String> {
-        let config: RuleConfig = toml::from_str(rules_config)
-            .map_err(|e| format!("Failed to parse rules config: {}", e))?;
+export!(RuleEnginePlugin);
 
-        for rule in config.rules {
-            if rule.enabled.unwrap_or(true) {
-                match Regex::new(&rule.pattern) {
-                    Ok(regex) => {
-                        self.rules.push(CompiledRule { rule, regex });
-                    }
-                    Err(e) => {
-                        return Err(format!("Invalid regex in rule {}: {}", rule.id, e));
-                    }
+impl Guest for RuleEnginePlugin {
+    fn initialize(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing Custom Rule Engine");
+
+        // Parse rules from custom_settings
+        let mut rules = Vec::new();
+
+        // Look for rules in config
+        // Format: rule.<id>.pattern, rule.<id>.severity, etc.
+        let rule_ids: Vec<String> = config.custom_settings.iter()
+            .filter_map(|(k, _)| {
+                if k.starts_with("rule.") {
+                    k.split('.').nth(1).map(|s| s.to_string())
+                } else {
+                    None
                 }
+            })
+            .collect::<std::collections::HashSet<_>>()
+            .into_iter()
+            .collect();
+
+        for rule_id in rule_ids {
+            let get_setting = |suffix: &str| -> Option<String> {
+                config.custom_settings.iter()
+                    .find(|(k, _)| k == &format!("rule.{}.{}", rule_id, suffix))
+                    .map(|(_, v)| v.clone())
+            };
+
+            if let (Some(pattern), Some(message)) = (get_setting("pattern"), get_setting("message")) {
+                rules.push(CustomRule {
+                    id: rule_id.clone(),
+                    name: get_setting("name").unwrap_or(rule_id.clone()),
+                    pattern,
+                    severity: match get_setting("severity").as_deref() {
+                        Some("critical") => SeverityLevel::Critical,
+                        Some("high") => SeverityLevel::High,
+                        Some("medium") => SeverityLevel::Medium,
+                        Some("low") => SeverityLevel::Low,
+                        _ => SeverityLevel::Info,
+                    },
+                    message,
+                    suggestion: get_setting("suggestion").unwrap_or_default(),
+                    languages: get_setting("languages")
+                        .map(|s| s.split(',').map(|l| l.trim().to_string()).collect())
+                        .unwrap_or_default(),
+                });
             }
         }
 
+        // Add default rules if none configured
+        if rules.is_empty() {
+            rules.push(CustomRule {
+                id: "DEFAULT001".to_string(),
+                name: "Print Statement".to_string(),
+                pattern: "print|println|console.log".to_string(),
+                severity: SeverityLevel::Info,
+                message: "Debug print statement found".to_string(),
+                suggestion: "Consider using a logging framework".to_string(),
+                languages: vec![],
+            });
+        }
+
+        log(LogLevel::Info, &format!("Loaded {} custom rules", rules.len()));
+
+        *RULE_STATE.borrow_mut() = Some(RuleEngineState { rules });
         Ok(())
     }
 
-    fn analyze(&self, input: &PluginFileInput) -> Vec<PluginIssue> {
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        let state_ref = RULE_STATE.borrow();
+        let state = state_ref.as_ref().ok_or("Plugin not initialized")?;
+
         let mut issues = Vec::new();
 
-        for compiled_rule in &self.rules {
-            // Check if rule applies to this language
-            if let Some(ref languages) = compiled_rule.rule.languages {
-                if !languages.contains(&input.language) {
-                    continue;
-                }
+        for rule in &state.rules {
+            // Check language filter
+            if !rule.languages.is_empty() && !rule.languages.contains(&file.language) {
+                continue;
             }
 
-            // Apply rule to each line
-            for (line_num, line) in input.content.lines().enumerate() {
-                if let Some(mat) = compiled_rule.regex.find(line) {
-                    issues.push(PluginIssue {
-                        issue_type: compiled_rule.rule.id.clone(),
-                        severity: compiled_rule.rule.severity.clone(),
-                        message: format!("{}: {}", compiled_rule.rule.name, compiled_rule.rule.message),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_num as u32 + 1),
-                        column: Some(mat.start() as u32),
-                        suggestion: compiled_rule.rule.suggestion.clone(),
-                        confidence: Some(0.8),
-                    });
+            // Apply pattern to each line
+            let patterns: Vec<&str> = rule.pattern.split('|').collect();
+
+            for (line_num, line) in file.content.lines().enumerate() {
+                for pattern in &patterns {
+                    if line.to_lowercase().contains(&pattern.to_lowercase()) {
+                        issues.push(Issue {
+                            id: format!("{}-{}", rule.id, line_num + 1),
+                            severity: rule.severity.clone(),
+                            category: IssueCategory::Quality,
+                            message: rule.message.clone(),
+                            description: Some(format!("Rule: {}", rule.name)),
+                            file: file.path.clone(),
+                            span: Span {
+                                start: Position {
+                                    line: line_num as u32 + 1,
+                                    column: 0,
+                                    byte_offset: 0,
+                                },
+                                end: Position {
+                                    line: line_num as u32 + 1,
+                                    column: line.len() as u32,
+                                    byte_offset: 0,
+                                },
+                            },
+                            rule_id: Some(rule.id.clone()),
+                            suggestion: if rule.suggestion.is_empty() {
+                                None
+                            } else {
+                                Some(rule.suggestion.clone())
+                            },
+                            fix: None,
+                            metadata: vec![("pattern".to_string(), pattern.to_string())],
+                        });
+                        break;
+                    }
                 }
             }
         }
 
-        issues
+        Ok(AnalysisResult {
+            issues,
+            metrics: Metrics {
+                lines_of_code: file.content.lines().count() as u32,
+                lines_of_comments: 0,
+                complexity: 0,
+                maintainability_index: 100.0,
+                technical_debt_minutes: 0,
+                custom_metrics: vec![],
+            },
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
     }
-}
 
-#[derive(Deserialize)]
-struct RuleConfig {
-    rules: Vec<CustomRule>,
-}
-
-// Configuration loading from host
-extern "C" {
-    fn host_get_config(key_ptr: *const u8, key_len: usize) -> u64;
-}
-
-fn get_rules_config() -> Option<String> {
-    // Try to get rules configuration from host
-    unsafe {
-        let key = "custom_rules.config";
-        let handle = host_get_config(key.as_ptr(), key.len());
-        if handle != 0 {
-            // Extract config string from handle (implementation specific)
-            Some(r#"
-[[rules]]
-id = "CUSTOM001"
-name = "No Print Statements"
-pattern = '\b(print|println|console\.log)\s*\('
-severity = "WARNING"
-message = "Print statement detected"
-suggestion = "Use proper logging framework"
-            "#.to_string())
-        } else {
-            None
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "custom-rule-engine".to_string(),
+            name: "Custom Rule Engine".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Applies user-defined detection rules".to_string(),
+            author: "Uveddi Team".to_string(),
+            license: "MIT".to_string(),
+            homepage: None,
+            supported_languages: vec!["*".to_string()],
+            detector_types: vec![IssueCategory::Quality],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![],
         }
     }
+
+    fn cleanup() -> Result<(), String> {
+        *RULE_STATE.borrow_mut() = None;
+        Ok(())
+    }
 }
 
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => return create_error_result(&format!("Parse error: {}", e)),
-    };
-
-    let mut engine = RuleEngine::new();
-
-    // Load rules from configuration
-    if let Some(config) = get_rules_config() {
-        if let Err(e) = engine.load_rules(&config) {
-            return create_error_result(&format!("Failed to load rules: {}", e));
-        }
-    } else {
-        return create_error_result("No rules configuration found");
-    }
-
-    let issues = engine.analyze(&input);
-
-    let result = PluginAnalysisResult {
-        plugin_name: "custom-rule-engine".to_string(),
-        issues,
-        metadata: [
-            ("rules_loaded".to_string(), engine.rules.len().to_string()),
-            ("language".to_string(), input.language.clone()),
-        ].into_iter().collect(),
-    };
-
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Serialization failed")
-    })
+thread_local! {
+    static RULE_STATE: RefCell<Option<RuleEngineState>> = RefCell::new(None);
 }
 ```
 
-## AI-Powered Code Quality Plugin
+## Multi-Language Plugin
 
-Uses AI models to analyze code quality and provide intelligent suggestions.
+A plugin that provides different analysis strategies for different languages.
 
 ### src/lib.rs
 
 ```rust
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+//! Multi-Language Analyzer Plugin
+//!
+//! Provides language-specific analysis for multiple programming languages.
 
-#[derive(Serialize)]
-pub struct AIAnalysisResult {
-    pub quality_score: f64,
-    pub maintainability_score: f64,
-    pub readability_score: f64,
-    pub suggestions: Vec<AISuggestion>,
-    pub complexity_analysis: ComplexityAnalysis,
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+struct MultiLanguagePlugin {
+    state: RefCell<Option<MultiLangState>>,
 }
 
-#[derive(Serialize)]
-pub struct AISuggestion {
-    pub suggestion_type: String,
-    pub description: String,
-    pub confidence: f64,
-    pub line_range: Option<(u32, u32)>,
-    pub before_code: Option<String>,
-    pub after_code: Option<String>,
+struct MultiLangState {
+    config: PluginConfig,
 }
 
-#[derive(Serialize)]
-pub struct ComplexityAnalysis {
-    pub cognitive_complexity: u32,
-    pub cyclomatic_complexity: u32,
-    pub nesting_depth: u32,
-    pub hotspots: Vec<ComplexityHotspot>,
+impl Default for MultiLanguagePlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
+    }
 }
 
-#[derive(Serialize)]
-pub struct ComplexityHotspot {
-    pub line_number: u32,
-    pub complexity_score: u32,
-    pub description: String,
-}
+export!(MultiLanguagePlugin);
 
-struct AICodeAnalyzer {
-    // In a real implementation, this would include ML model integration
-    patterns: HashMap<&'static str, Vec<QualityPattern>>,
-}
-
-struct QualityPattern {
-    name: &'static str,
-    pattern: regex::Regex,
-    impact: f64,
-    suggestion: &'static str,
-}
-
-impl AICodeAnalyzer {
-    fn new() -> Self {
-        let mut patterns = HashMap::new();
-
-        // Readability patterns
-        let readability_patterns = vec![
-            QualityPattern {
-                name: "Long Line",
-                pattern: regex::Regex::new(r".{120,}").unwrap(),
-                impact: -0.1,
-                suggestion: "Consider breaking long lines for better readability",
-            },
-            QualityPattern {
-                name: "Deep Nesting",
-                pattern: regex::Regex::new(r"^\s{16,}").unwrap(), // 4+ levels of indentation
-                impact: -0.2,
-                suggestion: "Deep nesting detected - consider extracting methods",
-            },
-        ];
-
-        // Maintainability patterns
-        let maintainability_patterns = vec![
-            QualityPattern {
-                name: "Magic Number",
-                pattern: regex::Regex::new(r"\b\d{2,}\b").unwrap(),
-                impact: -0.1,
-                suggestion: "Consider extracting magic numbers into named constants",
-            },
-            QualityPattern {
-                name: "Duplicate Code",
-                pattern: regex::Regex::new(r"(?m)^(.{10,})$\n(?:.*\n)*?\1").unwrap(),
-                impact: -0.3,
-                suggestion: "Potential code duplication detected - consider extraction",
-            },
-        ];
-
-        patterns.insert("readability", readability_patterns);
-        patterns.insert("maintainability", maintainability_patterns);
-
-        AICodeAnalyzer { patterns }
+impl Guest for MultiLanguagePlugin {
+    fn initialize(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing Multi-Language Analyzer");
+        *MULTI_STATE.borrow_mut() = Some(MultiLangState { config });
+        Ok(())
     }
 
-    fn analyze(&self, input: &PluginFileInput) -> (Vec<PluginIssue>, AIAnalysisResult) {
-        let mut issues = Vec::new();
-        let mut suggestions = Vec::new();
-        let mut quality_score = 100.0;
-        let mut readability_score = 100.0;
-        let mut maintainability_score = 100.0;
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        log(LogLevel::Info, &format!("Analyzing {} ({})", file.path, file.language));
 
-        // Analyze readability
-        for pattern in &self.patterns["readability"] {
-            for (line_num, line) in input.content.lines().enumerate() {
-                if pattern.pattern.is_match(line) {
-                    readability_score += pattern.impact;
-                    quality_score += pattern.impact * 0.3;
-
-                    issues.push(PluginIssue {
-                        issue_type: "READABILITY".to_string(),
-                        severity: "INFO".to_string(),
-                        message: format!("Readability issue: {}", pattern.name),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_num as u32 + 1),
-                        column: None,
-                        suggestion: Some(pattern.suggestion.to_string()),
-                        confidence: Some(0.7),
-                    });
-
-                    suggestions.push(AISuggestion {
-                        suggestion_type: "readability".to_string(),
-                        description: pattern.suggestion.to_string(),
-                        confidence: 0.7,
-                        line_range: Some((line_num as u32 + 1, line_num as u32 + 1)),
-                        before_code: Some(line.to_string()),
-                        after_code: None,
-                    });
-                }
+        // Dispatch to language-specific analyzer
+        let issues = match file.language.as_str() {
+            "rust" => analyze_rust(&file),
+            "python" => analyze_python(&file),
+            "javascript" | "typescript" => analyze_javascript(&file),
+            _ => {
+                log(LogLevel::Warn, &format!("No specific analyzer for {}", file.language));
+                vec![]
             }
-        }
-
-        // Analyze maintainability
-        for pattern in &self.patterns["maintainability"] {
-            for (line_num, line) in input.content.lines().enumerate() {
-                if pattern.pattern.is_match(line) {
-                    maintainability_score += pattern.impact;
-                    quality_score += pattern.impact * 0.4;
-
-                    issues.push(PluginIssue {
-                        issue_type: "MAINTAINABILITY".to_string(),
-                        severity: "WARNING".to_string(),
-                        message: format!("Maintainability issue: {}", pattern.name),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_num as u32 + 1),
-                        column: None,
-                        suggestion: Some(pattern.suggestion.to_string()),
-                        confidence: Some(0.8),
-                    });
-                }
-            }
-        }
-
-        // Calculate complexity
-        let complexity = self.calculate_complexity(&input.content);
-
-        // Generate AI-powered suggestions based on analysis
-        if quality_score < 70.0 {
-            suggestions.push(AISuggestion {
-                suggestion_type: "refactoring".to_string(),
-                description: "Consider refactoring this file to improve code quality".to_string(),
-                confidence: 0.9,
-                line_range: None,
-                before_code: None,
-                after_code: None,
-            });
-        }
-
-        let ai_result = AIAnalysisResult {
-            quality_score: quality_score.max(0.0),
-            maintainability_score: maintainability_score.max(0.0),
-            readability_score: readability_score.max(0.0),
-            suggestions,
-            complexity_analysis: complexity,
         };
 
-        (issues, ai_result)
+        Ok(AnalysisResult {
+            issues,
+            metrics: Metrics {
+                lines_of_code: file.content.lines().count() as u32,
+                lines_of_comments: 0,
+                complexity: 0,
+                maintainability_index: 100.0,
+                technical_debt_minutes: 0,
+                custom_metrics: vec![],
+            },
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
     }
 
-    fn calculate_complexity(&self, content: &str) -> ComplexityAnalysis {
-        let mut cognitive_complexity = 0;
-        let mut cyclomatic_complexity = 1;
-        let mut max_nesting = 0;
-        let mut current_nesting = 0;
-        let mut hotspots = Vec::new();
-
-        for (line_num, line) in content.lines().enumerate() {
-            let indent_level = line.len() - line.trim_start().len();
-            current_nesting = indent_level / 4; // Assuming 4-space indentation
-            max_nesting = max_nesting.max(current_nesting);
-
-            // Simple complexity calculation
-            if line.contains("if ") || line.contains("while ") || 
-               line.contains("for ") || line.contains("match ") {
-                cyclomatic_complexity += 1;
-                cognitive_complexity += 1 + current_nesting;
-
-                if current_nesting > 3 {
-                    hotspots.push(ComplexityHotspot {
-                        line_number: line_num as u32 + 1,
-                        complexity_score: current_nesting as u32,
-                        description: "High nesting complexity".to_string(),
-                    });
-                }
-            }
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "multi-language".to_string(),
+            name: "Multi-Language Analyzer".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Language-specific analysis for multiple languages".to_string(),
+            author: "Uveddi Team".to_string(),
+            license: "MIT".to_string(),
+            homepage: None,
+            supported_languages: vec![
+                "rust".to_string(), "python".to_string(),
+                "javascript".to_string(), "typescript".to_string(),
+            ],
+            detector_types: vec![IssueCategory::Quality, IssueCategory::Security],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![],
         }
+    }
 
-        ComplexityAnalysis {
-            cognitive_complexity,
-            cyclomatic_complexity,
-            nesting_depth: max_nesting as u32,
-            hotspots,
-        }
+    fn cleanup() -> Result<(), String> {
+        *MULTI_STATE.borrow_mut() = None;
+        Ok(())
     }
 }
 
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => return create_error_result(&format!("Parse error: {}", e)),
-    };
+thread_local! {
+    static MULTI_STATE: RefCell<Option<MultiLangState>> = RefCell::new(None);
+}
 
-    let analyzer = AICodeAnalyzer::new();
-    let (issues, ai_result) = analyzer.analyze(&input);
+fn analyze_rust(file: &SourceFile) -> Vec<Issue> {
+    let mut issues = Vec::new();
 
-    let mut metadata = HashMap::new();
-    metadata.insert("quality_score".to_string(), ai_result.quality_score.to_string());
-    metadata.insert("maintainability_score".to_string(), ai_result.maintainability_score.to_string());
-    metadata.insert("readability_score".to_string(), ai_result.readability_score.to_string());
-    metadata.insert("suggestions_count".to_string(), ai_result.suggestions.len().to_string());
+    for (line_num, line) in file.content.lines().enumerate() {
+        // Check for unsafe blocks
+        if line.contains("unsafe {") || line.contains("unsafe{") {
+            issues.push(create_issue(
+                "RUST001", SeverityLevel::Medium, IssueCategory::Security,
+                "Unsafe block detected",
+                "Document why unsafe is necessary here",
+                file, line_num,
+            ));
+        }
 
-    let result = PluginAnalysisResult {
-        plugin_name: "ai-code-quality".to_string(),
-        issues,
-        metadata,
-    };
+        // Check for unwrap without handling
+        if line.contains(".unwrap()") && !line.contains("expect") {
+            issues.push(create_issue(
+                "RUST002", SeverityLevel::Low, IssueCategory::Quality,
+                "Using unwrap() without error context",
+                "Consider using expect() with a message or proper error handling",
+                file, line_num,
+            ));
+        }
+    }
 
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Serialization failed")
-    })
+    issues
+}
+
+fn analyze_python(file: &SourceFile) -> Vec<Issue> {
+    let mut issues = Vec::new();
+
+    for (line_num, line) in file.content.lines().enumerate() {
+        // Check for bare except
+        if line.contains("except:") && !line.contains("except ") {
+            issues.push(create_issue(
+                "PY001", SeverityLevel::Medium, IssueCategory::Quality,
+                "Bare except clause",
+                "Specify the exception type to catch",
+                file, line_num,
+            ));
+        }
+
+        // Check for mutable default arguments
+        if line.contains("def ") && (line.contains("=[]") || line.contains("={}")) {
+            issues.push(create_issue(
+                "PY002", SeverityLevel::High, IssueCategory::Quality,
+                "Mutable default argument",
+                "Use None as default and initialize in function body",
+                file, line_num,
+            ));
+        }
+    }
+
+    issues
+}
+
+fn analyze_javascript(file: &SourceFile) -> Vec<Issue> {
+    let mut issues = Vec::new();
+
+    for (line_num, line) in file.content.lines().enumerate() {
+        // Check for var usage
+        if line.contains("var ") {
+            issues.push(create_issue(
+                "JS001", SeverityLevel::Low, IssueCategory::Style,
+                "Using 'var' instead of 'let' or 'const'",
+                "Prefer 'let' or 'const' for block-scoped variables",
+                file, line_num,
+            ));
+        }
+
+        // Check for == instead of ===
+        if line.contains(" == ") && !line.contains(" === ") {
+            issues.push(create_issue(
+                "JS002", SeverityLevel::Medium, IssueCategory::Quality,
+                "Using == instead of ===",
+                "Use strict equality (===) to avoid type coercion",
+                file, line_num,
+            ));
+        }
+    }
+
+    issues
+}
+
+fn create_issue(
+    id: &str,
+    severity: SeverityLevel,
+    category: IssueCategory,
+    message: &str,
+    suggestion: &str,
+    file: &SourceFile,
+    line_num: usize,
+) -> Issue {
+    Issue {
+        id: format!("{}-{}", id, line_num + 1),
+        severity,
+        category,
+        message: message.to_string(),
+        description: None,
+        file: file.path.clone(),
+        span: Span {
+            start: Position { line: line_num as u32 + 1, column: 0, byte_offset: 0 },
+            end: Position { line: line_num as u32 + 1, column: 0, byte_offset: 0 },
+        },
+        rule_id: Some(id.to_string()),
+        suggestion: Some(suggestion.to_string()),
+        fix: None,
+        metadata: vec![],
+    }
 }
 ```
 
-## Framework-Specific Plugin (React)
+## Testing Strategies
 
-A specialized plugin for React applications that detects React-specific patterns and issues.
-
-### src/lib.rs
+### Unit Tests
 
 ```rust
-use serde::{Deserialize, Serialize};
-use regex::Regex;
-use std::collections::HashMap;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-struct ReactAnalyzer {
-    patterns: HashMap<&'static str, Regex>,
-    rules: Vec<ReactRule>,
-}
-
-struct ReactRule {
-    id: &'static str,
-    name: &'static str,
-    pattern: &'static str,
-    severity: &'static str,
-    message: &'static str,
-    suggestion: &'static str,
-}
-
-impl ReactAnalyzer {
-    fn new() -> Self {
-        let mut patterns = HashMap::new();
-        
-        // React-specific patterns
-        patterns.insert("component", Regex::new(r"(?:function|const)\s+([A-Z][a-zA-Z0-9]*)\s*\(").unwrap());
-        patterns.insert("hook", Regex::new(r"\buse[A-Z][a-zA-Z0-9]*\(").unwrap());
-        patterns.insert("jsx", Regex::new(r"<[A-Z][a-zA-Z0-9]*").unwrap());
-        patterns.insert("inline_style", Regex::new(r#"style\s*=\s*\{\{.*?\}\}"#).unwrap());
-        patterns.insert("direct_dom", Regex::new(r"document\.(getElementById|querySelector)").unwrap());
-
-        let rules = vec![
-            ReactRule {
-                id: "REACT001",
-                name: "Inline Styles",
-                pattern: r#"style\s*=\s*\{\{.*?\}\}"#,
-                severity: "INFO",
-                message: "Inline styles detected",
-                suggestion: "Consider using CSS classes or styled-components for better maintainability",
-            },
-            ReactRule {
-                id: "REACT002",
-                name: "Direct DOM Manipulation",
-                pattern: r"document\.(getElementById|querySelector)",
-                severity: "WARNING",
-                message: "Direct DOM manipulation in React component",
-                suggestion: "Use React refs instead of direct DOM manipulation",
-            },
-            ReactRule {
-                id: "REACT003",
-                name: "Missing Key Prop",
-                pattern: r"\.map\([^}]*=>\s*<[^>]*(?!.*key=)",
-                severity: "WARNING",
-                message: "Missing key prop in list rendering",
-                suggestion: "Add a unique key prop to list items for optimal rendering performance",
-            },
-            ReactRule {
-                id: "REACT004",
-                name: "Unsafe Lifecycle Method",
-                pattern: r"componentWillMount|componentWillReceiveProps|componentWillUpdate",
-                severity: "HIGH",
-                message: "Unsafe lifecycle method detected",
-                suggestion: "Replace with safe lifecycle methods or hooks",
-            },
-        ];
-
-        ReactAnalyzer { patterns, rules }
+    fn create_test_file(content: &str, language: &str) -> SourceFile {
+        SourceFile {
+            path: format!("test.{}", match language {
+                "rust" => "rs",
+                "python" => "py",
+                "javascript" => "js",
+                _ => "txt",
+            }),
+            content: content.to_string(),
+            language: language.to_string(),
+            size: content.len() as u32,
+            hash: format!("{:x}", content.len()),
+            ast: None,
+        }
     }
 
-    fn analyze(&self, input: &PluginFileInput) -> Vec<PluginIssue> {
-        let mut issues = Vec::new();
+    #[test]
+    fn test_todo_detection() {
+        let file = create_test_file(
+            "// TODO: implement\nfn main() {}\n// FIXME: bug",
+            "rust"
+        );
 
-        // Only analyze JavaScript/TypeScript files that likely contain React code
-        if !["javascript", "typescript"].contains(&input.language.as_str()) {
-            return issues;
-        }
+        // Initialize plugin
+        let config = PluginConfig {
+            severity_threshold: SeverityLevel::Info,
+            max_issues_per_file: 100,
+            include_patterns: vec![],
+            exclude_patterns: vec![],
+            rule_overrides: vec![],
+            custom_settings: vec![],
+        };
 
-        // Check if file contains React imports or JSX
-        let has_react = input.content.contains("import React") || 
-                       input.content.contains("from 'react'") ||
-                       self.patterns["jsx"].is_match(&input.content);
+        TodoDetectorPlugin::initialize(config, ResourceLimits::default()).unwrap();
 
-        if !has_react {
-            return issues;
-        }
+        let result = TodoDetectorPlugin::analyze(file).unwrap();
 
-        // Apply React-specific rules
-        for rule in &self.rules {
-            let pattern = match Regex::new(rule.pattern) {
-                Ok(p) => p,
-                Err(_) => continue,
-            };
-
-            for (line_num, line) in input.content.lines().enumerate() {
-                if pattern.is_match(line) {
-                    issues.push(PluginIssue {
-                        issue_type: rule.id.to_string(),
-                        severity: rule.severity.to_string(),
-                        message: format!("{}: {}", rule.name, rule.message),
-                        file_path: input.file_path.clone(),
-                        line_number: Some(line_num as u32 + 1),
-                        column: None,
-                        suggestion: Some(rule.suggestion.to_string()),
-                        confidence: Some(0.85),
-                    });
-                }
-            }
-        }
-
-        // Analyze component structure
-        issues.extend(self.analyze_component_structure(input));
-        
-        // Analyze hook usage
-        issues.extend(self.analyze_hook_usage(input));
-
-        issues
+        assert_eq!(result.issues.len(), 2);
+        assert!(result.issues.iter().any(|i| i.id.contains("TODO")));
+        assert!(result.issues.iter().any(|i| i.id.contains("FIXME")));
     }
 
-    fn analyze_component_structure(&self, input: &PluginFileInput) -> Vec<PluginIssue> {
-        let mut issues = Vec::new();
-        
-        // Check for large components (simplified heuristic)
-        let line_count = input.content.lines().count();
-        if line_count > 200 {
-            issues.push(PluginIssue {
-                issue_type: "REACT_LARGE_COMPONENT".to_string(),
-                severity: "INFO".to_string(),
-                message: format!("Large component detected ({} lines)", line_count),
-                file_path: input.file_path.clone(),
-                line_number: None,
-                column: None,
-                suggestion: Some("Consider breaking this component into smaller, reusable components".to_string()),
-                confidence: Some(0.9),
-            });
-        }
-
-        issues
+    #[test]
+    fn test_empty_file() {
+        let file = create_test_file("", "rust");
+        let result = TodoDetectorPlugin::analyze(file).unwrap();
+        assert!(result.issues.is_empty());
     }
-
-    fn analyze_hook_usage(&self, input: &PluginFileInput) -> Vec<PluginIssue> {
-        let mut issues = Vec::new();
-        let mut in_component = false;
-        let mut hook_calls = Vec::new();
-
-        for (line_num, line) in input.content.lines().enumerate() {
-            // Simple heuristic to detect if we're inside a component
-            if self.patterns["component"].is_match(line) {
-                in_component = true;
-                hook_calls.clear();
-            }
-
-            // Detect hook calls
-            if in_component && self.patterns["hook"].is_match(line) {
-                hook_calls.push(line_num);
-            }
-
-            // Check for conditional hook usage (simplified)
-            if in_component && line.contains("useState") && 
-               (line.contains("if ") || line.contains("for ") || line.contains("while ")) {
-                issues.push(PluginIssue {
-                    issue_type: "REACT_CONDITIONAL_HOOK".to_string(),
-                    severity: "HIGH".to_string(),
-                    message: "Hook called conditionally".to_string(),
-                    file_path: input.file_path.clone(),
-                    line_number: Some(line_num as u32 + 1),
-                    column: None,
-                    suggestion: Some("Hooks must be called at the top level of components".to_string()),
-                    confidence: Some(0.8),
-                });
-            }
-
-            // Reset when leaving component (simplified)
-            if line.contains("export") || line.contains("};") {
-                in_component = false;
-            }
-        }
-
-        issues
-    }
-}
-
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => return create_error_result(&format!("Parse error: {}", e)),
-    };
-
-    let analyzer = ReactAnalyzer::new();
-    let issues = analyzer.analyze(&input);
-
-    let result = PluginAnalysisResult {
-        plugin_name: "react-analyzer".to_string(),
-        issues,
-        metadata: [
-            ("framework".to_string(), "React".to_string()),
-            ("language".to_string(), input.language.clone()),
-        ].into_iter().collect(),
-    };
-
-    serde_json::to_vec(&result).unwrap_or_else(|_| {
-        create_error_result("Serialization failed")
-    })
 }
 ```
 
-## Testing Example
+### Integration Testing Script
 
-Here's a comprehensive test setup that can be used with any of the above plugins:
+```bash
+#!/bin/bash
+# test-plugin.sh
 
-### tests/integration.rs
+set -e
 
-```rust
-use std::process::Command;
-use std::fs;
+echo "Building plugin..."
+cargo build --release --target wasm32-wasi
 
-#[test]
-fn test_plugin_with_uveddi() {
-    // Build the plugin first
-    let output = Command::new("cargo")
-        .args(&["build", "--release", "--target", "wasm32-wasi"])
-        .output()
-        .expect("Failed to build plugin");
+echo "Installing plugin..."
+WASM_PATH="target/wasm32-wasi/release/my_plugin.wasm"
+uveddi plugin install "$WASM_PATH" --force
 
-    assert!(output.status.success(), "Plugin build failed: {}", 
-            String::from_utf8_lossy(&output.stderr));
+echo "Creating test files..."
+mkdir -p test-data
 
-    // Create test file
-    fs::write("test_input.rs", r#"
-        // TODO: Implement this function
-        fn main() {
-            println!("Hello, world!");
-            // FIXME: Handle errors properly
-        }
-    "#).expect("Failed to write test file");
-
-    // Test plugin with Uveddi CLI
-    let output = Command::new("uveddi")
-        .args(&[
-            "plugin", "test",
-            "./target/wasm32-wasi/release/todo_detector_plugin.wasm",
-            "test_input.rs"
-        ])
-        .output()
-        .expect("Failed to run plugin test");
-
-    // Cleanup
-    fs::remove_file("test_input.rs").ok();
-
-    // Check that plugin executed successfully
-    assert!(output.status.success(), "Plugin test failed: {}", 
-            String::from_utf8_lossy(&output.stderr));
-
-    // Verify output contains expected issues
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("TODO_COMMENT"));
-    assert!(stdout.contains("FIXME_COMMENT"));
+cat > test-data/sample.rs << 'EOF'
+// TODO: implement proper error handling
+fn main() {
+    // FIXME: this is broken
+    println!("Hello");
 }
+EOF
 
-#[test]
-fn test_plugin_performance() {
-    use std::time::Instant;
+echo "Running plugin tests..."
+uveddi plugin test my-plugin --test-file test-data/sample.rs --verbose
 
-    let large_input = "// TODO: test\n".repeat(10000);
-    let input = serde_json::json!({
-        "file_path": "large_test.rs",
-        "content": large_input,
-        "language": "rust"
-    });
+echo "Running full analysis..."
+uveddi analyze test-data/ --plugins my-plugin --output json > results.json
 
-    let start = Instant::now();
-    
-    // This would call your plugin's analyze_file function
-    // let result = analyze_file(&serde_json::to_vec(&input).unwrap());
-    
-    let duration = start.elapsed();
-    
-    // Plugin should complete within reasonable time
-    assert!(duration.as_millis() < 1000, "Plugin too slow: {}ms", duration.as_millis());
-}
+echo "Verifying results..."
+if jq -e '.issues | length > 0' results.json > /dev/null; then
+    echo "SUCCESS: Plugin detected issues"
+    jq '.issues[] | {id, message, severity}' results.json
+else
+    echo "FAILURE: No issues detected"
+    exit 1
+fi
+
+echo "Cleanup..."
+rm -rf test-data results.json
+
+echo "All tests passed!"
 ```
 
-## Build Scripts
+## Best Practices Summary
 
-### Makefile
+1. **Use WIT Component Model**: Always use `wit_bindgen::generate!` for type-safe host communication
+2. **Thread-local State**: Use `thread_local!` with `RefCell` for plugin state
+3. **Proper Error Handling**: Return descriptive `Result<T, String>` errors
+4. **Comprehensive Logging**: Use appropriate log levels for debugging
+5. **Validate Inputs**: Check file size and language before processing
+6. **Performance**: Pre-allocate vectors, process incrementally for large files
+7. **Testing**: Write both unit tests and integration tests
 
-```makefile
-.PHONY: build test install clean release package
-
-PLUGIN_NAME ?= my-plugin
-PLUGIN_VERSION ?= $(shell grep '^version' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
-
-# Development build
-build:
-	cargo build --target wasm32-wasi
-
-# Optimized production build
-release:
-	cargo build --release --target wasm32-wasi
-	wasm-strip target/wasm32-wasi/release/$(PLUGIN_NAME).wasm
-	wasm-opt -Os target/wasm32-wasi/release/$(PLUGIN_NAME).wasm -o target/wasm32-wasi/release/$(PLUGIN_NAME).optimized.wasm
-
-# Run tests
-test:
-	cargo test
-	./scripts/integration-test.sh
-
-# Install plugin locally for testing
-install: release
-	uveddi plugin install target/wasm32-wasi/release/$(PLUGIN_NAME).optimized.wasm plugin.toml
-
-# Clean build artifacts
-clean:
-	cargo clean
-	rm -f *.wasm *.zip
-
-# Create distribution package
-package: release
-	mkdir -p dist
-	cp target/wasm32-wasi/release/$(PLUGIN_NAME).optimized.wasm dist/$(PLUGIN_NAME).wasm
-	cp plugin.toml dist/
-	cp README.md dist/
-	cp CHANGELOG.md dist/ 2>/dev/null || true
-	cd dist && zip -r ../$(PLUGIN_NAME)-$(PLUGIN_VERSION).zip .
-	rm -rf dist
-
-# Validate plugin
-validate: release
-	uveddi plugin validate target/wasm32-wasi/release/$(PLUGIN_NAME).optimized.wasm plugin.toml
-```
-
-These examples provide a solid foundation for developing various types of plugins for Uveddi. Each example demonstrates different aspects of plugin development, from basic pattern matching to advanced AI-powered analysis. The key principles demonstrated across all examples include:
-
-1. **Proper input validation and error handling**
-2. **Structured output with meaningful metadata**
-3. **Performance considerations and resource limits**
-4. **Comprehensive testing strategies**
-5. **Clear configuration and documentation**
-
-For more advanced features and integration patterns, refer to the [API Reference](api-reference.md) and [Development Guide](development-guide.md).
+For more details, see the [API Reference](api-reference.md) and [Development Guide](development-guide.md).

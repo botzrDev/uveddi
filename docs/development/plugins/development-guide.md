@@ -1,6 +1,6 @@
 # Plugin Development Guide
 
-This comprehensive guide covers developing WebAssembly plugins for Uveddi's analysis engine. Plugins enable custom analysis detectors that integrate seamlessly with Uveddi's analysis pipeline while running in a secure sandboxed environment.
+This comprehensive guide covers developing WebAssembly plugins for Uveddi's analysis engine using the WebAssembly Component Model. Plugins enable custom analysis detectors that integrate seamlessly with Uveddi's analysis pipeline while running in a secure sandboxed environment.
 
 ## Table of Contents
 
@@ -22,46 +22,48 @@ This comprehensive guide covers developing WebAssembly plugins for Uveddi's anal
 ### Prerequisites
 
 - **Rust** (1.70+) - Install from [rustup.rs](https://rustup.rs/)
-- **wasm-pack** - Install with:
+- **wasm32-wasi target** - Install with:
   ```bash
-  curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+  rustup target add wasm32-wasi
   ```
-- **Optional**: `wasm-opt` for optimization:
+- **wit-bindgen** - For generating bindings from WIT files
+- **Optional**: `wasm-tools` for component model tooling:
   ```bash
-  # macOS
-  brew install binaryen
-  
-  # Ubuntu/Debian
-  sudo apt-get install binaryen
+  cargo install wasm-tools
   ```
 
 ### Quick Start
 
-#### 1. Generate Plugin Template
+#### 1. Generate Plugin from Template
 
 ```bash
-# Generate a new plugin from template
-scripts/generate-plugin.py my-analyzer
+# Clone or copy the plugin template
+cp -r templates/plugin-template plugins/my-analyzer
+cd plugins/my-analyzer
 
-# This creates:
-plugins/my-analyzer/
-├── Cargo.toml          # Rust project configuration
-├── Makefile           # Build automation
-├── README.md          # Plugin documentation
-├── build.rs           # Custom build scripts
-├── plugin.toml        # Plugin manifest
-└── src/
-    └── lib.rs         # Plugin implementation
+# Update plugin metadata in plugin.toml and Cargo.toml
 ```
 
-#### 2. Plugin Manifest Configuration
+#### 2. Plugin Structure
+
+```
+my-analyzer/
+├── Cargo.toml          # Rust project configuration
+├── plugin.toml         # Plugin manifest
+├── build.rs            # Build script (optional)
+├── src/
+│   └── lib.rs          # Plugin implementation
+└── README.md           # Plugin documentation
+```
+
+#### 3. Plugin Manifest Configuration
 
 ```toml
 # plugin.toml
 [plugin]
 name = "my-analyzer"
 version = "1.0.0"
-description = "Custom analysis plugin for detecting TODO comments"
+description = "Custom analysis plugin for detecting code issues"
 author = "Your Name <your.email@example.com>"
 license = "MIT"
 homepage = "https://github.com/yourname/my-analyzer"
@@ -69,7 +71,7 @@ repository = "https://github.com/yourname/my-analyzer"
 
 [capabilities]
 # Security permissions required by the plugin
-permissions = ["ConfigRead", "Logging"]
+permissions = ["ReadFiles", "Logging"]
 
 # Resource limits
 max_memory_mb = 32
@@ -85,7 +87,7 @@ cache_ttl_seconds = 3600
 min_uveddi_version = "0.9.0"
 
 # Required host functions
-requires_tree_sitter = false
+requires_tree_sitter = true
 requires_database_access = false
 requires_network_access = false
 
@@ -95,9 +97,8 @@ supported_extensions = [".rs", ".py", ".js", ".ts", ".jsx", ".tsx"]
 
 [detection]
 # Types of issues this plugin can detect
-anti_pattern_types = ["CODE_SMELL", "MAINTAINABILITY"]
-issue_categories = ["TODO_COMMENTS", "CODE_QUALITY"]
-severity_levels = ["INFO", "WARNING", "ERROR"]
+issue_categories = ["complexity", "maintainability", "quality"]
+severity_levels = ["info", "low", "medium", "high", "critical"]
 
 [integration]
 # Integration settings
@@ -109,35 +110,43 @@ priority = 100  # Higher numbers run first
 
 ## Plugin Architecture
 
-### Core Components
+### WebAssembly Component Model
 
-```mermaid
-graph TB
-    Plugin[WASM Plugin]
-    Engine[Plugin Engine]
-    Host[Host Application]
-    API[Plugin API]
-    Sandbox[WASM Sandbox]
-    
-    Plugin --> Sandbox
-    Sandbox --> Engine
-    Engine --> API
-    API --> Host
-    
-    subgraph "Plugin Runtime"
-        Sandbox
-        Engine
-        API
-    end
+Uveddi plugins use the WebAssembly Component Model with WIT (WebAssembly Interface Types) for type-safe communication between the host and plugin.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Uveddi Host                            │
+│  ┌───────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │ Plugin Engine │  │ AST Provider │  │ Analysis Engine  │  │
+│  └───────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
+│          │                 │                    │            │
+│          └─────────────────┼────────────────────┘            │
+│                            │                                 │
+│                   ┌────────▼────────┐                        │
+│                   │  Host Functions │                        │
+│                   │  (WIT Imports)  │                        │
+│                   └────────┬────────┘                        │
+└────────────────────────────┼────────────────────────────────┘
+                             │
+              ┌──────────────▼──────────────┐
+              │     WASM Component Model    │
+              │  ┌───────────────────────┐  │
+              │  │   Plugin (WASM)       │  │
+              │  │  - initialize()       │  │
+              │  │  - analyze()          │  │
+              │  │  - get_info()         │  │
+              │  │  - cleanup()          │  │
+              │  └───────────────────────┘  │
+              └─────────────────────────────┘
 ```
 
 ### Plugin Types
 
 1. **Detector Plugins**: Custom code analysis and pattern detection
 2. **Rule Engine Plugins**: Organization-specific rules and policies
-3. **AI-Powered Plugins**: Intelligent code review and quality analysis
-4. **Metrics Plugins**: Advanced code metrics and visualization
-5. **Knowledge Plugins**: Domain-specific knowledge and anti-patterns
+3. **Metrics Plugins**: Advanced code metrics and visualization
+4. **Knowledge Plugins**: Domain-specific knowledge and anti-patterns
 
 ## Development Setup
 
@@ -146,101 +155,199 @@ graph TB
 ```
 my-plugin/
 ├── Cargo.toml          # Rust project configuration
+├── plugin.toml         # Plugin manifest
 ├── src/
-│   ├── lib.rs         # Main plugin implementation
-│   └── detector.rs    # Detection logic
-├── plugin.toml        # Plugin manifest
+│   └── lib.rs          # Main plugin implementation
 ├── tests/
-│   └── integration.rs # Integration tests
-├── examples/          # Usage examples
-├── README.md          # Documentation
-└── Makefile          # Build scripts
+│   └── integration.rs  # Integration tests
+├── README.md           # Documentation
+└── Makefile            # Build scripts (optional)
 ```
+
+### Cargo Configuration
+
+```toml
+# Cargo.toml
+[package]
+name = "my-uveddi-plugin"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.16"
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true
+codegen-units = 1
+```
+
+## Writing Your First Plugin
 
 ### Basic Plugin Implementation
 
 ```rust
 // src/lib.rs
-use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
-pub struct PluginFileInput {
-    pub file_path: String,
-    pub content: String,
-    pub language: String,
+// Generate bindings from the WIT interface
+wit_bindgen::generate!({
+    world: "core-analysis",
+    path: "../../../wit/core-analysis.wit",
+});
+
+use std::cell::RefCell;
+
+// Plugin state container
+struct MyAnalyzerPlugin {
+    state: RefCell<Option<PluginState>>,
 }
 
-#[derive(Serialize)]
-pub struct PluginIssue {
-    pub issue_type: String,
-    pub severity: String,
-    pub message: String,
-    pub file_path: String,
-    pub line_number: Option<u32>,
-    pub column: Option<u32>,
-    pub suggestion: Option<String>,
+struct PluginState {
+    config: PluginConfig,
+    analysis_count: u32,
 }
 
-#[derive(Serialize)]
-pub struct PluginAnalysisResult {
-    pub plugin_name: String,
-    pub issues: Vec<PluginIssue>,
-    pub metadata: std::collections::HashMap<String, String>,
-}
-
-#[export_name = "analyze_file"]
-pub fn analyze_file(file_data: &[u8]) -> Vec<u8> {
-    // Deserialize input
-    let input: PluginFileInput = match serde_json::from_slice(file_data) {
-        Ok(input) => input,
-        Err(e) => {
-            let error_result = PluginAnalysisResult {
-                plugin_name: "my-analyzer".to_string(),
-                issues: vec![],
-                metadata: [("error".to_string(), e.to_string())].into(),
-            };
-            return serde_json::to_vec(&error_result).unwrap_or_default();
+impl Default for MyAnalyzerPlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
         }
-    };
+    }
+}
 
-    // Perform analysis
-    let mut issues = Vec::new();
-    
-    // Example: Check for TODO comments
-    for (line_num, line) in input.content.lines().enumerate() {
-        if line.to_lowercase().contains("todo") {
-            issues.push(PluginIssue {
-                issue_type: "TODO_COMMENT".to_string(),
-                severity: "INFO".to_string(),
-                message: "TODO comment found".to_string(),
-                file_path: input.file_path.clone(),
-                line_number: Some(line_num as u32 + 1),
-                column: Some(line.find("TODO").unwrap_or(0) as u32),
-                suggestion: Some("Consider creating a proper issue for this TODO".to_string()),
-            });
+// Export the plugin
+export!(MyAnalyzerPlugin);
+
+// Implement the Guest trait (generated by wit_bindgen)
+impl Guest for MyAnalyzerPlugin {
+    fn initialize(config: PluginConfig, limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing My Analyzer Plugin");
+
+        let state = PluginState {
+            config,
+            analysis_count: 0,
+        };
+
+        // Store state for later use
+        *MY_STATE.borrow_mut() = Some(state);
+
+        log(LogLevel::Info, "My Analyzer Plugin initialized successfully");
+        Ok(())
+    }
+
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        log(LogLevel::Info, &format!("Analyzing {}", file.path));
+
+        let mut issues = Vec::new();
+
+        // Example: Check for TODO comments
+        for (line_num, line) in file.content.lines().enumerate() {
+            if let Some(col) = line.to_lowercase().find("todo") {
+                issues.push(Issue {
+                    id: format!("TODO-{}-{}", line_num, col),
+                    severity: SeverityLevel::Info,
+                    category: IssueCategory::Documentation,
+                    message: "TODO comment found".to_string(),
+                    description: Some("Consider creating an issue for this TODO".to_string()),
+                    file: file.path.clone(),
+                    span: Span {
+                        start: Position {
+                            line: line_num as u32 + 1,
+                            column: col as u32,
+                            byte_offset: 0,
+                        },
+                        end: Position {
+                            line: line_num as u32 + 1,
+                            column: (col + 4) as u32,
+                            byte_offset: 0,
+                        },
+                    },
+                    rule_id: Some("todo-comment".to_string()),
+                    suggestion: Some("Create an issue tracker entry for this TODO".to_string()),
+                    fix: None,
+                    metadata: vec![],
+                });
+            }
+        }
+
+        // Calculate basic metrics
+        let metrics = Metrics {
+            lines_of_code: file.content.lines().count() as u32,
+            lines_of_comments: count_comment_lines(&file.content),
+            complexity: 1,
+            maintainability_index: 100.0,
+            technical_debt_minutes: issues.len() as u32 * 5,
+            custom_metrics: vec![
+                ("todo_count".to_string(), issues.len() as f64),
+            ],
+        };
+
+        Ok(AnalysisResult {
+            issues,
+            metrics,
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
+    }
+
+    fn get_info() -> PluginInfo {
+        PluginInfo {
+            id: "my-analyzer".to_string(),
+            name: "My Analyzer Plugin".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Example plugin for demonstration".to_string(),
+            author: "Your Name".to_string(),
+            license: "MIT".to_string(),
+            homepage: Some("https://github.com/yourname/my-analyzer".to_string()),
+            supported_languages: vec![
+                "rust".to_string(),
+                "python".to_string(),
+                "javascript".to_string(),
+                "typescript".to_string(),
+            ],
+            detector_types: vec![IssueCategory::Documentation, IssueCategory::Quality],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![],
         }
     }
 
-    let result = PluginAnalysisResult {
-        plugin_name: "my-analyzer".to_string(),
-        issues,
-        metadata: [("analyzed_lines".to_string(), input.content.lines().count().to_string())].into(),
-    };
+    fn cleanup() -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up My Analyzer Plugin");
 
-    serde_json::to_vec(&result).unwrap_or_default()
+        if let Some(state) = MY_STATE.borrow().as_ref() {
+            log(LogLevel::Info, &format!(
+                "Analyzed {} files during session",
+                state.analysis_count
+            ));
+        }
+
+        *MY_STATE.borrow_mut() = None;
+        Ok(())
+    }
 }
 
-#[export_name = "get_plugin_info"]
-pub fn get_plugin_info() -> Vec<u8> {
-    let info = serde_json::json!({
-        "name": "my-analyzer",
-        "version": "1.0.0",
-        "description": "Example plugin for demonstration",
-        "supported_languages": ["rust", "python", "javascript", "typescript"],
-        "capabilities": ["static_analysis"]
-    });
-    
-    serde_json::to_vec(&info).unwrap_or_default()
+// Thread-local state
+thread_local! {
+    static MY_STATE: RefCell<Option<PluginState>> = RefCell::new(None);
+}
+
+// Helper function to count comment lines
+fn count_comment_lines(content: &str) -> u32 {
+    content
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            trimmed.starts_with("//")
+                || trimmed.starts_with("#")
+                || trimmed.starts_with("/*")
+                || trimmed.starts_with("*")
+        })
+        .count() as u32
 }
 ```
 
@@ -248,122 +355,176 @@ pub fn get_plugin_info() -> Vec<u8> {
 
 ### Using Host Functions
 
-Plugins can access Uveddi's core services through host functions:
+Plugins can access Uveddi's core services through host functions defined in the WIT interface:
 
 ```rust
-// Host function bindings
-extern "C" {
-    fn host_parse_ast(code_ptr: *const u8, code_len: usize, lang_ptr: *const u8, lang_len: usize) -> u64;
-    fn host_log_message(level: u32, msg_ptr: *const u8, msg_len: usize);
-    fn host_get_config(key_ptr: *const u8, key_len: usize) -> u64;
-}
+impl Guest for MyPlugin {
+    fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+        // Log messages to host
+        log(LogLevel::Info, &format!("Processing {}", file.path));
 
-// Wrapper functions for easier use
-pub fn parse_ast(code: &str, language: &str) -> Option<String> {
-    unsafe {
-        let handle = host_parse_ast(
-            code.as_ptr(), code.len(),
-            language.as_ptr(), language.len()
-        );
-        // Handle result extraction (simplified)
-        if handle != 0 {
-            Some("parsed_ast_data".to_string())
+        // Parse AST using host function
+        let ast = if let Some(ast) = file.ast {
+            ast
         } else {
-            None
-        }
-    }
-}
-
-pub fn log_info(message: &str) {
-    unsafe {
-        host_log_message(1, message.as_ptr(), message.len());
-    }
-}
-
-pub fn get_config_value(key: &str) -> Option<String> {
-    unsafe {
-        let handle = host_get_config(key.as_ptr(), key.len());
-        if handle != 0 {
-            Some("config_value".to_string())
-        } else {
-            None
-        }
-    }
-}
-```
-
-### Tree-Sitter Integration
-
-For advanced AST analysis, plugins can use tree-sitter through host functions:
-
-```rust
-pub fn analyze_with_tree_sitter(content: &str, language: &str) -> Vec<PluginIssue> {
-    let mut issues = Vec::new();
-    
-    // Parse AST using host function
-    if let Some(ast_json) = parse_ast(content, language) {
-        // Query for specific patterns
-        let query = match language {
-            "rust" => "(function_item name: (identifier) @func-name)",
-            "python" => "(function_definition name: (identifier) @func-name)",
-            "javascript" | "typescript" => "(function_declaration name: (identifier) @func-name)",
-            _ => return issues,
+            parse_ast(&file.content, &file.language)
+                .map_err(|e| format!("AST parsing failed: {}", e))?
         };
-        
-        // Execute tree-sitter query through host function
-        if let Some(matches) = execute_query(&ast_json, query) {
-            // Process query results
-            for match_data in matches {
-                if is_problematic_function(&match_data) {
-                    issues.push(PluginIssue {
-                        issue_type: "COMPLEX_FUNCTION".to_string(),
-                        severity: "WARNING".to_string(),
-                        message: "Function complexity is too high".to_string(),
-                        file_path: "current_file".to_string(),
-                        line_number: match_data.line,
-                        column: match_data.column,
-                        suggestion: Some("Consider breaking this function into smaller parts".to_string()),
-                    });
-                }
+
+        // Query AST for function definitions
+        let functions = query_ast(&ast, "(function_item) @function")
+            .unwrap_or_default();
+
+        log(LogLevel::Debug, &format!("Found {} functions", functions.len()));
+
+        // Read configuration
+        let threshold = get_config("complexity_threshold".to_string())
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(10);
+
+        // Analyze each function
+        let mut issues = Vec::new();
+        for func in functions {
+            let complexity = calculate_complexity(&func);
+            if complexity > threshold {
+                issues.push(create_complexity_issue(&func, complexity, &file));
             }
         }
+
+        Ok(AnalysisResult {
+            issues,
+            metrics: calculate_metrics(&file, &functions),
+            dependencies: vec![],
+            exports: vec![],
+            duration_ms: 0,
+            plugin_version: "1.0.0".to_string(),
+        })
     }
-    
-    issues
+}
+
+fn calculate_complexity(func: &AstNode) -> u32 {
+    // Count decision points for cyclomatic complexity
+    let mut complexity = 1;
+
+    // Query for control flow statements
+    let control_flow = [
+        "(if_statement)",
+        "(while_statement)",
+        "(for_statement)",
+        "(match_expression)",
+    ];
+
+    for query in control_flow {
+        if let Ok(nodes) = query_ast(func, query) {
+            complexity += nodes.len() as u32;
+        }
+    }
+
+    complexity
+}
+
+fn create_complexity_issue(func: &AstNode, complexity: u32, file: &SourceFile) -> Issue {
+    Issue {
+        id: format!("COMP-{}", func.span.start.line),
+        severity: if complexity > 20 {
+            SeverityLevel::High
+        } else {
+            SeverityLevel::Medium
+        },
+        category: IssueCategory::Complexity,
+        message: format!("High cyclomatic complexity: {}", complexity),
+        description: Some(format!(
+            "Function has complexity of {}, which exceeds the recommended maximum.",
+            complexity
+        )),
+        file: file.path.clone(),
+        span: func.span.clone(),
+        rule_id: Some("high-complexity".to_string()),
+        suggestion: Some("Consider breaking this function into smaller functions".to_string()),
+        fix: None,
+        metadata: vec![
+            ("complexity".to_string(), complexity.to_string()),
+        ],
+    }
 }
 ```
 
-### Plugin Configuration
+### Using Database for Caching
 
 ```rust
-use serde::{Deserialize, Serialize};
+fn analyze_with_cache(file: &SourceFile) -> Result<AnalysisResult, String> {
+    // Check cache first
+    let cache_key = format!("analysis:{}", file.hash);
 
-#[derive(Deserialize, Serialize)]
-struct PluginConfig {
-    threshold: f64,
-    ignore_patterns: Vec<String>,
-    max_issues_per_file: usize,
-    enable_suggestions: bool,
+    if let Some(cached) = db_get(cache_key.clone()) {
+        log(LogLevel::Debug, "Using cached analysis results");
+        // In a real implementation, you'd deserialize the cached result
+        // For now, we'll just skip re-analysis
+    }
+
+    // Perform analysis
+    let result = perform_analysis(file)?;
+
+    // Cache results with 1-hour TTL
+    let serialized = format!("{:?}", result); // Use proper serialization
+    db_set(cache_key, serialized, Some(3600))?;
+
+    Ok(result)
 }
+```
 
-impl Default for PluginConfig {
-    fn default() -> Self {
-        Self {
-            threshold: 0.8,
-            ignore_patterns: vec!["test".to_string(), "vendor".to_string()],
-            max_issues_per_file: 50,
-            enable_suggestions: true,
+### Multi-Language Support
+
+```rust
+fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+    // Dispatch to language-specific analyzer
+    match file.language.as_str() {
+        "rust" => analyze_rust(&file),
+        "python" => analyze_python(&file),
+        "javascript" | "typescript" => analyze_javascript(&file),
+        _ => {
+            log(LogLevel::Warn, &format!(
+                "Unsupported language: {}",
+                file.language
+            ));
+            Ok(AnalysisResult::default())
         }
     }
 }
 
-pub fn load_config() -> PluginConfig {
-    // Try to load from host configuration
-    if let Some(config_json) = get_config_value("my_analyzer.config") {
-        serde_json::from_str(&config_json).unwrap_or_default()
-    } else {
-        PluginConfig::default()
+fn analyze_rust(file: &SourceFile) -> Result<AnalysisResult, String> {
+    let ast = parse_ast(&file.content, "rust")?;
+
+    // Rust-specific queries
+    let unsafe_blocks = query_ast(&ast, "(unsafe_block) @unsafe")?;
+    let unwraps = query_ast(&ast, "(call_expression function: (field_expression field: (field_identifier) @method (#eq? @method \"unwrap\"))) @call")?;
+
+    let mut issues = Vec::new();
+
+    for block in unsafe_blocks {
+        issues.push(Issue {
+            id: format!("RUST-UNSAFE-{}", block.span.start.line),
+            severity: SeverityLevel::Medium,
+            category: IssueCategory::Security,
+            message: "Unsafe block detected".to_string(),
+            description: Some("Consider if this unsafe block is necessary".to_string()),
+            file: file.path.clone(),
+            span: block.span,
+            rule_id: Some("unsafe-block".to_string()),
+            suggestion: Some("Document why unsafe is required here".to_string()),
+            fix: None,
+            metadata: vec![],
+        });
     }
+
+    Ok(AnalysisResult {
+        issues,
+        metrics: Metrics::default(),
+        dependencies: vec![],
+        exports: vec![],
+        duration_ms: 0,
+        plugin_version: "1.0.0".to_string(),
+    })
 }
 ```
 
@@ -371,81 +532,62 @@ pub fn load_config() -> PluginConfig {
 
 ### Capability-Based Security Model
 
-Uveddi uses a capability-based security model where plugins must explicitly declare required permissions:
+Uveddi uses a capability-based security model where plugins must explicitly declare required permissions.
 
-```rust
-pub enum Permission {
-    // File system access
-    FileRead(PathBuf),          // Read specific files or directories
-    FileWrite(PathBuf),         // Write to specific files or directories
-    TempFileCreate,             // Create temporary files in sandboxed directory
-    
-    // Network access  
-    NetworkConnect(String),     // Connect to specific URLs or domains
-    NetworkListen(u16),         // Listen on specific ports (rarely granted)
-    
-    // Configuration access
-    ConfigRead,                 // Read project configuration
-    ConfigWrite,                // Modify project configuration
-    
-    // System interaction
-    EnvRead(String),           // Read specific environment variables
-    ProcessSpawn(String),       // Execute specific external commands
-    
-    // Uveddi services
-    Logging,                   // Write to log output
-    DatabaseRead,              // Read from analysis database
-    DatabaseWrite,             // Write to analysis database
-    
-    // Advanced features
-    PluginCommunication,       // Communicate with other plugins
-    HostFunctionCall(String),  // Call additional host functions
+### Permission Types
+
+```wit
+flags permission {
+    read-files,       // Read files from the file system
+    write-files,      // Write files to the file system
+    network-access,   // Make network requests
+    system-info,      // Access system information
+    environment-vars, // Read environment variables
+    spawn-processes,  // Execute external processes
 }
 ```
 
-### Security Best Practices
+### Declaring Permissions
 
-1. **Minimal Permissions**: Request only the minimum permissions required for functionality
-2. **Input Validation**: Validate all inputs thoroughly before processing
-3. **Output Sanitization**: Sanitize all outputs to prevent injection attacks
-4. **Error Handling**: Implement comprehensive error handling without leaking sensitive information
-5. **Resource Management**: Implement efficient resource usage and cleanup
-6. **Secure Dependencies**: Use only necessary dependencies and keep them updated
-7. **Testing**: Include security-focused testing in your test suite
+```toml
+# plugin.toml
+[capabilities]
+permissions = ["ReadFiles", "Logging"]
 
-### Input Validation Example
+[capabilities.limits]
+max_memory_mb = 64
+max_execution_seconds = 30
+fuel_limit = 2000000
+```
+
+### Input Validation Best Practices
 
 ```rust
 const MAX_FILE_SIZE: usize = 10 * 1024 * 1024; // 10MB
-const MAX_CONTENT_LENGTH: usize = 1024 * 1024; // 1MB
-const ALLOWED_LANGUAGES: &[&str] = &["rust", "python", "javascript", "typescript"];
+const MAX_LINE_LENGTH: usize = 10_000;
 
-pub fn validate_input(input: &PluginFileInput) -> Result<(), String> {
-    // Check file path
-    if input.file_path.is_empty() || input.file_path.len() > 1000 {
-        return Err("Invalid file path".to_string());
+fn validate_input(file: &SourceFile) -> Result<(), String> {
+    // Check file size
+    if file.content.len() > MAX_FILE_SIZE {
+        return Err("File too large for analysis".to_string());
     }
-    
-    // Prevent path traversal
-    if input.file_path.contains("..") || input.file_path.contains("//") {
-        return Err("Path traversal detected".to_string());
+
+    // Check for extremely long lines (potential DoS)
+    for (i, line) in file.content.lines().enumerate() {
+        if line.len() > MAX_LINE_LENGTH {
+            log(LogLevel::Warn, &format!(
+                "Line {} exceeds maximum length, truncating",
+                i + 1
+            ));
+        }
     }
-    
-    // Check content size
-    if input.content.len() > MAX_CONTENT_LENGTH {
-        return Err("Content too large".to_string());
-    }
-    
+
     // Validate language
-    if !ALLOWED_LANGUAGES.contains(&input.language.as_str()) {
-        return Err(format!("Unsupported language: {}", input.language));
+    let supported = ["rust", "python", "javascript", "typescript"];
+    if !supported.contains(&file.language.as_str()) {
+        return Err(format!("Unsupported language: {}", file.language));
     }
-    
-    // Check for null bytes
-    if input.content.contains('\0') || input.file_path.contains('\0') {
-        return Err("Null bytes not allowed".to_string());
-    }
-    
+
     Ok(())
 }
 ```
@@ -455,44 +597,65 @@ pub fn validate_input(input: &PluginFileInput) -> Result<(), String> {
 ### Memory Management
 
 ```rust
-// Efficient memory usage patterns
-use std::collections::HashMap;
+fn analyze_large_file(file: &SourceFile) -> Result<AnalysisResult, String> {
+    let mut issues = Vec::with_capacity(100); // Pre-allocate
 
-pub struct EfficientAnalyzer {
-    issue_cache: HashMap<String, Vec<PluginIssue>>,
-    pattern_cache: Vec<regex::Regex>,
-}
+    // Process in chunks for large files
+    let chunk_size = 1000;
+    let lines: Vec<&str> = file.content.lines().collect();
 
-impl EfficientAnalyzer {
-    pub fn new() -> Self {
-        Self {
-            issue_cache: HashMap::with_capacity(100),
-            pattern_cache: Vec::with_capacity(10),
-        }
-    }
-    
-    pub fn analyze_efficiently(&mut self, input: &PluginFileInput) -> Vec<PluginIssue> {
-        // Check cache first
-        if let Some(cached) = self.issue_cache.get(&input.file_path) {
-            return cached.clone();
-        }
-        
-        let mut issues = Vec::with_capacity(20); // Pre-allocate
-        
-        // Process in chunks to manage memory
-        let chunk_size = 1000;
-        for chunk in input.content.lines().collect::<Vec<_>>().chunks(chunk_size) {
-            for (local_line_num, line) in chunk.iter().enumerate() {
-                // Process line efficiently
-                if let Some(issue) = self.check_line_fast(line, local_line_num) {
-                    issues.push(issue);
+    for (chunk_idx, chunk) in lines.chunks(chunk_size).enumerate() {
+        let base_line = chunk_idx * chunk_size;
+
+        for (line_idx, line) in chunk.iter().enumerate() {
+            let line_num = base_line + line_idx;
+
+            if let Some(issue) = check_line(line, line_num, file) {
+                issues.push(issue);
+
+                // Respect max issues limit
+                if issues.len() >= 100 {
+                    log(LogLevel::Warn, "Maximum issues reached, stopping analysis");
+                    break;
                 }
             }
         }
-        
-        // Cache results
-        self.issue_cache.insert(input.file_path.clone(), issues.clone());
-        issues
+    }
+
+    Ok(AnalysisResult {
+        issues,
+        metrics: Metrics::default(),
+        dependencies: vec![],
+        exports: vec![],
+        duration_ms: 0,
+        plugin_version: "1.0.0".to_string(),
+    })
+}
+```
+
+### Caching Strategies
+
+```rust
+use std::collections::HashMap;
+
+struct PluginState {
+    config: PluginConfig,
+    // Cache parsed patterns
+    pattern_cache: HashMap<String, CompiledPattern>,
+    // Cache file hashes to avoid re-analysis
+    analyzed_files: HashMap<String, String>,
+}
+
+impl PluginState {
+    fn should_analyze(&self, file: &SourceFile) -> bool {
+        match self.analyzed_files.get(&file.path) {
+            Some(cached_hash) => cached_hash != &file.hash,
+            None => true,
+        }
+    }
+
+    fn mark_analyzed(&mut self, file: &SourceFile) {
+        self.analyzed_files.insert(file.path.clone(), file.hash.clone());
     }
 }
 ```
@@ -500,7 +663,7 @@ impl EfficientAnalyzer {
 ### Performance Requirements
 
 - **Initialization**: < 1000ms
-- **Analysis**: < 100ms per file
+- **Analysis**: < 100ms per file (for typical file sizes)
 - **Memory Usage**: < 100MB per plugin
 - **Integration Impact**: < 10% overhead on core system
 
@@ -512,41 +675,50 @@ impl EfficientAnalyzer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
-    #[test]
-    fn test_analyze_file_with_todos() {
-        let input = PluginFileInput {
-            file_path: "test.rs".to_string(),
-            content: "// TODO: Fix this\nfn main() {}".to_string(),
-            language: "rust".to_string(),
-        };
-        
-        let input_bytes = serde_json::to_vec(&input).unwrap();
-        let result_bytes = analyze_file(&input_bytes);
-        
-        let result: PluginAnalysisResult = serde_json::from_slice(&result_bytes).unwrap();
-        
-        assert_eq!(result.plugin_name, "my-analyzer");
-        assert_eq!(result.issues.len(), 1);
-        assert_eq!(result.issues[0].issue_type, "TODO_COMMENT");
-        assert_eq!(result.issues[0].line_number, Some(1));
+
+    fn create_test_file(content: &str, language: &str) -> SourceFile {
+        SourceFile {
+            path: "test.rs".to_string(),
+            content: content.to_string(),
+            language: language.to_string(),
+            size: content.len() as u32,
+            hash: format!("{:x}", content.len()),
+            ast: None,
+        }
     }
-    
+
     #[test]
-    fn test_plugin_info() {
-        let info_bytes = get_plugin_info();
-        let info: serde_json::Value = serde_json::from_slice(&info_bytes).unwrap();
-        
-        assert_eq!(info["name"], "my-analyzer");
-        assert_eq!(info["version"], "1.0.0");
-        assert!(info["supported_languages"].as_array().unwrap().contains(&"rust".into()));
+    fn test_todo_detection() {
+        let file = create_test_file(
+            "fn main() {\n    // TODO: implement\n    println!(\"Hello\");\n}",
+            "rust",
+        );
+
+        // Note: In tests, you'd mock the host functions
+        // This is a simplified example
+        let issues = find_todos(&file.content, &file.path);
+
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].rule_id, Some("todo-comment".to_string()));
+        assert_eq!(issues[0].span.start.line, 2);
     }
-    
+
     #[test]
-    fn test_config_loading() {
-        let config = PluginConfig::default();
-        assert_eq!(config.threshold, 0.8);
-        assert!(config.enable_suggestions);
+    fn test_empty_file() {
+        let file = create_test_file("", "rust");
+        let issues = find_todos(&file.content, &file.path);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_metrics_calculation() {
+        let file = create_test_file(
+            "// Comment\nfn main() {\n    println!(\"Hello\");\n}\n",
+            "rust",
+        );
+
+        let comment_lines = count_comment_lines(&file.content);
+        assert_eq!(comment_lines, 1);
     }
 }
 ```
@@ -573,9 +745,9 @@ uveddi analyze test-data/ --plugins my-analyzer --output-format json --output te
 
 echo "Verifying results..."
 if jq -e '.issues[] | select(.detector == "my-analyzer")' test-results.json > /dev/null; then
-    echo "✅ Plugin integration successful"
+    echo "Plugin integration successful"
 else
-    echo "❌ Plugin integration failed"
+    echo "Plugin integration failed"
     exit 1
 fi
 ```
@@ -595,28 +767,26 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-uveddi-plugin-api = "0.9"
+wit-bindgen = "0.16"
 
 [profile.release]
 opt-level = "z"     # Optimize for size
 lto = true
 codegen-units = 1
+strip = true
 ```
 
 ### Build Process
 
 ```bash
 # Build the plugin
-wasm-pack build --target web --out-dir pkg
+cargo build --release --target wasm32-wasi
 
-# Optimize the WASM file
-wasm-opt -Oz pkg/my_plugin_bg.wasm -o pkg/my_plugin_opt.wasm
+# The output will be at:
+# target/wasm32-wasi/release/my_plugin.wasm
 
-# Package for distribution
-zip -r my-plugin.zip pkg/ plugin.toml README.md
+# Optionally optimize further with wasm-tools
+wasm-tools strip target/wasm32-wasi/release/my_plugin.wasm -o my_plugin.wasm
 ```
 
 ### Makefile
@@ -624,15 +794,17 @@ zip -r my-plugin.zip pkg/ plugin.toml README.md
 ```makefile
 .PHONY: build test install clean release
 
+PLUGIN_NAME := my_analyzer
+TARGET := wasm32-wasi
+
 # Development build
 build:
-	cargo build --target wasm32-wasi
+	cargo build --target $(TARGET)
 
 # Optimized production build
 release:
-	cargo build --release --target wasm32-wasi
-	wasm-strip target/wasm32-wasi/release/$(PLUGIN_NAME).wasm
-	wasm-opt -Os target/wasm32-wasi/release/$(PLUGIN_NAME).wasm -o target/wasm32-wasi/release/$(PLUGIN_NAME).optimized.wasm
+	cargo build --release --target $(TARGET)
+	wasm-tools strip target/$(TARGET)/release/$(PLUGIN_NAME).wasm -o $(PLUGIN_NAME).wasm
 
 # Run tests
 test:
@@ -641,15 +813,13 @@ test:
 
 # Install plugin locally
 install: release
-	uveddi plugin install target/wasm32-wasi/release/$(PLUGIN_NAME).optimized.wasm
+	uveddi plugin install $(PLUGIN_NAME).wasm
 
 # Clean build artifacts
 clean:
 	cargo clean
+	rm -f $(PLUGIN_NAME).wasm
 	rm -f test-results.json
-
-PLUGIN_NAME := my_analyzer
-VERSION := $(shell grep '^version' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
 ```
 
 ## Distribution
@@ -661,7 +831,7 @@ VERSION := $(shell grep '^version' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
 uveddi plugin login
 
 # Publish plugin
-uveddi plugin publish ./my-plugin.zip
+uveddi plugin publish ./my-plugin.wasm
 
 # Plugin will be available at:
 # https://plugins.uveddi.io/my-plugin
@@ -683,39 +853,36 @@ uveddi plugin install registry:my-plugin@1.0.0
 ## Best Practices
 
 ### Code Quality
-- ✅ Use proper error handling with Result types
-- ✅ Implement comprehensive input validation
-- ✅ Add detailed logging and diagnostics
-- ✅ Write extensive unit and integration tests
-- ✅ Follow Rust idioms and conventions
+
+- Use proper error handling with `Result` types
+- Implement comprehensive input validation
+- Add detailed logging at appropriate levels
+- Write extensive unit and integration tests
+- Follow Rust idioms and conventions
 
 ### Security
-- ✅ Validate all inputs thoroughly
-- ✅ Sanitize all outputs
-- ✅ Use minimal required permissions
-- ✅ Implement resource limits
-- ✅ Avoid unsafe operations when possible
+
+- Validate all inputs thoroughly
+- Request only minimum required permissions
+- Implement resource limits
+- Avoid unsafe operations when possible
+- Never log sensitive information
 
 ### Performance
-- ✅ Pre-allocate collections when size is known
-- ✅ Use efficient data structures
-- ✅ Implement caching for repeated operations
-- ✅ Process data in batches for large files
-- ✅ Monitor memory usage and optimize
+
+- Pre-allocate collections when size is known
+- Use efficient data structures
+- Implement caching for repeated operations
+- Process data in batches for large files
+- Monitor memory usage and optimize
 
 ### Integration
-- ✅ Follow Uveddi's plugin interface exactly
-- ✅ Use consistent error reporting patterns
-- ✅ Provide meaningful metadata
-- ✅ Implement proper plugin information
-- ✅ Test with real-world codebases
 
-### Maintenance
-- ✅ Keep dependencies up to date
-- ✅ Version your plugin releases
-- ✅ Maintain comprehensive documentation
-- ✅ Provide migration guides for updates
-- ✅ Monitor plugin performance in production
+- Follow Uveddi's plugin interface exactly
+- Use consistent error reporting patterns
+- Provide meaningful metadata
+- Test with real-world codebases
+- Document plugin behavior clearly
 
 ## Troubleshooting
 
@@ -724,39 +891,44 @@ uveddi plugin install registry:my-plugin@1.0.0
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | Plugin fails to load | Invalid WASM binary | Check build target is `wasm32-wasi` |
-| `analyze_file` not found | Missing export name | Add `#[export_name = "analyze_file"]` |
-| Deserialization errors | Mismatched data structures | Ensure input/output structures match Uveddi's expectations |
-| Memory allocation failures | Too much memory usage | Implement efficient memory management |
-| Host function errors | Incorrect function signatures | Check host function bindings match Uveddi's API |
-| Permission denied | Insufficient plugin permissions | Update plugin manifest with required permissions |
+| `Guest` trait not found | Missing wit_bindgen | Add `wit_bindgen::generate!` macro |
+| Host function errors | Incorrect function usage | Check WIT interface definitions |
+| Memory allocation failures | Exceeding limits | Optimize memory usage, increase limits |
+| Permission denied | Missing permissions | Update plugin manifest with required permissions |
 
 ### Debug Logging
 
 ```rust
-// Enable debug logging
-#[wasm_bindgen]
-impl Plugin {
-    pub fn debug_analyze(&self, code: &str) {
-        log_debug(&format!("Starting analysis of {} bytes", code.len()));
-        
-        let start = js_sys::Date::now();
-        let result = self.analyze(code, "rust");
-        let duration = js_sys::Date::now() - start;
-        
-        log_info(&format!("Analysis completed in {}ms", duration));
-        log_debug(&format!("Found {} issues", result.issues.len()));
-    }
+fn analyze(file: SourceFile) -> Result<AnalysisResult, String> {
+    log(LogLevel::Debug, &format!("Starting analysis of {} bytes", file.content.len()));
+
+    let start = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+
+    let result = perform_analysis(&file)?;
+
+    let end = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+
+    log(LogLevel::Info, &format!(
+        "Analysis completed in {}ms, found {} issues",
+        end - start,
+        result.issues.len()
+    ));
+
+    Ok(result)
 }
 ```
 
-### Performance Issues
+### Performance Profiling
 
 ```bash
 # Profile plugin performance
 uveddi plugin profile my-plugin ./test_data
-
-# Optimize WASM size
-wasm-opt -O3 plugin.wasm -o plugin_opt.wasm
 
 # Monitor memory usage
 uveddi plugin monitor --duration 60s
@@ -766,10 +938,9 @@ uveddi plugin monitor --duration 60s
 
 - [Plugin API Reference](api-reference.md)
 - [Plugin Examples](examples.md)
-- [Plugin Registry](https://plugins.uveddi.io)
-- [WebAssembly MDN Docs](https://developer.mozilla.org/en-US/docs/WebAssembly)
-- [wasm-bindgen Book](https://rustwasm.github.io/wasm-bindgen/)
-- [Tree-sitter Documentation](https://tree-sitter.github.io/tree-sitter/)
+- [WIT Interface Definition](../../../wit/core-analysis.wit)
+- [WebAssembly Component Model](https://component-model.bytecodealliance.org/)
+- [wit-bindgen Documentation](https://github.com/bytecodealliance/wit-bindgen)
 
 ## Support
 
@@ -784,4 +955,4 @@ uveddi plugin monitor --duration 60s
 - Contribute to plugin development tools
 - Share examples and tutorials
 
-This guide provides a comprehensive foundation for developing high-quality WASM plugins for Uveddi's analysis engine.
+This guide provides a comprehensive foundation for developing high-quality WASM plugins for Uveddi's analysis engine using the WebAssembly Component Model.
