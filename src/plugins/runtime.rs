@@ -5,7 +5,7 @@
 //! It integrates with Wasmtime and the WebAssembly Component Model.
 
 use crate::error::UveddiError;
-use crate::plugins::{host_functions::HostContext, types::PluginId, PluginError, SecurityPolicy};
+use crate::plugins::{types::{HostContext, PluginId}, HostContextFactory, PluginError, SecurityPolicy};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -31,8 +31,8 @@ pub struct RuntimeConfig {
     pub plugin_id: PluginId,
     /// Security policy for this plugin
     pub security_policy: SecurityPolicy,
-    /// Host context for plugin execution
-    pub host_context: HostContext,
+    /// Host context factory for plugin execution
+    pub host_context_factory: HostContextFactory,
     /// Resource limits
     pub resource_limits: RuntimeResourceLimits,
     /// Fuel limits for execution
@@ -142,7 +142,7 @@ impl PluginRuntime {
         &self,
         plugin_id: PluginId,
         security_policy: SecurityPolicy,
-        host_context: HostContext,
+        host_context_factory: HostContextFactory,
     ) -> Result<(), UveddiError> {
         if !self.initialized {
             return Err(UveddiError::PluginError {
@@ -159,7 +159,7 @@ impl PluginRuntime {
         let runtime_config = RuntimeConfig {
             plugin_id: plugin_id.clone(),
             security_policy: security_policy.clone(),
-            host_context,
+            host_context_factory,
             resource_limits: RuntimeResourceLimits::default(),
             fuel_limit: self.global_config.default_fuel_limit,
             memory_limit: self.global_config.default_memory_limit,

@@ -9,6 +9,11 @@ use wasmtime::component::ResourceTable;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::WasiP1Ctx;
 #[cfg(feature = "wasm-plugins")]
+use crate::analysis::AnalysisEngine;
+use crate::database::ScalableDatabase;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+#[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::{WasiCtxView, WasiView};
 
 /// Unique identifier for a plugin instance
@@ -87,10 +92,46 @@ pub struct HostState {
 pub struct HostContext {
     /// Host state containing plugin configuration and limits
     pub host_state: HostState,
+    
     /// WASI Preview 1 context for system interface
     pub wasi_ctx: WasiP1Ctx,
+    
     /// Resource table for WASI host trait implementation
     pub table: ResourceTable,
+    
+    /// Database connection for storing and retrieving analysis results
+    pub database: Arc<ScalableDatabase>,
+    
+    /// Analysis engine for AST parsing and code analysis
+    pub analysis_engine: Arc<RwLock<AnalysisEngine>>,
+    
+    /// Configuration store (runtime)
+    pub config_store: Arc<RwLock<HashMap<String, String>>>,
+    
+    /// File cache for parsed ASTs
+    pub ast_cache: Arc<RwLock<HashMap<String, crate::analysis::components::ast_provider::ParsedFile>>>,
+}
+
+#[cfg(feature = "wasm-plugins")]
+impl HostContext {
+    /// Create a new host context
+    pub fn new(
+        host_state: HostState,
+        wasi_ctx: WasiP1Ctx,
+        table: ResourceTable,
+        database: Arc<ScalableDatabase>,
+        analysis_engine: Arc<RwLock<AnalysisEngine>>,
+    ) -> Self {
+        Self {
+            host_state,
+            wasi_ctx,
+            table,
+            database,
+            analysis_engine,
+            config_store: Arc::new(RwLock::new(HashMap::new())),
+            ast_cache: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
 }
 
 #[cfg(feature = "wasm-plugins")]
@@ -100,6 +141,10 @@ impl std::fmt::Debug for HostContext {
             .field("host_state", &self.host_state)
             .field("wasi_ctx", &"<WasiP1Ctx>")
             .field("table", &"<ResourceTable>")
+            .field("database", &"<database>")
+            .field("analysis_engine", &"<analysis_engine>")
+            .field("config_store", &"<config_store>")
+            .field("ast_cache", &"<ast_cache>")
             .finish()
     }
 }

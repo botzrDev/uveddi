@@ -53,12 +53,9 @@ pub mod types;
 pub mod verification;
 
 // Component Model host implementation
-#[cfg(feature = "wasm-plugins")]
-pub mod component_host;
-
-// Component Model plugin loader
-#[cfg(feature = "wasm-plugins")]
-pub mod component_loader;
+// Obsolete modules removed
+// pub mod component_host;
+// pub mod component_loader;
 
 // Knowledge plugin system modules
 pub mod development;
@@ -69,7 +66,9 @@ pub mod knowledge;
 pub use data_plane::AstDataPlane;
 pub use engine::WasmPluginEngine;
 pub use errors::PluginError;
-pub use host_functions::{HostContext, HostContextFactory, HostFunctions};
+#[cfg(feature = "wasm-plugins")]
+pub use types::HostContext;
+pub use host_functions::{HostContextFactory, HostFunctions};
 // Note: PluginResult is deprecated - use crate::error::Result<T> instead
 pub use lifecycle::{
     PluginAnalysisResult, PluginIssueResult, PluginLifecycleManager, PluginMetrics, ResourceReport,
@@ -106,6 +105,7 @@ pub mod wasm {
     wasmtime::component::bindgen!({
         path: "wit/core-analysis.wit",
         world: "core-analysis",
+        require_store_data_send: true,
     });
 }
 

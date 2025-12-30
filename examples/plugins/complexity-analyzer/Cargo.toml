@@ -14,7 +14,7 @@ categories = ["development-tools", "algorithms"]
 crate-type = ["cdylib"]
 
 [dependencies]
-wit-bindgen = "0.30.0"
+wit_bindgen = "0.44.0"
 
 [package.metadata.component]
 package = "uveddi:complexity-analyzer"

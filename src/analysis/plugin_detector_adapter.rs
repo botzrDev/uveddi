@@ -9,8 +9,12 @@ use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::plugins::{
-    host_functions::{HostContext, PluginIssue},
-    PluginId, PluginRuntime, WasmPluginEngine,
+    host_functions::PluginIssue,
+    types::{HostContext, PluginId},
+    HostContextFactory,
+    PluginAnalysisResult,
+    PluginRuntime,
+    WasmPluginEngine,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -24,8 +28,6 @@ pub struct PluginDetectorAdapter {
     plugin_id: PluginId,
     /// Plugin name for display
     plugin_name: String,
-    /// Host context for plugin execution
-    host_context: HostContext,
     /// Plugin runtime for execution
     runtime: Arc<RwLock<PluginRuntime>>,
     /// Plugin binary for execution
@@ -68,7 +70,6 @@ impl PluginDetectorAdapter {
     pub fn new(
         plugin_id: PluginId,
         plugin_name: String,
-        host_context: HostContext,
         runtime: Arc<RwLock<PluginRuntime>>,
         plugin_binary: Vec<u8>,
         supported_anti_patterns: Vec<AntiPatternType>,
@@ -76,7 +77,6 @@ impl PluginDetectorAdapter {
         Self {
             plugin_id,
             plugin_name,
-            host_context,
             runtime,
             plugin_binary,
             supported_anti_patterns,
@@ -88,7 +88,6 @@ impl PluginDetectorAdapter {
     pub fn with_config(
         plugin_id: PluginId,
         plugin_name: String,
-        host_context: HostContext,
         runtime: Arc<RwLock<PluginRuntime>>,
         plugin_binary: Vec<u8>,
         supported_anti_patterns: Vec<AntiPatternType>,
@@ -97,7 +96,6 @@ impl PluginDetectorAdapter {
         Self {
             plugin_id,
             plugin_name,
-            host_context,
             runtime,
             plugin_binary,
             supported_anti_patterns,
@@ -328,12 +326,16 @@ impl PluginDetectorManager {
 
         // Register plugin with runtime
         {
+            let factory = HostContextFactory::new(
+                host_context.database.clone(),
+                host_context.analysis_engine.clone(),
+            );
             let runtime = self.runtime.read().await;
             runtime
                 .register_plugin(
                     plugin_id.clone(),
-                    host_context.security_policy().clone(),
-                    host_context.clone(),
+                    host_context.host_state.security_policy.clone(),
+                    factory,
                 )
                 .await?;
         }
@@ -342,7 +344,6 @@ impl PluginDetectorManager {
         let adapter = Arc::new(PluginDetectorAdapter::new(
             plugin_id.clone(),
             plugin_name.clone(),
-            host_context,
             self.runtime.clone(),
             plugin_binary,
             supported_anti_patterns,

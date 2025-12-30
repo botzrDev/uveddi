@@ -15,11 +15,15 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime::{Engine, Linker, Module, Store};
+use wasmtime::component::{Component, Linker};
+#[cfg(feature = "wasm-plugins")]
+use wasmtime::{Engine, Store};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::{self, WasiP1Ctx};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::{WasiCtxBuilder, WasiView};
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::wasm::CoreAnalysis;
 
 /// Result type for plugin analysis
 #[derive(Debug, Clone)]
@@ -107,8 +111,8 @@ impl PluginLifecycleManager {
         #[cfg(feature = "wasm-plugins")]
         {
             let engine = wasmtime::Engine::new(&security_policy.configure_engine()?)?;
-            let module = wasmtime::Module::new(&engine, &binary)?;
-            let mut linker = wasmtime::Linker::<HostContext>::new(&engine);
+            let component = Component::new(&engine, &binary)?;
+            let mut linker = Linker::<HostContext>::new(&engine);
 
             // Configure host state
             let host_state = HostState {
@@ -121,36 +125,52 @@ impl PluginLifecycleManager {
             // Configure WASI
             let wasi_ctx = security_policy.configure_wasi_context()?.build_p1();
 
-            // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
+            // Add WASI to linker
             wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |host: &mut HostContext| {
                 &mut host.wasi_ctx
             })?;
 
             // Add our custom host functions
-            self.add_host_functions(&mut linker)?;
+            crate::plugins::wasm::CoreAnalysis::add_to_linker(&mut linker, |host: &mut HostContext| host)?;
 
             // Create store with fuel and memory limits
             let resource_table = wasmtime::component::ResourceTable::new();
-            let host_context = HostContext {
+            let host_context = HostContext::new(
+                 // In a real app we'd inject these dependencies properly. 
+                 // For now, we mock/stub or use globals if available, but here we create fresh ones 
+                 // because PluginLifecycleManager doesn't hold these dependencies in this struct.
+                 // TODO: Pass dependencies to load_plugin
+                 Arc::new(crate::database::ScalableDatabase::new_in_memory()), 
+                 Arc::new(RwLock::new(crate::analysis::AnalysisEngine::new())),
+                 security_policy.clone(),
+                 plugin_id.clone(),
+            );
+            
+            // We need to overwrite the partially created host_context from above with correct one
+             let host_context = HostContext {
                 host_state,
                 wasi_ctx,
                 table: resource_table,
+                database: Arc::new(crate::database::ScalableDatabase::new_in_memory()), // Placeholder
+                analysis_engine: Arc::new(RwLock::new(crate::analysis::AnalysisEngine::new())), // Placeholder
+                config_store: Arc::new(RwLock::new(HashMap::new())),
+                ast_cache: Arc::new(RwLock::new(HashMap::new())),
             };
+
             let mut store = wasmtime::Store::new(&engine, host_context);
             store.set_fuel(security_policy.resource_limits.max_fuel)?;
-            // Note: Resource limiting would be configured here in a real implementation
 
             // Instantiate the component
-            let instance = linker.instantiate(&mut store, &module)?;
+            let (bindings, _instance) = CoreAnalysis::instantiate(&mut store, &component, &linker)?;
 
             // Create active plugin wrapper
             let active_plugin = ActivePlugin::new(
                 plugin_id.clone(),
                 manifest,
                 engine,
-                module,
+                component,
                 store,
-                instance,
+                bindings,
                 AstHandleManager::new(),
             );
 
@@ -232,13 +252,9 @@ impl PluginLifecycleManager {
     #[cfg(feature = "wasm-plugins")]
     fn add_host_functions(
         &self,
-        _linker: &mut wasmtime::Linker<HostContext>,
+        _linker: &mut wasmtime::component::Linker<HostContext>,
     ) -> crate::error::Result<()> {
-        // NOTE: UV-108 - Component model host functions require WIT interface definitions
-        // This would be implemented using proper WIT files and generated bindings
-        // For now, we'll just return OK to get the basic loading working
-
-        tracing::info!("Host functions would be registered here with proper WIT bindings");
+        // NOTE: Host functions are now added via CoreAnalysis::add_to_linker in load_plugin
         Ok(())
     }
 
@@ -284,11 +300,11 @@ pub struct ActivePlugin {
     #[cfg(feature = "wasm-plugins")]
     engine: wasmtime::Engine,
     #[cfg(feature = "wasm-plugins")]
-    module: wasmtime::Module,
+    component: wasmtime::component::Component,
     #[cfg(feature = "wasm-plugins")]
     store: std::sync::Arc<std::sync::Mutex<wasmtime::Store<HostContext>>>,
     #[cfg(feature = "wasm-plugins")]
-    instance: wasmtime::Instance,
+    bindings: CoreAnalysis,
     ast_handles: AstHandleManager,
 }
 
@@ -298,9 +314,9 @@ impl ActivePlugin {
         id: PluginId,
         manifest: PluginManifest,
         engine: wasmtime::Engine,
-        module: wasmtime::Module,
+        component: wasmtime::component::Component,
         store: wasmtime::Store<HostContext>,
-        instance: wasmtime::Instance,
+        bindings: CoreAnalysis,
         ast_handles: AstHandleManager,
     ) -> Self {
         Self {
@@ -309,9 +325,9 @@ impl ActivePlugin {
             stats: PluginStats::default(),
             status: PluginStatus::Ready,
             engine,
-            module,
+            component,
             store: Arc::new(std::sync::Mutex::new(store)),
-            instance,
+            bindings,
             ast_handles,
         }
     }
@@ -322,12 +338,8 @@ impl ActivePlugin {
         {
             // Call the cleanup function if it exists
             if let Ok(mut store_guard) = self.store.lock() {
-                if let Ok(cleanup_func) = self
-                    .instance
-                    .get_typed_func::<(), ()>(&mut *store_guard, "cleanup")
-                {
-                    cleanup_func.call(&mut *store_guard, ())?;
-                }
+                // Ignore result of cleanup for now
+                let _ = self.bindings.call_cleanup(&mut *store_guard);
             }
         }
 
@@ -354,8 +366,8 @@ impl ActivePlugin {
             PluginError::Execution(format!("Failed to acquire store lock: {}", e))
         })?;
 
-        // Prepare the input data as JSON
-        // Use a simple hash calculation instead of md5 crate
+        // Prepare input
+        // Use a simple hash calculation
         let content_hash = {
             let mut hash: u64 = 0;
             for byte in file_content.bytes() {
@@ -363,95 +375,58 @@ impl ActivePlugin {
             }
             format!("{:016x}", hash)
         };
-        let input_json = serde_json::json!({
-            "path": file_path,
-            "content": file_content,
-            "language": language,
-            "size": file_content.len() as u32,
-            "hash": content_hash,
-        });
-        let input_str = serde_json::to_string(&input_json)
-            .map_err(|e| PluginError::Execution(format!("JSON serialization failed: {}", e)))?;
 
-        // Get the analyze function from the instance
-        // Note: The exact function signature depends on how the WASM module is compiled.
-        // For core modules with JSON interface:
-        // - Input: pointer to JSON string, length
-        // - Output: pointer to result JSON string, length
+        // Construct source file record
+        let source_file = crate::plugins::wasm::uveddi::core_analysis::SourceFile {
+            path: file_path.to_string(),
+            content: file_content.to_string(),
+            language: language.to_string(),
+            size: file_content.len() as u32,
+            hash: content_hash,
+            ast: None, // We don't provide pre-parsed AST yet
+        };
 
-        // First, we need to allocate memory in the WASM module for the input
-        let memory = self.instance
-            .get_memory(&mut *store_guard, "memory")
-            .ok_or_else(|| PluginError::Execution("No memory export found".to_string()))?;
+        // Call the component function
+        let result = self.bindings.call_analyze(&mut *store_guard, &source_file)
+            .map_err(|e| PluginError::Execution(format!("Component analyze call failed: {}", e)))?;
+            
+        // Handle the Result<AnalysisResult, String> returned by the plugin
+        match result {
+            Ok(analysis) => self.convert_analysis_result(analysis, start_time.elapsed().as_millis() as u32),
+            Err(e) => Err(PluginError::Execution(format!("Plugin analysis reported error: {}", e))),
+        }
+    }
 
-        // Try to get the alloc function
-        let alloc_func = self.instance
-            .get_typed_func::<i32, i32>(&mut *store_guard, "alloc")
-            .or_else(|_| self.instance.get_typed_func::<i32, i32>(&mut *store_guard, "__alloc"))
-            .or_else(|_| self.instance.get_typed_func::<i32, i32>(&mut *store_guard, "malloc"));
-
-        // If we have an alloc function, use proper memory management
-        if let Ok(alloc) = alloc_func {
-            let input_bytes = input_str.as_bytes();
-            let input_len = input_bytes.len() as i32;
-
-            // Allocate memory for input
-            let input_ptr = alloc.call(&mut *store_guard, input_len)
-                .map_err(|e| PluginError::Execution(format!("Alloc failed: {}", e)))?;
-
-            // Write input to WASM memory
-            memory.write(&mut *store_guard, input_ptr as usize, input_bytes)
-                .map_err(|e| PluginError::Execution(format!("Memory write failed: {}", e)))?;
-
-            // Call the analyze function
-            // Expected signature: analyze(ptr: i32, len: i32) -> i32 (ptr to result)
-            if let Ok(analyze_func) = self.instance.get_typed_func::<(i32, i32), i32>(&mut *store_guard, "analyze") {
-                let result_ptr = analyze_func.call(&mut *store_guard, (input_ptr, input_len))
-                    .map_err(|e| PluginError::Execution(format!("Analyze call failed: {}", e)))?;
-
-                // Read the result from WASM memory
-                // First 4 bytes should be the length, then the JSON data
-                let mut len_bytes = [0u8; 4];
-                memory.read(&*store_guard, result_ptr as usize, &mut len_bytes)
-                    .map_err(|e| PluginError::Execution(format!("Memory read failed: {}", e)))?;
-                let result_len = i32::from_le_bytes(len_bytes) as usize;
-
-                let mut result_bytes = vec![0u8; result_len];
-                memory.read(&*store_guard, (result_ptr + 4) as usize, &mut result_bytes)
-                    .map_err(|e| PluginError::Execution(format!("Memory read failed: {}", e)))?;
-
-                let result_str = String::from_utf8(result_bytes)
-                    .map_err(|e| PluginError::Execution(format!("UTF-8 decode failed: {}", e)))?;
-
-                // Parse the result JSON
-                return self.parse_analysis_result(&result_str, start_time.elapsed().as_millis() as u32);
+    #[cfg(feature = "wasm-plugins")]
+    fn convert_analysis_result(
+        &self, 
+        analysis: crate::plugins::wasm::uveddi::core_analysis::AnalysisResult,
+        duration_ms: u32
+    ) -> Result<PluginAnalysisResult, PluginError> {
+        let issues = analysis.issues.into_iter().map(|issue| {
+            PluginIssueResult {
+                id: issue.id,
+                severity: format!("{:?}", issue.severity),
+                category: format!("{:?}", issue.category),
+                message: issue.message,
+                description: issue.description,
+                file: issue.file,
+                start_line: issue.span.start.line,
+                start_column: issue.span.start.column,
+                end_line: issue.span.end.line,
+                end_column: issue.span.end.column,
+                suggestion: issue.suggestion,
             }
-        }
+        }).collect();
 
-        // Fallback: try simplified analyze function that works with pre-allocated buffers
-        // This is for plugins that don't have their own memory management
-        if let Ok(simple_analyze) = self.instance.get_typed_func::<(), i32>(&mut *store_guard, "analyze_simple") {
-            let result_code = simple_analyze.call(&mut *store_guard, ())
-                .map_err(|e| PluginError::Execution(format!("Simple analyze failed: {}", e)))?;
-
-            // Return a basic result based on the return code
-            return Ok(PluginAnalysisResult {
-                issues: vec![],
-                metrics: PluginMetrics {
-                    lines_of_code: file_content.lines().count() as u32,
-                    complexity: 0,
-                    maintainability_index: 100.0,
-                },
-                duration_ms: start_time.elapsed().as_millis() as u32,
-            });
-        }
-
-        // If no analyze function is found, return empty results with a warning
-        tracing::warn!("Plugin {} has no analyze function, returning empty results", self.id);
         Ok(PluginAnalysisResult {
-            issues: vec![],
-            metrics: PluginMetrics::default(),
-            duration_ms: start_time.elapsed().as_millis() as u32,
+            issues,
+            metrics: PluginMetrics {
+                lines_of_code: analysis.metrics.lines_of_code,
+                complexity: analysis.metrics.complexity,
+                maintainability_index: analysis.metrics.maintainability_index,
+            },
+            duration_ms,
         })
     }
 

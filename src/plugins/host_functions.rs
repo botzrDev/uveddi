@@ -18,69 +18,141 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
-/// Context for plugin host functions containing access to Uveddi services
-#[derive(Clone)]
-pub struct HostContext {
-    /// Database connection for storing and retrieving analysis results
-    database: Arc<ScalableDatabase>,
-    /// Analysis engine for AST parsing and code analysis
-    analysis_engine: Arc<RwLock<AnalysisEngine>>,
-    /// Security policy for the current plugin
-    security_policy: SecurityPolicy,
-    /// Plugin ID for permission checking
-    plugin_id: PluginId,
-    /// Configuration store
-    config: Arc<RwLock<HashMap<String, String>>>,
-    /// File cache for parsed ASTs
-    ast_cache: Arc<RwLock<HashMap<String, crate::analysis::components::ast_provider::ParsedFile>>>,
-}
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::types::HostContext;
 
-impl std::fmt::Debug for HostContext {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HostContext")
-            .field("plugin_id", &self.plugin_id)
-            .field("security_policy", &self.security_policy)
-            .field("database", &"<database>")
-            .field("analysis_engine", &"<analysis_engine>")
-            .field("config", &"<config>")
-            .field("ast_cache", &"<ast_cache>")
-            .finish()
-    }
-}
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::wasm::core_analysis::{
+    self, Host, LogLevel, AstNode, FileMetadata, HttpResponse, ProcessInfo,
+    SeverityLevel, IssueCategory, Span, Position, Metrics, AnalysisResult,
+    PluginConfig as WitPluginConfig, ResourceLimits as WitResourceLimits, PluginInfo
+};
 
+#[cfg(feature = "wasm-plugins")]
 impl HostContext {
-    /// Create a new host context for a plugin
-    pub fn new(
-        database: Arc<ScalableDatabase>,
-        analysis_engine: Arc<RwLock<AnalysisEngine>>,
-        security_policy: SecurityPolicy,
-        plugin_id: PluginId,
-    ) -> Self {
-        Self {
-            database,
-            analysis_engine,
-            security_policy,
-            plugin_id,
-            config: Arc::new(RwLock::new(HashMap::new())),
-            ast_cache: Arc::new(RwLock::new(HashMap::new())),
-        }
-    }
-
-    /// Get the security policy for this context
-    pub fn security_policy(&self) -> &SecurityPolicy {
-        &self.security_policy
-    }
-
     /// Check if plugin has required permission
-    fn check_permission(&self, permission: Permission) -> Result<(), PluginError> {
-        if self.security_policy.has_permission(&permission) {
+    fn check_permission(&self, permission: Permission) -> Result<(), String> {
+        if self.host_state.security_policy.has_permission(&permission) {
             Ok(())
         } else {
-            Err(PluginError::SecurityViolation(format!(
+            Err(format!(
                 "Plugin {} does not have permission {:?}",
-                self.plugin_id, permission
-            )))
+                self.host_state.plugin_id, permission
+            ))
         }
+    }
+}
+
+#[cfg(feature = "wasm-plugins")]
+#[async_trait::async_trait]
+impl Host for HostContext {
+    async fn log(&mut self, level: LogLevel, message: String) -> () {
+        let plugin_id = &self.host_state.plugin_id;
+        match level {
+            LogLevel::Trace => tracing::trace!("[Plugin {}] {}", plugin_id, message),
+            LogLevel::Debug => tracing::debug!("[Plugin {}] {}", plugin_id, message),
+            LogLevel::Info => tracing::info!("[Plugin {}] {}", plugin_id, message),
+            LogLevel::Warn => tracing::warn!("[Plugin {}] {}", plugin_id, message),
+            LogLevel::Error => tracing::error!("[Plugin {}] {}", plugin_id, message),
+        }
+    }
+
+    async fn read_file(&mut self, path: String) -> Result<String, String> {
+        self.check_permission(Permission::FileRead)?;
+        // TODO: Implement actual file reading with path sanitization
+        Err("Not implemented".to_string())
+    }
+
+    async fn write_file(&mut self, _path: String, _content: String) -> Result<(), String> {
+        self.check_permission(Permission::FileWrite)?;
+        Err("Not implemented".to_string())
+    }
+
+    async fn file_exists(&mut self, _path: String) -> bool {
+        // TODO: Check permissions and file existence
+        false
+    }
+
+    async fn list_files(&mut self, _pattern: String) -> Result<Vec<String>, String> {
+        self.check_permission(Permission::FileRead)?;
+        Err("Not implemented".to_string())
+    }
+
+    async fn get_file_metadata(&mut self, _path: String) -> Result<FileMetadata, String> {
+         Err("Not implemented".to_string())
+    }
+
+    async fn get_config(&mut self, key: String) -> Option<String> {
+        // First check runtime config store
+        if let Ok(store) = self.config_store.try_read() {
+            if let Some(val) = store.get(&key) {
+                return Some(val.clone());
+            }
+        }
+        // Then check initial config
+        self.host_state.config.custom_settings.get(&key).cloned()
+    }
+
+    async fn set_config(&mut self, key: String, value: String) -> Result<(), String> {
+         if let Ok(mut store) = self.config_store.write().await {
+             store.insert(key, value);
+             Ok(())
+         } else {
+             Err("Failed to acquire config lock".to_string())
+         }
+    }
+
+    async fn parse_ast(&mut self, code: String, language: String) -> Result<AstNode, String> {
+        // TODO: Integrate with AnalysisEngine
+         Ok(AstNode {
+            node_type: "root".to_string(),
+            content: code,
+            span: Span {
+                start: Position { line: 0, column: 0, byte_offset: 0 },
+                end: Position { line: 0, column: 0, byte_offset: 0 },
+            },
+            language,
+            attributes: Vec::new(),
+        })
+    }
+
+    async fn query_ast(&mut self, _node: AstNode, _query: String) -> Result<Vec<AstNode>, String> {
+        Err("Not implemented".to_string())
+    }
+
+    async fn calculate_hash(&mut self, _algorithm: String, _content: String) -> Result<String, String> {
+        Err("Not implemented".to_string())
+    }
+
+    async fn verify_signature(&mut self, _content: String, _signature: String, _public_key: String) -> Result<bool, String> {
+        Err("Not implemented".to_string())
+    }
+
+    async fn http_get(&mut self, _url: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
+        self.check_permission(Permission::NetworkAccess)?;
+        Err("Not implemented".to_string())
+    }
+
+    async fn http_post(&mut self, _url: String, _body: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
+        self.check_permission(Permission::NetworkAccess)?;
+        Err("Not implemented".to_string())
+    }
+
+    async fn db_get(&mut self, _key: String) -> Option<String> {
+        None
+    }
+
+    async fn db_set(&mut self, _key: String, _value: String, _ttl_seconds: Option<u32>) -> Result<(), String> {
+        Err("Not implemented".to_string())
+    }
+
+    async fn db_delete(&mut self, _key: String) -> Result<bool, String> {
+        Err("Not implemented".to_string())
+    }
+
+    async fn get_process_info(&mut self) -> Result<ProcessInfo, String> {
+        self.check_permission(Permission::SystemInfo)?;
+        Err("Not implemented".to_string())
     }
 }
 
@@ -500,6 +572,7 @@ impl HostFunctionLinker for wasmtime::Linker<HostContext> {
 }
 
 /// Factory for creating host contexts
+#[derive(Clone)]
 pub struct HostContextFactory {
     database: Arc<ScalableDatabase>,
     analysis_engine: Arc<RwLock<AnalysisEngine>>,

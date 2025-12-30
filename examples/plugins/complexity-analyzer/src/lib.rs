@@ -5,15 +5,95 @@
 //! It demonstrates sophisticated AST analysis and metrics calculation.
 
 use std::collections::HashMap;
+use std::cell::RefCell;
 
 wit_bindgen::generate!({
     world: "core-analysis",
     path: "../../../wit/core-analysis.wit",
 });
 
-use exports::{initialize, analyze, get_info, cleanup};
+struct ComplexityAnalyzerPlugin {
+    state: RefCell<Option<ComplexityAnalyzer>>,
+}
 
-static mut PLUGIN_STATE: Option<ComplexityAnalyzer> = None;
+impl Default for ComplexityAnalyzerPlugin {
+    fn default() -> Self {
+        Self {
+            state: RefCell::new(None),
+        }
+    }
+}
+
+export!(ComplexityAnalyzerPlugin);
+
+impl Guest for ComplexityAnalyzerPlugin {
+    fn initialize(&self, config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
+        log(LogLevel::Info, "Initializing Complexity Analyzer Plugin");
+        
+        let mut analyzer = ComplexityAnalyzer::new();
+        analyzer.config = config;
+        
+        // Apply custom thresholds from config
+        if let Some(cyclomatic_threshold) = analyzer.config.custom_settings.iter()
+            .find(|(k, _)| k == "cyclomatic_threshold")
+            .and_then(|(_, v)| v.parse().ok())
+        {
+            analyzer.complexity_thresholds.cyclomatic_complexity = cyclomatic_threshold;
+        }
+        
+        *self.state.borrow_mut() = Some(analyzer);
+        
+        log(LogLevel::Info, "Complexity Analyzer Plugin initialized successfully");
+        Ok(())
+    }
+
+    fn analyze(&self, file: SourceFile) -> Result<AnalysisResult, String> {
+        let mut state_guard = self.state.borrow_mut();
+        if let Some(ref mut state) = *state_guard {
+            state.analyze_file(file)
+        } else {
+            Err("Plugin not initialized".to_string())
+        }
+    }
+
+    fn get_info(&self) -> PluginInfo {
+        PluginInfo {
+            id: "complexity-analyzer".to_string(),
+            name: "Code Complexity Analyzer".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Analyzes code complexity using multiple metrics including Cyclomatic Complexity, Halstead Metrics, and Cognitive Complexity".to_string(),
+            author: "Uveddi Team".to_string(),
+            license: "MIT".to_string(),
+            homepage: Some("https://github.com/uveddi/plugins/complexity-analyzer".to_string()),
+            supported_languages: vec![
+                "rust".to_string(),
+                "javascript".to_string(), 
+                "typescript".to_string(),
+                "python".to_string(),
+                "java".to_string(),
+                "go".to_string(),
+            ],
+            detector_types: vec![IssueCategory::Complexity, IssueCategory::Maintainability],
+            api_version: "1.0".to_string(),
+            required_permissions: vec![Permission::ReadFiles],
+        }
+    }
+
+    fn cleanup(&self) -> Result<(), String> {
+        log(LogLevel::Info, "Cleaning up Complexity Analyzer Plugin");
+        
+        let mut state_guard = self.state.borrow_mut();
+        if let Some(ref state) = *state_guard {
+            log(LogLevel::Info, &format!("Analyzed {} files for complexity during session", state.analysis_count));
+            log(LogLevel::Info, &format!("Tracked complexity for {} functions", state.function_stats.len()));
+        }
+        *state_guard = None;
+        
+        Ok(())
+    }
+}
+
+// Internal structures and logic (kept from original)
 
 struct ComplexityAnalyzer {
     config: PluginConfig,
@@ -159,7 +239,7 @@ impl ComplexityAnalyzer {
         ];
 
         for query in function_queries {
-            if let Ok(functions) = query_ast(ast.clone(), query) {
+            if let Ok(functions) = query_ast(ast, query) {
                 for func_node in functions {
                     let func_complexity = self.analyze_single_function(&func_node, file)?;
                     let func_name = self.extract_function_name(&func_node);
@@ -228,13 +308,13 @@ impl ComplexityAnalyzer {
         ];
 
         for query in decision_queries {
-            if let Ok(nodes) = query_ast(func_node.clone(), query) {
+            if let Ok(nodes) = query_ast(func_node, query) {
                 complexity += nodes.len() as u32;
             }
         }
 
         // Count logical operators in conditions
-        if let Ok(logical_ops) = query_ast(func_node.clone(), "(binary_expression operator: [\"&&\" \"||\"]) @op") {
+        if let Ok(logical_ops) = query_ast(func_node, "(binary_expression operator: [\"&&\" \"||\"]) @op") {
             complexity += logical_ops.len() as u32;
         }
 
@@ -257,7 +337,7 @@ impl ComplexityAnalyzer {
         ];
 
         for structure in nesting_structures {
-            if let Ok(nodes) = query_ast(func_node.clone(), structure) {
+            if let Ok(nodes) = query_ast(func_node, structure) {
                 for _ in nodes {
                     complexity += 1 + nesting_level; // Base cost + nesting penalty
                     nesting_level += 1;
@@ -276,7 +356,7 @@ impl ComplexityAnalyzer {
 
     fn count_parameters(&self, func_node: &AstNode) -> Result<u32, String> {
         // Query for parameter lists
-        if let Ok(params) = query_ast(func_node.clone(), "(parameters (parameter)) @param") {
+        if let Ok(params) = query_ast(func_node, "(parameters (parameter)) @param") {
             Ok(params.len() as u32)
         } else {
             Ok(0)
@@ -295,7 +375,7 @@ impl ComplexityAnalyzer {
         ];
 
         for structure in nested_structures {
-            if let Ok(nodes) = query_ast(func_node.clone(), structure) {
+            if let Ok(nodes) = query_ast(func_node, structure) {
                 if !nodes.is_empty() {
                     max_depth = max_depth.max(2);
                 }
@@ -321,13 +401,13 @@ impl ComplexityAnalyzer {
         ];
 
         for query in operator_queries {
-            if let Ok(nodes) = query_ast(func_node.clone(), query) {
+            if let Ok(nodes) = query_ast(func_node, query) {
                 operators += nodes.len();
             }
         }
 
         // Count operands (simplified)
-        if let Ok(identifiers) = query_ast(func_node.clone(), "(identifier) @id") {
+        if let Ok(identifiers) = query_ast(func_node, "(identifier) @id") {
             operands = identifiers.len();
         }
 
@@ -520,7 +600,7 @@ impl ComplexityAnalyzer {
 
         let mut max_depth = 1;
         for pattern in nested_patterns {
-            if let Ok(nodes) = query_ast(ast.clone(), pattern) {
+            if let Ok(nodes) = query_ast(ast, pattern) {
                 if !nodes.is_empty() {
                     max_depth = max_depth.max(3);
                 }
@@ -570,83 +650,5 @@ impl ComplexityAnalyzer {
                 _ => 15,
             }
         }).sum()
-    }
-}
-
-// Plugin lifecycle implementation
-impl initialize {
-    fn call(config: PluginConfig, _limits: ResourceLimits) -> Result<(), String> {
-        log(LogLevel::Info, "Initializing Complexity Analyzer Plugin");
-        
-        unsafe {
-            let mut analyzer = ComplexityAnalyzer::new();
-            analyzer.config = config;
-            
-            // Apply custom thresholds from config
-            if let Some(cyclomatic_threshold) = analyzer.config.custom_settings.iter()
-                .find(|(k, _)| k == "cyclomatic_threshold")
-                .and_then(|(_, v)| v.parse().ok())
-            {
-                analyzer.complexity_thresholds.cyclomatic_complexity = cyclomatic_threshold;
-            }
-            
-            PLUGIN_STATE = Some(analyzer);
-        }
-        
-        log(LogLevel::Info, "Complexity Analyzer Plugin initialized successfully");
-        Ok(())
-    }
-}
-
-impl analyze {
-    fn call(file: SourceFile) -> Result<AnalysisResult, String> {
-        unsafe {
-            if let Some(ref mut state) = PLUGIN_STATE {
-                state.analyze_file(file)
-            } else {
-                Err("Plugin not initialized".to_string())
-            }
-        }
-    }
-}
-
-impl get_info {
-    fn call() -> PluginInfo {
-        PluginInfo {
-            id: "complexity-analyzer".to_string(),
-            name: "Code Complexity Analyzer".to_string(),
-            version: "1.0.0".to_string(),
-            description: "Analyzes code complexity using multiple metrics including Cyclomatic Complexity, Halstead Metrics, and Cognitive Complexity".to_string(),
-            author: "Uveddi Team".to_string(),
-            license: "MIT".to_string(),
-            homepage: Some("https://github.com/uveddi/plugins/complexity-analyzer".to_string()),
-            supported_languages: vec![
-                "rust".to_string(),
-                "javascript".to_string(), 
-                "typescript".to_string(),
-                "python".to_string(),
-                "java".to_string(),
-                "go".to_string(),
-            ],
-            detector_types: vec![IssueCategory::Complexity, IssueCategory::Maintainability],
-            api_version: "1.0".to_string(),
-            required_permissions: vec![Permission::ReadFiles.into()],
-        }
-    }
-}
-
-impl cleanup {
-    fn call() -> Result<(), String> {
-        log(LogLevel::Info, "Cleaning up Complexity Analyzer Plugin");
-        
-        unsafe {
-            if let Some(ref state) = PLUGIN_STATE {
-                log(LogLevel::Info, &format!("Analyzed {} files for complexity during session", state.analysis_count));
-                log(LogLevel::Info, &format!("Tracked complexity for {} functions", state.function_stats.len()));
-            }
-            PLUGIN_STATE = None;
-        }
-        
-        Ok(())
     }
 }

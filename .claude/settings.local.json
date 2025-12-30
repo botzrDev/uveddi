@@ -16,7 +16,13 @@
       "Bash(uveddi init:*)",
       "Bash(uveddi hooks --help:*)",
       "Bash(uveddi ci --help:*)",
-      "Bash(cargo build:*)"
+      "Bash(cargo build:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(git -C /home/austingreen/Documents/botzr/projects/uveddi log --oneline)",
+      "Bash(wc:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo clippy:*)"
     ],
     "deny": [],
     "ask": []
