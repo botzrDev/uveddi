@@ -431,6 +431,12 @@ impl IncrementalStateManager {
             environment_info,
         };
 
+        // Store the new state in memory so subsequent operations can find it
+        {
+            let mut current_state = self.state.write().await;
+            *current_state = Some(state.clone());
+        }
+
         info!(
             "New incremental state created with ID: {}",
             state.metadata.state_id

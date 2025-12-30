@@ -179,9 +179,19 @@ impl IncrementalAnalysisEngine {
     async fn load_or_create_state(&mut self, path: &Path) -> Result<IncrementalState> {
         let start_time = Instant::now();
 
-        // Try to load existing state
+        // First check if we already have state in memory (for reused engines)
+        if let Some(state) = self.state_manager.get_current_state().await {
+            info!("Using existing in-memory incremental state");
+
+            let elapsed = start_time.elapsed();
+            self.performance_metrics.state_persistence_time_ms = elapsed.as_millis() as u64;
+
+            return Ok(state);
+        }
+
+        // Try to load existing state from disk
         if let Some(state) = self.state_manager.load_state().await? {
-            info!("Loaded existing incremental state");
+            info!("Loaded existing incremental state from disk");
 
             // Initialize components with loaded state
             self.change_detector
