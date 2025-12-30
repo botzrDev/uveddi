@@ -28,19 +28,19 @@
 //!
 //! ```rust,no_run
 //! use uveddi::cache::result_cache::ResultCache;
+//! use std::path::Path;
 //!
-//! // Initialize cache
-//! let mut cache = ResultCache::new();
+//! # fn example() -> Result<(), Box<dyn std::error::Error>> {
+//! // Initialize file-based cache
+//! let cache = ResultCache::new(Path::new("cache.db"))?;
 //!
-//! // Cache analysis result
-//! let file_path = "src/main.rs";
-//! let analysis_result = /* ... */;
-//! cache.store_result(file_path, analysis_result);
+//! // Or use in-memory cache for testing
+//! let memory_cache = ResultCache::new_in_memory()?;
 //!
-//! // Retrieve cached result
-//! if let Some(cached) = cache.get_result(file_path) {
-//!     println!("Using cached analysis for {}", file_path);
-//! }
+//! // Cache operations are available via get/set methods
+//! println!("Cache initialized successfully");
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! # Cache Storage

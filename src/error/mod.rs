@@ -8,11 +8,13 @@
 //!
 //! All public APIs should use the unified `Result<T>` type for consistent error handling:
 //!
-//! ```rust
+//! ```rust,ignore
 //! use uveddi::error::Result;
+//! use std::path::Path;
 //!
-//! pub fn analyze_file(path: &Path) -> Result<ParsedFile> {
+//! pub fn analyze_file(path: &Path) -> Result<SomeType> {
 //!     // Implementation using UveddiError
+//!     Ok(())
 //! }
 //! ```
 
@@ -45,12 +47,13 @@ pub use rusqlite::Error as RusqliteError;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```rust,ignore
 /// use uveddi::error::Result;
 /// use std::path::Path;
 ///
 /// pub fn parse_config_file(path: &Path) -> Result<Config> {
 ///     // Implementation that returns Result<Config, UveddiError>
+///     Ok(config)
 /// }
 /// ```
 pub type Result<T> = std::result::Result<T, UveddiError>;

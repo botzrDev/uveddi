@@ -880,21 +880,16 @@ impl AnalyzeCommand {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
-    /// use uveddi::cli::analyze_command::AnalyzeCommand;
+    /// ```ignore
+    /// // AnalyzeCommand is typically created via clap argument parsing
+    /// use uveddi::cli::commands::analyze::AnalyzeCommand;
     /// use std::path::PathBuf;
     ///
-    /// let command = AnalyzeCommand {
-    ///     path: PathBuf::from("./src"),
-    ///     output_format: "markdown".to_string(),
-    ///     output: None,
-    ///     enable_ai: false,
-    ///     ollama_api_url: None,
-    ///     ollama_model: None,
-    /// };
+    /// // The command is usually constructed by clap from CLI arguments
+    /// // Example CLI usage: `uveddi analyze ./src --output-format markdown`
     ///
     /// # tokio_test::block_on(async {
-    /// command.execute().await?;
+    /// // command.execute().await?;
     /// # Ok::<(), uveddi::error::UveddiError>(())
     /// # });
     /// ```

@@ -23,13 +23,13 @@
 //!
 //! # async fn example() -> uveddi::Result<()> {
 //! // Create an analysis engine with default detectors
-//! let engine = AnalysisEngine::new()?;
+//! let mut engine = AnalysisEngine::new()?;
 //!
 //! // Analyze a project directory
 //! let (issues, dependency_graph) = engine.analyze(Path::new("src/")).await?;
 //!
 //! println!("Found {} architectural issues", issues.len());
-//! println!("Analyzed {} files", dependency_graph.nodes().count());
+//! println!("Analyzed {} files", dependency_graph.node_count());
 //! # Ok(())
 //! # }
 //! ```
@@ -37,51 +37,41 @@
 //! ### Using Configuration
 //!
 //! ```rust,no_run
-//! use uveddi::analysis::{AnalysisEngine, config::AnalysisConfig};
+//! use uveddi::analysis::AnalysisEngine;
 //! use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+//! use uveddi::analysis::detector_factory::DetectorFactory;
 //! use std::path::Path;
 //!
 //! # async fn example() -> uveddi::Result<()> {
-//! // Create custom configuration
-//! let config = AnalysisConfig {
-//!     max_file_size: 1024 * 1024, // 1MB limit
-//!     parallel_analysis: true,
-//!     cache_enabled: true,
-//!     ..Default::default()
-//! };
+//! // Build engine with custom detectors
+//! let mut detectors = DetectorFactory::create_default_detectors();
+//! detectors.push(Box::new(GodObjectDetector::new(15, 10))); // Custom thresholds
 //!
-//! // Build engine with custom detector
-//! let engine = AnalysisEngine::builder()
-//!     .with_config(config)
-//!     .with_detector(GodObjectDetector::default())
+//! let mut engine = AnalysisEngine::builder()
+//!     .with_detectors(detectors)
 //!     .build()?;
 //!
 //! let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+//! println!("Found {} issues", issues.len());
 //! # Ok(())
 //! # }
 //! ```
 //!
 //! ### AI-Powered Analysis
 //!
-//! ```rust,no_run
+//! ```ignore
+//! // Requires "ai" feature flag to be enabled
 //! use uveddi::ai::engine::AiEngine;
-//! use uveddi::ai::ollama_provider::OllamaProvider;
 //! use uveddi::analysis::AnalysisEngine;
+//! use std::path::Path;
 //!
 //! # async fn example() -> uveddi::Result<()> {
-//! // Set up AI provider (requires "local-ai" feature)
-//! let ai_provider = OllamaProvider::new("http://localhost:11434")?;
-//! let ai_engine = AiEngine::new(Box::new(ai_provider))?;
-//!
-//! // Analyze with AI explanations
+//! // Analyze with AI explanations (requires "ai" feature)
 //! let analysis_engine = AnalysisEngine::new()?;
-//! let (issues, graph) = analysis_engine.analyze("src/").await?;
+//! let (issues, graph) = analysis_engine.analyze(Path::new("src/")).await?;
 //!
-//! // Get AI explanations for issues
-//! for issue in issues {
-//!     let explanation = ai_engine.explain_issue(&issue).await?;
-//!     println!("AI Explanation: {}", explanation);
-//! }
+//! // AI-powered explanations available when the "ai" feature is enabled
+//! println!("Found {} issues to analyze", issues.len());
 //! # Ok(())
 //! # }
 //! ```
@@ -123,17 +113,16 @@
 //! - **Parallelization**: Enabled by default for multi-core analysis
 //! - **Cache Efficiency**: AST parsing results cached for repeated analysis
 //!
-//! For large codebases (>1000 files), enable caching and parallel processing:
+//! For large codebases (>1000 files), use the builder with caching enabled:
 //!
 //! ```rust,no_run
-//! use uveddi::analysis::{AnalysisEngine, cache::AstCache};
-//! use std::sync::Arc;
+//! use uveddi::analysis::AnalysisEngine;
+//! use std::path::PathBuf;
 //!
 //! # async fn example() -> uveddi::Result<()> {
-//! let cache = Arc::new(AstCache::with_capacity(1000)?);
+//! // Build engine with caching support
 //! let engine = AnalysisEngine::builder()
-//!     .with_cache(cache)
-//!     .with_parallel_processing(true)
+//!     .with_cache_path(&PathBuf::from("analysis_cache.db"))
 //!     .build()?;
 //! # Ok(())
 //! # }
@@ -144,27 +133,24 @@
 //! All operations return `Result<T, UveddiError>` with comprehensive error context:
 //!
 //! ```rust,no_run
-//! use uveddi::analysis::AnalysisEngine;
-//! use uveddi::error::{UveddiError, ErrorCategory};
+//! use uveddi::error::{UveddiError, ErrorCategory, ErrorSeverity};
 //!
-//! # async fn example() {
-//! match AnalysisEngine::new() {
-//!     Ok(engine) => {
-//!         // Use engine
-//!     }
-//!     Err(UveddiError::ConfigError(msg)) => {
-//!         error!("Configuration error: {}", msg);
-//!     }
-//!     Err(UveddiError::IoError(io_err)) => {
-//!         error!("File system error: {}", io_err);
-//!     }
-//!     Err(e) => {
-//!         error!("Analysis error: {}", e);
-//!         error!("Category: {:?}", e.category());
-//!         error!("Severity: {:?}", e.severity());
+//! fn handle_error(error: UveddiError) {
+//!     match error {
+//!         UveddiError::ConfigError { message, location, suggestion } => {
+//!             eprintln!("Configuration error at {}: {}", location, message);
+//!             eprintln!("Suggestion: {}", suggestion);
+//!         }
+//!         UveddiError::IoError { operation, path, message, .. } => {
+//!             eprintln!("File system error during {} on {}: {}", operation, path, message);
+//!         }
+//!         ref e => {
+//!             eprintln!("Error: {}", e);
+//!             eprintln!("Category: {:?}", e.category());
+//!             eprintln!("Severity: {:?}", e.severity());
+//!         }
 //!     }
 //! }
-//! # }
 //! ```
 //!
 //! ## Architecture Overview
@@ -186,17 +172,18 @@
 //! ### 1. Code Quality Assessment
 //! ```rust,no_run
 //! use uveddi::analysis::AnalysisEngine;
-//! use uveddi::analysis::detectors::anti_patterns::*;
+//! use uveddi::analysis::detector_factory::DetectorFactory;
+//! use std::path::Path;
 //!
 //! # async fn example() -> uveddi::Result<()> {
-//! let engine = AnalysisEngine::builder()
-//!     .with_detector(GodObjectDetector::default())
-//!     .with_detector(DeadCodeDetector::default())
-//!     .with_detector(CodeDuplicationDetector::default())
+//! // Use default detectors for comprehensive analysis
+//! let detectors = DetectorFactory::create_default_detectors();
+//! let mut engine = AnalysisEngine::builder()
+//!     .with_detectors(detectors)
 //!     .build()?;
 //!
-//! let (issues, _) = engine.analyze("src/").await?;
-//! let quality_score = calculate_quality_score(&issues);
+//! let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+//! println!("Found {} quality issues across {} nodes", issues.len(), graph.node_count());
 //! # Ok(())
 //! # }
 //! ```
@@ -204,25 +191,29 @@
 //! ### 2. Dependency Analysis
 //! ```rust,no_run
 //! use uveddi::analysis::AnalysisEngine;
-//! use uveddi::analysis::graph::LocalDependencyGraph;
+//! use std::path::Path;
 //!
 //! # async fn example() -> uveddi::Result<()> {
-//! let engine = AnalysisEngine::new()?;
-//! let (_, graph) = engine.analyze("src/").await?;
+//! let mut engine = AnalysisEngine::new()?;
+//! let (issues, graph) = engine.analyze(Path::new("src/")).await?;
 //!
-//! // Analyze dependency cycles
-//! let cycles = graph.detect_cycles();
-//! println!("Found {} dependency cycles", cycles.len());
+//! // Examine dependency graph
+//! println!("Dependency graph has {} nodes", graph.node_count());
+//! for node in graph.get_all_nodes() {
+//!     println!("Component: {:?}", node);
+//! }
 //! # Ok(())
 //! # }
 //! ```
 //!
 //! ### 3. Plugin Development
-//! ```rust,no_run
+//! ```ignore
+//! // Requires "wasm-plugins" feature flag to be enabled
 //! use uveddi::plugins::engine::PluginEngine;
 //! use uveddi::plugins::types::PluginConfig;
 //!
 //! # async fn example() -> uveddi::Result<()> {
+//! // Plugin system available when the "wasm-plugins" feature is enabled
 //! let plugin_engine = PluginEngine::new()?;
 //! let config = PluginConfig {
 //!     plugin_path: "path/to/plugin.wasm".into(),

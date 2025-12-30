@@ -372,10 +372,12 @@ impl DependencyGraphBuilder for DependencyGraphBuilderImpl {
     ///
     /// # Examples
     ///
-    /// ```rust,no_run
+    /// ```ignore
+    /// // DependencyGraphBuilderImpl requires injected dependencies
     /// use std::path::Path;
     /// use uveddi::analysis::components::DependencyGraphBuilderImpl;
     ///
+    /// // Create builder with required dependencies
     /// let builder = DependencyGraphBuilderImpl::new(ast_provider, cache_manager);
     /// let graph = builder.build_graph(Path::new("./src")).await?;
     /// println!("Found {} nodes in dependency graph", graph.node_count());

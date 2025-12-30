@@ -49,27 +49,18 @@ use std::path::Path;
 ///
 /// # Examples
 ///
-/// ```rust
-/// use uveddi::analysis::{AnalysisConfig, DetectorConfig};
-/// use std::collections::HashMap;
+/// ```rust,no_run
+/// use uveddi::analysis::AnalysisConfig;
+/// use std::path::Path;
 ///
 /// # async fn example() -> Result<(), uveddi::error::UveddiError> {
 /// // Create from file
-/// let config = AnalysisConfig::from_file(std::path::Path::new("config.toml"))?;
+/// let config = AnalysisConfig::from_file(Path::new("config.toml"))?;
 /// let engine = config.create_engine().await?;
 ///
-/// // Create programmatically
-/// let mut detectors = HashMap::new();
-/// detectors.insert("god_object".to_string(),
-///     DetectorConfig::new().with_param("threshold_methods", 10));
-///
-/// let config = AnalysisConfig {
-///     detectors,
-///     cache_size: Some(500),
-///     enable_plugins: false,
-///     cache_path: Some("custom_cache.db".to_string()),
-/// };
-/// let engine = config.create_engine().await?;
+/// // Or use the default configuration
+/// let default_config = AnalysisConfig::default();
+/// let engine = default_config.create_engine().await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -522,20 +513,23 @@ impl AnalysisConfig {
     ///
     /// # Examples
     ///
-    /// ```rust
-    /// use uveddi::analysis::{AnalysisConfig, StandardDetectorConfig, IssueSeverity};
+    /// ```rust,no_run
+    /// use uveddi::analysis::{AnalysisConfig, IssueSeverity};
+    /// use uveddi::analysis::standardized_config::{StandardDetectorConfig, ConfigValue};
     /// use std::collections::HashMap;
     ///
     /// let mut config = AnalysisConfig::default();
+    ///
+    /// // Create threshold configuration
+    /// let mut thresholds = HashMap::new();
+    /// thresholds.insert("max_methods".to_string(), ConfigValue::Integer(20));
+    /// thresholds.insert("max_fields".to_string(), ConfigValue::Integer(15));
+    ///
     /// let detector_config = StandardDetectorConfig {
     ///     enabled: true,
     ///     severity: IssueSeverity::High,
-    ///     thresholds: {
-    ///         let mut thresholds = HashMap::new();
-    ///         thresholds.insert("max_methods".to_string(), 20.into());
-    ///         thresholds.insert("max_fields".to_string(), 15.into());
-    ///         thresholds
-    ///     },
+    ///     thresholds,
+    ///     ..Default::default()
     /// };
     ///
     /// config.set_standard_detector_config("god_object", detector_config);

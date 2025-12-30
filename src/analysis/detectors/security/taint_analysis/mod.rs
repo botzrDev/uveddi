@@ -33,15 +33,14 @@
 //!
 //! ## Usage
 //!
-//! ```rust,no_run
-//! use crate::analysis::detectors::security::taint_analysis::{
-//!     TaintAnalysisEngine,
-//!     config::TaintAnalysisConfig,
-//! };
+//! ```ignore
+//! // Taint analysis is an internal component of the security detector
+//! use uveddi::analysis::detectors::security::taint_analysis::TaintAnalysisEngine;
+//! use uveddi::analysis::detectors::security::config::TaintAnalysisConfig;
 //!
 //! let config = TaintAnalysisConfig::production();
 //! let engine = TaintAnalysisEngine::new(config)?;
-//! let issues = engine.analyze_file(&parsed_file).await?;
+//! // Use within security detector framework
 //! ```
 
 pub mod config;

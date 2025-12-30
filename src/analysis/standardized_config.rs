@@ -15,21 +15,28 @@
 //!
 //! ## Usage Example
 //!
-//! ```rust
-//! use uveddi::analysis::standardized_config::{StandardDetectorConfig, StandardConfigBuilder};
+//! ```rust,no_run
+//! use uveddi::analysis::standardized_config::{StandardDetectorConfig, ConfigValue};
 //! use uveddi::analysis::IssueSeverity;
+//! use std::collections::HashMap;
 //!
 //! // Programmatic configuration
-//! let config = StandardConfigBuilder::new("god_object")
-//!     .enabled(true)
-//!     .severity(IssueSeverity::High)
-//!     .threshold("max_methods", 20)
-//!     .threshold("max_fields", 15)
-//!     .language_threshold("rust", "max_methods", 25)
-//!     .exclude_pattern("*_test.rs")
-//!     .build()?;
+//! let mut thresholds = HashMap::new();
+//! thresholds.insert("max_methods".to_string(), ConfigValue::Integer(20));
+//! thresholds.insert("max_fields".to_string(), ConfigValue::Integer(15));
 //!
-//! // TOML configuration
+//! let config = StandardDetectorConfig {
+//!     enabled: true,
+//!     severity: IssueSeverity::High,
+//!     thresholds,
+//!     ..Default::default()
+//! };
+//!
+//! println!("Detector enabled: {}", config.enabled);
+//! ```
+//!
+//! TOML configuration format:
+//! ```toml
 //! [detectors.god_object]
 //! enabled = true
 //! severity = "High"

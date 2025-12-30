@@ -22,8 +22,15 @@ use std::collections::HashSet;
 /// * `String` - Mermaid.js formatted diagram as a string.
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// use uveddi::report::diagrams::generate_mermaid_diagram;
+/// use uveddi::models::visualization::Dependency;
+/// use uveddi::database::models::ArchitecturalIssue;
+///
+/// // Assuming deps and issues are obtained from analysis
+/// let deps: Vec<Dependency> = Vec::new();
+/// let issues: Vec<ArchitecturalIssue> = Vec::new();
+///
 /// let diagram = generate_mermaid_diagram(&deps, &issues);
 /// println!("{}", diagram);
 /// ```

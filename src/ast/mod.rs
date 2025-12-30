@@ -16,16 +16,17 @@
 //! # Usage
 //!
 //! The primary entry point for using this module is typically through the `AstParser`
-//! in the `analysis` module, which handles file parsing and returns a `CustomAst` instance.
+//! in the `ast` module, which handles file parsing and returns a `ParsedFile` instance.
 //!
-//! ```no_run
-//! use uveddi::ast::tree_sitter::AstParser;
+//! ```rust,no_run
+//! use uveddi::ast::AstParser;
 //! use std::path::Path;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
-//! let parser = AstParser::new()?;
-//! let ast = parser.parse_file(Path::new("src/main.rs"))?;
-//! // Now you can analyze the `ast`
+//! let mut parser = AstParser::new()?;
+//! let parsed_file = parser.parse_file(Path::new("src/main.rs"))?;
+//! // Now you can analyze the parsed file
+//! println!("Parsed file with {} bytes", parsed_file.source.len());
 //! # Ok(())
 //! # }
 //! ```

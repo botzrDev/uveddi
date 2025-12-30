@@ -40,63 +40,57 @@
 ///
 /// ### Basic Analysis
 ///
-/// ```rust
+/// ```rust,no_run
 /// use uveddi::analysis::AnalysisEngine;
 /// use std::path::Path;
 ///
 /// # async fn example() -> uveddi::Result<()> {
 /// // Create engine with built-in detectors
-/// let engine = AnalysisEngine::new()?;
+/// let mut engine = AnalysisEngine::new()?;
 ///
 /// // Analyze a project directory
 /// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
-/// println!("Found {} issues across {} files", issues.len(), graph.nodes().count());
+/// println!("Found {} issues across {} nodes", issues.len(), graph.node_count());
 /// # Ok(())
 /// # }
 /// ```
 ///
 /// ### Custom Detector Configuration
 ///
-/// ```rust
-/// use uveddi::analysis::{AnalysisEngine, detectors::anti_patterns::GodObjectDetector};
-/// use uveddi::analysis::config::AnalysisConfig;
+/// ```rust,no_run
+/// use uveddi::analysis::AnalysisEngine;
+/// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+/// use uveddi::analysis::detector_factory::DetectorFactory;
+/// use std::path::Path;
 ///
 /// # async fn example() -> uveddi::Result<()> {
-/// let config = AnalysisConfig {
-///     max_file_size: 1024 * 1024, // 1MB limit
-///     parallel_analysis: true,
-///     cache_enabled: true,
-///     ..Default::default()
-/// };
+/// // Create custom detectors
+/// let mut detectors = DetectorFactory::create_default_detectors();
+/// detectors.push(Box::new(GodObjectDetector::new(15, 10)));
 ///
-/// let engine = AnalysisEngine::builder()
-///     .with_config(config)
-///     .with_detector(GodObjectDetector::default())
+/// let mut engine = AnalysisEngine::builder()
+///     .with_detectors(detectors)
 ///     .build()?;
 ///
-/// let (issues, graph) = engine.analyze("src/").await?;
+/// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
 /// # Ok(())
 /// # }
 /// ```
 ///
 /// ### Performance Optimized Analysis
 ///
-/// ```rust
-/// use uveddi::analysis::{AnalysisEngine, cache::AstCache};
-/// use std::sync::Arc;
+/// ```rust,no_run
+/// use uveddi::analysis::AnalysisEngine;
+/// use std::path::PathBuf;
 ///
 /// # async fn example() -> uveddi::Result<()> {
-/// // Shared cache across multiple analysis runs
-/// let cache = Arc::new(AstCache::with_capacity(1000)?);
-///
+/// // Build engine with cache support
 /// let engine = AnalysisEngine::builder()
-///     .with_cache(cache.clone())
-///     .with_parallel_processing(true)
+///     .with_cache_path(&PathBuf::from("analysis_cache.db"))
 ///     .build()?;
 ///
-/// // Multiple analysis runs will benefit from cache
-/// let (issues1, _) = engine.analyze("src/").await?;
-/// let (issues2, _) = engine.analyze("tests/").await?;
+/// // Subsequent analysis runs will benefit from cache
+/// println!("Engine ready with caching enabled");
 /// # Ok(())
 /// # }
 /// ```
@@ -216,39 +210,24 @@ use async_trait::async_trait;
 ///
 /// ## Example Implementation
 ///
-/// ```rust
+/// ```ignore
+/// // Custom detector implementation requires async_trait and proper error handling
 /// use uveddi::analysis::{AnalysisDetector, AnalysisError};
 /// use uveddi::ast::ParsedFile;
 /// use uveddi::database::models::{AntiPatternType, ArchitecturalIssue};
+/// use async_trait::async_trait;
 ///
 /// pub struct CustomDetector {
 ///     threshold: usize,
 /// }
 ///
+/// #[async_trait]
 /// impl AnalysisDetector for CustomDetector {
-///     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-///         let mut issues = Vec::new();
-///         
-///         // Analyze the file based on language
-///         match file.language {
-///             crate::ast::SourceLanguage::Rust => {
-///                 // Rust-specific analysis
-///                 if let Some(issue) = self.analyze_rust_file(file)? {
-///                     issues.push(issue);
-///                 }
-///             }
-///             crate::ast::SourceLanguage::Python => {
-///                 // Python-specific analysis
-///                 if let Some(issue) = self.analyze_python_file(file)? {
-///                     issues.push(issue);
-///                 }
-///             }
-///             _ => {
-///                 // Generic analysis for other languages
-///             }
-///         }
-///         
-///         Ok(issues)
+///     async fn detect_issues(&self, file: &ParsedFile)
+///         -> Result<Vec<ArchitecturalIssue>, AnalysisError>
+///     {
+///         // Analyze the file and return issues
+///         Ok(Vec::new())
 ///     }
 ///
 ///     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
@@ -264,35 +243,21 @@ use async_trait::async_trait;
 ///         "CustomDetector"
 ///     }
 /// }
-///
-/// impl CustomDetector {
-///     pub fn new(threshold: usize) -> Self {
-///         Self { threshold }
-///     }
-///     
-///     fn analyze_rust_file(&self, file: &ParsedFile) -> Result<Option<ArchitecturalIssue>, AnalysisError> {
-///         // Implementation specific to Rust files
-///         Ok(None)
-///     }
-///     
-///     fn analyze_python_file(&self, file: &ParsedFile) -> Result<Option<ArchitecturalIssue>, AnalysisError> {
-///         // Implementation specific to Python files  
-///         Ok(None)
-///     }
-/// }
 /// ```
 ///
 /// ## Usage in Analysis Engine
 ///
-/// ```rust
+/// ```rust,no_run
 /// use uveddi::analysis::AnalysisEngine;
+/// use uveddi::analysis::detector_factory::DetectorFactory;
+/// use std::path::Path;
 ///
 /// # async fn example() -> uveddi::Result<()> {
-/// let engine = AnalysisEngine::builder()
-///     .with_detector(CustomDetector::new(10))
-///     .build()?;
+/// // Use default detectors
+/// let mut engine = AnalysisEngine::new()?;
 ///
-/// let (issues, graph) = engine.analyze("src/").await?;
+/// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+/// println!("Found {} issues", issues.len());
 /// # Ok(())
 /// # }
 /// ```

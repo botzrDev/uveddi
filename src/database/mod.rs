@@ -40,17 +40,11 @@
 //! ## Basic Usage (SQLite)
 //!
 //! ```rust,no_run
-//! use uveddi::database::{ScalableDatabase, DatabaseConfig, DatabaseType};
-//! use std::time::Duration;
+//! use uveddi::database::{ScalableDatabase, DatabaseConfig};
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! let config = DatabaseConfig {
-//!     provider_type: DatabaseType::SQLite,
-//!     connection_string: "./analysis.db".to_string(),
-//!     max_connections: 20,
-//!     connection_timeout: Duration::from_secs(30),
-//!     ..Default::default()
-//! };
+//! // Use the builder-style configuration
+//! let config = DatabaseConfig::sqlite("./analysis.db");
 //!
 //! let database = ScalableDatabase::new(config).await?;
 //!
@@ -64,22 +58,17 @@
 //!
 //! ## Production Setup (PostgreSQL with Read Replicas)
 //!
-//! ```rust,no_run
-//! use uveddi::database::{ScalableDatabase, DatabaseConfig, DatabaseType};
-//! use std::time::Duration;
+//! ```ignore
+//! // Requires "full" feature flag for PostgreSQL support
+//! use uveddi::database::{ScalableDatabase, DatabaseConfig};
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! let config = DatabaseConfig {
-//!     provider_type: DatabaseType::PostgreSQL,
-//!     connection_string: "postgresql://user:pass@primary:5432/uveddi".to_string(),
-//!     read_connection_strings: vec![
+//! // PostgreSQL configuration (requires "full" feature)
+//! let config = DatabaseConfig::postgresql("postgresql://user:pass@primary:5432/uveddi")
+//!     .with_read_connections(vec![
 //!         "postgresql://user:pass@replica1:5432/uveddi".to_string(),
 //!         "postgresql://user:pass@replica2:5432/uveddi".to_string(),
-//!     ],
-//!     max_connections: 100,
-//!     connection_timeout: Duration::from_secs(30),
-//!     ..Default::default()
-//! };
+//!     ]);
 //!
 //! let database = ScalableDatabase::new(config).await?;
 //!
@@ -100,7 +89,7 @@
 //!
 //! // Automatically detects environment and loads appropriate config
 //! let config = config_manager.get_config();
-//! println!("Using database: {:?}", config.provider_type);
+//! println!("Using database: {:?}", config.database_type);
 //!
 //! // Validate configuration
 //! config_manager.validate_config()?;

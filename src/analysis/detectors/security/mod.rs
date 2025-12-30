@@ -31,7 +31,8 @@
 //! ## Usage Examples
 //!
 //! ### Basic Security Analysis
-//! ```rust
+//! ```ignore
+//! // Requires "security" feature flag to be enabled
 //! use uveddi::analysis::detectors::security::{SecurityDetector, SecurityConfig};
 //!
 //! let config = SecurityConfig::default();
@@ -39,21 +40,18 @@
 //!
 //! let issues = detector.detect_issues(&parsed_file).await?;
 //! for issue in issues {
-//!     println!("Security Issue: {} (Confidence: {:.2})", issue.title, issue.confidence_score);
+//!     println!("Security Issue: {:?}", issue);
 //! }
 //! ```
 //!
 //! ### Advanced Multi-Agent Analysis
-//! ```rust
+//! ```ignore
+//! // Requires "security" feature flag to be enabled
 //! use uveddi::analysis::detectors::security::{SecurityOrchestrator, MultiAgentConfig};
 //!
-//! let orchestrator = SecurityOrchestrator::new(MultiAgentConfig {
-//!     enable_taint_analysis: true,
-//!     enable_sca: true,
-//!     enable_ai_enhancement: true,
-//!     confidence_threshold: 0.7,
-//! })?;
+//! let orchestrator = SecurityOrchestrator::new(MultiAgentConfig::default())?;
 //!
+//! // Analyze codebase for security issues
 //! let analysis_result = orchestrator.analyze_codebase(&dependency_graph).await?;
 //! ```
 

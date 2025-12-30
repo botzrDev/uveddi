@@ -25,6 +25,7 @@
 //! ```rust,no_run
 //! use uveddi::config::Config;
 //!
+//! # fn example() -> uveddi::Result<()> {
 //! // Load from environment
 //! let config = Config::from_env()?;
 //!
@@ -34,8 +35,11 @@
 //! // Create programmatically
 //! let config = Config {
 //!     ollama_model: Some("codellama:7b-instruct".to_string()),
+//!     dead_code: None,
+//!     large_classes: None,
 //! };
-//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! # Ok(())
+//! # }
 //! ```
 
 // TODO: Re-enable when monitoring dependencies are properly configured

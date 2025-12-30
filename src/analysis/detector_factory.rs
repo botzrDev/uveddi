@@ -54,7 +54,7 @@ impl DetectorFactory {
     ///
     /// ## Basic Usage
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use uveddi::analysis::detector_factory::DetectorFactory;
     /// use uveddi::analysis::AnalysisEngine;
     ///
@@ -62,17 +62,15 @@ impl DetectorFactory {
     /// println!("Created {} detectors", detectors.len());
     ///
     /// // Use with analysis engine
-    /// let mut engine = AnalysisEngine::builder();
-    /// for detector in detectors {
-    ///     engine = engine.with_detector(detector);
-    /// }
-    /// let engine = engine.build()?;
+    /// let engine = AnalysisEngine::builder()
+    ///     .with_detectors(detectors)
+    ///     .build()?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// ## Selective Detector Usage
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use uveddi::analysis::detector_factory::DetectorFactory;
     /// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
     ///
@@ -84,29 +82,25 @@ impl DetectorFactory {
     /// all_detectors.push(Box::new(custom_god_detector));
     ///
     /// println!("Total detectors: {}", all_detectors.len());
-    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// ## Analysis with Default Detectors
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use uveddi::analysis::{AnalysisEngine, detector_factory::DetectorFactory};
     /// use std::path::Path;
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// // Create engine with all default detectors
     /// let detectors = DetectorFactory::create_default_detectors();
-    /// let mut builder = AnalysisEngine::builder();
+    /// let mut engine = AnalysisEngine::builder()
+    ///     .with_detectors(detectors)
+    ///     .build()?;
     ///
-    /// for detector in detectors {
-    ///     builder = builder.with_detector(detector);
-    /// }
-    ///
-    /// let engine = builder.build()?;
     /// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
     ///
-    /// println!("Found {} issues across {} files",
-    ///          issues.len(), graph.nodes().count());
+    /// println!("Found {} issues across {} nodes",
+    ///          issues.len(), graph.node_count());
     /// # Ok(())
     /// # }
     /// ```
