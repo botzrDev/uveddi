@@ -32,6 +32,7 @@ impl InterfaceExtractor {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.extract_javascript_interface_dependencies(file_path, tree, source)
             }
+            _ => Ok(Vec::new()),
         }
     }
 
@@ -78,6 +79,9 @@ impl InterfaceExtractor {
                         self.extract_field_access_dependencies(file_path, &query, tree, source)?,
                     );
                 }
+            }
+            _ => {
+                // Not supported for other languages yet
             }
         }
 

@@ -34,6 +34,7 @@ impl StateExposurePattern {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 issues.extend(self.detect_js_state_exposure(parsed_file, context)?);
             }
+            _ => {}
         }
 
         Ok(issues)

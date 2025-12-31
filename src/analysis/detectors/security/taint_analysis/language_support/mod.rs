@@ -67,6 +67,7 @@ impl LanguageAnalyzerFactory {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 Box::new(TypeScriptTaintAnalyzer::new())
             }
+            _ => Box::new(GenericTaintAnalyzer::new()),
         }
     }
 

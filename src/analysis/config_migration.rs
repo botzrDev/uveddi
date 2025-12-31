@@ -37,6 +37,7 @@ impl ConfigMigration<GodObjectConfig> for GodObjectConfig {
                 SourceLanguage::Python => "python",
                 SourceLanguage::JavaScript => "javascript",
                 SourceLanguage::TypeScript => "typescript", // UV-XXX: Add TypeScript support
+                _ => "rust",
             };
             builder = builder.language_threshold(lang_str, "max_methods", *threshold as i64);
         }
@@ -48,6 +49,7 @@ impl ConfigMigration<GodObjectConfig> for GodObjectConfig {
                 SourceLanguage::Python => "python",
                 SourceLanguage::JavaScript => "javascript",
                 SourceLanguage::TypeScript => "typescript", // UV-XXX: Add TypeScript support
+                _ => "rust",
             };
             builder = builder.language_threshold(lang_str, "max_fields", *threshold as i64);
         }

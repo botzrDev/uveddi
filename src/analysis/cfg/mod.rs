@@ -207,6 +207,78 @@ const JAVASCRIPT_CFG_QUERY: &str = r#"
 (try_statement) @try
 "#;
 
+const GO_CFG_QUERY: &str = r#"
+(function_declaration) @function
+(method_declaration) @method
+[(if_statement) @if (switch_expression) @switch]
+[(for_statement) @loop]
+(call_expression) @call
+(return_statement) @return
+"#;
+
+const JAVA_CFG_QUERY: &str = r#"
+[(method_declaration) @function (constructor_declaration) @function]
+[(if_statement) @if (switch_expression) @switch]
+[(for_statement) @for (while_statement) @while (do_statement) @do]
+(method_invocation) @call
+(return_statement) @return
+(try_statement) @try
+"#;
+
+const C_CFG_QUERY: &str = r#"
+(function_definition) @function
+[(if_statement) @if (switch_statement) @switch]
+[(for_statement) @for (while_statement) @while (do_statement) @do]
+(call_expression) @call
+(return_statement) @return
+"#;
+
+const CPP_CFG_QUERY: &str = r#"
+(function_definition) @function
+[(if_statement) @if (switch_statement) @switch]
+[(for_statement) @for (while_statement) @while (do_statement) @do]
+(call_expression) @call
+(return_statement) @return
+(try_statement) @try
+"#;
+
+const CSHARP_CFG_QUERY: &str = r#"
+(method_declaration) @function
+[(if_statement) @if (switch_statement) @switch]
+[(for_statement) @for (while_statement) @while (do_statement) @do (foreach_statement) @for]
+(invocation_expression) @call
+(return_statement) @return
+(try_statement) @try
+"#;
+
+const PHP_CFG_QUERY: &str = r#"
+(function_definition) @function
+(method_declaration) @method
+[(if_statement) @if (switch_statement) @switch]
+[(for_statement) @for (while_statement) @while (foreach_statement) @for]
+(member_call_expression) @call
+(return_statement) @return
+(try_statement) @try
+"#;
+
+const RUBY_CFG_QUERY: &str = r#"
+[(method) @function (singleton_method) @function]
+[(if) @if (case) @switch]
+[(for) @for (while) @while (until) @loop]
+(call) @call
+(return) @return
+(begin) @try
+"#;
+
+const KOTLIN_CFG_QUERY: &str = r#"
+(function_declaration) @function
+[(if_expression) @if (when_expression) @switch]
+[(for_statement) @for (while_statement) @while (do_while_statement) @do]
+(call_expression) @call
+(return_expression) @return
+(try_expression) @try
+"#;
+
 /// CFG builder for constructing control flow graphs from AST
 pub struct CfgBuilder<'a> {
     /// The graph being constructed
@@ -247,12 +319,27 @@ impl<'a> CfgBuilder<'a> {
         );
 
         // 2. Get language-specific query
+        // 2. Get language-specific query
         let query_str = match language {
             SourceLanguage::Rust => RUST_CFG_QUERY,
             SourceLanguage::Python => PYTHON_CFG_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_CFG_QUERY,
-            SourceLanguage::TypeScript => JAVASCRIPT_CFG_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
+            SourceLanguage::TypeScript => JAVASCRIPT_CFG_QUERY,
+            SourceLanguage::Go => GO_CFG_QUERY,
+            SourceLanguage::Java => JAVA_CFG_QUERY,
+            SourceLanguage::C => C_CFG_QUERY,
+            SourceLanguage::Cpp => CPP_CFG_QUERY,
+            SourceLanguage::CSharp => CSHARP_CFG_QUERY,
+            SourceLanguage::Php => PHP_CFG_QUERY,
+            SourceLanguage::Ruby => RUBY_CFG_QUERY,
+            SourceLanguage::Kotlin => KOTLIN_CFG_QUERY,
+             // Fallback for others - minimal/empty query might be safer or error
+            _ => "", // Will likely fail Query::new if empty, handled below
         };
+
+        if query_str.is_empty() {
+             return Ok(ControlFlowGraph::new()); // Return empty CFG for unsupported languages for now
+        }
 
         // 3. Parse query and traverse AST
         let query = Query::new(&ast_node.language(), query_str).map_err(|e| {

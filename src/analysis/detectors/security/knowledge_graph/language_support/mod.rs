@@ -52,6 +52,7 @@ impl LanguageEntityProcessor {
                     .process_js_entities(file_path, content)
                     .await
             }
+            _ => Ok(Vec::new()),
         }
     }
 

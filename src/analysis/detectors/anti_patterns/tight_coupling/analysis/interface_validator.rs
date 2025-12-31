@@ -35,6 +35,7 @@ impl InterfaceValidator {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.analyze_javascript_interfaces(file_path, tree, source)
             }
+            _ => Ok(Vec::new()),
         }
     }
 

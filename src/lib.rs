@@ -255,6 +255,7 @@ pub mod models;
 pub mod plugins;
 pub mod progress;
 pub mod report;
+pub mod licensing;
 
 // REMOVED: Enterprise and service modules for CLI-only release
 // pub mod api;

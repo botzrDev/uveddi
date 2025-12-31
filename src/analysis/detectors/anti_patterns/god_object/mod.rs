@@ -202,6 +202,7 @@ impl GodObjectDetector {
                 let analyzer = TypeScriptGodObjectAnalyzer::new(&self.config);
                 analyzer.analyze(parsed_file)
             }
+            _ => Ok(Vec::new()),
         }
     }
 }

@@ -173,7 +173,9 @@ impl InputSourceDetector {
                     "Browser form data".to_string(),
                 )
                 .with_language(language),
+
             ],
+            _ => vec![],
         }
     }
 }

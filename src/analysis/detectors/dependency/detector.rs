@@ -253,6 +253,7 @@ impl DependencyDetector {
                 SourceLanguage::Python => (PYTHON_IMPORTS_QUERY, DependencyType::Import),
                 SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
                 SourceLanguage::TypeScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
+                _ => return Ok(Vec::new()),
             };
 
             let query = Query::new(

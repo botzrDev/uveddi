@@ -44,6 +44,30 @@ impl LanguageAnalyzerFactory {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 Box::new(javascript::JavaScriptAnalyzer::new())
             }
+            _ => Box::new(NoopAnalyzer),
         }
+    }
+}
+
+pub struct NoopAnalyzer;
+
+impl LanguageAnalyzer for NoopAnalyzer {
+    fn extract_symbols(&self, _parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
+        Ok(Vec::new())
+    }
+    fn extract_references(
+        &self,
+        _parsed_file: &ParsedFile,
+    ) -> Result<HashSet<String>, AnalysisError> {
+        Ok(HashSet::new())
+    }
+    fn is_exported(&self, _node: &Node, _source: &[u8]) -> bool {
+        true
+    }
+    fn calculate_confidence(&self, _symbol: &Symbol) -> f64 {
+        0.0
+    }
+    fn identify_entry_points(&self, _symbols: &[Symbol]) -> Vec<String> {
+        Vec::new()
     }
 }

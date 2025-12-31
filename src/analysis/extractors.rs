@@ -32,6 +32,15 @@ impl SymbolExtractor {
             crate::ast::tree_sitter_impl::SourceLanguage::Python => "python",
             crate::ast::tree_sitter_impl::SourceLanguage::JavaScript => "javascript",
             crate::ast::tree_sitter_impl::SourceLanguage::TypeScript => "typescript",
+            crate::ast::tree_sitter_impl::SourceLanguage::Go => "go",
+            crate::ast::tree_sitter_impl::SourceLanguage::Java => "java",
+            crate::ast::tree_sitter_impl::SourceLanguage::C => "c",
+            crate::ast::tree_sitter_impl::SourceLanguage::Cpp => "cpp",
+            crate::ast::tree_sitter_impl::SourceLanguage::CSharp => "csharp",
+            crate::ast::tree_sitter_impl::SourceLanguage::Php => "php",
+            crate::ast::tree_sitter_impl::SourceLanguage::Ruby => "ruby",
+            crate::ast::tree_sitter_impl::SourceLanguage::Kotlin => "kotlin",
+            _ => "other",
         };
 
         let query_source = match language {
@@ -54,6 +63,31 @@ impl SymbolExtractor {
                 (class_declaration name: (type_identifier) @name) @class
                 (lexical_declaration (variable_declarator name: (identifier) @name)) @variable
             "#
+            }
+            "go" => {
+                r#"
+                (function_declaration name: (identifier) @name) @function
+                (method_declaration name: (field_identifier) @name) @function
+                (type_declaration (type_spec name: (type_identifier) @name)) @struct
+                "#
+            }
+            "java" | "csharp" | "kotlin" => {
+                r#"
+                (class_declaration name: (identifier) @name) @class
+                (method_declaration name: (identifier) @name) @function
+                "#
+            }
+            "c" | "cpp" => {
+                r#"
+                (function_definition declarator: (function_declarator declarator: (identifier) @name)) @function
+                (struct_specifier name: (type_identifier) @name) @struct
+                "#
+            }
+            "php" | "ruby" => {
+                r#"
+                (function_definition name: (identifier) @name) @function
+                (class_declaration name: (type_identifier) @name) @class
+                "#
             }
             _ => return Ok(()),
         };

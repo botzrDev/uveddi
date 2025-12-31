@@ -12,5 +12,6 @@ pub fn patterns_for(language: SourceLanguage) -> LanguagePatternSet {
         SourceLanguage::Rust => rust::patterns(),
         SourceLanguage::Python => python::patterns(),
         SourceLanguage::JavaScript | SourceLanguage::TypeScript => javascript::patterns(),
+        _ => LanguagePatternSet::default(),
     }
 }

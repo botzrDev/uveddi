@@ -728,6 +728,7 @@ fn get_common_apis_for_language(language: &SourceLanguage) -> Vec<String> {
             "forEach".to_string(),
             "Promise".to_string(),
         ],
+        _ => vec![], // Placeholder for new languages
     }
 }
 
@@ -804,6 +805,7 @@ fn get_keywords_for_language(language: &SourceLanguage) -> Vec<String> {
             "for".to_string(),
             "while".to_string(),
         ],
+        _ => vec![], // Placeholder for new languages
     }
 }
 

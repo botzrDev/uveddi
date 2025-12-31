@@ -22,6 +22,7 @@ impl ParameterizationChecker {
             }
             SourceLanguage::Rust => lowered.contains("query!(") || lowered.contains("execute!("),
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => lowered.contains("?"),
+            _ => false,
         }
     }
 }

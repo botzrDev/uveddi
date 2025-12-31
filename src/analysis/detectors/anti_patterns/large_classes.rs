@@ -442,6 +442,7 @@ impl AnalysisDetector for LargeClassDetector {
             SourceLanguage::Python => self.extract_python_metrics(file)?,
             SourceLanguage::JavaScript => self.extract_javascript_metrics(file)?,
             SourceLanguage::TypeScript => self.extract_javascript_metrics(file)?, // reuse JS metrics extractor
+            _ => Vec::new(),
         };
 
         let mut issues = Vec::new();
@@ -451,6 +452,7 @@ impl AnalysisDetector for LargeClassDetector {
                 SourceLanguage::Python => &self.config.python_thresholds,
                 SourceLanguage::JavaScript => &self.config.javascript_thresholds,
                 SourceLanguage::TypeScript => &self.config.javascript_thresholds,
+                _ => &self.config.rust_thresholds,
             };
 
             if class_metrics.logical_loc > thresholds.max_logical_loc

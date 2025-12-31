@@ -183,6 +183,57 @@ impl AstParser {
                 }
                 parsers.insert(SourceLanguage::TypeScript, typescript_parser);
             }
+
+            // New Premium Languages
+            #[cfg(feature = "go-lang")]
+            {
+                let mut go_parser = Parser::new();
+                go_parser.set_language(&tree_sitter_go::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::Go, go_parser);
+            }
+            #[cfg(feature = "java-lang")]
+            {
+                let mut java_parser = Parser::new();
+                java_parser.set_language(&tree_sitter_java::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::Java, java_parser);
+            }
+            #[cfg(feature = "c-lang")]
+            {
+                let mut c_parser = Parser::new();
+                c_parser.set_language(&tree_sitter_c::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::C, c_parser);
+            }
+            #[cfg(feature = "cpp-lang")]
+            {
+                let mut cpp_parser = Parser::new();
+                cpp_parser.set_language(&tree_sitter_cpp::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::Cpp, cpp_parser);
+            }
+            #[cfg(feature = "csharp-lang")]
+            {
+                let mut csharp_parser = Parser::new();
+                csharp_parser.set_language(&tree_sitter_c_sharp::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::CSharp, csharp_parser);
+            }
+            #[cfg(feature = "php-lang")]
+            {
+                let mut php_parser = Parser::new();
+                // PHP parser usually requires scanning for PHP tags, basic support here
+                php_parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into())?;
+                parsers.insert(SourceLanguage::Php, php_parser);
+            }
+            #[cfg(feature = "ruby-lang")]
+            {
+                let mut ruby_parser = Parser::new();
+                ruby_parser.set_language(&tree_sitter_ruby::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::Ruby, ruby_parser);
+            }
+            #[cfg(feature = "kotlin-lang")]
+            {
+                let mut kotlin_parser = Parser::new();
+                kotlin_parser.set_language(&tree_sitter_kotlin::LANGUAGE.into())?;
+                parsers.insert(SourceLanguage::Kotlin, kotlin_parser);
+            }
         }
 
         info!("Initialized AST parser with LRU cache size: {}", cache_size);
@@ -542,6 +593,129 @@ impl AstParser {
                     }
                 }
             }
+            SourceLanguage::Go => {
+                // Basic Go extraction
+                for child in root.children(&mut root.walk()) {
+                    match child.kind() {
+                        "function_declaration" | "method_declaration" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                    items.push(CustomAst::Function {
+                                        name: name.to_string(),
+                                        params: Vec::new(),
+                                    });
+                                }
+                            }
+                        }
+                        "type_declaration" => {
+                            // Structs in Go
+                            for spec in child.children(&mut child.walk()) {
+                                if spec.kind() == "type_spec" {
+                                    if let Some(name_node) = spec.child_by_field_name("name") {
+                                         if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                            items.push(CustomAst::Struct {
+                                                name: name.to_string(),
+                                                methods: Vec::new(),
+                                            });
+                                         }
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            SourceLanguage::Java | SourceLanguage::CSharp | SourceLanguage::Kotlin | SourceLanguage::Scala | SourceLanguage::Swift => {
+                // JVM/C#-like class-based languages
+                for child in root.children(&mut root.walk()) {
+                    match child.kind() {
+                        "class_declaration" | "interface_declaration" | "object_declaration" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                    let mut methods = Vec::new();
+                                    if let Some(body) = child.child_by_field_name("body") {
+                                        for member in body.children(&mut body.walk()) {
+                                            if member.kind().contains("method") || member.kind().contains("function") {
+                                                if let Some(m_name) = member.child_by_field_name("name") {
+                                                    if let Ok(mn) = m_name.utf8_text(source.as_bytes()) {
+                                                        methods.push(mn.to_string());
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    items.push(CustomAst::Struct {
+                                        name: name.to_string(),
+                                        methods,
+                                    });
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            SourceLanguage::C | SourceLanguage::Cpp => {
+                 // C/C++ Header/Source
+                 for child in root.children(&mut root.walk()) {
+                    match child.kind() {
+                        "function_definition" => {
+                            if let Some(decl) = child.child_by_field_name("declarator") {
+                                // Extract name from declarator (simplified)
+                                if let Ok(name_text) = decl.utf8_text(source.as_bytes()) {
+                                    items.push(CustomAst::Function {
+                                        name: name_text.to_string(),
+                                        params: Vec::new(),
+                                    });
+                                }
+                            }
+                        }
+                        "struct_specifier" | "class_specifier" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                    items.push(CustomAst::Struct {
+                                        name: name.to_string(),
+                                        methods: Vec::new(),
+                                    });
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                 }
+            }
+            SourceLanguage::Php | SourceLanguage::Ruby => {
+                // Scripting languages with classes/functions
+                for child in root.children(&mut root.walk()) {
+                    match child.kind() {
+                        "function_definition" | "method_definition" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                    items.push(CustomAst::Function {
+                                        name: name.to_string(),
+                                        params: Vec::new(),
+                                    });
+                                }
+                            }
+                        }
+                        "class_declaration" | "class_definition" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                    items.push(CustomAst::Struct {
+                                        name: name.to_string(),
+                                        methods: Vec::new(), // Deep extraction omitted for brevity
+                                    });
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {
+                // Unsupported or no-op languages
+            }
         }
         Ok(CustomAst::File { items })
     }
@@ -827,6 +1001,18 @@ impl AstParser {
             "py" => Ok(SourceLanguage::Python),
             "js" | "jsx" => Ok(SourceLanguage::JavaScript),
             "ts" | "tsx" => Ok(SourceLanguage::TypeScript),
+            "go" => Ok(SourceLanguage::Go),
+            "java" => Ok(SourceLanguage::Java),
+            "c" | "h" => Ok(SourceLanguage::C),
+            "cpp" | "hpp" | "cc" | "cxx" => Ok(SourceLanguage::Cpp),
+            "cs" => Ok(SourceLanguage::CSharp),
+            "php" => Ok(SourceLanguage::Php),
+            "rb" => Ok(SourceLanguage::Ruby),
+            "kt" | "kts" => Ok(SourceLanguage::Kotlin),
+            "sql" => Ok(SourceLanguage::Sql),
+            "lua" => Ok(SourceLanguage::Lua),
+            "swift" => Ok(SourceLanguage::Swift),
+            "scala" => Ok(SourceLanguage::Scala),
             _ => Err(AstError::UnsupportedLanguage(format!(
                 "Unsupported file extension: {}",
                 ext
@@ -1044,7 +1230,19 @@ pub enum SourceLanguage {
     Rust,
     Python,
     JavaScript,
-    TypeScript, // Added for Phase 1 multi-language support UV-XXX
+    TypeScript,
+    Go,
+    Java,
+    C,
+    Cpp,
+    CSharp,
+    Php,
+    Ruby,
+    Kotlin,
+    Swift,
+    Scala,
+    Lua,
+    Sql,
 }
 
 impl std::fmt::Display for SourceLanguage {
@@ -1054,6 +1252,18 @@ impl std::fmt::Display for SourceLanguage {
             SourceLanguage::Python => "python",
             SourceLanguage::JavaScript => "javascript",
             SourceLanguage::TypeScript => "typescript",
+            SourceLanguage::Go => "go",
+            SourceLanguage::Java => "java",
+            SourceLanguage::C => "c",
+            SourceLanguage::Cpp => "cpp",
+            SourceLanguage::CSharp => "csharp",
+            SourceLanguage::Php => "php",
+            SourceLanguage::Ruby => "ruby",
+            SourceLanguage::Kotlin => "kotlin",
+            SourceLanguage::Swift => "swift",
+            SourceLanguage::Scala => "scala",
+            SourceLanguage::Lua => "lua",
+            SourceLanguage::Sql => "sql",
         };
         write!(f, "{}", name)
     }
@@ -1073,7 +1283,7 @@ impl SourceLanguage {
                     "Unsupported file extension for '{}'; unable to detect language",
                     file
                 ),
-                suggestion: "Ensure file extension is one of .rs, .py, .js, .ts, .jsx, .tsx"
+                suggestion: "Ensure file extension is one of supported languages (rs, py, js, ts, go, java, c, cpp, cs, php, rb, kt, ...)"
                     .to_string(),
                 source: None,
             })
@@ -1089,6 +1299,18 @@ impl SourceLanguage {
                 "py" => Some(SourceLanguage::Python),
                 "js" | "jsx" => Some(SourceLanguage::JavaScript),
                 "ts" | "tsx" => Some(SourceLanguage::TypeScript),
+                "go" => Some(SourceLanguage::Go),
+                "java" => Some(SourceLanguage::Java),
+                "c" | "h" => Some(SourceLanguage::C),
+                "cpp" | "hpp" | "cc" | "cxx" => Some(SourceLanguage::Cpp),
+                "cs" => Some(SourceLanguage::CSharp),
+                "php" => Some(SourceLanguage::Php),
+                "rb" => Some(SourceLanguage::Ruby),
+                "kt" | "kts" => Some(SourceLanguage::Kotlin),
+                "sql" => Some(SourceLanguage::Sql),
+                "lua" => Some(SourceLanguage::Lua),
+                "swift" => Some(SourceLanguage::Swift),
+                "scala" => Some(SourceLanguage::Scala),
                 _ => None,
             })
     }

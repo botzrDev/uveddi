@@ -77,6 +77,7 @@ impl MetricsCalculator {
             SourceLanguage::Python => PYTHON_FUNCTION_COUNT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
             SourceLanguage::TypeScript => TYPESCRIPT_FUNCTION_COUNT_QUERY,
+            _ => return Ok(0),
         };
 
         let query = Query::new(&language, query_str)
@@ -109,6 +110,7 @@ impl MetricsCalculator {
             SourceLanguage::Python => PYTHON_FIELD_COUNT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FIELD_COUNT_QUERY,
             SourceLanguage::TypeScript => TYPESCRIPT_FIELD_COUNT_QUERY,
+            _ => return Ok(0),
         };
 
         let query = Query::new(&language, query_str)
@@ -142,6 +144,7 @@ impl MetricsCalculator {
             SourceLanguage::Python => vec!["import ", "from "],
             SourceLanguage::JavaScript => vec!["import ", "require("],
             SourceLanguage::TypeScript => vec!["import ", "require("],
+            _ => Vec::new(),
         };
 
         let mut count = 0;

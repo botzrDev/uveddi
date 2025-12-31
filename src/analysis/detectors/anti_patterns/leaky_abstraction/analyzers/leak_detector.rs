@@ -84,6 +84,7 @@ impl LeakDetector {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 self.detect_js_leaks(parsed_file, context)
             }
+            _ => Ok(Vec::new()),
         }
     }
 

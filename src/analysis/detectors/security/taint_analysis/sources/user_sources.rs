@@ -140,7 +140,9 @@ impl UserSourceDetector {
                     "Yargs command line parser".to_string(),
                 )
                 .with_language(language),
+
             ],
+            _ => vec![],
         }
     }
 
@@ -181,6 +183,7 @@ impl UserSourceDetector {
                 "Node.js environment variables".to_string(),
             )
             .with_language(language)],
+            _ => vec![],
         }
     }
 
@@ -247,6 +250,7 @@ impl UserSourceDetector {
                 )
                 .with_language(language),
             ],
+            _ => vec![],
         }
     }
 }

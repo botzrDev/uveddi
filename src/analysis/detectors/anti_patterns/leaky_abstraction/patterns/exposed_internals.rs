@@ -34,6 +34,7 @@ impl ExposedInternalsPattern {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 issues.extend(self.detect_js_exposed_internals(parsed_file, context)?);
             }
+            _ => {}
         }
 
         Ok(issues)

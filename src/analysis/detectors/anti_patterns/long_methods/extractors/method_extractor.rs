@@ -17,6 +17,7 @@ impl MethodExtractor {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 Self::extract_javascript_metrics(parsed_file)
             }
+            _ => Ok(Vec::new()),
         }
     }
 

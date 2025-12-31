@@ -185,6 +185,7 @@ impl CommandSinkDetector {
                 )
                 .with_language(language),
             ],
+            _ => vec![],
         }
     }
 
@@ -251,7 +252,8 @@ impl CommandSinkDetector {
                 )
                 .with_language(language),
             ],
-            SourceLanguage::Rust => Vec::new(), // No code evaluation sinks for Rust
+            SourceLanguage::Rust => Vec::new(), 
+            _ => vec![],
         }
     }
 
@@ -289,6 +291,7 @@ impl CommandSinkDetector {
             )
             .with_language(language)],
             SourceLanguage::Rust => Vec::new(),
+            _ => vec![],
         }
     }
 }

@@ -67,6 +67,7 @@ impl LayerValidator {
                     context,
                 )?);
             }
+            _ => {}
         }
 
         Ok(issues)

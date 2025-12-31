@@ -105,26 +105,51 @@ impl DetectorFactory {
     /// # }
     /// ```
     pub fn create_default_detectors() -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
-        let mut detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> = vec![
-            // Original detectors - using default() for language-specific thresholds
-            Box::new(GodObjectDetector::default()),  // Uses proper config: Rust:30/20, Python:25/15, JS:20/12, TS:15/10
-            Box::new(CodeDuplicationDetector::new()),
-            Box::new(DeadCodeDetector::with_default_config()),
-            Box::new(LargeClassDetector::with_default_config()),
-            Box::new(TightCouplingDetector::default()),
-            // Enhanced anti-pattern detectors
-            // Box::new(ShotgunSurgeryDetector::new()),
-            // Box::new(FeatureEnvyDetector::new()),
-            // Box::new(DataClumpsDetector::new()),
-            Box::new(LongMethodsDetector::default()),
-            Box::new(MagicValuesDetector::default()),
-        ];
+        use crate::licensing::{get_current_tier, is_feature_allowed, features};
+        let tier = get_current_tier();
+        
+        let mut detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> = Vec::new();
 
-        // Add SecurityDetector if security feature is enabled
+        // God Object Detector (Always included - Free Tier)
+        detectors.push(Box::new(GodObjectDetector::default()));
+
+        // Code Duplication Detector (Standard)
+        if is_feature_allowed(features::DETECTOR_TIGHT_COUPLING, &tier) { // Map to similar tier? Or make duplication its own feature
+             detectors.push(Box::new(CodeDuplicationDetector::new()));
+        }
+
+        // Dead Code Detector
+        if is_feature_allowed(features::DETECTOR_DEAD_CODE, &tier) {
+            detectors.push(Box::new(DeadCodeDetector::with_default_config()));
+        }
+
+        // Large Class Detector
+        if is_feature_allowed(features::DETECTOR_LARGE_CLASSES, &tier) {
+             detectors.push(Box::new(LargeClassDetector::with_default_config()));
+        }
+
+        // Tight Coupling Detector
+        if is_feature_allowed(features::DETECTOR_TIGHT_COUPLING, &tier) {
+            detectors.push(Box::new(TightCouplingDetector::default()));
+        }
+        
+        // Long Methods Detector
+        if is_feature_allowed(features::DETECTOR_LONG_METHODS, &tier) {
+            detectors.push(Box::new(LongMethodsDetector::default()));
+        }
+
+        // Magic Values Detector
+        if is_feature_allowed(features::DETECTOR_MAGIC_VALUES, &tier) {
+             detectors.push(Box::new(MagicValuesDetector::default()));
+        }
+
+        // Security Detector
         #[cfg(feature = "security")]
         {
-            if let Ok(security_detector) = MainSecurityDetector::new() {
-                detectors.push(Box::new(security_detector));
+            if is_feature_allowed(features::DETECTOR_SECURITY, &tier) {
+                if let Ok(security_detector) = MainSecurityDetector::new() {
+                    detectors.push(Box::new(security_detector));
+                }
             }
         }
 

@@ -34,6 +34,7 @@ impl EncapsulationChecker {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 issues.extend(self.check_js_encapsulation(parsed_file, context)?);
             }
+            _ => {}
         }
 
         Ok(issues)

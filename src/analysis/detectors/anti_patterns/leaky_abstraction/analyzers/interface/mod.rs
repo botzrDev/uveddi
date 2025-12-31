@@ -49,6 +49,11 @@ impl InterfaceAnalyzer {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 self.js_analyzer.analyze_js_interface(parsed_file, context)
             }
+            _ => Ok(InterfaceAnalysisResult {
+                public_api: Vec::new(),
+                visibility_violations: Vec::new(),
+                contract_violations: Vec::new(),
+            }),
         }
     }
 

@@ -81,6 +81,7 @@ impl LanguageSupportFactory {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 Box::new(TypeScriptLanguageSupport::new())
             }
+            _ => Box::new(GenericLanguageSupport::new(*language)),
         }
     }
 

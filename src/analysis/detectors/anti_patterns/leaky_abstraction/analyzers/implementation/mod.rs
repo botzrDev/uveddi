@@ -54,6 +54,11 @@ impl ImplementationAnalyzer {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 self.analyze_js_implementation(parsed_file, context)
             }
+            _ => Ok(ImplementationAnalysisResult {
+                implementation_exposures: Vec::new(),
+                type_leakages: Vec::new(),
+                visibility_issues: Vec::new(),
+            }),
         }
     }
 

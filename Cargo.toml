@@ -90,6 +90,16 @@ python-lang = ["dep:tree-sitter-python"]
 javascript-lang = ["dep:tree-sitter-javascript"]
 typescript-lang = ["dep:tree-sitter-typescript"]
 
+# New premium tier languages
+go-lang = ["dep:tree-sitter-go"]
+java-lang = ["dep:tree-sitter-java"]
+c-lang = ["dep:tree-sitter-c"]
+cpp-lang = ["dep:tree-sitter-cpp"]
+csharp-lang = ["dep:tree-sitter-c-sharp"]
+php-lang = ["dep:tree-sitter-php"]
+ruby-lang = ["dep:tree-sitter-ruby"]
+kotlin-lang = ["dep:tree-sitter-kotlin"]
+
 # ==================== LANGUAGE PACKS ====================
 # Backend languages (Rust, Python)
 languages-core = ["rust-lang", "python-lang"]
@@ -97,7 +107,26 @@ languages-core = ["rust-lang", "python-lang"]
 # Frontend languages (JavaScript, TypeScript)
 languages-web = ["javascript-lang", "typescript-lang"]
 
-# All supported languages
+# Pro tier languages (10 total)
+languages-pro = [
+    "languages-web",
+    "languages-core",
+    "go-lang",
+    "java-lang",
+    "c-lang",
+    "cpp-lang",
+    "php-lang",
+    "ruby-lang"
+]
+
+# Team tier languages (14 total)
+languages-team = [
+    "languages-pro",
+    "csharp-lang",
+    "kotlin-lang"
+]
+
+# All supported languages (legacy alias)
 languages-all = ["languages-core", "languages-web"]
 
 # Full tree-sitter support (all languages)
@@ -206,6 +235,14 @@ tree-sitter-rust = { version = "0.24.0", optional = true }
 tree-sitter-python = { version = "0.23.6", optional = true }
 tree-sitter-javascript = { version = "0.23.1", optional = true }
 tree-sitter-typescript = { version = "0.23.2", optional = true }
+tree-sitter-go = { version = "0.23", optional = true }
+tree-sitter-java = { version = "0.23", optional = true }
+tree-sitter-c = { version = "0.23", optional = true }
+tree-sitter-cpp = { version = "0.23", optional = true }
+tree-sitter-c-sharp = { version = "0.23", optional = true }
+tree-sitter-php = { version = "0.23", optional = true }
+tree-sitter-ruby = { version = "0.23", optional = true }
+tree-sitter-kotlin = { version = "0.3", optional = true }
 # HTML escaping for fallback diagram rendering
 html-escape = "0.2"
 # Additional tracing appender

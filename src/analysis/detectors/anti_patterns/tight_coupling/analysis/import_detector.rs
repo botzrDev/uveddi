@@ -31,6 +31,7 @@ impl ImportDetector {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.analyze_javascript_imports(file_path, tree, source)
             }
+            _ => Ok(Vec::new()),
         }
     }
 

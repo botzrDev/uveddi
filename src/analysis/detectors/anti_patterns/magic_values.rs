@@ -758,6 +758,7 @@ impl AnalysisDetector for MagicValuesDetector {
             SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.analyze_generic_literals(parsed_file).await?
             }
+            _ => Vec::new(),
         };
 
         let issues: Vec<ArchitecturalIssue> = magic_values

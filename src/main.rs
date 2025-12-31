@@ -118,6 +118,8 @@ enum Commands {
     Ci(CiCommand),
     /// Database migration management
     Migrate(MigrateCommand),
+    /// Manage license activation and status
+    License(LicenseCommand),
     /// Manage WASM plugins
     #[cfg(feature = "wasm-plugins")]
     Plugin(PluginCommand),
@@ -197,6 +199,10 @@ async fn main() -> Result<()> {
         }
         Commands::Migrate(command) => {
             info!("Executing migrate command...");
+            command.execute().await
+        }
+        Commands::License(command) => {
+            info!("Executing license command...");
             command.execute().await
         }
         #[cfg(feature = "wasm-plugins")]

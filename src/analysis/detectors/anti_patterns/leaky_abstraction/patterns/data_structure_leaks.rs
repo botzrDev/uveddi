@@ -34,6 +34,7 @@ impl DataStructureLeaksPattern {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 issues.extend(self.detect_js_data_structure_leaks(parsed_file, context)?);
             }
+            _ => {}
         }
 
         Ok(issues)

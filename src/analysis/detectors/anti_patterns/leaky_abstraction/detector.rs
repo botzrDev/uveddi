@@ -138,6 +138,7 @@ impl LeakyAbstractionDetector {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.typescript_support.analyze_file(parsed_file, context)
             }
+            _ => Ok(Vec::new()),
         }
     }
 

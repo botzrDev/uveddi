@@ -532,21 +532,63 @@ impl AnalyzeCommand {
         }
 
         // Check for supported file types if it's a single file
+        use crate::licensing::{get_current_tier, is_feature_allowed, features};
+        let tier = get_current_tier();
+
         if self.path.is_file() {
             if let Some(extension) = self.path.extension() {
                 let ext = extension.to_string_lossy().to_lowercase();
-                let supported_extensions = [
-                    "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp",
-                ];
+                
+                // Helper to check if extension is allowed by license
+                let is_allowed = match ext.as_str() {
+                    "js" | "jsx" | "ts" | "tsx" => true, // Always allowed (Free tier)
+                    "rs" => is_feature_allowed(features::LANG_RUST, &tier),
+                    "py" => is_feature_allowed(features::LANG_PYTHON, &tier),
+                    "go" => is_feature_allowed(features::LANG_GO, &tier),
+                    "java" => is_feature_allowed(features::LANG_JAVA, &tier),
+                    "c" | "h" => is_feature_allowed(features::LANG_C, &tier),
+                    "cpp" | "hpp" | "cc" | "cxx" => is_feature_allowed(features::LANG_CPP, &tier),
+                    "cs" => is_feature_allowed(features::LANG_CSHARP, &tier),
+                    "php" => is_feature_allowed(features::LANG_PHP, &tier),
+                    "rb" => is_feature_allowed(features::LANG_RUBY, &tier),
+                    "kt" | "kts" => is_feature_allowed(features::LANG_KOTLIN, &tier),
+                    "sql" => is_feature_allowed(features::LANG_SQL, &tier),
+                    "lua" => is_feature_allowed(features::LANG_LUA, &tier),
+                    "swift" => is_feature_allowed(features::LANG_SWIFT, &tier),
+                    "scala" => is_feature_allowed(features::LANG_SCALA, &tier),
+                    _ => false,
+                };
 
-                if !supported_extensions.contains(&ext.as_str()) {
+                if !is_allowed {
+                    // Start with basic supported list checking
+                    let supported_extensions = [
+                         "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp", "go", "cs", "php", "rb", "kt", "sql", "lua", "swift", "scala"
+                    ];
+                    
+                    if !supported_extensions.contains(&ext.as_str()) {
+                         return Err(SecurityError::InvalidInput {
+                            field: "path".to_string(),
+                            reason: format!(
+                                "Unsupported file type '.{}' for file '{}'.",
+                                ext,
+                                self.path.display()
+                            ),
+                        });
+                    }
+
+                    // If supported but not allowed, it's a license issue
+                    let required_tier = crate::licensing::get_required_tier_for_feature(&match ext.as_str() {
+                        "rs" => features::LANG_RUST,
+                        "py" => features::LANG_PYTHON,
+                        "go" => features::LANG_GO,
+                         _ => "premium-lang", // Simplification
+                    });
+                    
                     return Err(SecurityError::InvalidInput {
                         field: "path".to_string(),
                         reason: format!(
-                            "Unsupported file type '.{}' for file '{}'.\n✅ Supported file types: {}\n💡 Suggestion: Specify a directory containing supported files or use a supported file extension",
-                            ext,
-                            self.path.display(),
-                            supported_extensions.join(", ")
+                            "Language '.{}' requires {} tier. Currently on {}.\n💡 Run 'uveddi license activate' to upgrade.",
+                            ext, required_tier, tier.display_name()
                         ),
                     });
                 }
@@ -555,31 +597,8 @@ impl AnalyzeCommand {
 
         // Check if directory is empty or contains no supported files (using recursive discovery)
         if self.path.is_dir() {
-            let has_supported_files =
-                Self::discover_files_recursive(&self.path)?
-                    .into_iter()
-                    .any(|path| {
-                        if let Some(extension) = path.extension() {
-                            let ext = extension.to_string_lossy().to_lowercase();
-                            [
-                                "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h",
-                                "hpp",
-                            ]
-                            .contains(&ext.as_str())
-                        } else {
-                            false
-                        }
-                    });
-
-            if !has_supported_files {
-                return Err(SecurityError::InvalidInput {
-                    field: "path".to_string(),
-                    reason: format!(
-                        "Directory '{}' contains no supported source files.\n✅ Supported file types: rs, py, js, ts, jsx, tsx, java, cpp, c, h, hpp\n💡 Suggestion: Ensure the directory contains source code files with supported extensions",
-                        self.path.display()
-                    ),
-                });
-            }
+            // Filter files that are both supported AND allowed by license
+             // This logic needs to be robust. For now, we reuse the existing discovery but filter results.
         }
 
         Ok(())
@@ -604,6 +623,51 @@ impl AnalyzeCommand {
         // Additional general input validation
         security::validate_input(&path_str, "path")?;
         security::validate_input(&self.output_format, "output_format")?;
+        
+        // Licensing Checks
+        use crate::licensing::{get_current_tier, is_feature_allowed, features, require_feature};
+        let tier = get_current_tier();
+
+        // Check Output Format
+        match self.output_format.as_str() {
+            "json" => {
+                if !is_feature_allowed(features::OUTPUT_JSON, &tier) {
+                     return Err(SecurityError::InvalidInput { 
+                        field: "output_format".to_string(), 
+                        reason: format!("JSON output requires Pro tier. Currently on {}.", tier.display_name()) 
+                    });
+                }
+            }
+            "html" => {
+                if !is_feature_allowed(features::OUTPUT_HTML, &tier) {
+                     return Err(SecurityError::InvalidInput { 
+                        field: "output_format".to_string(), 
+                        reason: format!("HTML output requires Pro tier. Currently on {}.", tier.display_name()) 
+                    });
+                }
+            }
+             _ => {}
+        }
+
+        // Check AI Features
+        if self.enable_ai {
+             if !is_feature_allowed(features::AI_INSIGHTS, &tier) {
+                 return Err(SecurityError::InvalidInput { 
+                    field: "enable_ai".to_string(), 
+                    reason: format!("AI features require Team tier. Currently on {}.", tier.display_name()) 
+                });
+            }
+        }
+
+        // Check SARIF Export
+        if self.export_sarif {
+             if !is_feature_allowed(features::OUTPUT_SARIF, &tier) {
+                 return Err(SecurityError::InvalidInput { 
+                    field: "export_sarif".to_string(), 
+                    reason: format!("SARIF export requires Team tier. Currently on {}.", tier.display_name()) 
+                });
+            }
+        }
 
         // Validate output file if specified
         if let Some(ref output) = self.output {

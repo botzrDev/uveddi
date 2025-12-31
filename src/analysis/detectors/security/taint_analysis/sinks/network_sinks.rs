@@ -157,7 +157,9 @@ impl NetworkSinkDetector {
                     "WebSocket connection with user URL".to_string(),
                 )
                 .with_language(language),
+
             ],
+            _ => vec![],
         }
     }
 
@@ -233,6 +235,7 @@ impl NetworkSinkDetector {
                 )
                 .with_language(language),
             ],
+            _ => vec![],
         }
     }
 
@@ -269,7 +272,8 @@ impl NetworkSinkDetector {
                 )
                 .with_language(language),
             ],
-            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(), // No network-based code execution sinks for these languages
+            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(), 
+            _ => vec![],
         }
     }
 
@@ -293,6 +297,7 @@ impl NetworkSinkDetector {
             SourceLanguage::JavaScript | SourceLanguage::TypeScript => vec![
                 // Placeholder for JS/TS websocket sinks detection; currently none
             ],
+            _ => vec![],
         }
     }
 }

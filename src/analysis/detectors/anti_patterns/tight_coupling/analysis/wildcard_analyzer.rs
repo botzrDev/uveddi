@@ -60,6 +60,9 @@ impl WildcardAnalyzer {
                     );
                 }
             }
+            _ => {
+                // Not supported for other languages yet
+            }
         }
 
         Ok(wildcard_deps)

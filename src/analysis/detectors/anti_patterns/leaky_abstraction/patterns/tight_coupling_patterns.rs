@@ -34,6 +34,7 @@ impl TightCouplingPattern {
             crate::ast::SourceLanguage::JavaScript | crate::ast::SourceLanguage::TypeScript => {
                 issues.extend(self.detect_js_tight_coupling(parsed_file, context)?);
             }
+            _ => {}
         }
 
         Ok(issues)
