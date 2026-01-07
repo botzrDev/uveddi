@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 #[cfg(feature = "tui")]
 use uveddi::application::{AnalysisConfig, AnalysisOrchestrator};
-use uveddi::cli::analyze_command::AnalyzeCommand;
+use uveddi::cli::AnalyzeCommand;
 use uveddi::error::UveddiError;
 #[cfg(feature = "tui")]
 use uveddi::tui::app::{AppScreen, AppState};

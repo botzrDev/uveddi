@@ -2,11 +2,11 @@
 
 [package]
 name = "uveddi"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 resolver = "2"
 description = "A Rust-based code analysis and exploration tool"
-authors = ["Phillip Austin Green <your.email@example.com>"]
+authors = ["Phillip Austin Green <contact@botzr.com>"]
 license = "CC-BY-NC-SA-4.0"
 repository = "https://github.com/botzrDev/uveddi"
 keywords = ["code", "analysis", "tools", "visualization", "uveddi"]

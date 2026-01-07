@@ -218,22 +218,28 @@ impl DatabaseProvider for SqliteProvider {
         Ok(())
     }
 
-    async fn execute_query(&self, query: &str, params: &[&str]) -> Result<Vec<QueryResult>> {
-        // Not implemented for this specific use case, but would convert rusqlite::Rows to QueryResult
-        todo!("Generic query execution not implemented - use specific methods instead")
+    async fn execute_query(&self, _query: &str, _params: &[&str]) -> Result<Vec<QueryResult>> {
+        Err(UveddiError::database_error_msg(
+            "Generic query execution not implemented - use specific methods instead",
+        ))
     }
 
-    async fn execute_write(&self, query: &str, params: &[&str]) -> Result<u64> {
-        // Not implemented for this specific use case, but would execute write operations
-        todo!("Generic write execution not implemented - use specific methods instead")
+    async fn execute_write(&self, _query: &str, _params: &[&str]) -> Result<u64> {
+        Err(UveddiError::database_error_msg(
+            "Generic write execution not implemented - use specific methods instead",
+        ))
     }
 
     async fn begin_transaction(&self) -> Result<Box<dyn TransactionProvider>> {
-        todo!("Transaction implementation")
+        Err(UveddiError::database_error_msg(
+            "Transaction provider not implemented - use direct batch operations instead",
+        ))
     }
 
     async fn get_connection(&self) -> Result<Box<dyn DatabaseConnection>> {
-        todo!("Direct connection not implemented for provider pattern")
+        Err(UveddiError::database_error_msg(
+            "Direct connection not supported - use provider methods instead",
+        ))
     }
 
     async fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
@@ -499,50 +505,67 @@ impl DatabaseProvider for SqliteProvider {
     }
 
     async fn get_latest_analysis_run(&self) -> Result<Option<AnalysisRun>> {
-        // Implementation similar to get_analysis_run but with ORDER BY start_time DESC LIMIT 1
-        todo!("Implement get_latest_analysis_run")
+        Err(UveddiError::database_error_msg(
+            "get_latest_analysis_run not yet implemented for SQLite provider",
+        ))
     }
 
-    async fn get_recent_analysis_runs(&self, limit: u32) -> Result<Vec<AnalysisRun>> {
-        todo!("Implement get_recent_analysis_runs")
+    async fn get_recent_analysis_runs(&self, _limit: u32) -> Result<Vec<AnalysisRun>> {
+        Err(UveddiError::database_error_msg(
+            "get_recent_analysis_runs not yet implemented for SQLite provider",
+        ))
     }
 
-    async fn get_issues_for_run(&self, run_id: i64) -> Result<Vec<ArchitecturalIssue>> {
-        todo!("Implement get_issues_for_run")
+    async fn get_issues_for_run(&self, _run_id: i64) -> Result<Vec<ArchitecturalIssue>> {
+        Err(UveddiError::database_error_msg(
+            "get_issues_for_run not yet implemented for SQLite provider",
+        ))
     }
 
-    async fn get_dependencies_for_run(&self, run_id: i64) -> Result<Vec<Dependency>> {
-        todo!("Implement get_dependencies_for_run")
+    async fn get_dependencies_for_run(&self, _run_id: i64) -> Result<Vec<Dependency>> {
+        Err(UveddiError::database_error_msg(
+            "get_dependencies_for_run not yet implemented for SQLite provider",
+        ))
     }
 
     async fn get_issues_with_types_for_run(
         &self,
-        run_id: i64,
+        _run_id: i64,
     ) -> Result<Vec<(ArchitecturalIssue, AntiPatternType)>> {
-        todo!("Implement get_issues_with_types_for_run")
+        Err(UveddiError::database_error_msg(
+            "get_issues_with_types_for_run not yet implemented for SQLite provider",
+        ))
     }
 
-    async fn get_analysis_stats(&self, run_id: i64) -> Result<AnalysisStats> {
-        todo!("Implement get_analysis_stats")
+    async fn get_analysis_stats(&self, _run_id: i64) -> Result<AnalysisStats> {
+        Err(UveddiError::database_error_msg(
+            "get_analysis_stats not yet implemented for SQLite provider",
+        ))
     }
 
     async fn get_issues_paginated(
         &self,
-        run_id: i64,
-        offset: u32,
-        limit: u32,
-        severity_filter: Option<&str>,
-        detector_filter: Option<&str>,
+        _run_id: i64,
+        _offset: u32,
+        _limit: u32,
+        _severity_filter: Option<&str>,
+        _detector_filter: Option<&str>,
     ) -> Result<Vec<ArchitecturalIssue>> {
-        todo!("Implement get_issues_paginated")
+        Err(UveddiError::database_error_msg(
+            "get_issues_paginated not yet implemented for SQLite provider",
+        ))
     }
 
     async fn get_all_anti_pattern_types(&self) -> Result<Vec<AntiPatternType>> {
-        todo!("Implement get_all_anti_pattern_types")
+        Err(UveddiError::database_error_msg(
+            "get_all_anti_pattern_types not yet implemented for SQLite provider",
+        ))
     }
 
-    async fn get_project_path(&self, project_id: i64) -> Result<String> {
-        todo!("Implement get_project_path")
+    async fn get_project_path(&self, _project_id: i64) -> Result<String> {
+        Err(UveddiError::database_error_msg(
+            "get_project_path not yet implemented for SQLite provider",
+        ))
     }
 
     async fn cleanup(&self) -> Result<u64> {

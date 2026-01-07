@@ -2,7 +2,7 @@
 
 Uveddi is a modern architectural analysis CLI that combines static code analysis with AI-assisted insights to help engineering teams audit, modernize, and govern large codebases.
 
-**Current Version**: `0.0.2` &nbsp;|&nbsp; **Status**: Alpha Release
+**Current Version**: `0.0.3` &nbsp;|&nbsp; **Status**: Alpha Release
 
 **License**: CC-BY-NC-SA-4.0 (Non-Commercial)
 

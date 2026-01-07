@@ -338,6 +338,7 @@ fn capture_git_info() {
 }
 
 /// Capture enabled feature flags for build metadata
+#[allow(clippy::vec_init_then_push)]
 fn capture_feature_flags() {
     let mut features = Vec::new();
 
