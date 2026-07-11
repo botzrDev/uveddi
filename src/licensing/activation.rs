@@ -199,10 +199,11 @@ pub fn print_activation_status() {
             println!("  No license activated. Using free tier features:");
             println!("    ✓ JavaScript analysis");
             println!("    ✓ TypeScript analysis");
-            println!("    ✓ GodObject detector");
+            println!("    ✓ Core anti-pattern detectors");
+            println!("    ✓ Security scanning");
             println!("    ✓ Markdown output");
             println!();
-            println!("  💡 Upgrade for 10+ languages, all detectors, security scanning, and AI:");
+            println!("  💡 Upgrade for 10+ languages, cyclic-dependency detection, advanced output formats, and AI:");
             println!("     https://uveddi.org/pricing");
             println!();
             println!("  Already have a key? Run: uveddi license activate <KEY>");

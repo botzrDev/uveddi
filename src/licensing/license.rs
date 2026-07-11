@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// License tier levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Default)]
 pub enum LicenseTier {
-    /// Free tier - JavaScript/TypeScript, GodObject detector, Markdown output
+    /// Free tier - JavaScript/TypeScript, core anti-pattern detectors, security scanning, Markdown output
     #[default]
     Free,
     /// Pro tier ($199/year) - 10 languages, all detectors, all outputs
@@ -43,8 +43,8 @@ impl LicenseTier {
     /// Get the number of detectors available in this tier
     pub fn detector_count(&self) -> u32 {
         match self {
-            LicenseTier::Free => 1,       // GodObject only
-            LicenseTier::Pro => 9,        // All detectors
+            LicenseTier::Free => 8,       // Core anti-pattern detectors + security scanning
+            LicenseTier::Pro => 9,        // All detectors (adds cyclic-dependency detection)
             LicenseTier::Team => 9,       // All detectors
             LicenseTier::Enterprise => 9, // All + custom
         }
@@ -218,7 +218,8 @@ pub fn get_tier_features(tier: LicenseTier) -> Vec<String> {
     let mut features = vec![
         "JavaScript analysis".to_string(),
         "TypeScript analysis".to_string(),
-        "GodObject detector".to_string(),
+        "Core anti-pattern detectors".to_string(),
+        "Security scanning".to_string(),
         "Markdown output".to_string(),
     ];
     
@@ -232,10 +233,9 @@ pub fn get_tier_features(tier: LicenseTier) -> Vec<String> {
             "C++ analysis".to_string(),
             "PHP analysis".to_string(),
             "Ruby analysis".to_string(),
-            "All 9+ detectors".to_string(),
+            "Cyclic-dependency detector".to_string(),
             "JSON/HTML/SVG output".to_string(),
             "SARIF export".to_string(),
-            "Security scanning".to_string(),
             "AI-powered insights".to_string(),
         ]);
     }
