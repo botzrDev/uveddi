@@ -5,12 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.3] - 2025-01-07
+## [0.0.3] - 2026-07-11
+
+### Added
+- **Licensing system**: Tiered feature gating (Free / Pro / Team / Enterprise) with a
+  new `license` CLI command for activation and status display
+- **WASM plugin system**: WebAssembly component-model host and loader, with the
+  analysis engine invoking plugins via the lifecycle manager for file analysis and
+  issue extraction; plugin template migrated to WASI with an updated WIT definition
+- Integration tests for code duplication detection covering multiple scenarios and
+  configurations
 
 ### Changed
+- Core anti-pattern detectors and security scanning are now available on the **free
+  tier** (no license required); advanced cyclic-dependency detection remains a Pro
+  feature
+- Enhanced detector language handling
+- Optimized incremental-analysis state management by prioritizing in-memory state
+- Refined configuration parsing logic
+- Magic value detector now ignores magic values in test code and self-documenting
+  calls, with refined environment-variable detection
+- Improved error handling for unimplemented SQLite provider methods
 - Updated author contact information in package metadata
 
 ### Fixed
+- Integration test suite now compiles and runs (previously blocked by references to
+  removed modules) — resolves DEF-001
+- Security detectors no longer rely on unsupported regex lookahead/lookbehind
+  assertions — resolves DEF-002
+- TypeScript files are now correctly detected as TypeScript instead of JavaScript —
+  resolves DEF-008
 - Fixed clippy `vec_init_then_push` lint warning in build script
 - Corrected test import paths for TUI integration tests
 - Updated version references across documentation

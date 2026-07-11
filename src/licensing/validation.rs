@@ -126,14 +126,17 @@ pub fn is_feature_allowed(feature: &str, tier: &LicenseTier) -> bool {
         features::LANG_LUA |
         features::LANG_SQL => *tier >= LicenseTier::Enterprise,
         
-        // Pro tier detectors
+        // Free tier detectors (core anti-pattern detectors and security scanning
+        // are always available, even without a license)
         features::DETECTOR_DEAD_CODE |
         features::DETECTOR_LARGE_CLASSES |
         features::DETECTOR_TIGHT_COUPLING |
         features::DETECTOR_LONG_METHODS |
         features::DETECTOR_MAGIC_VALUES |
-        features::DETECTOR_CYCLIC_DEPS |
-        features::DETECTOR_SECURITY => *tier >= LicenseTier::Pro,
+        features::DETECTOR_SECURITY => true,
+
+        // Pro tier detectors
+        features::DETECTOR_CYCLIC_DEPS => *tier >= LicenseTier::Pro,
         
         // Pro tier output formats
         features::OUTPUT_JSON |
@@ -168,7 +171,14 @@ pub fn require_feature(feature: &str) -> Result<(), LicenseError> {
 pub fn get_required_tier_for_feature(feature: &str) -> &'static str {
     match feature {
         "javascript-lang" | "typescript-lang" => "Free",
-        
+
+        features::DETECTOR_DEAD_CODE |
+        features::DETECTOR_LARGE_CLASSES |
+        features::DETECTOR_TIGHT_COUPLING |
+        features::DETECTOR_LONG_METHODS |
+        features::DETECTOR_MAGIC_VALUES |
+        features::DETECTOR_SECURITY => "Free",
+
         features::LANG_RUST |
         features::LANG_PYTHON |
         features::LANG_GO |
@@ -177,13 +187,7 @@ pub fn get_required_tier_for_feature(feature: &str) -> &'static str {
         features::LANG_CPP |
         features::LANG_PHP |
         features::LANG_RUBY |
-        features::DETECTOR_DEAD_CODE |
-        features::DETECTOR_LARGE_CLASSES |
-        features::DETECTOR_TIGHT_COUPLING |
-        features::DETECTOR_LONG_METHODS |
-        features::DETECTOR_MAGIC_VALUES |
         features::DETECTOR_CYCLIC_DEPS |
-        features::DETECTOR_SECURITY |
         features::OUTPUT_JSON |
         features::OUTPUT_HTML |
         features::OUTPUT_SVG |
@@ -243,6 +247,17 @@ mod tests {
         assert!(is_feature_allowed("javascript-lang", &LicenseTier::Free));
         assert!(is_feature_allowed("typescript-lang", &LicenseTier::Free));
         assert!(!is_feature_allowed(features::LANG_RUST, &LicenseTier::Free));
+
+        // Core detectors and security scanning are available on the free tier
+        assert!(is_feature_allowed(features::DETECTOR_DEAD_CODE, &LicenseTier::Free));
+        assert!(is_feature_allowed(features::DETECTOR_LARGE_CLASSES, &LicenseTier::Free));
+        assert!(is_feature_allowed(features::DETECTOR_TIGHT_COUPLING, &LicenseTier::Free));
+        assert!(is_feature_allowed(features::DETECTOR_LONG_METHODS, &LicenseTier::Free));
+        assert!(is_feature_allowed(features::DETECTOR_MAGIC_VALUES, &LicenseTier::Free));
+        assert!(is_feature_allowed(features::DETECTOR_SECURITY, &LicenseTier::Free));
+        // ...but advanced detectors still require Pro
+        assert!(!is_feature_allowed(features::DETECTOR_CYCLIC_DEPS, &LicenseTier::Free));
+        assert!(is_feature_allowed(features::DETECTOR_CYCLIC_DEPS, &LicenseTier::Pro));
         
         // Pro tier
         assert!(is_feature_allowed(features::LANG_RUST, &LicenseTier::Pro));

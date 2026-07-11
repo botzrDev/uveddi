@@ -176,10 +176,11 @@ impl LicenseCommand {
                 println!("  ──────────────────────────────────────────────────────");
                 println!("    ✓ JavaScript analysis");
                 println!("    ✓ TypeScript analysis");
-                println!("    ✓ GodObject detector");
+                println!("    ✓ Core anti-pattern detectors");
+                println!("    ✓ Security scanning");
                 println!("    ✓ Markdown output");
                 println!();
-                println!("  💡 Upgrade to Pro for 10 languages, all detectors, and more:");
+                println!("  💡 Upgrade to Pro for 10 languages, cyclic-dependency detection, and more:");
                 println!("     https://uveddi.org/pricing");
             }
         }
