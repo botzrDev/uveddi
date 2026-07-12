@@ -7,6 +7,10 @@
 # Cache directories (runtime caches, not source code)
 /cache/
 
+# Local test fixtures (real-world codebases fetched for detector validation;
+# not tracked — were previously committed as broken submodule gitlinks)
+/test-codebases/
+
 # IDE/editor settings
 /.vscode/
 .idea/

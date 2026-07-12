@@ -53,6 +53,18 @@ OLLAMA_API_URL=http://localhost:11434 \
 uveddi analyze /path/to/project --enable-ai --ollama-model deepseek-coder:6.7b
 ```
 
+### Install with Cargo
+
+If you already have Rust installed, you can build and install directly from the
+repository in one command — no clone required:
+
+```bash
+cargo install --git https://github.com/botzrDev/uveddi --bin uveddi --locked
+```
+
+This builds the release binary and places it on your Cargo bin path
+(`~/.cargo/bin`), which is typically already on your `PATH`.
+
 ### Manual Installation
 
 If you prefer manual installation or the script doesn't work for your environment:
