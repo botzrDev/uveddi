@@ -47,17 +47,15 @@ fn main() {
 }
 "#;
 
-        let mut symbols = vec![
-            Symbol {
-                name: "TestStruct".to_string(),
-                kind: SymbolKind::Struct,
-                line: 2,
-                column: 0,
-                end_line: 13,
-                end_column: 1,
-                parent: None,
-            },
-        ];
+        let mut symbols = vec![Symbol {
+            name: "TestStruct".to_string(),
+            kind: SymbolKind::Struct,
+            line: 2,
+            column: 0,
+            end_line: 13,
+            end_column: 1,
+            parent: None,
+        }];
 
         // Add 35 methods to exceed threshold (Rust default is 30)
         for i in 1..=35 {

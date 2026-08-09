@@ -157,7 +157,6 @@ impl NetworkSinkDetector {
                     "WebSocket connection with user URL".to_string(),
                 )
                 .with_language(language),
-
             ],
             _ => vec![],
         }
@@ -272,7 +271,7 @@ impl NetworkSinkDetector {
                 )
                 .with_language(language),
             ],
-            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(), 
+            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(),
             _ => vec![],
         }
     }

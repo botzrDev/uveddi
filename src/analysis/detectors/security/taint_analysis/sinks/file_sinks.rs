@@ -271,7 +271,7 @@ impl FileSinkDetector {
                 )
                 .with_language(language),
             ],
-            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(), 
+            SourceLanguage::Rust | SourceLanguage::Python => Vec::new(),
             _ => vec![],
         }
     }

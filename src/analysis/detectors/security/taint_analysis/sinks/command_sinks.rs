@@ -252,7 +252,7 @@ impl CommandSinkDetector {
                 )
                 .with_language(language),
             ],
-            SourceLanguage::Rust => Vec::new(), 
+            SourceLanguage::Rust => Vec::new(),
             _ => vec![],
         }
     }

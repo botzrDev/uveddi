@@ -145,7 +145,6 @@ impl ExternalSourceDetector {
                     "Synchronous file read".to_string(),
                 )
                 .with_language(language),
-
             ],
             _ => vec![],
         }

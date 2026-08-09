@@ -173,7 +173,10 @@ impl GodObject {
             let err_msg = format!("{:?}", e);
             if err_msg.contains("workspace") || err_msg.contains("crate") {
                 // Workspace detection issue - skip the rest of the test
-                println!("Skipping god object assertions due to workspace detection: {}", err_msg);
+                println!(
+                    "Skipping god object assertions due to workspace detection: {}",
+                    err_msg
+                );
                 return;
             }
             panic!("Analysis should succeed: {:?}", e);

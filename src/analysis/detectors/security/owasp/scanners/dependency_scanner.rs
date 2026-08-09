@@ -98,7 +98,9 @@ impl DependencyScanner {
                     for (package, version) in deps {
                         if let Some(v) = version.as_str() {
                             // Strip semver prefixes (^, ~, >=, etc.)
-                            let clean_version = v.trim_start_matches(|c| c == '^' || c == '~' || c == '>' || c == '=' || c == '<');
+                            let clean_version = v.trim_start_matches(|c| {
+                                c == '^' || c == '~' || c == '>' || c == '=' || c == '<'
+                            });
                             dependencies.push((package.clone(), clean_version.to_string()));
                         }
                     }

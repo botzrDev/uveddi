@@ -180,7 +180,10 @@ impl PatternBuilder {
         }
 
         // YAML format: key: value (key must not start with quote)
-        if let Some(captures) = Regex::new(r#"^\s*([^":\s][^:]*?):\s*(.+)$"#).ok()?.captures(line) {
+        if let Some(captures) = Regex::new(r#"^\s*([^":\s][^:]*?):\s*(.+)$"#)
+            .ok()?
+            .captures(line)
+        {
             let value = captures.get(2)?.as_str().trim();
             // Strip surrounding quotes from value if present
             let value = value.trim_matches('"').trim_matches('\'');

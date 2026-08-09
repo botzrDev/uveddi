@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-08-09
+
+### First Stable Release 🎉
+
+Uveddi 1.0.0 is the first stable release. It promotes the CLI-focused product
+that shipped as 0.0.3 to stable status: same feature set, verified build and
+test suite, and documentation updated to describe the product as it actually
+ships. See `docs/release-planning/v1.0.0-release-plan.md` for the full release
+plan and gate results.
+
+### Stable in 1.0.0
+
+- **CLI commands**: `analyze`, `init`, `config`, `doctor`, `ci`, `hooks`,
+  `migrate`, `license`, `help` (plus `plugin` when built with `wasm-plugins`)
+- **Multi-language analysis** via Tree-sitter: Rust, Python, JavaScript, and
+  TypeScript in the default `cli-standard` build; more languages behind
+  per-language feature flags and license tiers
+- **Anti-pattern detection**: god objects, large classes, dead code, code
+  duplication, tight coupling, magic values, and related smells — available on
+  the free tier
+- **Security scanning** with SARIF export for CI/CD pipelines — free tier
+- **Tiered licensing** (Free / Pro / Team / Enterprise) with offline
+  activation via the `license` command; advanced cyclic-dependency detection
+  is Pro-tier
+- **Reporting**: Markdown, JSON, and HTML outputs with severity scoring and
+  technical-debt metrics
+- **Persistent storage**: SQLite database with migration support via
+  `uveddi migrate`
+- **Incremental analysis** with in-memory-first state management
+
+### Experimental in 1.0.0 (opt-in feature flags)
+
+- **WASM plugin system** (`wasm-plugins` / `cli-plugins`): WebAssembly
+  component-model plugin host, loader, and lifecycle manager with a WASI-based
+  plugin template
+- **AI insights** (`cli-ai`): local Ollama integration for remediation
+  guidance and summaries
+
+### Changed
+
+- Version: 0.0.3 → 1.0.0
+- README and release documentation rewritten to describe the shipped
+  CLI product; older planning documents that describe the removed
+  web-dashboard architecture are retained under `docs/` for history only
+
+### Not included (removed during the CLI refocus, pre-1.0)
+
+Web dashboard/React frontend, REST API server, WebSocket/GraphQL interfaces,
+standalone TUI, Prometheus metrics, and enterprise auth/RBAC are not part of
+1.0.0. Some may return in post-1.0 releases.
+
+---
+
 ## [0.0.3] - 2026-07-11
 
 ### Added

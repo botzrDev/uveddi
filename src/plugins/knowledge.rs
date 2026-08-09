@@ -23,15 +23,15 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 #[cfg(feature = "wasm-plugins")]
+use crate::plugins::types::{HostContext, HostState, PluginConfig};
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::wasm::CoreAnalysis;
+#[cfg(feature = "wasm-plugins")]
 use std::sync::Mutex;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::component::{Component, Linker};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::{Engine, Store};
-#[cfg(feature = "wasm-plugins")]
-use crate::plugins::types::{HostContext, HostState, PluginConfig};
-#[cfg(feature = "wasm-plugins")]
-use crate::plugins::wasm::CoreAnalysis;
 
 /// Plugin system manager for knowledge extensions
 pub struct KnowledgePluginSystem {
@@ -955,14 +955,19 @@ impl KnowledgePluginLoader {
     ) -> Result<KnowledgePluginPackage, PluginError> {
         #[cfg(feature = "wasm-plugins")]
         {
-             // 1. Read plugin binary
-            let binary = tokio::fs::read(plugin_path).await
-                .map_err(|e| PluginError::Loading(format!("Failed to read plugin binary: {}", e)))?;
-            
+            // 1. Read plugin binary
+            let binary = tokio::fs::read(plugin_path).await.map_err(|e| {
+                PluginError::Loading(format!("Failed to read plugin binary: {}", e))
+            })?;
+
             // 2. Parse manifest from sibling .toml file (simple assumption for now)
             // In a real implementation we might embedded it or use a proper manifest loader
             // For now, construct a default metadata
-            let plugin_id = plugin_path.file_stem().unwrap().to_string_lossy().to_string();
+            let plugin_id = plugin_path
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
             let metadata = KnowledgePluginMetadata {
                 id: plugin_id.clone(),
                 name: plugin_id,
@@ -1020,8 +1025,11 @@ impl KnowledgePluginLoader {
             let mut linker = Linker::<HostContext>::new(&engine);
 
             // Add host functions (skip WASI Preview 1 as it's incompatible with Component Model Linker)
-            crate::plugins::wasm::CoreAnalysis::add_to_linker::<_, wasmtime::component::HasSelf<HostContext>>(&mut linker, |host| host)
-                .map_err(|e| PluginError::Loading(e.to_string()))?;
+            crate::plugins::wasm::CoreAnalysis::add_to_linker::<
+                _,
+                wasmtime::component::HasSelf<HostContext>,
+            >(&mut linker, |host| host)
+            .map_err(|e| PluginError::Loading(e.to_string()))?;
 
             // Create host state and WASI context
             let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new()
@@ -1037,10 +1045,12 @@ impl KnowledgePluginLoader {
 
             // Create database and analysis engine
             let database_config = crate::database::DatabaseConfig::default();
-            let database = crate::database::ScalableDatabase::new(database_config).await
+            let database = crate::database::ScalableDatabase::new(database_config)
+                .await
                 .map_err(|e| PluginError::Loading(format!("Failed to create database: {}", e)))?;
-            let analysis_engine = crate::analysis::AnalysisEngine::new()
-                .map_err(|e| PluginError::Loading(format!("Failed to create analysis engine: {}", e)))?;
+            let analysis_engine = crate::analysis::AnalysisEngine::new().map_err(|e| {
+                PluginError::Loading(format!("Failed to create analysis engine: {}", e))
+            })?;
 
             let host_context = HostContext {
                 host_state,
@@ -1056,24 +1066,26 @@ impl KnowledgePluginLoader {
 
             // Instantiate (sync, not async)
             let bindings = CoreAnalysis::instantiate(&mut store, &component, &linker)
-                 .map_err(|e| PluginError::Loading(format!("Failed to instantiate: {}", e)))?;
-                 
+                .map_err(|e| PluginError::Loading(format!("Failed to instantiate: {}", e)))?;
+
             // Create adapter
             let adapter = WasmKnowledgeAdapter {
                 store: Arc::new(Mutex::new(store)),
                 bindings,
                 metadata: metadata.clone(),
             };
-            
+
             Ok(KnowledgePluginPackage {
                 metadata,
                 implementation: Box::new(adapter),
             })
         }
-        
+
         #[cfg(not(feature = "wasm-plugins"))]
         {
-            Err(PluginError::Unsupported("WASM plugins not enabled".to_string()))
+            Err(PluginError::Unsupported(
+                "WASM plugins not enabled".to_string(),
+            ))
         }
     }
 }
@@ -1088,10 +1100,16 @@ struct WasmKnowledgeAdapter {
 #[cfg(feature = "wasm-plugins")]
 #[async_trait]
 impl KnowledgePlugin for WasmKnowledgeAdapter {
-    fn metadata(&self) -> &KnowledgePluginMetadata { &self.metadata }
+    fn metadata(&self) -> &KnowledgePluginMetadata {
+        &self.metadata
+    }
 
-    async fn initialize(&mut self) -> Result<(), PluginError> { Ok(()) }
-    async fn shutdown(&mut self) -> Result<(), PluginError> { Ok(()) }
+    async fn initialize(&mut self) -> Result<(), PluginError> {
+        Ok(())
+    }
+    async fn shutdown(&mut self) -> Result<(), PluginError> {
+        Ok(())
+    }
 
     async fn get_patterns(&self) -> Result<Vec<PatternKnowledge>, PluginError> {
         Ok(Vec::new()) // Placeholder
@@ -1133,11 +1151,14 @@ impl DetectorPlugin for WasmKnowledgeAdapter {
         language: SourceLanguage,
         _context: &AnalysisContext,
     ) -> Result<Vec<DetectedIssue>, PluginError> {
-        let mut store_guard = self.store.lock().map_err(|e| PluginError::Execution(e.to_string()))?;
-        
+        let mut store_guard = self
+            .store
+            .lock()
+            .map_err(|e| PluginError::Execution(e.to_string()))?;
+
         // Map types and call bindings like in lifecycle.rs
         // Simplified for brevity
-        Ok(Vec::new()) 
+        Ok(Vec::new())
     }
 
     async fn get_detection_confidence(

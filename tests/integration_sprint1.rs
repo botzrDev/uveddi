@@ -53,14 +53,14 @@ fn test_sprint1_cycle_detection() {
 
     // The cycle detector may report cycles from different starting points
     // (mod1 -> mod2 -> mod1) and (mod2 -> mod1 -> mod2)
-    assert!(
-        !results.is_empty(),
-        "Should detect at least one cycle"
-    );
+    assert!(!results.is_empty(), "Should detect at least one cycle");
 
     // Verify that at least one result mentions both modules
-    let has_both_modules = results.iter().any(|r| {
-        r.description.contains("mod1") && r.description.contains("mod2")
-    });
-    assert!(has_both_modules, "At least one cycle should involve both mod1 and mod2");
+    let has_both_modules = results
+        .iter()
+        .any(|r| r.description.contains("mod1") && r.description.contains("mod2"));
+    assert!(
+        has_both_modules,
+        "At least one cycle should involve both mod1 and mod2"
+    );
 }

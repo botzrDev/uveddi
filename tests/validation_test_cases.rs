@@ -27,38 +27,118 @@ pub struct MassiveGodObject {
 }
 
 impl MassiveGodObject {
-    pub fn new() -> Self { Self { field1: String::new(), field2: 0, field3: Vec::new(), field4: false, field5: 0.0, field6: None, field7: Ok(0), field8: Box::new(std::io::Error::new(std::io::ErrorKind::Other, "test")), field9: std::collections::HashMap::new(), field10: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())), field11: String::new(), field12: 0, field13: false, field14: 0.0, field15: String::new() } }
-    pub fn method1(&self) -> i32 { 1 }
-    pub fn method2(&self) -> i32 { 2 }
-    pub fn method3(&self) -> i32 { 3 }
-    pub fn method4(&self) -> i32 { 4 }
-    pub fn method5(&self) -> i32 { 5 }
-    pub fn method6(&self) -> i32 { 6 }
-    pub fn method7(&self) -> i32 { 7 }
-    pub fn method8(&self) -> i32 { 8 }
-    pub fn method9(&self) -> i32 { 9 }
-    pub fn method10(&self) -> i32 { 10 }
-    pub fn method11(&self) -> i32 { 11 }
-    pub fn method12(&self) -> i32 { 12 }
-    pub fn method13(&self) -> i32 { 13 }
-    pub fn method14(&self) -> i32 { 14 }
-    pub fn method15(&self) -> i32 { 15 }
-    pub fn method16(&self) -> i32 { 16 }
-    pub fn method17(&self) -> i32 { 17 }
-    pub fn method18(&self) -> i32 { 18 }
-    pub fn method19(&self) -> i32 { 19 }
-    pub fn method20(&self) -> i32 { 20 }
-    pub fn method21(&self) -> i32 { 21 }
-    pub fn method22(&self) -> i32 { 22 }
-    pub fn method23(&self) -> i32 { 23 }
-    pub fn method24(&self) -> i32 { 24 }
-    pub fn method25(&self) -> i32 { 25 }
-    pub fn method26(&self) -> i32 { 26 }
-    pub fn method27(&self) -> i32 { 27 }
-    pub fn method28(&self) -> i32 { 28 }
-    pub fn method29(&self) -> i32 { 29 }
-    pub fn method30(&self) -> i32 { 30 }
-    pub fn method31(&self) -> i32 { 31 }
+    pub fn new() -> Self {
+        Self {
+            field1: String::new(),
+            field2: 0,
+            field3: Vec::new(),
+            field4: false,
+            field5: 0.0,
+            field6: None,
+            field7: Ok(0),
+            field8: Box::new(std::io::Error::new(std::io::ErrorKind::Other, "test")),
+            field9: std::collections::HashMap::new(),
+            field10: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
+            field11: String::new(),
+            field12: 0,
+            field13: false,
+            field14: 0.0,
+            field15: String::new(),
+        }
+    }
+    pub fn method1(&self) -> i32 {
+        1
+    }
+    pub fn method2(&self) -> i32 {
+        2
+    }
+    pub fn method3(&self) -> i32 {
+        3
+    }
+    pub fn method4(&self) -> i32 {
+        4
+    }
+    pub fn method5(&self) -> i32 {
+        5
+    }
+    pub fn method6(&self) -> i32 {
+        6
+    }
+    pub fn method7(&self) -> i32 {
+        7
+    }
+    pub fn method8(&self) -> i32 {
+        8
+    }
+    pub fn method9(&self) -> i32 {
+        9
+    }
+    pub fn method10(&self) -> i32 {
+        10
+    }
+    pub fn method11(&self) -> i32 {
+        11
+    }
+    pub fn method12(&self) -> i32 {
+        12
+    }
+    pub fn method13(&self) -> i32 {
+        13
+    }
+    pub fn method14(&self) -> i32 {
+        14
+    }
+    pub fn method15(&self) -> i32 {
+        15
+    }
+    pub fn method16(&self) -> i32 {
+        16
+    }
+    pub fn method17(&self) -> i32 {
+        17
+    }
+    pub fn method18(&self) -> i32 {
+        18
+    }
+    pub fn method19(&self) -> i32 {
+        19
+    }
+    pub fn method20(&self) -> i32 {
+        20
+    }
+    pub fn method21(&self) -> i32 {
+        21
+    }
+    pub fn method22(&self) -> i32 {
+        22
+    }
+    pub fn method23(&self) -> i32 {
+        23
+    }
+    pub fn method24(&self) -> i32 {
+        24
+    }
+    pub fn method25(&self) -> i32 {
+        25
+    }
+    pub fn method26(&self) -> i32 {
+        26
+    }
+    pub fn method27(&self) -> i32 {
+        27
+    }
+    pub fn method28(&self) -> i32 {
+        28
+    }
+    pub fn method29(&self) -> i32 {
+        29
+    }
+    pub fn method30(&self) -> i32 {
+        30
+    }
+    pub fn method31(&self) -> i32 {
+        31
+    }
 }
 
 // TEST CASE 2: Long Method with High Complexity

@@ -17,12 +17,12 @@ pub fn get_language_thresholds(language: SourceLanguage) -> LanguageThresholds {
 /// Get thresholds for Rust (balanced for production code)
 fn rust_thresholds() -> LanguageThresholds {
     LanguageThresholds {
-        max_logical_loc: 80,  // Balanced for real-world Rust code
-        max_statements: 60,   // Allow for complex but readable functions
-        max_parameters: 7,    // Rust type system helps with this
-        max_nesting_depth: 5, // Match-based patterns can be deep
-        max_cyclomatic_complexity: 20,  // More lenient for complex logic
-        max_cognitive_complexity: 18,   // Allow reasonable complexity
+        max_logical_loc: 80,           // Balanced for real-world Rust code
+        max_statements: 60,            // Allow for complex but readable functions
+        max_parameters: 7,             // Rust type system helps with this
+        max_nesting_depth: 5,          // Match-based patterns can be deep
+        max_cyclomatic_complexity: 20, // More lenient for complex logic
+        max_cognitive_complexity: 18,  // Allow reasonable complexity
     }
 }
 

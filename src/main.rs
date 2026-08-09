@@ -62,20 +62,36 @@ use uveddi::error::UveddiError;
 fn get_version_string() -> &'static str {
     concat!(
         env!("CARGO_PKG_VERSION"),
-        " (", env!("GIT_HASH"), "-", env!("GIT_DIRTY"), ")"
+        " (",
+        env!("GIT_HASH"),
+        "-",
+        env!("GIT_DIRTY"),
+        ")"
     )
 }
 
 /// Get the detailed version string for --version
 fn get_long_version() -> &'static str {
     concat!(
-        "Uveddi ", env!("CARGO_PKG_VERSION"), "\n",
+        "Uveddi ",
+        env!("CARGO_PKG_VERSION"),
+        "\n",
         "\n",
         "Build Information:\n",
-        "  Built:    ", env!("BUILD_TIMESTAMP"), "\n",
-        "  Commit:   ", env!("GIT_HASH"), " (", env!("GIT_BRANCH"), ")\n",
-        "  Status:   ", env!("GIT_DIRTY"), "\n",
-        "  Features: ", env!("BUILD_FEATURES"), "\n",
+        "  Built:    ",
+        env!("BUILD_TIMESTAMP"),
+        "\n",
+        "  Commit:   ",
+        env!("GIT_HASH"),
+        " (",
+        env!("GIT_BRANCH"),
+        ")\n",
+        "  Status:   ",
+        env!("GIT_DIRTY"),
+        "\n",
+        "  Features: ",
+        env!("BUILD_FEATURES"),
+        "\n",
         "\n",
         "Repository: https://github.com/botzrDev/uveddi"
     )

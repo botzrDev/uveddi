@@ -250,12 +250,12 @@ pub mod engine;
 pub mod error;
 pub mod health;
 pub mod hooks;
+pub mod licensing;
 pub mod models;
 #[cfg(feature = "wasm-plugins")]
 pub mod plugins;
 pub mod progress;
 pub mod report;
-pub mod licensing;
 
 // REMOVED: Enterprise and service modules for CLI-only release
 // pub mod api;

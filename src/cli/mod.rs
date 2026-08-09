@@ -34,4 +34,3 @@ pub use commands::license::LicenseCommand;
 pub use commands::migrate::MigrateCommand;
 #[cfg(feature = "wasm-plugins")]
 pub use commands::plugin::PluginCommand;
-

@@ -16,11 +16,15 @@ mod tests {
         // Create a minimal Cargo.toml for valid Rust crate
         let cargo_toml = dir.path().join("Cargo.toml");
         let mut cargo_file = File::create(&cargo_toml).unwrap();
-        writeln!(cargo_file, r#"[package]
+        writeln!(
+            cargo_file,
+            r#"[package]
 name = "test-project"
 version = "0.1.0"
 edition = "2021"
-"#).unwrap();
+"#
+        )
+        .unwrap();
 
         // Create src directory and main.rs
         fs::create_dir(dir.path().join("src")).unwrap();
@@ -54,11 +58,15 @@ edition = "2021"
         // Create a minimal Cargo.toml for valid Rust crate
         let cargo_toml = dir.path().join("Cargo.toml");
         let mut cargo_file = File::create(&cargo_toml).unwrap();
-        writeln!(cargo_file, r#"[package]
+        writeln!(
+            cargo_file,
+            r#"[package]
 name = "test-project"
 version = "0.1.0"
 edition = "2021"
-"#).unwrap();
+"#
+        )
+        .unwrap();
 
         // Create src directory and main.rs
         fs::create_dir(dir.path().join("src")).unwrap();

@@ -956,7 +956,7 @@ mod tests {
     #[test]
     fn test_command_suggestions() {
         assert_eq!(suggest_command("analze"), vec!["analyze"]); // typo
-        // "doctr" is close to both "doctor" and "dr" (alias), so both may be suggested
+                                                                // "doctr" is close to both "doctor" and "dr" (alias), so both may be suggested
         let doctr_suggestions = suggest_command("doctr");
         assert!(doctr_suggestions.contains(&"doctor".to_string()));
         assert!(suggest_command("totally-wrong-command").is_empty()); // too different

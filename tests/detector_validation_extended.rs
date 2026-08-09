@@ -53,7 +53,9 @@ pub enum ProcessingError {
 
 // TEST CASE 1: Type-1 Clone (Exact Duplicate) - 80+ lines
 // Expected: Should be detected as high-severity duplication
-pub fn complex_data_processing_algorithm_v1(input_data: Vec<i32>) -> Result<ProcessedData, ProcessingError> {
+pub fn complex_data_processing_algorithm_v1(
+    input_data: Vec<i32>,
+) -> Result<ProcessedData, ProcessingError> {
     let mut result = ProcessedData::new();
 
     // Phase 1: Input Validation (15 lines)
@@ -146,7 +148,9 @@ pub fn complex_data_processing_algorithm_v1(input_data: Vec<i32>) -> Result<Proc
 
 // TEST CASE 2: Type-1 Clone (EXACT DUPLICATE of above)
 // Expected: Should be detected with ~100% similarity
-pub fn complex_data_processing_algorithm_v2(input_data: Vec<i32>) -> Result<ProcessedData, ProcessingError> {
+pub fn complex_data_processing_algorithm_v2(
+    input_data: Vec<i32>,
+) -> Result<ProcessedData, ProcessingError> {
     let mut result = ProcessedData::new();
 
     // Phase 1: Input Validation (15 lines)
@@ -368,33 +372,41 @@ impl DatabaseConnection {
 
 // TEST CASE 4: Magic Values - High Severity (Comparisons and Function Args)
 // Expected: Should detect multiple magic values with HIGH severity
-pub fn process_user_account_with_magic_values(age: i32, balance: f64, role: &str) -> Result<(), UserError> {
+pub fn process_user_account_with_magic_values(
+    age: i32,
+    balance: f64,
+    role: &str,
+) -> Result<(), UserError> {
     // HIGH SEVERITY: Magic number in comparison
-    if age < 18 {  // MAGIC: 18 (legal age threshold)
+    if age < 18 {
+        // MAGIC: 18 (legal age threshold)
         return Err(UserError::TooYoung);
     }
 
     // HIGH SEVERITY: Magic number in comparison
-    if balance < 100.50 {  // MAGIC: 100.50 (minimum balance)
+    if balance < 100.50 {
+        // MAGIC: 100.50 (minimum balance)
         return Err(UserError::InsufficientBalance);
     }
 
     // HIGH SEVERITY: Magic string in comparison
-    if role == "administrator" {  // MAGIC: "administrator" string
+    if role == "administrator" {
+        // MAGIC: "administrator" string
         println!("Admin access granted");
     }
 
     // HIGH SEVERITY: Magic string in comparison
-    if role != "guest" {  // MAGIC: "guest" string
+    if role != "guest" {
+        // MAGIC: "guest" string
         println!("Registered user");
     }
 
     // HIGH SEVERITY: Magic number as function argument
     let mut db = DatabaseConnection::new();
-    db.set_timeout(300);  // MAGIC: 300 seconds timeout
+    db.set_timeout(300); // MAGIC: 300 seconds timeout
 
     // HIGH SEVERITY: Magic number as function argument
-    db.connect("localhost", 5432)?;  // MAGIC: 5432 (PostgreSQL port)
+    db.connect("localhost", 5432)?; // MAGIC: 5432 (PostgreSQL port)
 
     Ok(())
 }
@@ -403,19 +415,19 @@ pub fn process_user_account_with_magic_values(age: i32, balance: f64, role: &str
 // Expected: Should detect magic values with MEDIUM severity
 pub fn configure_system_settings() -> (u32, f64, String) {
     // MEDIUM SEVERITY: Magic number in assignment
-    let retry_count = 5;  // MAGIC: 5 retries
+    let retry_count = 5; // MAGIC: 5 retries
 
     // MEDIUM SEVERITY: Magic number in assignment
-    let timeout_seconds = 3600;  // MAGIC: 3600 (1 hour in seconds)
+    let timeout_seconds = 3600; // MAGIC: 3600 (1 hour in seconds)
 
     // MEDIUM SEVERITY: Magic number in assignment
-    let cache_size = 500;  // MAGIC: 500 MB cache size
+    let cache_size = 500; // MAGIC: 500 MB cache size
 
     // MEDIUM SEVERITY: Magic float in assignment
-    let threshold = 0.75;  // MAGIC: 0.75 threshold
+    let threshold = 0.75; // MAGIC: 0.75 threshold
 
     // MEDIUM SEVERITY: Magic string in assignment
-    let environment = "production";  // MAGIC: "production" string
+    let environment = "production"; // MAGIC: "production" string
 
     // MEDIUM SEVERITY: Magic values in return statement
     (retry_count, threshold, environment.to_string())
@@ -430,9 +442,9 @@ pub fn values_that_should_not_be_detected() -> i32 {
     const BUFFER_SIZE: usize = 4096;
 
     // SHOULD NOT DETECT: Powers of 2 (heuristic exclusion)
-    let small_buffer = 1024;  // 2^10
-    let large_buffer = 8192;  // 2^13
-    let page_size = 4096;     // 2^12
+    let small_buffer = 1024; // 2^10
+    let large_buffer = 8192; // 2^13
+    let page_size = 4096; // 2^12
 
     // SHOULD NOT DETECT: Allowed values (0, 1, -1, 2)
     let index = 0;
@@ -453,21 +465,22 @@ pub fn values_that_should_not_be_detected() -> i32 {
 // Expected: Different severity levels based on context
 pub fn mixed_magic_value_contexts(count: i32) -> Result<String, UserError> {
     // HIGH: Magic in comparison
-    if count > 100 {  // MAGIC: 100 threshold
+    if count > 100 {
+        // MAGIC: 100 threshold
         return Err(UserError::Timeout);
     }
 
     // MEDIUM: Magic in assignment
-    let max_items = 50;  // MAGIC: 50 max items
+    let max_items = 50; // MAGIC: 50 max items
 
     // HIGH: Magic in function call
-    process_batch(count, 25);  // MAGIC: 25 batch size
+    process_batch(count, 25); // MAGIC: 25 batch size
 
     // MEDIUM: Magic in field initialization
     let connection = DatabaseConnection {
-        timeout: 60,      // MAGIC: 60 seconds
-        max_retries: 3,   // Borderline - might be detected
-        port: 8080,       // MAGIC: 8080 HTTP alternate port
+        timeout: 60,    // MAGIC: 60 seconds
+        max_retries: 3, // Borderline - might be detected
+        port: 8080,     // MAGIC: 8080 HTTP alternate port
     };
 
     Ok("Success".to_string())
@@ -481,18 +494,19 @@ fn process_batch(count: i32, batch_size: i32) {
 // Expected: Detect non-trivial magic strings
 pub fn magic_string_examples(mode: &str) -> String {
     // HIGH: Magic string in comparison
-    if mode == "debug" {  // MAGIC: "debug"
+    if mode == "debug" {
+        // MAGIC: "debug"
         println!("Debug mode enabled");
     }
 
     // MEDIUM: Magic string in assignment
-    let api_endpoint = "https://api.example.com/v1/users";  // MAGIC: URL
+    let api_endpoint = "https://api.example.com/v1/users"; // MAGIC: URL
 
     // MEDIUM: Magic string in return
     match mode {
-        "production" => "prod".to_string(),  // MAGIC: "production", "prod"
-        "staging" => "stage".to_string(),    // MAGIC: "staging", "stage"
-        _ => "development".to_string(),      // MAGIC: "development"
+        "production" => "prod".to_string(), // MAGIC: "production", "prod"
+        "staging" => "stage".to_string(),   // MAGIC: "staging", "stage"
+        _ => "development".to_string(),     // MAGIC: "development"
     }
 }
 

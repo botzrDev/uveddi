@@ -29,27 +29,27 @@ impl LicenseTier {
             LicenseTier::Enterprise => "Enterprise",
         }
     }
-    
+
     /// Get the number of languages available in this tier
     pub fn language_count(&self) -> u32 {
         match self {
-            LicenseTier::Free => 2,       // JS, TS
-            LicenseTier::Pro => 10,       // + Python, Rust, Go, Java, C, C++, PHP, Ruby
-            LicenseTier::Team => 14,      // + C#, Kotlin, Swift, Scala
+            LicenseTier::Free => 2,        // JS, TS
+            LicenseTier::Pro => 10,        // + Python, Rust, Go, Java, C, C++, PHP, Ruby
+            LicenseTier::Team => 14,       // + C#, Kotlin, Swift, Scala
             LicenseTier::Enterprise => 16, // + Lua, SQL, custom
         }
     }
-    
+
     /// Get the number of detectors available in this tier
     pub fn detector_count(&self) -> u32 {
         match self {
-            LicenseTier::Free => 8,       // Core anti-pattern detectors + security scanning
-            LicenseTier::Pro => 9,        // All detectors (adds cyclic-dependency detection)
-            LicenseTier::Team => 9,       // All detectors
+            LicenseTier::Free => 8, // Core anti-pattern detectors + security scanning
+            LicenseTier::Pro => 9,  // All detectors (adds cyclic-dependency detection)
+            LicenseTier::Team => 9, // All detectors
             LicenseTier::Enterprise => 9, // All + custom
         }
     }
-    
+
     /// Get the number of seats available in this tier
     pub fn seat_count(&self) -> u32 {
         match self {
@@ -59,7 +59,7 @@ impl LicenseTier {
             LicenseTier::Enterprise => u32::MAX, // Unlimited
         }
     }
-    
+
     /// Parse tier from string
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
@@ -83,25 +83,25 @@ impl std::fmt::Display for LicenseTier {
 pub struct License {
     /// License key (format: UVDD-XXXX-XXXX-XXXX-XXXX)
     pub key: String,
-    
+
     /// License tier
     pub tier: LicenseTier,
-    
+
     /// Expiration date (None for lifetime licenses)
     pub valid_until: Option<DateTime<Utc>>,
-    
+
     /// Number of seats (for team licenses)
     pub seats: u32,
-    
+
     /// Machine ID this license is activated on
     pub machine_id: String,
-    
+
     /// When the license was activated
     pub activated_at: DateTime<Utc>,
-    
+
     /// Customer email (optional)
     pub email: Option<String>,
-    
+
     /// License signature for offline validation
     pub signature: String,
 }
@@ -127,7 +127,7 @@ impl License {
             signature,
         }
     }
-    
+
     /// Check if the license is expired
     pub fn is_expired(&self) -> bool {
         if let Some(valid_until) = self.valid_until {
@@ -136,7 +136,7 @@ impl License {
             false // Lifetime license never expires
         }
     }
-    
+
     /// Get days until expiration (None if lifetime or already expired)
     pub fn days_until_expiration(&self) -> Option<i64> {
         if let Some(valid_until) = self.valid_until {
@@ -150,7 +150,7 @@ impl License {
             None // Lifetime license
         }
     }
-    
+
     /// Check if license is in grace period (expired but within 7 days)
     pub fn is_in_grace_period(&self) -> bool {
         if let Some(valid_until) = self.valid_until {
@@ -161,13 +161,17 @@ impl License {
             false
         }
     }
-    
+
     /// Get a masked version of the license key for display
     pub fn masked_key(&self) -> String {
         if self.key.len() > 10 {
             let parts: Vec<&str> = self.key.split('-').collect();
             if parts.len() >= 2 {
-                return format!("{}-****-****-****-{}", parts[0], parts.last().unwrap_or(&"****"));
+                return format!(
+                    "{}-****-****-****-{}",
+                    parts[0],
+                    parts.last().unwrap_or(&"****")
+                );
             }
         }
         "UVDD-****-****-****-****".to_string()
@@ -189,7 +193,7 @@ impl LicenseInfo {
     /// Create license info from a license
     pub fn from_license(license: &License) -> Self {
         let features = get_tier_features(license.tier);
-        
+
         Self {
             tier: license.tier,
             is_active: !license.is_expired() || license.is_in_grace_period(),
@@ -199,7 +203,7 @@ impl LicenseInfo {
             features,
         }
     }
-    
+
     /// Create info for free tier (no license)
     pub fn free_tier() -> Self {
         Self {
@@ -222,7 +226,7 @@ pub fn get_tier_features(tier: LicenseTier) -> Vec<String> {
         "Security scanning".to_string(),
         "Markdown output".to_string(),
     ];
-    
+
     if tier >= LicenseTier::Pro {
         features.extend([
             "Python analysis".to_string(),
@@ -239,7 +243,7 @@ pub fn get_tier_features(tier: LicenseTier) -> Vec<String> {
             "AI-powered insights".to_string(),
         ]);
     }
-    
+
     if tier >= LicenseTier::Team {
         features.extend([
             "C# analysis".to_string(),
@@ -250,7 +254,7 @@ pub fn get_tier_features(tier: LicenseTier) -> Vec<String> {
             "Priority support".to_string(),
         ]);
     }
-    
+
     if tier >= LicenseTier::Enterprise {
         features.extend([
             "Lua analysis".to_string(),
@@ -263,21 +267,21 @@ pub fn get_tier_features(tier: LicenseTier) -> Vec<String> {
             "Dedicated support".to_string(),
         ]);
     }
-    
+
     features
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_tier_ordering() {
         assert!(LicenseTier::Free < LicenseTier::Pro);
         assert!(LicenseTier::Pro < LicenseTier::Team);
         assert!(LicenseTier::Team < LicenseTier::Enterprise);
     }
-    
+
     #[test]
     fn test_tier_from_str() {
         assert_eq!(LicenseTier::from_str("free"), Some(LicenseTier::Free));
@@ -285,7 +289,7 @@ mod tests {
         assert_eq!(LicenseTier::from_str("Team"), Some(LicenseTier::Team));
         assert_eq!(LicenseTier::from_str("invalid"), None);
     }
-    
+
     #[test]
     fn test_license_expiration() {
         let mut license = License::new(
@@ -296,15 +300,15 @@ mod tests {
             "test-machine".to_string(),
             "test-sig".to_string(),
         );
-        
+
         assert!(!license.is_expired());
         assert!(license.days_until_expiration().unwrap() >= 29);
-        
+
         // Test expired license
         license.valid_until = Some(Utc::now() - chrono::Duration::days(1));
         assert!(license.is_expired());
     }
-    
+
     #[test]
     fn test_masked_key() {
         let license = License::new(
@@ -315,7 +319,7 @@ mod tests {
             "test".to_string(),
             "sig".to_string(),
         );
-        
+
         assert_eq!(license.masked_key(), "UVDD-****-****-****-MNOP");
     }
 }

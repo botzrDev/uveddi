@@ -333,12 +333,12 @@ impl<'a> CfgBuilder<'a> {
             SourceLanguage::Php => PHP_CFG_QUERY,
             SourceLanguage::Ruby => RUBY_CFG_QUERY,
             SourceLanguage::Kotlin => KOTLIN_CFG_QUERY,
-             // Fallback for others - minimal/empty query might be safer or error
+            // Fallback for others - minimal/empty query might be safer or error
             _ => "", // Will likely fail Query::new if empty, handled below
         };
 
         if query_str.is_empty() {
-             return Ok(ControlFlowGraph::new()); // Return empty CFG for unsupported languages for now
+            return Ok(ControlFlowGraph::new()); // Return empty CFG for unsupported languages for now
         }
 
         // 3. Parse query and traverse AST

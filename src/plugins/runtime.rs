@@ -5,7 +5,10 @@
 //! It integrates with Wasmtime and the WebAssembly Component Model.
 
 use crate::error::UveddiError;
-use crate::plugins::{types::{HostContext, PluginId}, HostContextFactory, PluginError, SecurityPolicy};
+use crate::plugins::{
+    types::{HostContext, PluginId},
+    HostContextFactory, PluginError, SecurityPolicy,
+};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;

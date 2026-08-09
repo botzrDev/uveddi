@@ -84,8 +84,8 @@ impl DatabaseMetrics {
         } else {
             // For databases with queries, check recency and failure rate
             let query_recency_ok = last_query > 0 && (now - last_query) < 300; // 5min
-            // Avoid integer division issues: for small query counts, just check for any failures
-            // For larger counts, allow up to 10% failure rate
+                                                                               // Avoid integer division issues: for small query counts, just check for any failures
+                                                                               // For larger counts, allow up to 10% failure rate
             let failure_rate_ok = if total_queries < 10 {
                 failed_queries == 0
             } else {

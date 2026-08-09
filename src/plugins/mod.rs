@@ -66,9 +66,9 @@ pub mod knowledge;
 pub use data_plane::AstDataPlane;
 pub use engine::WasmPluginEngine;
 pub use errors::PluginError;
+pub use host_functions::{HostContextFactory, HostFunctions};
 #[cfg(feature = "wasm-plugins")]
 pub use types::HostContext;
-pub use host_functions::{HostContextFactory, HostFunctions};
 // Note: PluginResult is deprecated - use crate::error::Result<T> instead
 pub use lifecycle::{
     PluginAnalysisResult, PluginIssueResult, PluginLifecycleManager, PluginMetrics, ResourceReport,
