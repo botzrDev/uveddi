@@ -30,11 +30,17 @@ mod license;
 mod storage;
 mod validation;
 
-pub use activation::{activate_license, deactivate_license, check_activation_status, print_activation_status, ActivationStatus};
+pub use activation::{
+    activate_license, check_activation_status, deactivate_license, print_activation_status,
+    ActivationStatus,
+};
 pub use errors::{LicenseError, LicenseErrorKind};
-pub use license::{License, LicenseTier, LicenseInfo};
-pub use storage::{load_license, save_license, get_license_path, delete_license};
-pub use validation::{validate_license_key, is_license_valid, get_current_tier, is_feature_allowed, require_feature, get_required_tier_for_feature};
+pub use license::{License, LicenseInfo, LicenseTier};
+pub use storage::{delete_license, get_license_path, load_license, save_license};
+pub use validation::{
+    get_current_tier, get_required_tier_for_feature, is_feature_allowed, is_license_valid,
+    require_feature, validate_license_key,
+};
 
 /// Features that can be gated by license tier
 pub mod features {
@@ -53,7 +59,7 @@ pub mod features {
     pub const LANG_SCALA: &str = "scala-lang";
     pub const LANG_LUA: &str = "lua-lang";
     pub const LANG_SQL: &str = "sql-lang";
-    
+
     /// Detector features
     pub const DETECTOR_DEAD_CODE: &str = "dead-code-detector";
     pub const DETECTOR_LARGE_CLASSES: &str = "large-classes-detector";
@@ -62,13 +68,13 @@ pub mod features {
     pub const DETECTOR_MAGIC_VALUES: &str = "magic-values-detector";
     pub const DETECTOR_CYCLIC_DEPS: &str = "cyclic-deps-detector";
     pub const DETECTOR_SECURITY: &str = "security-detector";
-    
+
     /// Output format features
     pub const OUTPUT_JSON: &str = "output-json";
     pub const OUTPUT_HTML: &str = "output-html";
     pub const OUTPUT_SVG: &str = "output-svg";
     pub const OUTPUT_SARIF: &str = "output-sarif";
-    
+
     /// Other features
     pub const AI_INSIGHTS: &str = "ai-insights";
     pub const MULTI_SEAT: &str = "multi-seat";

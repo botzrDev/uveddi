@@ -11,10 +11,7 @@ use crate::error::UveddiError;
 use crate::plugins::{
     host_functions::PluginIssue,
     types::{HostContext, PluginId},
-    HostContextFactory,
-    PluginAnalysisResult,
-    PluginRuntime,
-    WasmPluginEngine,
+    HostContextFactory, PluginAnalysisResult, PluginRuntime, WasmPluginEngine,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;

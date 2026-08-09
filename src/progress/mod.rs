@@ -192,8 +192,13 @@ impl ProgressReporter for TerminalProgressReporter {
         let spinner = spinner_frames[*idx];
 
         // Build progress message
-        let message = format!("  {} {} {}", progress.phase.emoji(), spinner, progress.phase.description());
-        
+        let message = format!(
+            "  {} {} {}",
+            progress.phase.emoji(),
+            spinner,
+            progress.phase.description()
+        );
+
         // Clear to end of line and print
         eprint!("\r{}\x1b[K", message);
 
@@ -287,37 +292,42 @@ impl ProgressTracker {
         let now = Instant::now();
         let current_phase = Arc::new(Mutex::new(AnalysisPhase::Discovery));
         let stop_signal = Arc::new(Mutex::new(false));
-        
+
         // Start background thread for continuous spinner animation
         let phase_clone = Arc::clone(&current_phase);
         let stop_clone = Arc::clone(&stop_signal);
-        
+
         let spinner_thread = std::thread::spawn(move || {
             let spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
             let mut idx = 0;
-            
+
             loop {
                 // Check if we should stop
                 if *stop_clone.lock().unwrap() {
                     break;
                 }
-                
+
                 // Get current phase
                 let phase = phase_clone.lock().unwrap().clone();
                 let spinner = spinner_frames[idx % spinner_frames.len()];
-                
+
                 // Print spinner animation
-                eprint!("\r  {} {} {}\x1b[K", phase.emoji(), spinner, phase.description());
+                eprint!(
+                    "\r  {} {} {}\x1b[K",
+                    phase.emoji(),
+                    spinner,
+                    phase.description()
+                );
                 use std::io::{self, Write};
                 let _ = io::stderr().flush();
-                
+
                 idx += 1;
-                
+
                 // Sleep to control animation speed
                 std::thread::sleep(Duration::from_millis(100));
             }
         });
-        
+
         Self {
             current_phase,
             phase_start_time: now,
@@ -374,7 +384,7 @@ impl ProgressTracker {
 
     fn calculate_overall_progress(&self, current: usize, total: usize) -> f32 {
         let phase = self.current_phase.lock().unwrap().clone();
-        
+
         // Weight different phases based on typical time distribution
         let phase_weights = match phase {
             AnalysisPhase::Discovery => 0.05,
@@ -413,7 +423,7 @@ impl ProgressTracker {
         if let Some(thread) = self.spinner_thread.take() {
             let _ = thread.join();
         }
-        
+
         let total_time = self.analysis_start_time.elapsed();
         self.reporter.report_complete(total_time);
 

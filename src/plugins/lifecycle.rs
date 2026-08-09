@@ -11,6 +11,8 @@ use crate::plugins::{
 
 #[cfg(feature = "wasm-plugins")]
 use crate::plugins::types::HostContext;
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::wasm::CoreAnalysis;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -22,8 +24,6 @@ use wasmtime::{Engine, Store};
 use wasmtime_wasi::preview1::{self, WasiP1Ctx};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::{WasiCtxBuilder, WasiView};
-#[cfg(feature = "wasm-plugins")]
-use crate::plugins::wasm::CoreAnalysis;
 
 /// Result type for plugin analysis
 #[derive(Debug, Clone)]
@@ -128,7 +128,10 @@ impl PluginLifecycleManager {
             // Add our custom host functions to the linker
             // Note: WASI Preview 1 uses core modules, not Component Model, so we skip it
             // and rely on our host functions providing necessary functionality
-            crate::plugins::wasm::CoreAnalysis::add_to_linker::<_, wasmtime::component::HasSelf<HostContext>>(&mut linker, |host| host)?;
+            crate::plugins::wasm::CoreAnalysis::add_to_linker::<
+                _,
+                wasmtime::component::HasSelf<HostContext>,
+            >(&mut linker, |host| host)?;
 
             // Create store with fuel and memory limits
             let resource_table = wasmtime::component::ResourceTable::new();
@@ -136,10 +139,12 @@ impl PluginLifecycleManager {
             // Create database and analysis engine (placeholders for now)
             // TODO: Pass real dependencies to load_plugin via PluginLifecycleManager fields
             let database_config = crate::database::DatabaseConfig::default();
-            let database = crate::database::ScalableDatabase::new(database_config).await
+            let database = crate::database::ScalableDatabase::new(database_config)
+                .await
                 .map_err(|e| PluginError::Loading(format!("Failed to create database: {}", e)))?;
-            let analysis_engine = crate::analysis::AnalysisEngine::new()
-                .map_err(|e| PluginError::Loading(format!("Failed to create analysis engine: {}", e)))?;
+            let analysis_engine = crate::analysis::AnalysisEngine::new().map_err(|e| {
+                PluginError::Loading(format!("Failed to create analysis engine: {}", e))
+            })?;
 
             let host_context = HostContext {
                 host_state,
@@ -355,9 +360,10 @@ impl ActivePlugin {
         let start_time = Instant::now();
 
         // Get mutable access to the store
-        let mut store_guard = self.store.lock().map_err(|e| {
-            PluginError::Execution(format!("Failed to acquire store lock: {}", e))
-        })?;
+        let mut store_guard = self
+            .store
+            .lock()
+            .map_err(|e| PluginError::Execution(format!("Failed to acquire store lock: {}", e)))?;
 
         // Prepare input
         // Use a simple hash calculation
@@ -380,24 +386,33 @@ impl ActivePlugin {
         };
 
         // Call the component function
-        let result = self.bindings.call_analyze(&mut *store_guard, &source_file)
+        let result = self
+            .bindings
+            .call_analyze(&mut *store_guard, &source_file)
             .map_err(|e| PluginError::Execution(format!("Component analyze call failed: {}", e)))?;
-            
+
         // Handle the Result<AnalysisResult, String> returned by the plugin
         match result {
-            Ok(analysis) => self.convert_analysis_result(analysis, start_time.elapsed().as_millis() as u32),
-            Err(e) => Err(PluginError::Execution(format!("Plugin analysis reported error: {}", e))),
+            Ok(analysis) => {
+                self.convert_analysis_result(analysis, start_time.elapsed().as_millis() as u32)
+            }
+            Err(e) => Err(PluginError::Execution(format!(
+                "Plugin analysis reported error: {}",
+                e
+            ))),
         }
     }
 
     #[cfg(feature = "wasm-plugins")]
     fn convert_analysis_result(
-        &self, 
+        &self,
         analysis: crate::plugins::wasm::AnalysisResult,
-        duration_ms: u32
+        duration_ms: u32,
     ) -> Result<PluginAnalysisResult, PluginError> {
-        let issues = analysis.issues.into_iter().map(|issue| {
-            PluginIssueResult {
+        let issues = analysis
+            .issues
+            .into_iter()
+            .map(|issue| PluginIssueResult {
                 id: issue.id,
                 severity: format!("{:?}", issue.severity),
                 category: format!("{:?}", issue.category),
@@ -409,8 +424,8 @@ impl ActivePlugin {
                 end_line: issue.span.end.line,
                 end_column: issue.span.end.column,
                 suggestion: issue.suggestion,
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(PluginAnalysisResult {
             issues,
@@ -425,7 +440,11 @@ impl ActivePlugin {
 
     /// Parse analysis result from JSON
     #[cfg(feature = "wasm-plugins")]
-    fn parse_analysis_result(&self, json_str: &str, duration_ms: u32) -> Result<PluginAnalysisResult, PluginError> {
+    fn parse_analysis_result(
+        &self,
+        json_str: &str,
+        duration_ms: u32,
+    ) -> Result<PluginAnalysisResult, PluginError> {
         let value: serde_json::Value = serde_json::from_str(json_str)
             .map_err(|e| PluginError::Execution(format!("Result JSON parse failed: {}", e)))?;
 
@@ -433,17 +452,63 @@ impl ActivePlugin {
         if let Some(issues_array) = value.get("issues").and_then(|v| v.as_array()) {
             for issue_val in issues_array {
                 let issue = PluginIssueResult {
-                    id: issue_val.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    severity: issue_val.get("severity").and_then(|v| v.as_str()).unwrap_or("medium").to_string(),
-                    category: issue_val.get("category").and_then(|v| v.as_str()).unwrap_or("quality").to_string(),
-                    message: issue_val.get("message").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    description: issue_val.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                    file: issue_val.get("file").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    start_line: issue_val.get("span").and_then(|v| v.get("start")).and_then(|v| v.get("line")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
-                    start_column: issue_val.get("span").and_then(|v| v.get("start")).and_then(|v| v.get("column")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
-                    end_line: issue_val.get("span").and_then(|v| v.get("end")).and_then(|v| v.get("line")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
-                    end_column: issue_val.get("span").and_then(|v| v.get("end")).and_then(|v| v.get("column")).and_then(|v| v.as_u64()).unwrap_or(1) as u32,
-                    suggestion: issue_val.get("suggestion").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    id: issue_val
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    severity: issue_val
+                        .get("severity")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("medium")
+                        .to_string(),
+                    category: issue_val
+                        .get("category")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("quality")
+                        .to_string(),
+                    message: issue_val
+                        .get("message")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    description: issue_val
+                        .get("description")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    file: issue_val
+                        .get("file")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    start_line: issue_val
+                        .get("span")
+                        .and_then(|v| v.get("start"))
+                        .and_then(|v| v.get("line"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(1) as u32,
+                    start_column: issue_val
+                        .get("span")
+                        .and_then(|v| v.get("start"))
+                        .and_then(|v| v.get("column"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(1) as u32,
+                    end_line: issue_val
+                        .get("span")
+                        .and_then(|v| v.get("end"))
+                        .and_then(|v| v.get("line"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(1) as u32,
+                    end_column: issue_val
+                        .get("span")
+                        .and_then(|v| v.get("end"))
+                        .and_then(|v| v.get("column"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(1) as u32,
+                    suggestion: issue_val
+                        .get("suggestion")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
                 };
                 issues.push(issue);
             }
@@ -451,9 +516,18 @@ impl ActivePlugin {
 
         let metrics = if let Some(metrics_val) = value.get("metrics") {
             PluginMetrics {
-                lines_of_code: metrics_val.get("lines_of_code").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                complexity: metrics_val.get("complexity").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                maintainability_index: metrics_val.get("maintainability_index").and_then(|v| v.as_f64()).unwrap_or(100.0),
+                lines_of_code: metrics_val
+                    .get("lines_of_code")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u32,
+                complexity: metrics_val
+                    .get("complexity")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0) as u32,
+                maintainability_index: metrics_val
+                    .get("maintainability_index")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(100.0),
             }
         } else {
             PluginMetrics::default()

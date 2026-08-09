@@ -532,13 +532,13 @@ impl AnalyzeCommand {
         }
 
         // Check for supported file types if it's a single file
-        use crate::licensing::{get_current_tier, is_feature_allowed, features};
+        use crate::licensing::{features, get_current_tier, is_feature_allowed};
         let tier = get_current_tier();
 
         if self.path.is_file() {
             if let Some(extension) = self.path.extension() {
                 let ext = extension.to_string_lossy().to_lowercase();
-                
+
                 // Helper to check if extension is allowed by license
                 let is_allowed = match ext.as_str() {
                     "js" | "jsx" | "ts" | "tsx" => true, // Always allowed (Free tier)
@@ -562,11 +562,12 @@ impl AnalyzeCommand {
                 if !is_allowed {
                     // Start with basic supported list checking
                     let supported_extensions = [
-                         "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp", "go", "cs", "php", "rb", "kt", "sql", "lua", "swift", "scala"
+                        "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp", "go",
+                        "cs", "php", "rb", "kt", "sql", "lua", "swift", "scala",
                     ];
-                    
+
                     if !supported_extensions.contains(&ext.as_str()) {
-                         return Err(SecurityError::InvalidInput {
+                        return Err(SecurityError::InvalidInput {
                             field: "path".to_string(),
                             reason: format!(
                                 "Unsupported file type '.{}' for file '{}'.",
@@ -577,13 +578,14 @@ impl AnalyzeCommand {
                     }
 
                     // If supported but not allowed, it's a license issue
-                    let required_tier = crate::licensing::get_required_tier_for_feature(&match ext.as_str() {
-                        "rs" => features::LANG_RUST,
-                        "py" => features::LANG_PYTHON,
-                        "go" => features::LANG_GO,
-                         _ => "premium-lang", // Simplification
-                    });
-                    
+                    let required_tier =
+                        crate::licensing::get_required_tier_for_feature(&match ext.as_str() {
+                            "rs" => features::LANG_RUST,
+                            "py" => features::LANG_PYTHON,
+                            "go" => features::LANG_GO,
+                            _ => "premium-lang", // Simplification
+                        });
+
                     return Err(SecurityError::InvalidInput {
                         field: "path".to_string(),
                         reason: format!(
@@ -598,7 +600,7 @@ impl AnalyzeCommand {
         // Check if directory is empty or contains no supported files (using recursive discovery)
         if self.path.is_dir() {
             // Filter files that are both supported AND allowed by license
-             // This logic needs to be robust. For now, we reuse the existing discovery but filter results.
+            // This logic needs to be robust. For now, we reuse the existing discovery but filter results.
         }
 
         Ok(())
@@ -623,48 +625,60 @@ impl AnalyzeCommand {
         // Additional general input validation
         security::validate_input(&path_str, "path")?;
         security::validate_input(&self.output_format, "output_format")?;
-        
+
         // Licensing Checks
-        use crate::licensing::{get_current_tier, is_feature_allowed, features, require_feature};
+        use crate::licensing::{features, get_current_tier, is_feature_allowed, require_feature};
         let tier = get_current_tier();
 
         // Check Output Format
         match self.output_format.as_str() {
             "json" => {
                 if !is_feature_allowed(features::OUTPUT_JSON, &tier) {
-                     return Err(SecurityError::InvalidInput { 
-                        field: "output_format".to_string(), 
-                        reason: format!("JSON output requires Pro tier. Currently on {}.", tier.display_name()) 
+                    return Err(SecurityError::InvalidInput {
+                        field: "output_format".to_string(),
+                        reason: format!(
+                            "JSON output requires Pro tier. Currently on {}.",
+                            tier.display_name()
+                        ),
                     });
                 }
             }
             "html" => {
                 if !is_feature_allowed(features::OUTPUT_HTML, &tier) {
-                     return Err(SecurityError::InvalidInput { 
-                        field: "output_format".to_string(), 
-                        reason: format!("HTML output requires Pro tier. Currently on {}.", tier.display_name()) 
+                    return Err(SecurityError::InvalidInput {
+                        field: "output_format".to_string(),
+                        reason: format!(
+                            "HTML output requires Pro tier. Currently on {}.",
+                            tier.display_name()
+                        ),
                     });
                 }
             }
-             _ => {}
+            _ => {}
         }
 
         // Check AI Features
         if self.enable_ai {
-             if !is_feature_allowed(features::AI_INSIGHTS, &tier) {
-                 return Err(SecurityError::InvalidInput { 
-                    field: "enable_ai".to_string(), 
-                    reason: format!("AI features require Team tier. Currently on {}.", tier.display_name()) 
+            if !is_feature_allowed(features::AI_INSIGHTS, &tier) {
+                return Err(SecurityError::InvalidInput {
+                    field: "enable_ai".to_string(),
+                    reason: format!(
+                        "AI features require Team tier. Currently on {}.",
+                        tier.display_name()
+                    ),
                 });
             }
         }
 
         // Check SARIF Export
         if self.export_sarif {
-             if !is_feature_allowed(features::OUTPUT_SARIF, &tier) {
-                 return Err(SecurityError::InvalidInput { 
-                    field: "export_sarif".to_string(), 
-                    reason: format!("SARIF export requires Team tier. Currently on {}.", tier.display_name()) 
+            if !is_feature_allowed(features::OUTPUT_SARIF, &tier) {
+                return Err(SecurityError::InvalidInput {
+                    field: "export_sarif".to_string(),
+                    reason: format!(
+                        "SARIF export requires Team tier. Currently on {}.",
+                        tier.display_name()
+                    ),
                 });
             }
         }
@@ -1187,13 +1201,25 @@ impl AnalyzeCommand {
 
         // Header
         content.push_str("# Code Analysis Report\n\n");
-        content.push_str(&format!("**Generated:** {}\n\n", chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")));
+        content.push_str(&format!(
+            "**Generated:** {}\n\n",
+            chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+        ));
 
         // Summary
         content.push_str("## Summary\n\n");
-        content.push_str(&format!("- **Files Analyzed:** {}\n", report.metadata.files_analyzed));
-        content.push_str(&format!("- **Issues Found:** {}\n", report.metadata.issues_found));
-        content.push_str(&format!("- **Analysis Duration:** {:.2}s\n", report.metadata.analysis_duration.as_secs_f64()));
+        content.push_str(&format!(
+            "- **Files Analyzed:** {}\n",
+            report.metadata.files_analyzed
+        ));
+        content.push_str(&format!(
+            "- **Issues Found:** {}\n",
+            report.metadata.issues_found
+        ));
+        content.push_str(&format!(
+            "- **Analysis Duration:** {:.2}s\n",
+            report.metadata.analysis_duration.as_secs_f64()
+        ));
         content.push_str("\n---\n\n");
 
         // Issues grouped by severity
@@ -1246,11 +1272,16 @@ impl AnalyzeCommand {
         }
 
         // Write to file
-        let mut file = File::create(output_path)
-            .map_err(|e| UveddiError::config_error(&format!("Failed to create report file: {}", e), "file creation"))?;
+        let mut file = File::create(output_path).map_err(|e| {
+            UveddiError::config_error(
+                &format!("Failed to create report file: {}", e),
+                "file creation",
+            )
+        })?;
 
-        file.write_all(content.as_bytes())
-            .map_err(|e| UveddiError::config_error(&format!("Failed to write report: {}", e), "file write"))?;
+        file.write_all(content.as_bytes()).map_err(|e| {
+            UveddiError::config_error(&format!("Failed to write report: {}", e), "file write")
+        })?;
 
         Ok(())
     }

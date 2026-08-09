@@ -56,12 +56,12 @@ impl Default for MagicValuesConfig {
         allowed_floats.insert("1.0".to_string());
         allowed_floats.insert("-1.0".to_string());
         // Common percentage thresholds - reduce false positives on threshold comparisons
-        allowed_floats.insert("0.5".to_string());   // 50%
-        allowed_floats.insert("0.25".to_string());  // 25%
-        allowed_floats.insert("0.75".to_string());  // 75%
-        allowed_floats.insert("0.9".to_string());   // 90%
-        allowed_floats.insert("0.1".to_string());   // 10%
-        allowed_floats.insert("90.0".to_string());  // 90% threshold
+        allowed_floats.insert("0.5".to_string()); // 50%
+        allowed_floats.insert("0.25".to_string()); // 25%
+        allowed_floats.insert("0.75".to_string()); // 75%
+        allowed_floats.insert("0.9".to_string()); // 90%
+        allowed_floats.insert("0.1".to_string()); // 10%
+        allowed_floats.insert("90.0".to_string()); // 90% threshold
         allowed_floats.insert("100.0".to_string()); // 100% threshold
 
         Self {
@@ -193,10 +193,20 @@ impl MagicValuesDetector {
                 if let Some(func) = call_node.child_by_field_name("function") {
                     let func_text = func.utf8_text(source).unwrap_or("");
                     let self_doc_patterns = [
-                        "from_secs", "from_millis", "from_nanos", "from_micros",
-                        "with_capacity", "repeat", "sleep", "timeout",
-                        "from_be_bytes", "from_le_bytes", "from_ne_bytes",
-                        "with_size", "resize", "reserve",
+                        "from_secs",
+                        "from_millis",
+                        "from_nanos",
+                        "from_micros",
+                        "with_capacity",
+                        "repeat",
+                        "sleep",
+                        "timeout",
+                        "from_be_bytes",
+                        "from_le_bytes",
+                        "from_ne_bytes",
+                        "with_size",
+                        "resize",
+                        "reserve",
                     ];
                     return self_doc_patterns.iter().any(|p| func_text.ends_with(p));
                 }
@@ -247,9 +257,10 @@ impl MagicValuesDetector {
         }
 
         // 4. Common HTTP status codes
-        if (200..=299).contains(&value) ||
-           (400..=499).contains(&value) ||
-           (500..=599).contains(&value) {
+        if (200..=299).contains(&value)
+            || (400..=499).contains(&value)
+            || (500..=599).contains(&value)
+        {
             return true;
         }
 
@@ -312,12 +323,20 @@ impl MagicValuesDetector {
         // **Enhanced heuristics to reduce false positives**
 
         // 1. Ignore error messages and log messages (contain spaces or common formatting)
-        if value.contains(' ') || value.contains("{}") || value.contains("%s") || value.contains("%d") {
+        if value.contains(' ')
+            || value.contains("{}")
+            || value.contains("%s")
+            || value.contains("%d")
+        {
             return true;
         }
 
         // Enhanced format string detection (Rust debug formatting)
-        if value.contains("{:") || value.contains("{#") || value.contains("{<") || value.contains("{>") {
+        if value.contains("{:")
+            || value.contains("{#")
+            || value.contains("{<")
+            || value.contains("{>")
+        {
             return true;
         }
 
@@ -325,38 +344,74 @@ impl MagicValuesDetector {
         // Fixed: Removed underscore requirement - "MODE", "DEBUG", "PORT" are valid env var names
         if value.len() >= 2
             && value.chars().next().map_or(false, |c| c.is_uppercase())
-            && value.chars().all(|c| c.is_uppercase() || c == '_' || c.is_numeric())
+            && value
+                .chars()
+                .all(|c| c.is_uppercase() || c == '_' || c.is_numeric())
         {
             return true;
         }
 
         // 3. Ignore common configuration/log level keywords
         let common_config_keywords = [
-            "debug", "info", "warn", "error", "trace", "fatal",
-            "production", "development", "test", "staging",
-            "enabled", "disabled", "true", "false",
-            "json", "xml", "yaml", "toml", "csv",
-            "utf-8", "utf8", "ascii",
-            "localhost", "127.0.0.1",
+            "debug",
+            "info",
+            "warn",
+            "error",
+            "trace",
+            "fatal",
+            "production",
+            "development",
+            "test",
+            "staging",
+            "enabled",
+            "disabled",
+            "true",
+            "false",
+            "json",
+            "xml",
+            "yaml",
+            "toml",
+            "csv",
+            "utf-8",
+            "utf8",
+            "ascii",
+            "localhost",
+            "127.0.0.1",
             // Severity levels (common in analysis tools)
-            "high", "medium", "low", "critical", "warning",
+            "high",
+            "medium",
+            "low",
+            "critical",
+            "warning",
             // Programming language names
-            "rust", "python", "javascript", "typescript", "java", "cpp", "c",
-            "go", "ruby", "php", "swift", "kotlin", "csharp",
+            "rust",
+            "python",
+            "javascript",
+            "typescript",
+            "java",
+            "cpp",
+            "c",
+            "go",
+            "ruby",
+            "php",
+            "swift",
+            "kotlin",
+            "csharp",
         ];
         if common_config_keywords.contains(&value.to_lowercase().as_str()) {
             return true;
         }
 
         // 4. Ignore file names and paths with extensions
-        if value.contains('.') && value.split('.').last().map_or(false, |ext| {
-            let common_extensions = [
-                "rs", "py", "js", "ts", "java", "cpp", "c", "go", "rb",
-                "json", "toml", "yaml", "yml", "xml", "csv", "md", "txt",
-                "lock", "config", "conf", "ini", "env",
-            ];
-            common_extensions.contains(&ext.to_lowercase().as_str())
-        }) {
+        if value.contains('.')
+            && value.split('.').last().map_or(false, |ext| {
+                let common_extensions = [
+                    "rs", "py", "js", "ts", "java", "cpp", "c", "go", "rb", "json", "toml", "yaml",
+                    "yml", "xml", "csv", "md", "txt", "lock", "config", "conf", "ini", "env",
+                ];
+                common_extensions.contains(&ext.to_lowercase().as_str())
+            })
+        {
             return true;
         }
 
@@ -366,9 +421,13 @@ impl MagicValuesDetector {
         }
 
         // 5. Ignore HTTP/URL-related strings
-        if value.starts_with("http://") || value.starts_with("https://") ||
-           value.starts_with("ws://") || value.starts_with("wss://") ||
-           value.starts_with('/') || value.starts_with("./") {
+        if value.starts_with("http://")
+            || value.starts_with("https://")
+            || value.starts_with("ws://")
+            || value.starts_with("wss://")
+            || value.starts_with('/')
+            || value.starts_with("./")
+        {
             return true;
         }
 
@@ -378,7 +437,8 @@ impl MagicValuesDetector {
         }
 
         // 7. Ignore regex-like patterns
-        if value.contains('[') || value.contains(']') || value.contains('(') || value.contains(')') {
+        if value.contains('[') || value.contains(']') || value.contains('(') || value.contains(')')
+        {
             return true;
         }
 
@@ -388,7 +448,13 @@ impl MagicValuesDetector {
         }
 
         // 9. Ignore escape sequences and control characters
-        if value == "\\n" || value == "\\t" || value == "\\r" || value == "\n" || value == "\t" || value == "\r" {
+        if value == "\\n"
+            || value == "\\t"
+            || value == "\\r"
+            || value == "\n"
+            || value == "\t"
+            || value == "\r"
+        {
             return true;
         }
 

@@ -30,11 +30,15 @@ mod tests {
         // Create a valid Cargo.toml for the test project
         let cargo_toml = dir.path().join("Cargo.toml");
         let mut cargo_file = File::create(cargo_toml).unwrap();
-        writeln!(cargo_file, r#"[package]
+        writeln!(
+            cargo_file,
+            r#"[package]
 name = "test-project"
 version = "0.1.0"
 edition = "2021"
-"#).unwrap();
+"#
+        )
+        .unwrap();
 
         // Create src directory and main.rs
         std::fs::create_dir(dir.path().join("src")).unwrap();

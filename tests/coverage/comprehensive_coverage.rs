@@ -955,11 +955,15 @@ mod comprehensive_coverage_analysis {
         let html_content = fs::read_to_string(&html_file).unwrap();
         // HTML should contain coverage information (project name may vary)
         assert!(
-            html_content.contains("Test Project") || html_content.contains("coverage") || html_content.contains("Coverage"),
+            html_content.contains("Test Project")
+                || html_content.contains("coverage")
+                || html_content.contains("Coverage"),
             "HTML should contain project name or coverage info"
         );
         assert!(
-            html_content.contains("85.0%") || html_content.contains("85%") || html_content.contains("coverage"),
+            html_content.contains("85.0%")
+                || html_content.contains("85%")
+                || html_content.contains("coverage"),
             "HTML should contain coverage percentage or coverage info"
         );
 

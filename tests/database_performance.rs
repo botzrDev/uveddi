@@ -127,8 +127,14 @@ async fn benchmark_single_connection_vs_pooled() {
 
     // Both approaches should complete in reasonable time
     // Note: In-memory SQLite benchmarks can be variable, so we just verify both complete
-    assert!(single_time < Duration::from_secs(30), "Single connection should complete in reasonable time");
-    assert!(pooled_time < Duration::from_secs(30), "Pooled connections should complete in reasonable time");
+    assert!(
+        single_time < Duration::from_secs(30),
+        "Single connection should complete in reasonable time"
+    );
+    assert!(
+        pooled_time < Duration::from_secs(30),
+        "Pooled connections should complete in reasonable time"
+    );
 }
 
 #[tokio::test]
@@ -356,10 +362,13 @@ async fn benchmark_index_effectiveness() {
     db.store_issues(&issues).await.unwrap();
 
     // Test queries that should benefit from indexes
-    
+
     // Severity filter
     let start = Instant::now();
-    let _result = db.get_issues_paginated(run_id, 0, 1000, Some("critical"), None).await.unwrap();
+    let _result = db
+        .get_issues_paginated(run_id, 0, 1000, Some("critical"), None)
+        .await
+        .unwrap();
     let query_time = start.elapsed();
     println!("severity filter time: {:?}", query_time);
     assert!(
@@ -370,7 +379,10 @@ async fn benchmark_index_effectiveness() {
 
     // Detector filter
     let start = Instant::now();
-    let _result = db.get_issues_paginated(run_id, 0, 1000, None, Some("test_detector")).await.unwrap();
+    let _result = db
+        .get_issues_paginated(run_id, 0, 1000, None, Some("test_detector"))
+        .await
+        .unwrap();
     let query_time = start.elapsed();
     println!("detector filter time: {:?}", query_time);
     assert!(

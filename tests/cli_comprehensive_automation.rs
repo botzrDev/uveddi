@@ -170,12 +170,11 @@ fn test_cli_analyze_json_output() {
 
     // Verify report was created (CLI currently produces markdown regardless of format flag)
     let content = fs::read_to_string(output_file.path()).unwrap();
+    assert!(!content.is_empty(), "Report file should not be empty");
     assert!(
-        !content.is_empty(),
-        "Report file should not be empty"
-    );
-    assert!(
-        content.contains("# Code Analysis Report") || content.contains("Analysis") || content.contains("Summary"),
+        content.contains("# Code Analysis Report")
+            || content.contains("Analysis")
+            || content.contains("Summary"),
         "Report should contain analysis content"
     );
 }
@@ -365,11 +364,11 @@ fn test_cli_empty_directory() {
         .arg("--output-format=markdown");
 
     // Empty directories should fail with appropriate error message
-    cmd.assert()
-        .failure()
-        .stderr(predicate::str::contains("no supported source files")
+    cmd.assert().failure().stderr(
+        predicate::str::contains("no supported source files")
             .or(predicate::str::contains("workspace"))
-            .or(predicate::str::contains("crate")));
+            .or(predicate::str::contains("crate")),
+    );
 }
 
 #[test]

@@ -105,17 +105,18 @@ impl DetectorFactory {
     /// # }
     /// ```
     pub fn create_default_detectors() -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
-        use crate::licensing::{get_current_tier, is_feature_allowed, features};
+        use crate::licensing::{features, get_current_tier, is_feature_allowed};
         let tier = get_current_tier();
-        
+
         let mut detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> = Vec::new();
 
         // God Object Detector (Always included - Free Tier)
         detectors.push(Box::new(GodObjectDetector::default()));
 
         // Code Duplication Detector (Standard)
-        if is_feature_allowed(features::DETECTOR_TIGHT_COUPLING, &tier) { // Map to similar tier? Or make duplication its own feature
-             detectors.push(Box::new(CodeDuplicationDetector::new()));
+        if is_feature_allowed(features::DETECTOR_TIGHT_COUPLING, &tier) {
+            // Map to similar tier? Or make duplication its own feature
+            detectors.push(Box::new(CodeDuplicationDetector::new()));
         }
 
         // Dead Code Detector
@@ -125,14 +126,14 @@ impl DetectorFactory {
 
         // Large Class Detector
         if is_feature_allowed(features::DETECTOR_LARGE_CLASSES, &tier) {
-             detectors.push(Box::new(LargeClassDetector::with_default_config()));
+            detectors.push(Box::new(LargeClassDetector::with_default_config()));
         }
 
         // Tight Coupling Detector
         if is_feature_allowed(features::DETECTOR_TIGHT_COUPLING, &tier) {
             detectors.push(Box::new(TightCouplingDetector::default()));
         }
-        
+
         // Long Methods Detector
         if is_feature_allowed(features::DETECTOR_LONG_METHODS, &tier) {
             detectors.push(Box::new(LongMethodsDetector::default()));
@@ -140,7 +141,7 @@ impl DetectorFactory {
 
         // Magic Values Detector
         if is_feature_allowed(features::DETECTOR_MAGIC_VALUES, &tier) {
-             detectors.push(Box::new(MagicValuesDetector::default()));
+            detectors.push(Box::new(MagicValuesDetector::default()));
         }
 
         // Security Detector

@@ -23,10 +23,9 @@ use crate::plugins::types::HostContext;
 
 #[cfg(feature = "wasm-plugins")]
 use crate::plugins::wasm::{
-    LogLevel as WitLogLevel, AstNode as WitAstNode, FileMetadata, HttpResponse, ProcessInfo,
-    SeverityLevel, IssueCategory, Span, Position, Metrics, AnalysisResult,
-    PluginConfig as WitPluginConfig, ResourceLimits as WitResourceLimits, PluginInfo,
-    SourceFile, CoreAnalysisImports,
+    AnalysisResult, AstNode as WitAstNode, CoreAnalysisImports, FileMetadata, HttpResponse,
+    IssueCategory, LogLevel as WitLogLevel, Metrics, PluginConfig as WitPluginConfig, PluginInfo,
+    Position, ProcessInfo, ResourceLimits as WitResourceLimits, SeverityLevel, SourceFile, Span,
 };
 
 #[cfg(feature = "wasm-plugins")]
@@ -62,15 +61,13 @@ impl CoreAnalysisImports for HostContext {
     fn read_file(&mut self, path: String) -> Result<String, String> {
         self.check_permission(Permission::FileRead(std::path::PathBuf::from(&path)))
             .map_err(|e| e.to_string())?;
-        std::fs::read_to_string(&path)
-            .map_err(|e| format!("Failed to read file {}: {}", path, e))
+        std::fs::read_to_string(&path).map_err(|e| format!("Failed to read file {}: {}", path, e))
     }
 
     fn write_file(&mut self, path: String, content: String) -> Result<(), String> {
         self.check_permission(Permission::FileWrite(std::path::PathBuf::from(&path)))
             .map_err(|e| e.to_string())?;
-        std::fs::write(&path, content)
-            .map_err(|e| format!("Failed to write file {}: {}", path, e))
+        std::fs::write(&path, content).map_err(|e| format!("Failed to write file {}: {}", path, e))
     }
 
     fn file_exists(&mut self, path: String) -> bool {
@@ -96,8 +93,13 @@ impl CoreAnalysisImports for HostContext {
     fn get_file_metadata(&mut self, path: String) -> Result<FileMetadata, String> {
         let metadata = std::fs::metadata(&path)
             .map_err(|e| format!("Failed to get metadata for {}: {}", path, e))?;
-        let modified = metadata.modified()
-            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs())
+        let modified = metadata
+            .modified()
+            .map(|t| {
+                t.duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+            })
             .unwrap_or(0);
         Ok(FileMetadata {
             size: metadata.len(),
@@ -133,11 +135,15 @@ impl CoreAnalysisImports for HostContext {
             node_type: "root".to_string(),
             content: code.clone(),
             span: Span {
-                start: Position { line: 0, column: 0, byte_offset: 0 },
+                start: Position {
+                    line: 0,
+                    column: 0,
+                    byte_offset: 0,
+                },
                 end: Position {
                     line: code.lines().count() as u32,
                     column: 0,
-                    byte_offset: code.len() as u32
+                    byte_offset: code.len() as u32,
                 },
             },
             language,
@@ -151,7 +157,7 @@ impl CoreAnalysisImports for HostContext {
     }
 
     fn calculate_hash(&mut self, algorithm: String, content: String) -> Result<String, String> {
-        use sha2::{Sha256, Sha512, Digest};
+        use sha2::{Digest, Sha256, Sha512};
         match algorithm.to_lowercase().as_str() {
             "sha256" => {
                 let mut hasher = Sha256::new();
@@ -167,20 +173,40 @@ impl CoreAnalysisImports for HostContext {
         }
     }
 
-    fn verify_signature(&mut self, _content: String, _signature: String, _public_key: String) -> Result<bool, String> {
+    fn verify_signature(
+        &mut self,
+        _content: String,
+        _signature: String,
+        _public_key: String,
+    ) -> Result<bool, String> {
         Err("Signature verification not yet implemented".to_string())
     }
 
-    fn http_get(&mut self, url: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
+    fn http_get(
+        &mut self,
+        url: String,
+        _headers: Vec<(String, String)>,
+    ) -> Result<HttpResponse, String> {
         self.check_permission(Permission::NetworkConnect(url.clone()))
             .map_err(|e| e.to_string())?;
-        Err("HTTP requests require async context - not implemented in sync host functions".to_string())
+        Err(
+            "HTTP requests require async context - not implemented in sync host functions"
+                .to_string(),
+        )
     }
 
-    fn http_post(&mut self, url: String, _body: String, _headers: Vec<(String, String)>) -> Result<HttpResponse, String> {
+    fn http_post(
+        &mut self,
+        url: String,
+        _body: String,
+        _headers: Vec<(String, String)>,
+    ) -> Result<HttpResponse, String> {
         self.check_permission(Permission::NetworkConnect(url.clone()))
             .map_err(|e| e.to_string())?;
-        Err("HTTP requests require async context - not implemented in sync host functions".to_string())
+        Err(
+            "HTTP requests require async context - not implemented in sync host functions"
+                .to_string(),
+        )
     }
 
     fn db_get(&mut self, key: String) -> Option<String> {
@@ -191,7 +217,12 @@ impl CoreAnalysisImports for HostContext {
         }
     }
 
-    fn db_set(&mut self, key: String, value: String, _ttl_seconds: Option<u32>) -> Result<(), String> {
+    fn db_set(
+        &mut self,
+        key: String,
+        value: String,
+        _ttl_seconds: Option<u32>,
+    ) -> Result<(), String> {
         if let Ok(mut store) = self.config_store.try_write() {
             store.insert(format!("db:{}", key), value);
             Ok(())
@@ -685,9 +716,9 @@ impl HostContextFactory {
         plugin_id: PluginId,
         security_policy: SecurityPolicy,
     ) -> HostContext {
+        use crate::plugins::types::{HostState, PluginConfig, ResourceLimits};
         use std::collections::HashMap;
         use wasmtime::component::ResourceTable;
-        use crate::plugins::types::{HostState, PluginConfig, ResourceLimits};
 
         let host_state = HostState {
             plugin_id,

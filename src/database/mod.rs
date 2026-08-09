@@ -293,7 +293,10 @@ pub async fn initialize_database() -> crate::error::Result<ScalableDatabase> {
 /// Returns an Arc-wrapped database since the monitor needs shared ownership.
 pub async fn initialize_database_with_monitoring(
     monitoring_config: Option<MonitoringConfig>,
-) -> crate::error::Result<(std::sync::Arc<ScalableDatabase>, monitoring::MonitoringHandle)> {
+) -> crate::error::Result<(
+    std::sync::Arc<ScalableDatabase>,
+    monitoring::MonitoringHandle,
+)> {
     let database = std::sync::Arc::new(initialize_database().await?);
 
     let monitoring_config = monitoring_config.unwrap_or_default();

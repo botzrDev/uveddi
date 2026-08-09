@@ -115,8 +115,7 @@ impl CsrfDetector {
         vec![
             CsrfPattern {
                 // Simplified pattern - matches POST routes (cannot verify CSRF absence without lookahead)
-                pattern: r#"@app\.route.*methods=\[.*POST.*\]"#
-                    .to_string(),
+                pattern: r#"@app\.route.*methods=\[.*POST.*\]"#.to_string(),
                 description: "POST route without CSRF token validation".to_string(),
                 confidence: 0.5, // Lowered - may have false positives if CSRF is present
                 severity: SecuritySeverity::High,

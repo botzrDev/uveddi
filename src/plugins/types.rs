@@ -1,18 +1,18 @@
 //! Type definitions for the WASM plugin system
 
+#[cfg(feature = "wasm-plugins")]
+use crate::analysis::AnalysisEngine;
+use crate::database::ScalableDatabase;
 use crate::plugins::SecurityPolicy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::component::ResourceTable;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::WasiP1Ctx;
-#[cfg(feature = "wasm-plugins")]
-use crate::analysis::AnalysisEngine;
-use crate::database::ScalableDatabase;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::{WasiCtxView, WasiView};
 
@@ -92,24 +92,25 @@ pub struct HostState {
 pub struct HostContext {
     /// Host state containing plugin configuration and limits
     pub host_state: HostState,
-    
+
     /// WASI Preview 1 context for system interface
     pub wasi_ctx: WasiP1Ctx,
-    
+
     /// Resource table for WASI host trait implementation
     pub table: ResourceTable,
-    
+
     /// Database connection for storing and retrieving analysis results
     pub database: Arc<ScalableDatabase>,
-    
+
     /// Analysis engine for AST parsing and code analysis
     pub analysis_engine: Arc<RwLock<AnalysisEngine>>,
-    
+
     /// Configuration store (runtime)
     pub config_store: Arc<RwLock<HashMap<String, String>>>,
-    
+
     /// File cache for parsed ASTs
-    pub ast_cache: Arc<RwLock<HashMap<String, crate::analysis::components::ast_provider::ParsedFile>>>,
+    pub ast_cache:
+        Arc<RwLock<HashMap<String, crate::analysis::components::ast_provider::ParsedFile>>>,
 }
 
 #[cfg(feature = "wasm-plugins")]

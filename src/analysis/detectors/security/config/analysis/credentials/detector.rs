@@ -198,7 +198,9 @@ aws_access_key_id: "AKIAIOSFODNN7EXAMPLE"
         assert_eq!(issues.len(), 3);
         assert!(issues.iter().any(|i| i.title.contains("API Key")));
         assert!(issues.iter().any(|i| i.title.contains("AWS Access Key")));
-        assert!(issues.iter().any(|i| i.title.contains("Structured Credential")));
+        assert!(issues
+            .iter()
+            .any(|i| i.title.contains("Structured Credential")));
     }
 
     #[test]

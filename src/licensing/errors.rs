@@ -53,7 +53,7 @@ impl LicenseError {
             source: None,
         }
     }
-    
+
     /// Create an error with a source
     pub fn with_source(
         kind: LicenseErrorKind,
@@ -66,27 +66,33 @@ impl LicenseError {
             source: Some(Box::new(source)),
         }
     }
-    
+
     /// Create an invalid key format error
     pub fn invalid_key_format(message: impl Into<String>) -> Self {
         Self::new(LicenseErrorKind::InvalidKeyFormat, message)
     }
-    
+
     /// Create a key not found error
     pub fn key_not_found() -> Self {
         Self::new(LicenseErrorKind::KeyNotFound, "License key not found")
     }
-    
+
     /// Create an expired error
     pub fn expired() -> Self {
-        Self::new(LicenseErrorKind::Expired, "License has expired. Please renew at uveddi.org/pricing")
+        Self::new(
+            LicenseErrorKind::Expired,
+            "License has expired. Please renew at uveddi.org/pricing",
+        )
     }
-    
+
     /// Create a not activated error
     pub fn not_activated() -> Self {
-        Self::new(LicenseErrorKind::NotActivated, "License not activated. Run 'uveddi license activate <KEY>'")
+        Self::new(
+            LicenseErrorKind::NotActivated,
+            "License not activated. Run 'uveddi license activate <KEY>'",
+        )
     }
-    
+
     /// Create a feature not available error
     pub fn feature_not_available(feature: &str, required_tier: &str) -> Self {
         Self::new(
@@ -97,30 +103,36 @@ impl LicenseError {
             ),
         )
     }
-    
+
     /// Create a storage error
     pub fn storage_error(message: impl Into<String>) -> Self {
         Self::new(LicenseErrorKind::StorageError, message)
     }
-    
+
     /// Create a network error
     pub fn network_error(message: impl Into<String>) -> Self {
         Self::new(LicenseErrorKind::NetworkError, message)
     }
-    
+
     /// Create an API error
     pub fn api_error(message: impl Into<String>) -> Self {
         Self::new(LicenseErrorKind::ApiError, message)
     }
-    
+
     /// Get a user-friendly error message with upgrade suggestion
     pub fn user_message(&self) -> String {
         match self.kind {
             LicenseErrorKind::FeatureNotAvailable => {
-                format!("⚠️  {}\n\n💡 Upgrade your license to unlock this feature.", self.message)
+                format!(
+                    "⚠️  {}\n\n💡 Upgrade your license to unlock this feature.",
+                    self.message
+                )
             }
             LicenseErrorKind::Expired => {
-                format!("⚠️  {}\n\n💡 Renew your license to continue using premium features.", self.message)
+                format!(
+                    "⚠️  {}\n\n💡 Renew your license to continue using premium features.",
+                    self.message
+                )
             }
             LicenseErrorKind::NotActivated => {
                 format!("ℹ️  {}\n\n💡 Already have a license? Activate it with: uveddi license activate <KEY>", self.message)
@@ -138,7 +150,9 @@ impl fmt::Display for LicenseError {
 
 impl std::error::Error for LicenseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        self.source.as_ref().map(|e| e.as_ref() as &(dyn std::error::Error + 'static))
+        self.source
+            .as_ref()
+            .map(|e| e.as_ref() as &(dyn std::error::Error + 'static))
     }
 }
 
@@ -165,7 +179,7 @@ impl From<serde_json::Error> for LicenseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_error_creation() {
         let err = LicenseError::feature_not_available("Rust analysis", "Pro");
@@ -173,7 +187,7 @@ mod tests {
         assert!(err.message.contains("Rust analysis"));
         assert!(err.message.contains("Pro"));
     }
-    
+
     #[test]
     fn test_user_message() {
         let err = LicenseError::expired();

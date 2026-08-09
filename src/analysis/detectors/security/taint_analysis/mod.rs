@@ -274,7 +274,10 @@ mod tests {
         // With effectiveness 0.9 and TaintLevel::Tainted, result should be Medium (reduced from Tainted)
         // Any level lower than Tainted indicates sanitization worked
         match result {
-            TaintLevel::Sanitized | TaintLevel::Partial(_) | TaintLevel::Medium | TaintLevel::Low => {
+            TaintLevel::Sanitized
+            | TaintLevel::Partial(_)
+            | TaintLevel::Medium
+            | TaintLevel::Low => {
                 assert!(true)
             }
             _ => assert!(false, "Expected sanitization to reduce taint level"),

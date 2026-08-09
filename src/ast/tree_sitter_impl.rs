@@ -612,12 +612,12 @@ impl AstParser {
                             for spec in child.children(&mut child.walk()) {
                                 if spec.kind() == "type_spec" {
                                     if let Some(name_node) = spec.child_by_field_name("name") {
-                                         if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
+                                        if let Ok(name) = name_node.utf8_text(source.as_bytes()) {
                                             items.push(CustomAst::Struct {
                                                 name: name.to_string(),
                                                 methods: Vec::new(),
                                             });
-                                         }
+                                        }
                                     }
                                 }
                             }
@@ -626,7 +626,11 @@ impl AstParser {
                     }
                 }
             }
-            SourceLanguage::Java | SourceLanguage::CSharp | SourceLanguage::Kotlin | SourceLanguage::Scala | SourceLanguage::Swift => {
+            SourceLanguage::Java
+            | SourceLanguage::CSharp
+            | SourceLanguage::Kotlin
+            | SourceLanguage::Scala
+            | SourceLanguage::Swift => {
                 // JVM/C#-like class-based languages
                 for child in root.children(&mut root.walk()) {
                     match child.kind() {
@@ -636,9 +640,15 @@ impl AstParser {
                                     let mut methods = Vec::new();
                                     if let Some(body) = child.child_by_field_name("body") {
                                         for member in body.children(&mut body.walk()) {
-                                            if member.kind().contains("method") || member.kind().contains("function") {
-                                                if let Some(m_name) = member.child_by_field_name("name") {
-                                                    if let Ok(mn) = m_name.utf8_text(source.as_bytes()) {
+                                            if member.kind().contains("method")
+                                                || member.kind().contains("function")
+                                            {
+                                                if let Some(m_name) =
+                                                    member.child_by_field_name("name")
+                                                {
+                                                    if let Ok(mn) =
+                                                        m_name.utf8_text(source.as_bytes())
+                                                    {
                                                         methods.push(mn.to_string());
                                                     }
                                                 }
@@ -657,8 +667,8 @@ impl AstParser {
                 }
             }
             SourceLanguage::C | SourceLanguage::Cpp => {
-                 // C/C++ Header/Source
-                 for child in root.children(&mut root.walk()) {
+                // C/C++ Header/Source
+                for child in root.children(&mut root.walk()) {
                     match child.kind() {
                         "function_definition" => {
                             if let Some(decl) = child.child_by_field_name("declarator") {
@@ -683,7 +693,7 @@ impl AstParser {
                         }
                         _ => {}
                     }
-                 }
+                }
             }
             SourceLanguage::Php | SourceLanguage::Ruby => {
                 // Scripting languages with classes/functions

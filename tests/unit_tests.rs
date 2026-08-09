@@ -65,10 +65,7 @@ fn test_extract_javascript_dependencies() {
     let deps = extractor.extract_from_file(&file_path).unwrap();
 
     // Should extract at least some dependencies
-    assert!(
-        !deps.is_empty(),
-        "Should extract JavaScript dependencies"
-    );
+    assert!(!deps.is_empty(), "Should extract JavaScript dependencies");
 
     // Check that we extract the react import
     let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();

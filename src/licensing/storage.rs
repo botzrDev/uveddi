@@ -39,11 +39,11 @@ fn ensure_config_dir() -> Result<(), LicenseError> {
 /// Load a license from disk
 pub fn load_license() -> Result<License, LicenseError> {
     let license_path = get_license_path();
-    
+
     if !license_path.exists() {
         return Err(LicenseError::not_activated());
     }
-    
+
     let content = fs::read_to_string(&license_path).map_err(|e| {
         LicenseError::storage_error(format!(
             "Failed to read license file at {}: {}",
@@ -51,24 +51,24 @@ pub fn load_license() -> Result<License, LicenseError> {
             e
         ))
     })?;
-    
+
     let license: License = serde_json::from_str(&content).map_err(|e| {
         LicenseError::storage_error(format!(
             "Failed to parse license file: {}. Try re-activating your license.",
             e
         ))
     })?;
-    
+
     Ok(license)
 }
 
 /// Save a license to disk
 pub fn save_license(license: &License) -> Result<(), LicenseError> {
     ensure_config_dir()?;
-    
+
     let license_path = get_license_path();
     let content = serde_json::to_string_pretty(license)?;
-    
+
     fs::write(&license_path, content).map_err(|e| {
         LicenseError::storage_error(format!(
             "Failed to write license file at {}: {}",
@@ -76,7 +76,7 @@ pub fn save_license(license: &License) -> Result<(), LicenseError> {
             e
         ))
     })?;
-    
+
     // Set restrictive permissions on Unix
     #[cfg(unix)]
     {
@@ -85,23 +85,20 @@ pub fn save_license(license: &License) -> Result<(), LicenseError> {
         perms.set_mode(0o600); // Owner read/write only
         fs::set_permissions(&license_path, perms)?;
     }
-    
+
     Ok(())
 }
 
 /// Delete the license file (for deactivation)
 pub fn delete_license() -> Result<(), LicenseError> {
     let license_path = get_license_path();
-    
+
     if license_path.exists() {
         fs::remove_file(&license_path).map_err(|e| {
-            LicenseError::storage_error(format!(
-                "Failed to delete license file: {}",
-                e
-            ))
+            LicenseError::storage_error(format!("Failed to delete license file: {}", e))
         })?;
     }
-    
+
     Ok(())
 }
 
@@ -114,7 +111,7 @@ pub fn license_exists() -> bool {
 mod tests {
     use super::*;
     use tempfile::tempdir;
-    
+
     #[test]
     fn test_get_license_path() {
         let path = get_license_path();

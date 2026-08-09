@@ -38,8 +38,7 @@ mod tree_sitter_tests {
     }
 
     fn create_strict_detector() -> CodeDuplicationDetector {
-        let config = DuplicationConfig::performance_optimized()
-            .with_similarity_threshold(0.95);
+        let config = DuplicationConfig::performance_optimized().with_similarity_threshold(0.95);
         CodeDuplicationDetector::with_config(config)
     }
 

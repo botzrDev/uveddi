@@ -401,11 +401,9 @@ impl SecurityOrchestrator {
             // AI enhancement and architectural correlation are not yet implemented
             TaskType::AiEnhancement | TaskType::ArchitecturalCorrelation => {
                 debug!("Task type {:?} not yet implemented", subtask.task_type);
-                tokio::spawn(async move {
-                    Ok(AgentResult::Error(format!(
-                        "Task type not implemented"
-                    )))
-                })
+                tokio::spawn(
+                    async move { Ok(AgentResult::Error(format!("Task type not implemented"))) },
+                )
             }
         };
 

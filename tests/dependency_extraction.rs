@@ -57,7 +57,9 @@ mod tests {
         assert!(!deps.is_empty(), "Should extract at least one dependency");
         // Check for fs module or any module reference
         assert!(
-            dep_names.iter().any(|n| n.contains("fs") || n.contains("b")),
+            dep_names
+                .iter()
+                .any(|n| n.contains("fs") || n.contains("b")),
             "Should contain fs or b dependency, got: {:?}",
             dep_names
         );
@@ -195,7 +197,8 @@ function processFile() {
                     Ok(deps) => {
                         // If we get deps, verify we extracted something
                         if !deps.is_empty() {
-                            let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
+                            let dep_names: Vec<_> =
+                                deps.iter().map(|d| d.to_module.as_str()).collect();
                             let has_js_deps = dep_names.iter().any(|name| {
                                 name.contains("react")
                                     || name.contains("axios")
